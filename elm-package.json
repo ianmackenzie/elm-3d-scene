@@ -9,6 +9,7 @@
     ],
     "exposed-modules": [],
     "dependencies": {
+        "elm-community/linear-algebra": "3.0.0 <= v < 4.0.0",
         "elm-community/webgl": "2.0.3 <= v < 3.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0"
     },
