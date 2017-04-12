@@ -5,7 +5,8 @@
     "license": "MPL-2.0",
     "source-directories": [
         "src",
-        "../geometry/src"
+        "../geometry/src",
+        "../webgl/src"
     ],
     "exposed-modules": [],
     "dependencies": {
