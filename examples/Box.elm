@@ -7,7 +7,6 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.WebGL.Frame3d as Frame3d
 import WebGL
 import OpenSolid.Axis3d as Axis3d
-import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes as Attributes
@@ -56,9 +55,7 @@ box =
         square : Color -> Point3d -> Point3d -> Point3d -> Point3d -> SceneGraph.Node
         square color a b c d =
             SceneGraph.triangles
-                [ Triangle3d ( a, b, c )
-                , Triangle3d ( a, c, d )
-                ]
+                [ Triangle3d ( a, b, c ), Triangle3d ( a, c, d ) ]
                 |> SceneGraph.meshWith { material = Material.solid color }
 
         bottomFace =
@@ -90,7 +87,7 @@ box =
 
 
 view : Float -> Html msg
-view time =
+view elapsedTime =
     let
         width =
             800
@@ -114,7 +111,7 @@ view time =
                 }
 
         angle =
-            degrees 90 * Time.inSeconds time
+            degrees 90 * Time.inSeconds elapsedTime
 
         scene =
             box |> SceneGraph.rotateAround Axis3d.z angle
@@ -122,17 +119,10 @@ view time =
         entities =
             SceneGraph.toEntities eyeFrame projection scene
 
-        options =
-            [ WebGL.clearColor 0 0 0 1
-            , WebGL.depth 1
-            , WebGL.antialias
-            , WebGL.alpha True
-            ]
-
         attributes =
             [ Attributes.width width, Attributes.height height ]
     in
-        WebGL.toHtmlWith options attributes entities
+        WebGL.toHtml attributes entities
 
 
 main : Program Never Float Float
@@ -140,6 +130,6 @@ main =
     Html.program
         { init = ( 0.0, Cmd.none )
         , view = view
-        , update = \delta time -> ( time + delta, Cmd.none )
+        , update = \delta elapsed -> ( elapsed + delta, Cmd.none )
         , subscriptions = always (AnimationFrame.diffs identity)
         }
