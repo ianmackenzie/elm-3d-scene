@@ -3,13 +3,16 @@ module OpenSolid.SceneGraph
         ( Mesh
         , Lines
         , Points
-        , Node
         , triangles
         , mesh
         , lines
         , polyline
         , points
-        , scaleAbout
+        , Node
+        , meshWith
+        , linesWith
+        , pointsWith
+        , group
         , rotateAround
         , translateBy
         , mirrorAcross
@@ -17,136 +20,44 @@ module OpenSolid.SceneGraph
         , Projection
         , perspectiveProjection
         , orthographicProjection
-        , Lighting
-        , PointLight
-        , ambientLighting
-        , directionalLighting
-        , singlePointLighting
-        , twoPointLighting
-        , threePointLighting
-        , fourPointLighting
+        , toEntities
         )
 
+import OpenSolid.SceneGraph.Internal.Shader as Shader
+import OpenSolid.SceneGraph.Internal.Material as Material
+import OpenSolid.SceneGraph.Material as Material exposing (Material)
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Polyline3d as Polyline3d
+import OpenSolid.Frame3d as Frame3d
 import OpenSolid.WebGL.Direction3d as Direction3d
 import OpenSolid.WebGL.Point3d as Point3d
+import OpenSolid.WebGL.Frame3d as Frame3d
 import OpenSolid.WebGL.Color as Color
-import Math.Vector3 as Vec3 exposing (Vec3)
-import Math.Vector4 as Vec4 exposing (Vec4)
-import Math.Matrix4 as Mat4 exposing (Mat4)
+import Math.Vector3 as Vector3 exposing (Vec3)
+import Math.Vector4 as Vector4 exposing (Vec4)
+import Math.Matrix4 as Matrix4 exposing (Mat4)
 import WebGL
+import WebGL.Settings
+import WebGL.Settings.DepthTest
 import Color exposing (Color)
 
 
-type alias VertexPositionAndNormal =
-    { vertexPosition : Vec3
-    , vertexNormal : Vec3
-    }
-
-
-type alias VertexPosition =
-    { vertexPosition : Vec3 }
-
-
-type alias Uniforms a =
-    { a
-        | modelMatrix : Mat4
-        , modelViewMatrix : Mat4
-        , modelViewProjectionMatrix : Mat4
-    }
-
-
-type alias MeshUniforms a =
-    Uniforms { a | normalMatrix : Mat4 }
-
-
-type alias PrimitiveUniforms =
-    Uniforms { color : Vec4 }
-
-
-type alias PositionAndNormal =
-    { position : Vec3
-    , normal : Vec3
-    }
-
-
-type alias MeshVertexShader a =
-    WebGL.Shader VertexPositionAndNormal (MeshUniforms a) PositionAndNormal
-
-
-type alias MeshFragmentShader a =
-    WebGL.Shader {} (Uniforms a) PositionAndNormal
-
-
-type alias PrimitiveVertexShader =
-    WebGL.Shader VertexPosition PrimitiveUniforms {}
-
-
-type alias PrimitiveFragmentShader =
-    WebGL.Shader {} PrimitiveUniforms {}
-
-
 type Mesh
-    = Mesh (WebGL.Mesh VertexPositionAndNormal)
+    = Mesh (WebGL.Mesh Shader.MeshAttributes)
 
 
 type Lines
-    = Lines (WebGL.Mesh VertexPosition)
+    = Lines (WebGL.Mesh Shader.VertexPosition)
 
 
 type Points
-    = Points (WebGL.Mesh VertexPosition)
+    = Points (WebGL.Mesh Shader.VertexPosition)
 
 
-type MeshShaders
-    = MeshShaders
-
-
-type alias PrimitiveShaders =
-    ( PrimitiveVertexShader, PrimitiveFragmentShader )
-
-
-type Entity
-    = MeshEntity Mesh MeshShaders
-    | LinesEntity Lines PrimitiveShaders
-    | PointsEntity Points PrimitiveShaders
-
-
-type Transformation
-    = Transformation Frame3d Float
-
-
-type Node
-    = Node (List ( Entity, Transformation ))
-
-
-type Projection
-    = Projection Mat4
-
-
-type Lighting
-    = AmbientLighting Color
-    | DirectionalLighting Direction3d Color
-    | SinglePointLighting PointLight
-    | TwoPointLighting PointLight PointLight
-    | ThreePointLighting PointLight PointLight PointLight
-    | FourPointLighting PointLight PointLight PointLight PointLight
-
-
-type alias PointLight =
-    ( Point3d, Color )
-
-
-zeroVec3 : Vec3
-zeroVec3 =
-    Vec3.vec3 0 0 0
-
-
-vertexPositionsAndNormals : Triangle3d -> ( VertexPositionAndNormal, VertexPositionAndNormal, VertexPositionAndNormal )
-vertexPositionsAndNormals triangle =
+triangleAttributes : Triangle3d -> ( Shader.MeshAttributes, Shader.MeshAttributes, Shader.MeshAttributes )
+triangleAttributes triangle =
     let
         normalVector =
             case Triangle3d.normalDirection triangle of
@@ -154,7 +65,7 @@ vertexPositionsAndNormals triangle =
                     Direction3d.toVec3 direction
 
                 Nothing ->
-                    zeroVec3
+                    Vector3.vec3 0 0 0
 
         ( p1, p2, p3 ) =
             Triangle3d.vertices triangle
@@ -167,11 +78,11 @@ vertexPositionsAndNormals triangle =
 
 triangles : List Triangle3d -> Mesh
 triangles triangles_ =
-    Mesh (WebGL.triangles (List.map vertexPositionsAndNormals triangles_))
+    Mesh (WebGL.triangles (List.map triangleAttributes triangles_))
 
 
-vertexPositionAndNormal : ( Point3d, Direction3d ) -> VertexPositionAndNormal
-vertexPositionAndNormal ( point, normalDirection ) =
+meshVertexAttributes : ( Point3d, Direction3d ) -> Shader.MeshAttributes
+meshVertexAttributes ( point, normalDirection ) =
     { vertexPosition = Point3d.toVec3 point
     , vertexNormal = Direction3d.toVec3 normalDirection
     }
@@ -179,15 +90,11 @@ vertexPositionAndNormal ( point, normalDirection ) =
 
 mesh : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Mesh
 mesh vertices faces =
-    let
-        vertexPositionsAndNormals =
-            List.map vertexPositionAndNormal vertices
-    in
-        Mesh (WebGL.indexedTriangles vertexPositionsAndNormals faces)
+    Mesh (WebGL.indexedTriangles (List.map meshVertexAttributes vertices) faces)
 
 
-vertexPositions : LineSegment3d -> ( VertexPosition, VertexPosition )
-vertexPositions lineSegment =
+lineSegmentAttributes : LineSegment3d -> ( Shader.VertexPosition, Shader.VertexPosition )
+lineSegmentAttributes lineSegment =
     let
         ( p1, p2 ) =
             LineSegment3d.endpoints lineSegment
@@ -199,10 +106,10 @@ vertexPositions lineSegment =
 
 lines : List LineSegment3d -> Lines
 lines lineSegments =
-    Lines (WebGL.lines (List.map vertexPositions lineSegments))
+    Lines (WebGL.lines (List.map lineSegmentAttributes lineSegments))
 
 
-vertexPosition : Point3d -> VertexPosition
+vertexPosition : Point3d -> Shader.VertexPosition
 vertexPosition point =
     { vertexPosition = Point3d.toVec3 point }
 
@@ -221,119 +128,202 @@ points points_ =
     Points (WebGL.points (List.map vertexPosition points_))
 
 
+type Entity
+    = MeshEntity Mesh Material
+    | LinesEntity Lines Color
+    | PointsEntity Points Color Float
+
+
+type Node
+    = Leaf Frame3d Entity
+    | Group Frame3d (List Node)
+
+
+meshWith : { material : Material } -> Mesh -> Node
+meshWith { material } mesh =
+    Leaf Frame3d.xyz (MeshEntity mesh material)
+
+
+linesWith : { color : Color } -> Lines -> Node
+linesWith { color } lines =
+    Leaf Frame3d.xyz (LinesEntity lines color)
+
+
+pointsWith : { color : Color, size : Float } -> Points -> Node
+pointsWith { color, size } points =
+    Leaf Frame3d.xyz (PointsEntity points color size)
+
+
 group : List Node -> Node
 group nodes =
-    Debug.crash "TODO"
+    Group Frame3d.xyz nodes
 
 
-scaleAbout : Point3d -> Float -> Node -> Node
-scaleAbout point scale node =
-    Debug.crash "TODO"
+transformBy : (Frame3d -> Frame3d) -> Node -> Node
+transformBy frameTransformation node =
+    case node of
+        Leaf frame entity ->
+            Leaf (frameTransformation frame) entity
+
+        Group frame nodes ->
+            Group (frameTransformation frame) nodes
 
 
 rotateAround : Axis3d -> Float -> Node -> Node
 rotateAround axis angle node =
-    Debug.crash "TODO"
+    transformBy (Frame3d.rotateAround axis angle) node
 
 
 translateBy : Vector3d -> Node -> Node
 translateBy displacement node =
-    Debug.crash "TODO"
+    transformBy (Frame3d.translateBy displacement) node
 
 
 mirrorAcross : Plane3d -> Node -> Node
 mirrorAcross plane node =
-    Debug.crash "TODO"
+    transformBy (Frame3d.mirrorAcross plane) node
 
 
 placeIn : Frame3d -> Node -> Node
 placeIn frame node =
-    Debug.crash "TODO"
+    transformBy (Frame3d.placeIn frame) node
+
+
+type Projection
+    = Projection Mat4
 
 
 perspectiveProjection : { verticalFov : Float, aspectRatio : Float, zNear : Float, zFar : Float } -> Projection
 perspectiveProjection { verticalFov, aspectRatio, zNear, zFar } =
-    Debug.crash "TODO"
+    let
+        fovInDegrees =
+            verticalFov / degrees 1
+    in
+        Projection (Matrix4.makePerspective fovInDegrees aspectRatio zNear zFar)
 
 
 orthographicProjection : { height : Float, aspectRatio : Float, zNear : Float, zFar : Float } -> Projection
 orthographicProjection { height, aspectRatio, zNear, zFar } =
-    Debug.crash "TODO"
+    let
+        width =
+            aspectRatio * height
+
+        left =
+            -width / 2
+
+        right =
+            width / 2
+
+        bottom =
+            -height / 2
+
+        top =
+            height / 2
+    in
+        Projection (Matrix4.makeOrtho left right bottom top zNear zFar)
 
 
-ambientLighting : Color -> Lighting
-ambientLighting =
-    AmbientLighting
+type alias Camera =
+    { eyeFrame : Frame3d
+    , projectionMatrix : Mat4
+    }
 
 
-directionalLighting : Direction3d -> Color -> Lighting
-directionalLighting =
-    DirectionalLighting
+toEntity : Camera -> Frame3d -> Entity -> WebGL.Entity
+toEntity camera modelFrame entity =
+    let
+        modelMatrix =
+            Frame3d.modelMatrix modelFrame
+
+        modelViewMatrix =
+            Frame3d.modelViewMatrix camera.eyeFrame modelFrame
+
+        modelViewProjectionMatrix =
+            Matrix4.mul camera.projectionMatrix modelViewMatrix
+    in
+        case entity of
+            MeshEntity (Mesh mesh) material ->
+                case material of
+                    Material.Solid color ->
+                        let
+                            cullSetting =
+                                if Frame3d.isRightHanded modelFrame then
+                                    WebGL.Settings.back
+                                else
+                                    WebGL.Settings.front
+
+                            settings =
+                                [ WebGL.Settings.DepthTest.default
+                                , WebGL.Settings.cullFace cullSetting
+                                ]
+
+                            uniforms =
+                                { modelMatrix = modelMatrix
+                                , modelViewMatrix = modelViewMatrix
+                                , modelViewProjectionMatrix =
+                                    modelViewProjectionMatrix
+                                , color = Color.toVec4 color
+                                }
+                        in
+                            WebGL.entityWith settings
+                                Shader.meshVertexShader
+                                Shader.solidFragmentShader
+                                mesh
+                                uniforms
+
+            LinesEntity (Lines lineMesh) color ->
+                WebGL.entity
+                    Shader.primitiveVertexShader
+                    Shader.primitiveFragmentShader
+                    lineMesh
+                    { modelViewProjectionMatrix = modelViewProjectionMatrix
+                    , color = Color.toVec4 color
+                    , size = 1.0
+                    }
+
+            PointsEntity (Points pointMesh) color size ->
+                WebGL.entity
+                    Shader.primitiveVertexShader
+                    Shader.primitiveFragmentShader
+                    pointMesh
+                    { modelViewProjectionMatrix = modelViewProjectionMatrix
+                    , color = Color.toVec4 color
+                    , size = size
+                    }
 
 
-singlePointLighting : PointLight -> Lighting
-singlePointLighting =
-    SinglePointLighting
+collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
+collectEntities camera placementFrame node accumulated =
+    case node of
+        Leaf frame entity ->
+            let
+                modelFrame =
+                    Frame3d.placeIn placementFrame frame
+            in
+                toEntity camera modelFrame entity :: accumulated
+
+        Group frame nodes ->
+            let
+                localFrame =
+                    Frame3d.placeIn placementFrame frame
+            in
+                List.foldl
+                    (\childNode accumulated ->
+                        collectEntities camera localFrame childNode accumulated
+                    )
+                    accumulated
+                    nodes
 
 
-twoPointLighting : PointLight -> PointLight -> Lighting
-twoPointLighting =
-    TwoPointLighting
+toEntities : Frame3d -> Projection -> Node -> List WebGL.Entity
+toEntities eyeFrame projection rootNode =
+    let
+        (Projection projectionMatrix) =
+            projection
 
-
-threePointLighting : PointLight -> PointLight -> PointLight -> Lighting
-threePointLighting =
-    ThreePointLighting
-
-
-fourPointLighting : PointLight -> PointLight -> PointLight -> PointLight -> Lighting
-fourPointLighting =
-    FourPointLighting
-
-
-meshVertexShader : MeshVertexShader a
-meshVertexShader =
-    [glsl|
-        attribute vec3 vertexPosition;
-        attribute vec3 vertexNormal;
-
-        uniform mat4 modelMatrix;
-        uniform mat4 modelViewMatrix;
-        uniform mat4 modelViewProjectionMatrix;
-        uniform mat4 normalMatrix;
-
-        varying vec3 position;
-        varying vec3 normal;
-
-        void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(vertexPosition, 1.0);
-          position = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
-          normal = (normalMatrix * vec4(vertexNormal, 0.0)).xyz;
-        }
-    |]
-
-
-primitiveVertexShader : PrimitiveVertexShader
-primitiveVertexShader =
-    [glsl|
-        attribute vec3 vertexPosition;
-
-        uniform mat4 modelViewProjectionMatrix;
-
-        void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(vertexPosition, 1.0);
-        }
-    |]
-
-
-primitiveFragmentShader : PrimitiveFragmentShader
-primitiveFragmentShader =
-    [glsl|
-        precision mediump float;
-
-        uniform vec4 color;
-
-        void main () {
-            gl_FragColor = color;
-        }
-    |]
+        camera =
+            { eyeFrame = eyeFrame
+            , projectionMatrix = projectionMatrix
+            }
+    in
+        collectEntities camera Frame3d.xyz rootNode []
