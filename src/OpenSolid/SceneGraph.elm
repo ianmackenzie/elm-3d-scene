@@ -4,7 +4,7 @@ module OpenSolid.SceneGraph
         , WithNormals
         , WithNormalsAndTextureCoordinates
         , triangles
-        , triangleWithNormals
+        , trianglesWithNormals
         , triangleFan
         , mesh
         , meshWithNormals
