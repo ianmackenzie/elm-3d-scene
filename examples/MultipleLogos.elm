@@ -27,7 +27,7 @@ view angleInDegrees =
             600
 
         eyeElevation =
-            degrees 20
+            degrees 22.5
 
         eyeDistance =
             10
@@ -40,7 +40,7 @@ view angleInDegrees =
 
         eyePoint =
             Point3d ( eyeX, 0, eyeZ )
-                |> Point3d.rotateAround Axis3d.z (degrees 30)
+                |> Point3d.rotateAround Axis3d.z (degrees 60)
 
         eyeFrame =
             Frame3d.lookAt
