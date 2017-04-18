@@ -1,21 +1,23 @@
 module OpenSolid.SceneGraph
     exposing
-        ( Mesh
-        , Lines
-        , Points
+        ( PositionOnly
+        , WithNormals
+        , WithNormalsAndTextureCoordinates
         , triangles
+        , triangleWithNormals
+        , triangleFan
         , mesh
+        , meshWithNormals
         , lines
         , polyline
         , points
         , Node
-        , meshWith
-        , linesWith
-        , pointsWith
+        , colored
         , group
         , rotateAround
         , translateBy
         , mirrorAcross
+        , relativeTo
         , placeIn
         , Projection
         , perspectiveProjection
@@ -24,8 +26,6 @@ module OpenSolid.SceneGraph
         )
 
 import OpenSolid.SceneGraph.Internal.Shader as Shader
-import OpenSolid.SceneGraph.Internal.Material as Material
-import OpenSolid.SceneGraph.Material as Material exposing (Material)
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.LineSegment3d as LineSegment3d
@@ -35,6 +35,7 @@ import OpenSolid.WebGL.Direction3d as Direction3d
 import OpenSolid.WebGL.Point3d as Point3d
 import OpenSolid.WebGL.Frame3d as Frame3d
 import OpenSolid.WebGL.Color as Color
+import Math.Vector2 as Vector2 exposing (Vec2)
 import Math.Vector3 as Vector3 exposing (Vec3)
 import Math.Vector4 as Vector4 exposing (Vec4)
 import Math.Matrix4 as Matrix4 exposing (Mat4)
@@ -44,20 +45,54 @@ import WebGL.Settings.DepthTest
 import Color exposing (Color)
 
 
-type Mesh
-    = Mesh (WebGL.Mesh Shader.MeshAttributes)
+type alias PositionOnly =
+    { vertexPosition : Vec3
+    }
 
 
-type Lines
-    = Lines (WebGL.Mesh Shader.VertexPosition)
+type alias WithNormals =
+    { vertexPosition : Vec3
+    , vertexNormal : Vec3
+    }
 
 
-type Points
-    = Points (WebGL.Mesh Shader.VertexPosition)
+type alias WithNormalsAndTextureCoordinates =
+    { vertexPosition : Vec3
+    , vertexNormal : Vec3
+    , vertexTextureCoordinates : Vec2
+    }
 
 
-triangleAttributes : Triangle3d -> ( Shader.MeshAttributes, Shader.MeshAttributes, Shader.MeshAttributes )
-triangleAttributes triangle =
+vertexPosition : Point3d -> PositionOnly
+vertexPosition point =
+    { vertexPosition = Point3d.toVec3 point }
+
+
+lineSegment : LineSegment3d -> ( PositionOnly, PositionOnly )
+lineSegment lineSegment_ =
+    let
+        ( p1, p2 ) =
+            LineSegment3d.endpoints lineSegment_
+    in
+        ( vertexPosition p1, vertexPosition p2 )
+
+
+triangle : Triangle3d -> ( PositionOnly, PositionOnly, PositionOnly )
+triangle triangle_ =
+    let
+        ( p1, p2, p3 ) =
+            Triangle3d.vertices triangle_
+    in
+        ( vertexPosition p1, vertexPosition p2, vertexPosition p3 )
+
+
+triangles : List Triangle3d -> WebGL.Mesh PositionOnly
+triangles triangles_ =
+    WebGL.triangles (List.map triangle triangles_)
+
+
+triangleWithNormals : Triangle3d -> ( WithNormals, WithNormals, WithNormals )
+triangleWithNormals triangle =
     let
         normalVector =
             case Triangle3d.normalDirection triangle of
@@ -76,62 +111,50 @@ triangleAttributes triangle =
         )
 
 
-triangles : List Triangle3d -> Mesh
-triangles triangles_ =
-    Mesh (WebGL.triangles (List.map triangleAttributes triangles_))
+triangleFan : List Point3d -> WebGL.Mesh PositionOnly
+triangleFan points =
+    WebGL.triangleFan (List.map vertexPosition points)
 
 
-meshVertexAttributes : ( Point3d, Direction3d ) -> Shader.MeshAttributes
-meshVertexAttributes ( point, normalDirection ) =
+trianglesWithNormals : List Triangle3d -> WebGL.Mesh WithNormals
+trianglesWithNormals triangles =
+    WebGL.triangles (List.map triangleWithNormals triangles)
+
+
+mesh : List Point3d -> List ( Int, Int, Int ) -> WebGL.Mesh PositionOnly
+mesh vertices faces =
+    WebGL.indexedTriangles (List.map vertexPosition vertices) faces
+
+
+positionAndNormal : ( Point3d, Direction3d ) -> WithNormals
+positionAndNormal ( point, normalDirection ) =
     { vertexPosition = Point3d.toVec3 point
     , vertexNormal = Direction3d.toVec3 normalDirection
     }
 
 
-mesh : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Mesh
-mesh vertices faces =
-    Mesh (WebGL.indexedTriangles (List.map meshVertexAttributes vertices) faces)
+meshWithNormals : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> WebGL.Mesh WithNormals
+meshWithNormals vertices faces =
+    WebGL.indexedTriangles (List.map positionAndNormal vertices) faces
 
 
-lineSegmentAttributes : LineSegment3d -> ( Shader.VertexPosition, Shader.VertexPosition )
-lineSegmentAttributes lineSegment =
-    let
-        ( p1, p2 ) =
-            LineSegment3d.endpoints lineSegment
-    in
-        ( { vertexPosition = Point3d.toVec3 p1 }
-        , { vertexPosition = Point3d.toVec3 p2 }
-        )
-
-
-lines : List LineSegment3d -> Lines
+lines : List LineSegment3d -> WebGL.Mesh PositionOnly
 lines lineSegments =
-    Lines (WebGL.lines (List.map lineSegmentAttributes lineSegments))
+    WebGL.lines (List.map lineSegment lineSegments)
 
 
-vertexPosition : Point3d -> Shader.VertexPosition
-vertexPosition point =
-    { vertexPosition = Point3d.toVec3 point }
-
-
-polyline : Polyline3d -> Lines
+polyline : Polyline3d -> WebGL.Mesh PositionOnly
 polyline polyline_ =
-    let
-        vertices =
-            Polyline3d.vertices polyline_
-    in
-        Lines (WebGL.lineStrip (List.map vertexPosition vertices))
+    WebGL.lineStrip (List.map vertexPosition (Polyline3d.vertices polyline_))
 
 
-points : List Point3d -> Points
+points : List Point3d -> WebGL.Mesh PositionOnly
 points points_ =
-    Points (WebGL.points (List.map vertexPosition points_))
+    WebGL.points (List.map vertexPosition points_)
 
 
 type Entity
-    = MeshEntity Mesh Material
-    | LinesEntity Lines Color
-    | PointsEntity Points Color Float
+    = Colored (WebGL.Mesh PositionOnly) Color
 
 
 type Node
@@ -139,19 +162,14 @@ type Node
     | Group Frame3d (List Node)
 
 
-meshWith : { material : Material } -> Mesh -> Node
-meshWith { material } mesh =
-    Leaf Frame3d.xyz (MeshEntity mesh material)
+leafNode : Entity -> Node
+leafNode entity =
+    Leaf Frame3d.xyz entity
 
 
-linesWith : { color : Color } -> Lines -> Node
-linesWith { color } lines =
-    Leaf Frame3d.xyz (LinesEntity lines color)
-
-
-pointsWith : { color : Color, size : Float } -> Points -> Node
-pointsWith { color, size } points =
-    Leaf Frame3d.xyz (PointsEntity points color size)
+colored : Color -> WebGL.Mesh PositionOnly -> Node
+colored color mesh =
+    leafNode (Colored mesh color)
 
 
 group : List Node -> Node
@@ -182,6 +200,11 @@ translateBy displacement node =
 mirrorAcross : Plane3d -> Node -> Node
 mirrorAcross plane node =
     transformBy (Frame3d.mirrorAcross plane) node
+
+
+relativeTo : Frame3d -> Node -> Node
+relativeTo frame node =
+    transformBy (Frame3d.relativeTo frame) node
 
 
 placeIn : Frame3d -> Node -> Node
@@ -242,54 +265,31 @@ toEntity camera modelFrame entity =
             Matrix4.mul camera.projectionMatrix modelViewMatrix
     in
         case entity of
-            MeshEntity (Mesh mesh) material ->
-                case material of
-                    Material.Solid color ->
-                        let
-                            cullSetting =
-                                if Frame3d.isRightHanded modelFrame then
-                                    WebGL.Settings.back
-                                else
-                                    WebGL.Settings.front
+            Colored mesh color ->
+                let
+                    cullSetting =
+                        if Frame3d.isRightHanded modelFrame then
+                            WebGL.Settings.back
+                        else
+                            WebGL.Settings.front
 
-                            settings =
-                                [ WebGL.Settings.DepthTest.default
-                                , WebGL.Settings.cullFace cullSetting
-                                ]
+                    settings =
+                        [ WebGL.Settings.DepthTest.default
+                        , WebGL.Settings.cullFace cullSetting
+                        ]
 
-                            uniforms =
-                                { modelMatrix = modelMatrix
-                                , modelViewMatrix = modelViewMatrix
-                                , modelViewProjectionMatrix =
-                                    modelViewProjectionMatrix
-                                , color = Color.toVec4 color
-                                }
-                        in
-                            WebGL.entityWith settings
-                                Shader.meshVertexShader
-                                Shader.solidFragmentShader
-                                mesh
-                                uniforms
-
-            LinesEntity (Lines lineMesh) color ->
-                WebGL.entity
-                    Shader.primitiveVertexShader
-                    Shader.primitiveFragmentShader
-                    lineMesh
-                    { modelViewProjectionMatrix = modelViewProjectionMatrix
-                    , color = Color.toVec4 color
-                    , size = 1.0
-                    }
-
-            PointsEntity (Points pointMesh) color size ->
-                WebGL.entity
-                    Shader.primitiveVertexShader
-                    Shader.primitiveFragmentShader
-                    pointMesh
-                    { modelViewProjectionMatrix = modelViewProjectionMatrix
-                    , color = Color.toVec4 color
-                    , size = size
-                    }
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewMatrix = modelViewMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , color = Color.toVec4 color
+                        }
+                in
+                    WebGL.entityWith settings
+                        Shader.positionOnlyVertexShader
+                        Shader.solidColorShader
+                        mesh
+                        uniforms
 
 
 collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity

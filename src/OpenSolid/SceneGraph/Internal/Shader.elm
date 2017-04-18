@@ -10,38 +10,30 @@ import Math.Matrix4 as Matrix4 exposing (Mat4)
 import WebGL
 
 
-type alias MeshAttributes =
-    { vertexPosition : Vec3
-    , vertexNormal : Vec3
-    }
+positionOnlyVertexShader : WebGL.Shader { vertexPosition : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { position : Vec3 }
+positionOnlyVertexShader =
+    [glsl|
+        attribute vec3 vertexPosition;
+
+        uniform mat4 modelMatrix;
+        uniform mat4 modelViewProjectionMatrix;
+
+        varying vec3 position;
+
+        void main () {
+          gl_Position = modelViewProjectionMatrix * vec4(vertexPosition, 1.0);
+          position = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
+        }
+    |]
 
 
-type alias MeshUniforms a =
-    { a
-        | modelMatrix : Mat4
-        , modelViewMatrix : Mat4
-        , modelViewProjectionMatrix : Mat4
-    }
-
-
-type alias MeshVaryings =
-    { position : Vec3
-    , normal : Vec3
-    }
-
-
-type alias MeshVertexShader a =
-    WebGL.Shader MeshAttributes (MeshUniforms a) MeshVaryings
-
-
-meshVertexShader : MeshVertexShader a
-meshVertexShader =
+positionAndNormalVertexShader : WebGL.Shader { vertexPosition : Vec3, vertexNormal : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { position : Vec3, normal : Vec3 }
+positionAndNormalVertexShader =
     [glsl|
         attribute vec3 vertexPosition;
         attribute vec3 vertexNormal;
 
         uniform mat4 modelMatrix;
-        uniform mat4 modelViewMatrix;
         uniform mat4 modelViewProjectionMatrix;
 
         varying vec3 position;
@@ -55,69 +47,14 @@ meshVertexShader =
     |]
 
 
-type alias MeshFragmentShader a =
-    WebGL.Shader {} (MeshUniforms a) MeshVaryings
-
-
-type alias SolidMaterialUniforms =
-    { color : Vec4 }
-
-
-solidFragmentShader : MeshFragmentShader SolidMaterialUniforms
-solidFragmentShader =
+solidColorShader : WebGL.Shader {} { a | color : Vec4 } { position : Vec3 }
+solidColorShader =
     [glsl|
         precision mediump float;
 
         uniform vec4 color;
 
         varying vec3 position;
-        varying vec3 normal;
-
-        void main () {
-            gl_FragColor = color;
-        }
-    |]
-
-
-type alias VertexPosition =
-    { vertexPosition : Vec3
-    }
-
-
-type alias PrimitiveUniforms =
-    { modelViewProjectionMatrix : Mat4
-    , color : Vec4
-    , size : Float
-    }
-
-
-type alias PrimitiveVertexShader =
-    WebGL.Shader VertexPosition PrimitiveUniforms {}
-
-
-primitiveVertexShader : PrimitiveVertexShader
-primitiveVertexShader =
-    [glsl|
-        attribute vec3 vertexPosition;
-
-        uniform mat4 modelViewProjectionMatrix;
-
-        void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(vertexPosition, 1.0);
-        }
-    |]
-
-
-type alias PrimitiveFragmentShader =
-    WebGL.Shader {} PrimitiveUniforms {}
-
-
-primitiveFragmentShader : PrimitiveFragmentShader
-primitiveFragmentShader =
-    [glsl|
-        precision mediump float;
-
-        uniform vec4 color;
 
         void main () {
             gl_FragColor = color;
