@@ -1,4 +1,4 @@
-module MultipleLogos exposing (..)
+module PerspectiveLogos exposing (..)
 
 import OpenSolid.SceneGraph as SceneGraph
 import OpenSolid.Geometry.Types exposing (..)
@@ -26,20 +26,9 @@ view angleInDegrees =
         height =
             600
 
-        eyeElevation =
-            degrees 22.5
-
-        eyeDistance =
-            10
-
-        eyeX =
-            eyeDistance * cos eyeElevation
-
-        eyeZ =
-            eyeDistance * sin eyeElevation
-
         eyePoint =
-            Point3d ( eyeX, 0, eyeZ )
+            Point3d ( 10, 0, 0 )
+                |> Point3d.rotateAround Axis3d.y (degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
         eyeFrame =
