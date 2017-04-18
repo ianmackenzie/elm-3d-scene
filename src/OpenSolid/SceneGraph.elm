@@ -1,12 +1,6 @@
 module OpenSolid.SceneGraph
     exposing
         ( Geometry
-        , VertexPosition
-        , VertexPositionAnd
-        , VertexNormal
-        , VertexNormalAnd
-        , VertexTextureCoordinates
-        , VertexTextureCoordinatesAnd
         , triangles
         , trianglesWithNormals
         , triangleFan
@@ -36,10 +30,14 @@ import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Polyline3d as Polyline3d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.BoundingBox3d as BoundingBox3d
+import OpenSolid.WebGL.Types exposing (..)
 import OpenSolid.WebGL.Direction3d as Direction3d
 import OpenSolid.WebGL.Point3d as Point3d
 import OpenSolid.WebGL.Frame3d as Frame3d
 import OpenSolid.WebGL.Color as Color
+import OpenSolid.WebGL.Triangle3d as Triangle3d
+import OpenSolid.WebGL.LineSegment3d as LineSegment3d
+import OpenSolid.WebGL.Polyline3d as Polyline3d
 import Math.Vector2 as Vector2 exposing (Vec2)
 import Math.Vector3 as Vector3 exposing (Vec3)
 import Math.Vector4 as Vector4 exposing (Vec4)
@@ -52,73 +50,6 @@ import Color exposing (Color)
 
 type Geometry a
     = Geometry (Maybe BoundingBox3d) (WebGL.Mesh a)
-
-
-type alias VertexPosition =
-    VertexPositionAnd {}
-
-
-type alias VertexPositionAnd a =
-    { a | vertexPosition : Vec3 }
-
-
-type alias VertexNormal =
-    VertexNormalAnd {}
-
-
-type alias VertexNormalAnd a =
-    { a | vertexNormal : Vec3 }
-
-
-type alias VertexTextureCoordinates =
-    VertexTextureCoordinatesAnd {}
-
-
-type alias VertexTextureCoordinatesAnd a =
-    { a | vertexTextureCoordinates : Vec2 }
-
-
-vertexPosition : Point3d -> VertexPosition
-vertexPosition point =
-    { vertexPosition = Point3d.toVec3 point }
-
-
-lineSegmentPositions : LineSegment3d -> ( VertexPosition, VertexPosition )
-lineSegmentPositions lineSegment =
-    let
-        ( p1, p2 ) =
-            LineSegment3d.endpoints lineSegment
-    in
-        ( vertexPosition p1, vertexPosition p2 )
-
-
-trianglePositions : Triangle3d -> ( VertexPosition, VertexPosition, VertexPosition )
-trianglePositions triangle_ =
-    let
-        ( p1, p2, p3 ) =
-            Triangle3d.vertices triangle_
-    in
-        ( vertexPosition p1, vertexPosition p2, vertexPosition p3 )
-
-
-trianglePositionsAndNormals : Triangle3d -> ( VertexPositionAnd VertexNormal, VertexPositionAnd VertexNormal, VertexPositionAnd VertexNormal )
-trianglePositionsAndNormals triangle =
-    let
-        normalVector =
-            case Triangle3d.normalDirection triangle of
-                Just direction ->
-                    Direction3d.toVec3 direction
-
-                Nothing ->
-                    Vector3.vec3 0 0 0
-
-        ( p1, p2, p3 ) =
-            Triangle3d.vertices triangle
-    in
-        ( { vertexPosition = Point3d.toVec3 p1, vertexNormal = normalVector }
-        , { vertexPosition = Point3d.toVec3 p2, vertexNormal = normalVector }
-        , { vertexPosition = Point3d.toVec3 p3, vertexNormal = normalVector }
-        )
 
 
 trianglesWith : (Triangle3d -> ( a, a, a )) -> List Triangle3d -> Geometry a
@@ -135,12 +66,12 @@ trianglesWith toAttributes triangles =
 
 triangles : List Triangle3d -> Geometry VertexPosition
 triangles =
-    trianglesWith trianglePositions
+    trianglesWith Triangle3d.vertexPositions
 
 
 trianglesWithNormals : List Triangle3d -> Geometry (VertexPositionAnd VertexNormal)
 trianglesWithNormals =
-    trianglesWith trianglePositionsAndNormals
+    trianglesWith Triangle3d.vertexPositionsAndNormals
 
 
 triangleFan : List Point3d -> Geometry VertexPosition
@@ -150,7 +81,7 @@ triangleFan points =
             BoundingBox3d.containing points
 
         mesh =
-            WebGL.triangleFan (List.map vertexPosition points)
+            WebGL.triangleFan (List.map Point3d.toVertexPosition points)
     in
         Geometry boundingBox mesh
 
@@ -162,7 +93,7 @@ mesh vertices faces =
             BoundingBox3d.containing vertices
 
         vertexPositions =
-            List.map vertexPosition vertices
+            List.map Point3d.toVertexPosition vertices
 
         mesh =
             WebGL.indexedTriangles vertexPositions faces
@@ -170,8 +101,8 @@ mesh vertices faces =
         Geometry boundingBox mesh
 
 
-vertexPositionAndNormal : ( Point3d, Direction3d ) -> VertexPositionAnd VertexNormal
-vertexPositionAndNormal ( point, normalDirection ) =
+toVertexPositionAndNormal : ( Point3d, Direction3d ) -> VertexPositionAnd VertexNormal
+toVertexPositionAndNormal ( point, normalDirection ) =
     { vertexPosition = Point3d.toVec3 point
     , vertexNormal = Direction3d.toVec3 normalDirection
     }
@@ -180,14 +111,17 @@ vertexPositionAndNormal ( point, normalDirection ) =
 meshWithNormals : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry (VertexPositionAnd VertexNormal)
 meshWithNormals vertices faces =
     let
-        boundingBox =
-            BoundingBox3d.containing (List.map Tuple.first vertices)
+        vertexPoints =
+            List.map Tuple.first vertices
 
-        attributes =
-            List.map vertexPositionAndNormal vertices
+        boundingBox =
+            BoundingBox3d.containing vertexPoints
+
+        vertexPositionsAndNormals =
+            List.map toVertexPositionAndNormal vertices
 
         mesh =
-            WebGL.indexedTriangles attributes faces
+            WebGL.indexedTriangles vertexPositionsAndNormals faces
     in
         Geometry boundingBox mesh
 
@@ -202,7 +136,7 @@ lines lineSegments =
             BoundingBox3d.hullOf segmentBoundingBoxes
 
         mesh =
-            WebGL.lines (List.map lineSegmentPositions lineSegments)
+            WebGL.lines (List.map LineSegment3d.vertexPositions lineSegments)
     in
         Geometry boundingBox mesh
 
@@ -213,11 +147,8 @@ polyline polyline_ =
         boundingBox =
             Polyline3d.boundingBox polyline_
 
-        vertexPositions =
-            List.map vertexPosition (Polyline3d.vertices polyline_)
-
         mesh =
-            WebGL.lineStrip vertexPositions
+            WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
     in
         Geometry boundingBox mesh
 
@@ -229,7 +160,7 @@ points points_ =
             BoundingBox3d.containing points_
 
         mesh =
-            WebGL.points (List.map vertexPosition points_)
+            WebGL.points (List.map Point3d.toVertexPosition points_)
     in
         Geometry boundingBox mesh
 
