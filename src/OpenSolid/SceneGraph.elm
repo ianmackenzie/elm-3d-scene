@@ -17,9 +17,6 @@ module OpenSolid.SceneGraph
         , mirrorAcross
         , relativeTo
         , placeIn
-        , Projection
-        , perspectiveProjection
-        , orthographicProjection
         , toEntities
         )
 
@@ -37,6 +34,7 @@ import OpenSolid.WebGL.Color as Color
 import OpenSolid.WebGL.Triangle3d as Triangle3d
 import OpenSolid.WebGL.LineSegment3d as LineSegment3d
 import OpenSolid.WebGL.Polyline3d as Polyline3d
+import OpenSolid.WebGL.Projection as Projection exposing (Projection)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
@@ -221,57 +219,23 @@ placeIn frame node =
     transformBy (Frame3d.placeIn frame) node
 
 
-type Projection
-    = Projection Mat4
-
-
-perspectiveProjection : { verticalFov : Float, aspectRatio : Float, zNear : Float, zFar : Float } -> Projection
-perspectiveProjection { verticalFov, aspectRatio, zNear, zFar } =
-    let
-        fovInDegrees =
-            verticalFov / degrees 1
-    in
-        Projection (Matrix4.makePerspective fovInDegrees aspectRatio zNear zFar)
-
-
-orthographicProjection : { height : Float, aspectRatio : Float, zNear : Float, zFar : Float } -> Projection
-orthographicProjection { height, aspectRatio, zNear, zFar } =
-    let
-        width =
-            aspectRatio * height
-
-        left =
-            -width / 2
-
-        right =
-            width / 2
-
-        bottom =
-            -height / 2
-
-        top =
-            height / 2
-    in
-        Projection (Matrix4.makeOrtho left right bottom top zNear zFar)
-
-
-type alias Camera =
-    { eyeFrame : Frame3d
-    , projectionMatrix : Mat4
-    }
-
-
-toEntity : Camera -> Frame3d -> Drawable -> WebGL.Entity
-toEntity camera modelFrame drawable =
+toEntity : Projection -> Frame3d -> Drawable -> WebGL.Entity
+toEntity projection modelFrame drawable =
     let
         modelMatrix =
             Frame3d.modelMatrix modelFrame
 
+        eyeFrame =
+            Projection.eyeFrame projection
+
         modelViewMatrix =
-            Frame3d.modelViewMatrix camera.eyeFrame modelFrame
+            Frame3d.modelViewMatrix eyeFrame modelFrame
+
+        projectionMatrix =
+            Projection.matrix projection
 
         modelViewProjectionMatrix =
-            Math.Matrix4.mul camera.projectionMatrix modelViewMatrix
+            Math.Matrix4.mul projectionMatrix modelViewMatrix
 
         cullSetting =
             if Frame3d.isRightHanded modelFrame then
@@ -301,38 +265,30 @@ toEntity camera modelFrame drawable =
                         uniforms
 
 
-collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
-collectEntities camera placementFrame node accumulated =
+collectEntities : Projection -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
+collectEntities projection placementFrame node accumulated =
     case node of
         Leaf frame drawable ->
             let
                 modelFrame =
                     Frame3d.placeIn placementFrame frame
+
+                entity =
+                    toEntity projection modelFrame drawable
             in
-                toEntity camera modelFrame drawable :: accumulated
+                entity :: accumulated
 
         Group frame childNodes ->
             let
                 localFrame =
                     Frame3d.placeIn placementFrame frame
+
+                accumulate childNode accumulated =
+                    collectEntities projection localFrame childNode accumulated
             in
-                List.foldl
-                    (\childNode accumulated ->
-                        collectEntities camera localFrame childNode accumulated
-                    )
-                    accumulated
-                    childNodes
+                List.foldl accumulate accumulated childNodes
 
 
-toEntities : Frame3d -> Projection -> Node -> List WebGL.Entity
-toEntities eyeFrame projection rootNode =
-    let
-        (Projection projectionMatrix) =
-            projection
-
-        camera =
-            { eyeFrame = eyeFrame
-            , projectionMatrix = projectionMatrix
-            }
-    in
-        collectEntities camera Frame3d.xyz rootNode []
+toEntities : Projection -> Node -> List WebGL.Entity
+toEntities projection rootNode =
+    collectEntities projection Frame3d.xyz rootNode []
