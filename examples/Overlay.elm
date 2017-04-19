@@ -157,7 +157,28 @@ view { angleInDegrees, projectionType } =
             }
 
         slider =
-            InputWidget.slider sliderAttributes sliderConfig angleInDegrees
+            Html.div []
+                [ InputWidget.slider sliderAttributes
+                    sliderConfig
+                    angleInDegrees
+                    |> Html.map SetAngleInDegrees
+                ]
+
+        radioButton ownProjectionType =
+            let
+                label =
+                    toString ownProjectionType
+
+                id =
+                    String.toLower label
+            in
+                Html.div []
+                    [ InputWidget.radioButton [ Attributes.id id ]
+                        ownProjectionType
+                        projectionType
+                        |> Html.map SetProjectionType
+                    , Html.label [ Attributes.for id ] [ Html.text label ]
+                    ]
     in
         Html.div []
             [ Html.div
@@ -170,21 +191,9 @@ view { angleInDegrees, projectionType } =
                 [ WebGL.toHtml attributes entities
                 , svgElement
                 ]
-            , Html.div [] [ slider |> Html.map SetAngleInDegrees ]
-            , Html.div []
-                [ InputWidget.radioButton [ Attributes.id "perspective" ]
-                    Perspective
-                    projectionType
-                    |> Html.map SetProjectionType
-                , Html.label [ Attributes.for "perspective" ] [ Html.text "Perspective" ]
-                ]
-            , Html.div []
-                [ InputWidget.radioButton [ Attributes.id "orthographic" ]
-                    Orthographic
-                    projectionType
-                    |> Html.map SetProjectionType
-                , Html.label [ Attributes.for "orthographic" ] [ Html.text "Orthographic" ]
-                ]
+            , slider
+            , radioButton Perspective
+            , radioButton Orthographic
             ]
 
 
