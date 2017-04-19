@@ -37,10 +37,10 @@ import OpenSolid.WebGL.Color as Color
 import OpenSolid.WebGL.Triangle3d as Triangle3d
 import OpenSolid.WebGL.LineSegment3d as LineSegment3d
 import OpenSolid.WebGL.Polyline3d as Polyline3d
-import Math.Vector2 as Vector2 exposing (Vec2)
-import Math.Vector3 as Vector3 exposing (Vec3)
-import Math.Vector4 as Vector4 exposing (Vec4)
-import Math.Matrix4 as Matrix4 exposing (Mat4)
+import Math.Vector2 exposing (Vec2)
+import Math.Vector3 exposing (Vec3)
+import Math.Vector4 exposing (Vec4)
+import Math.Matrix4 exposing (Mat4)
 import WebGL
 import WebGL.Settings
 import WebGL.Settings.DepthTest
@@ -271,7 +271,7 @@ toEntity camera modelFrame drawable =
             Frame3d.modelViewMatrix camera.eyeFrame modelFrame
 
         modelViewProjectionMatrix =
-            Matrix4.mul camera.projectionMatrix modelViewMatrix
+            Math.Matrix4.mul camera.projectionMatrix modelViewMatrix
 
         cullSetting =
             if Frame3d.isRightHanded modelFrame then
