@@ -23,8 +23,34 @@ import Kintail.InputWidget as InputWidget
 import Logo
 
 
-view : Float -> Html Float
-view angleInDegrees =
+type ProjectionType
+    = Perspective
+    | Orthographic
+
+
+type Msg
+    = SetAngleInDegrees Float
+    | SetProjectionType ProjectionType
+
+
+type alias Model =
+    { angleInDegrees : Float
+    , projectionType : ProjectionType
+    }
+
+
+update : Msg -> Model -> Model
+update message model =
+    case message of
+        SetAngleInDegrees angleInDegrees ->
+            { model | angleInDegrees = angleInDegrees }
+
+        SetProjectionType projectionType ->
+            { model | projectionType = projectionType }
+
+
+view : Model -> Html Msg
+view { angleInDegrees, projectionType } =
     let
         width =
             800
@@ -45,14 +71,26 @@ view angleInDegrees =
                 }
 
         projection =
-            Projection.perspective
-                { eyeFrame = eyeFrame
-                , screenWidth = toFloat width
-                , screenHeight = toFloat height
-                , verticalFov = degrees 30
-                , zNear = 0.1
-                , zFar = 100
-                }
+            case projectionType of
+                Perspective ->
+                    Projection.perspective
+                        { eyeFrame = eyeFrame
+                        , screenWidth = toFloat width
+                        , screenHeight = toFloat height
+                        , verticalFov = degrees 30
+                        , zNear = 0.1
+                        , zFar = 100
+                        }
+
+                Orthographic ->
+                    Projection.orthographic
+                        { eyeFrame = eyeFrame
+                        , screenWidth = toFloat width
+                        , screenHeight = toFloat height
+                        , viewportHeight = 2.5
+                        , zNear = 0.1
+                        , zFar = 100
+                        }
 
         angle =
             degrees angleInDegrees
@@ -117,6 +155,9 @@ view angleInDegrees =
             , max = 360
             , step = 1
             }
+
+        slider =
+            InputWidget.slider sliderAttributes sliderConfig angleInDegrees
     in
         Html.div []
             [ Html.div
@@ -129,14 +170,28 @@ view angleInDegrees =
                 [ WebGL.toHtml attributes entities
                 , svgElement
                 ]
-            , InputWidget.slider sliderAttributes sliderConfig angleInDegrees
+            , Html.div [] [ slider |> Html.map SetAngleInDegrees ]
+            , Html.div []
+                [ InputWidget.radioButton [ Attributes.id "perspective" ]
+                    Perspective
+                    projectionType
+                    |> Html.map SetProjectionType
+                , Html.label [ Attributes.for "perspective" ] [ Html.text "Perspective" ]
+                ]
+            , Html.div []
+                [ InputWidget.radioButton [ Attributes.id "orthographic" ]
+                    Orthographic
+                    projectionType
+                    |> Html.map SetProjectionType
+                , Html.label [ Attributes.for "orthographic" ] [ Html.text "Orthographic" ]
+                ]
             ]
 
 
-main : Program Never Float Float
+main : Program Never Model Msg
 main =
     Html.beginnerProgram
-        { model = 0.0
+        { model = { angleInDegrees = 0.0, projectionType = Perspective }
         , view = view
-        , update = always
+        , update = update
         }
