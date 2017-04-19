@@ -6,6 +6,7 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.WebGL.Frame3d as Frame3d
+import OpenSolid.WebGL.Projection as Projection
 import WebGL
 import OpenSolid.Axis3d as Axis3d
 import OpenSolid.Point3d as Point3d
@@ -53,9 +54,11 @@ view angleInDegrees =
                 }
 
         projection =
-            SceneGraph.orthographicProjection
-                { height = 3
-                , aspectRatio = width / height
+            Projection.orthographic
+                { eyeFrame = eyeFrame
+                , screenWidth = toFloat width
+                , screenHeight = toFloat height
+                , viewportHeight = 3
                 , zNear = 0.1
                 , zFar = 100
                 }
@@ -67,7 +70,7 @@ view angleInDegrees =
             Logo.node |> SceneGraph.rotateAround Axis3d.z angle
 
         entities =
-            SceneGraph.toEntities eyeFrame projection rotatedLogo
+            SceneGraph.toEntities projection rotatedLogo
 
         attributes =
             [ Attributes.width width, Attributes.height height ]
