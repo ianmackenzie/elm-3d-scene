@@ -3,9 +3,9 @@ module OpenSolid.SceneGraph
         ( Geometry
         , triangles
         , trianglesWithNormals
+        , indexedTriangles
+        , indexedTrianglesWithNormals
         , triangleFan
-        , mesh
-        , meshWithNormals
         , lines
         , polyline
         , points
@@ -24,13 +24,12 @@ module OpenSolid.SceneGraph
         )
 
 import OpenSolid.SceneGraph.Internal.Shader as Shader
-import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Polyline3d as Polyline3d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.BoundingBox3d as BoundingBox3d
-import OpenSolid.WebGL.Types exposing (..)
+import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.WebGL.Direction3d as Direction3d
 import OpenSolid.WebGL.Point3d as Point3d
 import OpenSolid.WebGL.Frame3d as Frame3d
@@ -64,30 +63,18 @@ trianglesWith toAttributes triangles =
         Geometry boundingBox mesh
 
 
-triangles : List Triangle3d -> Geometry VertexPosition
+triangles : List Triangle3d -> Geometry { vertexPosition : Vec3 }
 triangles =
     trianglesWith Triangle3d.vertexPositions
 
 
-trianglesWithNormals : List Triangle3d -> Geometry (VertexPositionAnd VertexNormal)
+trianglesWithNormals : List Triangle3d -> Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
 trianglesWithNormals =
     trianglesWith Triangle3d.vertexPositionsAndNormals
 
 
-triangleFan : List Point3d -> Geometry VertexPosition
-triangleFan points =
-    let
-        boundingBox =
-            BoundingBox3d.containing points
-
-        mesh =
-            WebGL.triangleFan (List.map Point3d.toVertexPosition points)
-    in
-        Geometry boundingBox mesh
-
-
-mesh : List Point3d -> List ( Int, Int, Int ) -> Geometry VertexPosition
-mesh vertices faces =
+indexedTriangles : List Point3d -> List ( Int, Int, Int ) -> Geometry { vertexPosition : Vec3 }
+indexedTriangles vertices faces =
     let
         boundingBox =
             BoundingBox3d.containing vertices
@@ -101,15 +88,8 @@ mesh vertices faces =
         Geometry boundingBox mesh
 
 
-toVertexPositionAndNormal : ( Point3d, Direction3d ) -> VertexPositionAnd VertexNormal
-toVertexPositionAndNormal ( point, normalDirection ) =
-    { vertexPosition = Point3d.toVec3 point
-    , vertexNormal = Direction3d.toVec3 normalDirection
-    }
-
-
-meshWithNormals : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry (VertexPositionAnd VertexNormal)
-meshWithNormals vertices faces =
+indexedTrianglesWithNormals : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
+indexedTrianglesWithNormals vertices faces =
     let
         vertexPoints =
             List.map Tuple.first vertices
@@ -117,16 +97,33 @@ meshWithNormals vertices faces =
         boundingBox =
             BoundingBox3d.containing vertexPoints
 
-        vertexPositionsAndNormals =
-            List.map toVertexPositionAndNormal vertices
+        toAttributes ( point, normalDirection ) =
+            { vertexPosition = Point3d.toVec3 point
+            , vertexNormal = Direction3d.toVec3 normalDirection
+            }
+
+        vertexAttributes =
+            List.map toAttributes vertices
 
         mesh =
-            WebGL.indexedTriangles vertexPositionsAndNormals faces
+            WebGL.indexedTriangles vertexAttributes faces
     in
         Geometry boundingBox mesh
 
 
-lines : List LineSegment3d -> Geometry VertexPosition
+triangleFan : List Point3d -> Geometry { vertexPosition : Vec3 }
+triangleFan points =
+    let
+        boundingBox =
+            BoundingBox3d.containing points
+
+        mesh =
+            WebGL.triangleFan (List.map Point3d.toVertexPosition points)
+    in
+        Geometry boundingBox mesh
+
+
+lines : List LineSegment3d -> Geometry { vertexPosition : Vec3 }
 lines lineSegments =
     let
         segmentBoundingBoxes =
@@ -141,7 +138,7 @@ lines lineSegments =
         Geometry boundingBox mesh
 
 
-polyline : Polyline3d -> Geometry VertexPosition
+polyline : Polyline3d -> Geometry { vertexPosition : Vec3 }
 polyline polyline_ =
     let
         boundingBox =
@@ -153,7 +150,7 @@ polyline polyline_ =
         Geometry boundingBox mesh
 
 
-points : List Point3d -> Geometry VertexPosition
+points : List Point3d -> Geometry { vertexPosition : Vec3 }
 points points_ =
     let
         boundingBox =
@@ -166,7 +163,7 @@ points points_ =
 
 
 type Drawable
-    = Colored Color (Geometry VertexPosition)
+    = Colored Color (Geometry { vertexPosition : Vec3 })
 
 
 type Node
@@ -179,7 +176,7 @@ leafNode drawable =
     Leaf Frame3d.xyz drawable
 
 
-colored : Color -> Geometry VertexPosition -> Node
+colored : Color -> Geometry { vertexPosition : Vec3 } -> Node
 colored color geometry =
     leafNode (Colored color geometry)
 
