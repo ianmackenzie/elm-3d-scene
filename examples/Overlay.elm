@@ -59,7 +59,7 @@ view { angleInDegrees, projectionType } =
             600
 
         eyePoint =
-            Point3d ( 5, 0, 0 )
+            Point3d ( 4, 0, 0 )
                 |> Point3d.rotateAround Axis3d.y (degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
@@ -87,7 +87,7 @@ view { angleInDegrees, projectionType } =
                         { eyeFrame = eyeFrame
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
-                        , viewportHeight = 2.5
+                        , viewportHeight = 2
                         , zNear = 0.1
                         , zFar = 100
                         }
