@@ -120,8 +120,8 @@ view { angleInDegrees, projectionType } =
         topLeftFrame =
             Frame2d
                 { originPoint = Point2d ( 0, height )
-                , xDirection = Direction2d.x
-                , yDirection = Direction2d.flip Direction2d.y
+                , xDirection = Direction2d.positiveX
+                , yDirection = Direction2d.negativeY
                 }
 
         svgElement =
