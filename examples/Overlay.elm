@@ -7,6 +7,7 @@ import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.LineSegment3d as LineSegment3d
+import OpenSolid.Point2d as Point2d
 import OpenSolid.WebGL.Frame3d as Frame3d
 import OpenSolid.WebGL.Projection as Projection
 import OpenSolid.WebGL.Point3d as Point3d
@@ -98,24 +99,49 @@ view { angleInDegrees, projectionType } =
         rotatedLogo =
             Logo.node |> SceneGraph.rotateAround Axis3d.z angle
 
-        svgCircles =
+        vertices2d =
             Logo.vertices
                 |> List.map (Point3d.rotateAround Axis3d.z angle)
                 |> List.map (Point3d.toScreenSpace projection)
+
+        svgCircles =
+            vertices2d
                 |> List.map
-                    (\point ->
+                    (\vertex ->
                         Svg.circle2d
                             [ Svg.Attributes.stroke "grey"
+                            , Svg.Attributes.strokeWidth "2"
                             , Svg.Attributes.fill "none"
                             ]
-                            (Circle2d { centerPoint = point, radius = 5 })
+                            (Circle2d { centerPoint = vertex, radius = 7 })
                     )
 
         svgLines =
             Logo.edges
                 |> List.map (LineSegment3d.rotateAround Axis3d.z angle)
                 |> List.map (LineSegment3d.toScreenSpace projection)
-                |> List.map (Svg.lineSegment2d [ Svg.Attributes.stroke "grey", Svg.Attributes.strokeDasharray "3 3" ])
+                |> List.map
+                    (\edge ->
+                        Svg.lineSegment2d
+                            [ Svg.Attributes.stroke "grey"
+                            , Svg.Attributes.strokeWidth "2"
+                            , Svg.Attributes.strokeDasharray "5 5"
+                            ]
+                            edge
+                    )
+
+        svgLabels =
+            vertices2d
+                |> List.indexedMap
+                    (\index vertex ->
+                        Svg.text2d
+                            [ Svg.Attributes.fill "rgb(92, 92, 92)"
+                            , Svg.Attributes.fontFamily "monospace"
+                            , Svg.Attributes.fontSize "20px"
+                            ]
+                            (vertex |> Point2d.translateBy (Vector2d ( 10, 0 )))
+                            ("p" ++ toString index)
+                    )
 
         topLeftFrame =
             Frame2d
@@ -133,7 +159,9 @@ view { angleInDegrees, projectionType } =
                     , ( "z-index", "1" )
                     ]
                 ]
-                [ Svg.relativeTo topLeftFrame (Svg.g [] (svgCircles ++ svgLines)) ]
+                [ Svg.relativeTo topLeftFrame
+                    (Svg.g [] (svgCircles ++ svgLines ++ svgLabels))
+                ]
 
         entities =
             SceneGraph.toEntities projection rotatedLogo
