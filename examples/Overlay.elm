@@ -1,4 +1,4 @@
-module OrthographicLogo exposing (..)
+module Overlay exposing (..)
 
 import OpenSolid.SceneGraph as SceneGraph
 import OpenSolid.Geometry.Types exposing (..)
