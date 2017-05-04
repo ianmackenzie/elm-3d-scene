@@ -9,7 +9,7 @@ import OpenSolid.Plane3d as Plane3d
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.WebGL.Frame3d as Frame3d
-import OpenSolid.WebGL.Projection as Projection
+import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Point3d as Point3d
 import OpenSolid.WebGL.LineSegment3d as LineSegment3d
 import OpenSolid.Svg as Svg
@@ -71,11 +71,11 @@ view { angleInDegrees, projectionType } =
                 , upDirection = Direction3d.z
                 }
 
-        projection =
+        camera =
             case projectionType of
                 Perspective ->
-                    Projection.perspective
-                        { eyeFrame = eyeFrame
+                    Camera.perspective
+                        { frame = eyeFrame
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
                         , verticalFov = degrees 30
@@ -84,8 +84,8 @@ view { angleInDegrees, projectionType } =
                         }
 
                 Orthographic ->
-                    Projection.orthographic
-                        { eyeFrame = eyeFrame
+                    Camera.orthographic
+                        { frame = eyeFrame
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
                         , viewportHeight = 2
@@ -102,7 +102,7 @@ view { angleInDegrees, projectionType } =
         vertices2d =
             Logo.vertices
                 |> List.map (Point3d.rotateAround Axis3d.z angle)
-                |> List.map (Point3d.toScreenSpace projection)
+                |> List.map (Point3d.toScreenSpace camera)
 
         svgCircles =
             vertices2d
@@ -119,7 +119,7 @@ view { angleInDegrees, projectionType } =
         svgLines =
             Logo.edges
                 |> List.map (LineSegment3d.rotateAround Axis3d.z angle)
-                |> List.map (LineSegment3d.toScreenSpace projection)
+                |> List.map (LineSegment3d.toScreenSpace camera)
                 |> List.map
                     (\edge ->
                         Svg.lineSegment2d
@@ -164,7 +164,7 @@ view { angleInDegrees, projectionType } =
                 ]
 
         entities =
-            SceneGraph.toEntities projection rotatedLogo
+            SceneGraph.toEntities camera rotatedLogo
 
         attributes =
             [ Attributes.width width

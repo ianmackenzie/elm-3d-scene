@@ -34,7 +34,7 @@ import OpenSolid.WebGL.Color as Color
 import OpenSolid.WebGL.Triangle3d as Triangle3d
 import OpenSolid.WebGL.LineSegment3d as LineSegment3d
 import OpenSolid.WebGL.Polyline3d as Polyline3d
-import OpenSolid.WebGL.Projection as Projection exposing (Projection)
+import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
@@ -219,20 +219,17 @@ placeIn frame node =
     transformBy (Frame3d.placeIn frame) node
 
 
-toEntity : Projection -> Frame3d -> Drawable -> WebGL.Entity
-toEntity projection modelFrame drawable =
+toEntity : Camera -> Frame3d -> Drawable -> WebGL.Entity
+toEntity camera modelFrame drawable =
     let
         modelMatrix =
             Frame3d.modelMatrix modelFrame
 
-        eyeFrame =
-            Projection.eyeFrame projection
-
         modelViewMatrix =
-            Frame3d.modelViewMatrix eyeFrame modelFrame
+            Frame3d.modelViewMatrix (Camera.frame camera) modelFrame
 
         projectionMatrix =
-            Projection.matrix projection
+            Camera.projectionMatrix camera
 
         modelViewProjectionMatrix =
             Math.Matrix4.mul projectionMatrix modelViewMatrix
@@ -265,8 +262,8 @@ toEntity projection modelFrame drawable =
                         uniforms
 
 
-collectEntities : Projection -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
-collectEntities projection placementFrame node accumulated =
+collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
+collectEntities camera placementFrame node accumulated =
     case node of
         Leaf frame drawable ->
             let
@@ -274,7 +271,7 @@ collectEntities projection placementFrame node accumulated =
                     Frame3d.placeIn placementFrame frame
 
                 entity =
-                    toEntity projection modelFrame drawable
+                    toEntity camera modelFrame drawable
             in
                 entity :: accumulated
 
@@ -284,11 +281,11 @@ collectEntities projection placementFrame node accumulated =
                     Frame3d.placeIn placementFrame frame
 
                 accumulate childNode accumulated =
-                    collectEntities projection localFrame childNode accumulated
+                    collectEntities camera localFrame childNode accumulated
             in
                 List.foldl accumulate accumulated childNodes
 
 
-toEntities : Projection -> Node -> List WebGL.Entity
-toEntities projection rootNode =
-    collectEntities projection Frame3d.xyz rootNode []
+toEntities : Camera -> Node -> List WebGL.Entity
+toEntities camera rootNode =
+    collectEntities camera Frame3d.xyz rootNode []

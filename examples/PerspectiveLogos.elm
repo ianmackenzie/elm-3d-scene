@@ -6,7 +6,7 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.WebGL.Frame3d as Frame3d
-import OpenSolid.WebGL.Projection as Projection
+import OpenSolid.WebGL.Camera as Camera
 import WebGL
 import OpenSolid.Axis3d as Axis3d
 import OpenSolid.Point3d as Point3d
@@ -39,9 +39,9 @@ view angleInDegrees =
                 , upDirection = Direction3d.z
                 }
 
-        projection =
-            Projection.perspective
-                { eyeFrame = eyeFrame
+        camera =
+            Camera.perspective
+                { frame = eyeFrame
                 , screenWidth = toFloat width
                 , screenHeight = toFloat height
                 , verticalFov = degrees 30
@@ -77,7 +77,7 @@ view angleInDegrees =
             SceneGraph.group [ topLogos, bottomLogos ]
 
         entities =
-            SceneGraph.toEntities projection scene
+            SceneGraph.toEntities camera scene
 
         attributes =
             [ Attributes.width width, Attributes.height height ]
