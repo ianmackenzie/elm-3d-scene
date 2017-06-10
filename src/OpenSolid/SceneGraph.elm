@@ -1,48 +1,47 @@
 module OpenSolid.SceneGraph
     exposing
         ( Geometry
-        , triangles
-        , trianglesWithNormals
-        , indexedTriangles
-        , indexedTrianglesWithNormals
-        , triangleFan
-        , lines
-        , polyline
-        , points
         , Node
         , colored
         , group
-        , rotateAround
-        , translateBy
+        , indexedTriangles
+        , indexedTrianglesWithNormals
+        , lines
         , mirrorAcross
-        , relativeTo
         , placeIn
+        , points
+        , polyline
+        , relativeTo
+        , rotateAround
         , toEntities
+        , translateBy
+        , triangleFan
+        , triangles
+        , trianglesWithNormals
         )
 
-import OpenSolid.SceneGraph.Internal.Shader as Shader
-import OpenSolid.Triangle3d as Triangle3d
-import OpenSolid.LineSegment3d as LineSegment3d
-import OpenSolid.Polyline3d as Polyline3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.BoundingBox3d as BoundingBox3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.WebGL.Direction3d as Direction3d
-import OpenSolid.WebGL.Point3d as Point3d
-import OpenSolid.WebGL.Frame3d as Frame3d
-import OpenSolid.WebGL.Color as Color
-import OpenSolid.WebGL.Triangle3d as Triangle3d
-import OpenSolid.WebGL.LineSegment3d as LineSegment3d
-import OpenSolid.WebGL.Polyline3d as Polyline3d
-import OpenSolid.WebGL.Camera as Camera exposing (Camera)
+import Color exposing (Color)
+import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
-import Math.Vector4 exposing (Vec4)
-import Math.Matrix4 exposing (Mat4)
+import OpenSolid.BoundingBox3d as BoundingBox3d
+import OpenSolid.Frame3d as Frame3d
+import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.LineSegment3d as LineSegment3d
+import OpenSolid.Polyline3d as Polyline3d
+import OpenSolid.SceneGraph.Internal.Shader as Shader
+import OpenSolid.Triangle3d as Triangle3d
+import OpenSolid.WebGL.Camera as Camera exposing (Camera)
+import OpenSolid.WebGL.Color as Color
+import OpenSolid.WebGL.Direction3d as Direction3d
+import OpenSolid.WebGL.Frame3d as Frame3d
+import OpenSolid.WebGL.LineSegment3d as LineSegment3d
+import OpenSolid.WebGL.Point3d as Point3d
+import OpenSolid.WebGL.Polyline3d as Polyline3d
+import OpenSolid.WebGL.Triangle3d as Triangle3d
 import WebGL
 import WebGL.Settings
 import WebGL.Settings.DepthTest
-import Color exposing (Color)
 
 
 type Geometry a
@@ -58,7 +57,7 @@ trianglesWith toAttributes triangles =
         mesh =
             WebGL.triangles (List.map toAttributes triangles)
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 triangles : List Triangle3d -> Geometry { vertexPosition : Vec3 }
@@ -83,7 +82,7 @@ indexedTriangles vertices faces =
         mesh =
             WebGL.indexedTriangles vertexPositions faces
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 indexedTrianglesWithNormals : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
@@ -106,7 +105,7 @@ indexedTrianglesWithNormals vertices faces =
         mesh =
             WebGL.indexedTriangles vertexAttributes faces
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 triangleFan : List Point3d -> Geometry { vertexPosition : Vec3 }
@@ -118,7 +117,7 @@ triangleFan points =
         mesh =
             WebGL.triangleFan (List.map Point3d.toVertexPosition points)
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 lines : List LineSegment3d -> Geometry { vertexPosition : Vec3 }
@@ -133,7 +132,7 @@ lines lineSegments =
         mesh =
             WebGL.lines (List.map LineSegment3d.vertexPositions lineSegments)
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 polyline : Polyline3d -> Geometry { vertexPosition : Vec3 }
@@ -145,7 +144,7 @@ polyline polyline_ =
         mesh =
             WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 points : List Point3d -> Geometry { vertexPosition : Vec3 }
@@ -157,7 +156,7 @@ points points_ =
         mesh =
             WebGL.points (List.map Point3d.toVertexPosition points_)
     in
-        Geometry boundingBox mesh
+    Geometry boundingBox mesh
 
 
 type Drawable
@@ -245,21 +244,21 @@ toEntity camera modelFrame drawable =
             , WebGL.Settings.cullFace cullSetting
             ]
     in
-        case drawable of
-            Colored color (Geometry boundingBox mesh) ->
-                let
-                    uniforms =
-                        { modelMatrix = modelMatrix
-                        , modelViewMatrix = modelViewMatrix
-                        , modelViewProjectionMatrix = modelViewProjectionMatrix
-                        , color = Color.toVec4 color
-                        }
-                in
-                    WebGL.entityWith settings
-                        Shader.positionOnlyVertexShader
-                        Shader.solidColorShader
-                        mesh
-                        uniforms
+    case drawable of
+        Colored color (Geometry boundingBox mesh) ->
+            let
+                uniforms =
+                    { modelMatrix = modelMatrix
+                    , modelViewMatrix = modelViewMatrix
+                    , modelViewProjectionMatrix = modelViewProjectionMatrix
+                    , color = Color.toVec3 color
+                    }
+            in
+            WebGL.entityWith settings
+                Shader.positionOnlyVertexShader
+                Shader.solidColorShader
+                mesh
+                uniforms
 
 
 collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
@@ -273,7 +272,7 @@ collectEntities camera placementFrame node accumulated =
                 entity =
                     toEntity camera modelFrame drawable
             in
-                entity :: accumulated
+            entity :: accumulated
 
         Group frame childNodes ->
             let
@@ -283,7 +282,7 @@ collectEntities camera placementFrame node accumulated =
                 accumulate childNode accumulated =
                     collectEntities camera localFrame childNode accumulated
             in
-                List.foldl accumulate accumulated childNodes
+            List.foldl accumulate accumulated childNodes
 
 
 toEntities : Camera -> Node -> List WebGL.Entity

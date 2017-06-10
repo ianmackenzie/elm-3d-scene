@@ -1,27 +1,27 @@
 module Overlay exposing (..)
 
-import OpenSolid.SceneGraph as SceneGraph
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Direction2d as Direction2d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Plane3d as Plane3d
-import OpenSolid.LineSegment3d as LineSegment3d
-import OpenSolid.Point2d as Point2d
-import OpenSolid.WebGL.Frame3d as Frame3d
-import OpenSolid.WebGL.Camera as Camera
-import OpenSolid.WebGL.Point3d as Point3d
-import OpenSolid.WebGL.LineSegment3d as LineSegment3d
-import OpenSolid.Svg as Svg
-import Svg exposing (Svg)
-import Svg.Attributes
-import WebGL
-import OpenSolid.Axis3d as Axis3d
-import OpenSolid.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Kintail.InputWidget as InputWidget
 import Logo
+import OpenSolid.Axis3d as Axis3d
+import OpenSolid.Direction2d as Direction2d
+import OpenSolid.Direction3d as Direction3d
+import OpenSolid.Frame3d as Frame3d
+import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.LineSegment3d as LineSegment3d
+import OpenSolid.Plane3d as Plane3d
+import OpenSolid.Point2d as Point2d
+import OpenSolid.Point3d as Point3d
+import OpenSolid.SceneGraph as SceneGraph
+import OpenSolid.Svg as Svg
+import OpenSolid.WebGL.Camera as Camera
+import OpenSolid.WebGL.Frame3d as Frame3d
+import OpenSolid.WebGL.LineSegment3d as LineSegment3d
+import OpenSolid.WebGL.Point3d as Point3d
+import Svg exposing (Svg)
+import Svg.Attributes
+import WebGL
 
 
 type ProjectionType
@@ -200,29 +200,29 @@ view { angleInDegrees, projectionType } =
                 id =
                     String.toLower label
             in
-                Html.div []
-                    [ InputWidget.radioButton [ Attributes.id id ]
-                        ownProjectionType
-                        projectionType
-                        |> Html.map SetProjectionType
-                    , Html.label [ Attributes.for id ] [ Html.text label ]
-                    ]
+            Html.div []
+                [ InputWidget.radioButton [ Attributes.id id ]
+                    ownProjectionType
+                    projectionType
+                    |> Html.map SetProjectionType
+                , Html.label [ Attributes.for id ] [ Html.text label ]
+                ]
     in
-        Html.div []
-            [ Html.div
-                [ Attributes.style
-                    [ ( "position", "relative" )
-                    , ( "width", toString width ++ "px" )
-                    , ( "height", toString height ++ "px" )
-                    ]
+    Html.div []
+        [ Html.div
+            [ Attributes.style
+                [ ( "position", "relative" )
+                , ( "width", toString width ++ "px" )
+                , ( "height", toString height ++ "px" )
                 ]
-                [ WebGL.toHtml attributes entities
-                , svgElement
-                ]
-            , slider
-            , radioButton Perspective
-            , radioButton Orthographic
             ]
+            [ WebGL.toHtml attributes entities
+            , svgElement
+            ]
+        , slider
+        , radioButton Perspective
+        , radioButton Orthographic
+        ]
 
 
 main : Program Never Model Msg

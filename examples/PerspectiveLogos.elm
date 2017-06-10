@@ -1,21 +1,21 @@
 module PerspectiveLogos exposing (..)
 
-import OpenSolid.SceneGraph as SceneGraph
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Plane3d as Plane3d
-import OpenSolid.WebGL.Frame3d as Frame3d
-import OpenSolid.WebGL.Camera as Camera
-import WebGL
-import OpenSolid.Axis3d as Axis3d
-import OpenSolid.Point3d as Point3d
+import AnimationFrame
 import Html exposing (Html)
 import Html.Attributes as Attributes
-import AnimationFrame
-import Time
 import Kintail.InputWidget as InputWidget
 import Logo
+import OpenSolid.Axis3d as Axis3d
+import OpenSolid.Direction3d as Direction3d
+import OpenSolid.Frame3d as Frame3d
+import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Plane3d as Plane3d
+import OpenSolid.Point3d as Point3d
+import OpenSolid.SceneGraph as SceneGraph
+import OpenSolid.WebGL.Camera as Camera
+import OpenSolid.WebGL.Frame3d as Frame3d
+import Time
+import WebGL
 
 
 view : Float -> Html Float
@@ -91,10 +91,10 @@ view angleInDegrees =
             , step = 1
             }
     in
-        Html.div []
-            [ Html.div [] [ WebGL.toHtml attributes entities ]
-            , InputWidget.slider sliderAttributes sliderConfig angleInDegrees
-            ]
+    Html.div []
+        [ Html.div [] [ WebGL.toHtml attributes entities ]
+        , InputWidget.slider sliderAttributes sliderConfig angleInDegrees
+        ]
 
 
 main : Program Never Float Float

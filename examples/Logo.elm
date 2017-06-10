@@ -1,16 +1,16 @@
 module Logo
     exposing
-        ( node
+        ( edges
+        , node
         , vertices
-        , edges
         )
 
-import OpenSolid.SceneGraph as SceneGraph
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Point3d as Point3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.LineSegment3d as LineSegment3d
 import Color
+import OpenSolid.Frame3d as Frame3d
+import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.LineSegment3d as LineSegment3d
+import OpenSolid.Point3d as Point3d
+import OpenSolid.SceneGraph as SceneGraph
 
 
 height : Float
@@ -131,16 +131,16 @@ node =
             SceneGraph.triangleFan [ p3, p0, p5, p4 ]
                 |> SceneGraph.colored orange
     in
-        SceneGraph.group
-            [ leftFace
-            , rightFace
-            , topFace
-            , triangleFace
-            , backLeftFace
-            , backRightFace
-            , bottomFace
-            ]
-            |> SceneGraph.relativeTo centerFrame
+    SceneGraph.group
+        [ leftFace
+        , rightFace
+        , topFace
+        , triangleFace
+        , backLeftFace
+        , backRightFace
+        , bottomFace
+        ]
+        |> SceneGraph.relativeTo centerFrame
 
 
 vertices : List Point3d

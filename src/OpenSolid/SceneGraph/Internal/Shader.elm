@@ -1,12 +1,12 @@
 module OpenSolid.SceneGraph.Internal.Shader exposing (..)
 
+import Math.Matrix4 as Matrix4 exposing (Mat4)
+import Math.Vector3 as Vector3 exposing (Vec3)
+import Math.Vector4 as Vector4 exposing (Vec4)
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.WebGL.Direction3d as Direction3d
 import OpenSolid.WebGL.Point3d as Point3d
-import Math.Vector3 as Vector3 exposing (Vec3)
-import Math.Vector4 as Vector4 exposing (Vec4)
-import Math.Matrix4 as Matrix4 exposing (Mat4)
 import WebGL
 
 
