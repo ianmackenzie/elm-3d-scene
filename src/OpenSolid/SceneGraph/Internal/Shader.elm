@@ -47,16 +47,16 @@ positionAndNormalVertexShader =
     |]
 
 
-solidColorShader : WebGL.Shader {} { a | color : Vec4 } { position : Vec3 }
+solidColorShader : WebGL.Shader {} { a | color : Vec3 } { position : Vec3 }
 solidColorShader =
     [glsl|
         precision mediump float;
 
-        uniform vec4 color;
+        uniform vec3 color;
 
         varying vec3 position;
 
         void main () {
-            gl_FragColor = color;
+            gl_FragColor = vec4(color, 1.0);
         }
     |]
