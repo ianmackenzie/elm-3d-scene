@@ -246,6 +246,12 @@ toEntity camera modelFrame drawable =
         modelMatrix =
             Frame3d.modelMatrix modelFrame
 
+        cameraFrame =
+            Camera.frame camera
+
+        eyePoint =
+            Frame3d.originPoint cameraFrame
+
         modelViewMatrix =
             Frame3d.modelViewMatrix (Camera.frame camera) modelFrame
 
@@ -305,11 +311,12 @@ toEntity camera modelFrame drawable =
                     , metallic = metallic
                     , lightColor = Color.toVec3 lightColor
                     , lightDirection = Direction3d.toVec3 lightDirection
+                    , eyePoint = Point3d.toVec3 eyePoint
                     }
             in
             WebGL.entityWith settings
                 Shader.positionAndNormalVertexShader
-                Shader.directionalLightShader
+                Shader.physicallyBasedDirectionalLightShader
                 mesh
                 uniforms
 

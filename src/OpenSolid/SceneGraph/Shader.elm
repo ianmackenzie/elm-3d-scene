@@ -62,8 +62,8 @@ solidColorShader =
     |]
 
 
-directionalLightShader : WebGL.Shader {} { a | baseColor : Vec3, roughness : Float, metallic : Float, lightColor : Vec3, lightDirection : Vec3 } { position : Vec3, normal : Vec3 }
-directionalLightShader =
+physicallyBasedDirectionalLightShader : WebGL.Shader {} { a | baseColor : Vec3, roughness : Float, metallic : Float, lightColor : Vec3, lightDirection : Vec3, eyePoint : Vec3 } { position : Vec3, normal : Vec3 }
+physicallyBasedDirectionalLightShader =
     [glsl|
         precision mediump float;
 
