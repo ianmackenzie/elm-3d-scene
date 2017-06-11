@@ -24,7 +24,7 @@ gold : SceneGraph.Material
 gold =
     Material.physicallyBased
         { baseColor = rgb ( 1, 0.86, 0.57 )
-        , roughness = 0.5
+        , roughness = 0.25
         , metallic = 1
         }
 
@@ -42,7 +42,7 @@ blackPlastic : SceneGraph.Material
 blackPlastic =
     Material.physicallyBased
         { baseColor = Color.black
-        , roughness = 0.3
+        , roughness = 0.25
         , metallic = 0
         }
 
@@ -51,7 +51,7 @@ whitePlastic : SceneGraph.Material
 whitePlastic =
     Material.physicallyBased
         { baseColor = Color.white
-        , roughness = 0.75
+        , roughness = 0.25
         , metallic = 0
         }
 
