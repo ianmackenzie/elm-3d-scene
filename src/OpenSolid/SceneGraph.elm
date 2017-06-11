@@ -1,6 +1,9 @@
 module OpenSolid.SceneGraph
     exposing
         ( Geometry
+        , Light
+        , Lighting
+        , Material
         , Node
         , colored
         , group
@@ -13,6 +16,7 @@ module OpenSolid.SceneGraph
         , polyline
         , relativeTo
         , rotateAround
+        , shaded
         , toEntities
         , translateBy
         , triangleFan
