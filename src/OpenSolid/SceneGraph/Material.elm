@@ -4,6 +4,7 @@ module OpenSolid.SceneGraph.Material
         , physicallyBased
         )
 
+import Color exposing (Color)
 import OpenSolid.SceneGraph.Types as Types
 
 
