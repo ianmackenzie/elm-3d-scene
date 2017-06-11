@@ -29,7 +29,9 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Polyline3d as Polyline3d
-import OpenSolid.SceneGraph.Internal.Shader as Shader
+import OpenSolid.SceneGraph.Lighting as Lighting
+import OpenSolid.SceneGraph.Shader as Shader
+import OpenSolid.SceneGraph.Types as Types
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Color as Color
@@ -44,8 +46,28 @@ import WebGL.Settings
 import WebGL.Settings.DepthTest
 
 
-type Geometry a
-    = Geometry (Maybe BoundingBox3d) (WebGL.Mesh a)
+type alias Geometry a =
+    Types.Geometry a
+
+
+type alias Material =
+    Types.Material
+
+
+type alias Light =
+    Types.Light
+
+
+type alias Lighting =
+    Types.Lighting
+
+
+type alias Drawable =
+    Types.Drawable
+
+
+type alias Node =
+    Types.Node
 
 
 trianglesWith : (Triangle3d -> ( a, a, a )) -> List Triangle3d -> Geometry a
@@ -57,7 +79,7 @@ trianglesWith toAttributes triangles =
         mesh =
             WebGL.triangles (List.map toAttributes triangles)
     in
-    Geometry boundingBox mesh
+    Types.Geometry boundingBox mesh
 
 
 triangles : List Triangle3d -> Geometry { vertexPosition : Vec3 }
@@ -82,7 +104,7 @@ indexedTriangles vertices faces =
         mesh =
             WebGL.indexedTriangles vertexPositions faces
     in
-    Geometry boundingBox mesh
+    Types.Geometry boundingBox mesh
 
 
 indexedTrianglesWithNormals : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
@@ -105,7 +127,7 @@ indexedTrianglesWithNormals vertices faces =
         mesh =
             WebGL.indexedTriangles vertexAttributes faces
     in
-    Geometry boundingBox mesh
+    Types.Geometry boundingBox mesh
 
 
 triangleFan : List Point3d -> Geometry { vertexPosition : Vec3 }
@@ -117,7 +139,7 @@ triangleFan points =
         mesh =
             WebGL.triangleFan (List.map Point3d.toVertexPosition points)
     in
-    Geometry boundingBox mesh
+    Types.Geometry boundingBox mesh
 
 
 lines : List LineSegment3d -> Geometry { vertexPosition : Vec3 }
@@ -132,7 +154,7 @@ lines lineSegments =
         mesh =
             WebGL.lines (List.map LineSegment3d.vertexPositions lineSegments)
     in
-    Geometry boundingBox mesh
+    Types.Geometry boundingBox mesh
 
 
 polyline : Polyline3d -> Geometry { vertexPosition : Vec3 }
@@ -144,7 +166,7 @@ polyline polyline_ =
         mesh =
             WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
     in
-    Geometry boundingBox mesh
+    Types.Geometry boundingBox mesh
 
 
 points : List Point3d -> Geometry { vertexPosition : Vec3 }
@@ -156,41 +178,37 @@ points points_ =
         mesh =
             WebGL.points (List.map Point3d.toVertexPosition points_)
     in
-    Geometry boundingBox mesh
-
-
-type Drawable
-    = Colored Color (Geometry { vertexPosition : Vec3 })
-
-
-type Node
-    = Leaf Frame3d Drawable
-    | Group Frame3d (List Node)
+    Types.Geometry boundingBox mesh
 
 
 leafNode : Drawable -> Node
 leafNode drawable =
-    Leaf Frame3d.xyz drawable
+    Types.LeafNode Frame3d.xyz drawable
 
 
 colored : Color -> Geometry { vertexPosition : Vec3 } -> Node
 colored color geometry =
-    leafNode (Colored color geometry)
+    leafNode (Types.ColoredGeometry color geometry)
+
+
+shaded : Material -> Lighting -> Geometry { vertexPosition : Vec3, vertexNormal : Vec3 } -> Node
+shaded material lighting geometry =
+    leafNode (Types.ShadedGeometry material lighting geometry)
 
 
 group : List Node -> Node
 group nodes =
-    Group Frame3d.xyz nodes
+    Types.GroupNode Frame3d.xyz nodes
 
 
 transformBy : (Frame3d -> Frame3d) -> Node -> Node
 transformBy frameTransformation node =
     case node of
-        Leaf frame drawable ->
-            Leaf (frameTransformation frame) drawable
+        Types.LeafNode frame drawable ->
+            Types.LeafNode (frameTransformation frame) drawable
 
-        Group frame nodes ->
-            Group (frameTransformation frame) nodes
+        Types.GroupNode frame nodes ->
+            Types.GroupNode (frameTransformation frame) nodes
 
 
 rotateAround : Axis3d -> Float -> Node -> Node
@@ -245,8 +263,11 @@ toEntity camera modelFrame drawable =
             ]
     in
     case drawable of
-        Colored color (Geometry boundingBox mesh) ->
+        Types.ColoredGeometry color geometry ->
             let
+                (Types.Geometry boundingBox mesh) =
+                    geometry
+
                 uniforms =
                     { modelMatrix = modelMatrix
                     , modelViewMatrix = modelViewMatrix
@@ -260,11 +281,39 @@ toEntity camera modelFrame drawable =
                 mesh
                 uniforms
 
+        Types.ShadedGeometry material lighting geometry ->
+            let
+                (Types.PhysicallyBasedMaterial { baseColor, roughness, metallic }) =
+                    material
+
+                (Types.SingleLight (Types.DirectionalLight lightColor lightDirection)) =
+                    lighting
+
+                (Types.Geometry boundingBox mesh) =
+                    geometry
+
+                uniforms =
+                    { modelMatrix = modelMatrix
+                    , modelViewMatrix = modelViewMatrix
+                    , modelViewProjectionMatrix = modelViewProjectionMatrix
+                    , baseColor = Color.toVec3 baseColor
+                    , roughness = roughness
+                    , metallic = metallic
+                    , lightColor = Color.toVec3 lightColor
+                    , lightDirection = Direction3d.toVec3 lightDirection
+                    }
+            in
+            WebGL.entityWith settings
+                Shader.positionAndNormalVertexShader
+                Shader.directionalLightShader
+                mesh
+                uniforms
+
 
 collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
 collectEntities camera placementFrame node accumulated =
     case node of
-        Leaf frame drawable ->
+        Types.LeafNode frame drawable ->
             let
                 modelFrame =
                     Frame3d.placeIn placementFrame frame
@@ -274,7 +323,7 @@ collectEntities camera placementFrame node accumulated =
             in
             entity :: accumulated
 
-        Group frame childNodes ->
+        Types.GroupNode frame childNodes ->
             let
                 localFrame =
                     Frame3d.placeIn placementFrame frame

@@ -1,4 +1,4 @@
-module OpenSolid.SceneGraph.Internal.Shader exposing (..)
+module OpenSolid.SceneGraph.Shader exposing (..)
 
 import Math.Matrix4 as Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
@@ -58,5 +58,25 @@ solidColorShader =
 
         void main () {
             gl_FragColor = vec4(color, 1.0);
+        }
+    |]
+
+
+directionalLightShader : WebGL.Shader {} { a | baseColor : Vec3, roughness : Float, metallic : Float, lightColor : Vec3, lightDirection : Vec3 } { position : Vec3, normal : Vec3 }
+directionalLightShader =
+    [glsl|
+        precision mediump float;
+
+        uniform vec3 baseColor;
+        uniform float roughness;
+        uniform float metallic;
+        uniform vec3 lightColor;
+        uniform vec3 lightDirection;
+
+        varying vec3 position;
+        varying vec3 normal;
+
+        void main() {
+            gl_FragColor = vec4(baseColor, 1.0);
         }
     |]
