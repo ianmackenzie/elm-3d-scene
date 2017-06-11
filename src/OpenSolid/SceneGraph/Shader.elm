@@ -72,11 +72,53 @@ physicallyBasedDirectionalLightShader =
         uniform float metallic;
         uniform vec3 lightColor;
         uniform vec3 lightDirection;
+        uniform vec3 eyePoint;
 
         varying vec3 position;
         varying vec3 normal;
 
+        // leave out pi in denominator and then don't multiply by it later
+        float normalFactor(float alphaSquared, float dotNHSquared) {
+            float tmp = dotNHSquared * (alphaSquared - 1.0) + 1.0;
+            return alphaSquared / (tmp * tmp);
+        }
+
+        // leave out n.l and n.v in numerator and then leave them out of the
+        // denominator later
+        float geometryFactor(float dotNL, float dotNV) {
+            float tmp = roughness + 1.0;
+            float k = 0.125 * tmp * tmp;
+            float oneMinusK = 1.0 - k;
+            return 1.0 / ((dotNL * oneMinusK + k) * (dotNV * oneMinusK + k));
+        }
+
+        vec3 fresnelColor(vec3 specularBaseColor, float dotVH) {
+            vec3 white = vec3(1.0, 1.0, 1.0);
+            float scale = exp2((-5.55473 * dotVH - 6.98316) * dotVH);
+            return specularBaseColor + (white - specularBaseColor) * scale;
+        }
+
         void main() {
-            gl_FragColor = vec4(baseColor, 1.0);
+            vec3 correctedNormal = normalize(normal);
+            vec3 viewDirection = normalize(eyePoint - position);
+            vec3 halfVector = normalize(0.5 * (viewDirection - lightDirection));
+            float alpha = roughness * roughness;
+            float alphaSquared = alpha * alpha;
+            float dotVH = clamp(dot(viewDirection, halfVector), 0.0, 1.0);
+            float dotNH = clamp(dot(correctedNormal, halfVector), 0.0, 1.0);
+            float dotNL = clamp(-dot(correctedNormal, lightDirection), 0.0, 1.0);
+            float dotNV = clamp(dot(correctedNormal, viewDirection), 0.0, 1.0);
+            float dotNHSquared = dotNH * dotNH;
+            float dielectric = 1.0 - metallic;
+            vec3 diffuseBaseColor = dielectric * 0.96 * baseColor;
+            vec3 specularBaseColor = 0.04 * dielectric + metallic * baseColor;
+
+            float d = normalFactor(alphaSquared, dotNHSquared);
+            float g = geometryFactor(dotNL, dotNV);
+            vec3 f = fresnelColor(specularBaseColor, dotVH);
+            vec3 specularColor = (0.25 * d * g) * f;
+
+            vec3 color = dotNL * (diffuseBaseColor + specularColor) * lightColor;
+            gl_FragColor = vec4(color, 1.0);
         }
     |]
