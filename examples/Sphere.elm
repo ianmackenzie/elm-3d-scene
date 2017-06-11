@@ -15,7 +15,7 @@ sphere centerPoint radius =
             Point3d.coordinates centerPoint
 
         subdivisions =
-            36
+            72
 
         angle =
             2 * pi / subdivisions
