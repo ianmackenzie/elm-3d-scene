@@ -10,6 +10,14 @@ import OpenSolid.WebGL.Point3d as Point3d
 import WebGL
 
 
+flag : Bool -> Float
+flag value =
+    if value then
+        1
+    else
+        0
+
+
 positionOnlyVertexShader : WebGL.Shader { vertexPosition : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { position : Vec3 }
 positionOnlyVertexShader =
     [glsl|

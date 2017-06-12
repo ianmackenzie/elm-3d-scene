@@ -22,7 +22,7 @@ type Material
     = PhysicallyBasedMaterial
         { baseColor : Color
         , roughness : Float
-        , metallic : Float
+        , metallic : Bool
         }
 
 

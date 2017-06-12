@@ -12,6 +12,6 @@ type alias Material =
     Types.Material
 
 
-physicallyBased : { baseColor : Color, roughness : Float, metallic : Float } -> Material
+physicallyBased : { baseColor : Color, roughness : Float, metallic : Bool } -> Material
 physicallyBased =
     Types.PhysicallyBasedMaterial

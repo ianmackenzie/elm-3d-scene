@@ -25,7 +25,7 @@ gold =
     Material.physicallyBased
         { baseColor = rgb ( 1, 0.86, 0.57 )
         , roughness = 0.25
-        , metallic = 1
+        , metallic = True
         }
 
 
@@ -34,7 +34,7 @@ aluminum =
     Material.physicallyBased
         { baseColor = rgb ( 0.96, 0.96, 0.97 )
         , roughness = 0.5
-        , metallic = 1
+        , metallic = True
         }
 
 
@@ -43,7 +43,7 @@ blackPlastic =
     Material.physicallyBased
         { baseColor = Color.black
         , roughness = 0.25
-        , metallic = 0
+        , metallic = False
         }
 
 
@@ -52,7 +52,7 @@ whitePlastic =
     Material.physicallyBased
         { baseColor = Color.white
         , roughness = 0.25
-        , metallic = 0
+        , metallic = False
         }
 
 
