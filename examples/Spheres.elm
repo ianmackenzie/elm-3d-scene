@@ -24,7 +24,7 @@ gold : SceneGraph.Material
 gold =
     Material.physicallyBased
         { baseColor = rgb ( 1, 0.86, 0.57 )
-        , roughness = 0.25
+        , roughness = 0.4
         , metallic = True
         }
 
@@ -33,7 +33,7 @@ aluminum : SceneGraph.Material
 aluminum =
     Material.physicallyBased
         { baseColor = rgb ( 0.96, 0.96, 0.97 )
-        , roughness = 0.5
+        , roughness = 0.6
         , metallic = True
         }
 
