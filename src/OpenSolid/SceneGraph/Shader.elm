@@ -118,7 +118,10 @@ physicallyBasedDirectionalLightShader =
             vec3 f = fresnelColor(specularBaseColor, dotVH);
             vec3 specularColor = (0.25 * d * g) * f;
 
-            vec3 color = dotNL * (diffuseBaseColor + specularColor) * lightColor;
-            gl_FragColor = vec4(color, 1.0);
+            vec3 linearColor = dotNL * (diffuseBaseColor + specularColor) * lightColor;
+            float red = pow(linearColor.r, 0.45);
+            float green = pow(linearColor.g, 0.45);
+            float blue = pow(linearColor.b, 0.45);
+            gl_FragColor = vec4(red, green, blue, 1.0);
         }
     |]
