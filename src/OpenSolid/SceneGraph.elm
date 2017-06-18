@@ -310,7 +310,8 @@ toEntity camera modelFrame drawable =
                     , roughness = roughness
                     , metallic = Shader.flag metallic
                     , lightColor = Color.toVec3 lightColor
-                    , lightDirection = Direction3d.toVec3 lightDirection
+                    , lightDirection =
+                        Direction3d.toVec3 (Direction3d.flip lightDirection)
                     , eyePoint = Point3d.toVec3 eyePoint
                     }
             in

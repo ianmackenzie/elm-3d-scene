@@ -107,15 +107,15 @@ physicallyBasedDirectionalLightShader =
         }
 
         void main() {
-            vec3 correctedNormal = normalize(normal);
+            vec3 normalDirection = normalize(normal);
             vec3 viewDirection = normalize(eyePoint - position);
-            vec3 halfVector = normalize(0.5 * (viewDirection - lightDirection));
+            vec3 halfDirection = normalize(viewDirection + lightDirection);
             float alpha = roughness * roughness;
             float alphaSquared = alpha * alpha;
-            float dotVH = clamp(dot(viewDirection, halfVector), 0.0, 1.0);
-            float dotNH = clamp(dot(correctedNormal, halfVector), 0.0, 1.0);
-            float dotNL = clamp(-dot(correctedNormal, lightDirection), 0.0, 1.0);
-            float dotNV = clamp(dot(correctedNormal, viewDirection), 0.0, 1.0);
+            float dotVH = clamp(dot(viewDirection, halfDirection), 0.0, 1.0);
+            float dotNH = clamp(dot(normalDirection, halfDirection), 0.0, 1.0);
+            float dotNL = clamp(dot(normalDirection, lightDirection), 0.0, 1.0);
+            float dotNV = clamp(dot(normalDirection, viewDirection), 0.0, 1.0);
             float dotNHSquared = dotNH * dotNH;
             float dielectric = 1.0 - metallic;
             vec3 diffuseBaseColor = dielectric * 0.96 * baseColor;
