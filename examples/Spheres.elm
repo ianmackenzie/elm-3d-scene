@@ -6,32 +6,32 @@ import Html.Attributes as Attributes
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
-import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Light as Light
 import OpenSolid.Scene.Lighting as Lighting
-import OpenSolid.Scene.Material as Material
+import OpenSolid.Scene.Material as Material exposing (Material)
+import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
 import Sphere
 import WebGL
 
 
-gold : Scene.Material
+gold : Material
 gold =
     Material.metal { color = Color.rgb 255 219 145, roughness = 0.4 }
 
 
-aluminum : Scene.Material
+aluminum : Material
 aluminum =
     Material.metal { color = Color.rgb 245 245 247, roughness = 0.6 }
 
 
-blackPlastic : Scene.Material
+blackPlastic : Material
 blackPlastic =
     Material.nonmetal { color = Color.black, roughness = 0.25 }
 
 
-whitePlastic : Scene.Material
+whitePlastic : Material
 whitePlastic =
     Material.nonmetal { color = Color.white, roughness = 0.25 }
 
@@ -58,26 +58,26 @@ lighting =
 
 goldSphere =
     Sphere.sphere (Point3d ( 2, 2, 0 )) 1
-        |> Scene.shaded gold lighting
+        |> Node.shaded gold lighting
 
 
 aluminumSphere =
     Sphere.sphere (Point3d ( 2, -2, 0 )) 1
-        |> Scene.shaded aluminum lighting
+        |> Node.shaded aluminum lighting
 
 
 blackPlasticSphere =
     Sphere.sphere (Point3d ( -2, -2, 0 )) 1
-        |> Scene.shaded blackPlastic lighting
+        |> Node.shaded blackPlastic lighting
 
 
 whitePlasticSphere =
     Sphere.sphere (Point3d ( -2, 2, 0 )) 1
-        |> Scene.shaded whitePlastic lighting
+        |> Node.shaded whitePlastic lighting
 
 
 scene =
-    Scene.group
+    Node.group
         [ goldSphere
         , aluminumSphere
         , blackPlasticSphere
@@ -116,4 +116,4 @@ main : Html Never
 main =
     WebGL.toHtml
         [ Attributes.width width, Attributes.height height ]
-        (Scene.toEntities camera scene)
+        (Node.toEntities camera scene)

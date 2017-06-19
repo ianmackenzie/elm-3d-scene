@@ -11,7 +11,7 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point3d as Point3d
-import OpenSolid.Scene as Scene
+import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
 import Time
@@ -66,11 +66,10 @@ view angleInDegrees =
         angle =
             degrees angleInDegrees
 
-        rotatedLogo =
-            Logo.node |> Scene.rotateAround Axis3d.z angle
-
         entities =
-            Scene.toEntities camera rotatedLogo
+            Logo.node
+                |> Node.rotateAround Axis3d.z angle
+                |> Node.toEntities camera
 
         attributes =
             [ Attributes.width width, Attributes.height height ]

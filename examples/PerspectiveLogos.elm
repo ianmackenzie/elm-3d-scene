@@ -11,7 +11,7 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point3d as Point3d
-import OpenSolid.Scene as Scene
+import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
 import Time
@@ -53,31 +53,31 @@ view angleInDegrees =
             degrees angleInDegrees
 
         rotatedLogo =
-            Logo.node |> Scene.rotateAround Axis3d.z angle
+            Logo.node |> Node.rotateAround Axis3d.z angle
 
         rightLogo =
-            rotatedLogo |> Scene.translateBy (Vector3d ( 1, 1, 0.75 ))
+            rotatedLogo |> Node.translateBy (Vector3d ( 1, 1, 0.75 ))
 
         leftLogo =
-            rightLogo |> Scene.mirrorAcross Plane3d.zx
+            rightLogo |> Node.mirrorAcross Plane3d.zx
 
         frontLogos =
-            Scene.group [ rightLogo, leftLogo ]
+            Node.group [ rightLogo, leftLogo ]
 
         backLogos =
-            frontLogos |> Scene.mirrorAcross Plane3d.yz
+            frontLogos |> Node.mirrorAcross Plane3d.yz
 
         topLogos =
-            Scene.group [ frontLogos, backLogos ]
+            Node.group [ frontLogos, backLogos ]
 
         bottomLogos =
-            topLogos |> Scene.mirrorAcross Plane3d.xy
+            topLogos |> Node.mirrorAcross Plane3d.xy
 
         scene =
-            Scene.group [ topLogos, bottomLogos ]
+            Node.group [ topLogos, bottomLogos ]
 
         entities =
-            Scene.toEntities camera scene
+            Node.toEntities camera scene
 
         attributes =
             [ Attributes.width width, Attributes.height height ]

@@ -10,7 +10,8 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Point3d as Point3d
-import OpenSolid.Scene as Scene
+import OpenSolid.Scene.Node as Node exposing (Node)
+import OpenSolid.Scene.SimpleGeometry as SimpleGeometry exposing (SimpleGeometry)
 
 
 height : Float
@@ -88,7 +89,7 @@ centerFrame =
     Frame3d.at (Point3d ( 0.5, 0.5, height / 2 ))
 
 
-node : Scene.Node
+node : Node
 node =
     let
         orange =
@@ -104,34 +105,34 @@ node =
             Color.rgb 90 99 120
 
         leftFace =
-            Scene.triangleFan [ p1, p2, p8, p7, p6 ]
-                |> Scene.colored orange
+            SimpleGeometry.triangleFan [ p1, p2, p8, p7, p6 ]
+                |> Node.colored orange
 
         rightFace =
-            Scene.triangleFan [ p2, p3, p4, p9, p8 ]
-                |> Scene.colored lightBlue
+            SimpleGeometry.triangleFan [ p2, p3, p4, p9, p8 ]
+                |> Node.colored lightBlue
 
         topFace =
-            Scene.triangleFan [ p6, p7, p9, p4, p5 ]
-                |> Scene.colored green
+            SimpleGeometry.triangleFan [ p6, p7, p9, p4, p5 ]
+                |> Node.colored green
 
         triangleFace =
-            Scene.triangleFan [ p7, p8, p9 ]
-                |> Scene.colored darkBlue
+            SimpleGeometry.triangleFan [ p7, p8, p9 ]
+                |> Node.colored darkBlue
 
         bottomFace =
-            Scene.triangleFan [ p0, p3, p2, p1 ]
-                |> Scene.colored green
+            SimpleGeometry.triangleFan [ p0, p3, p2, p1 ]
+                |> Node.colored green
 
         backLeftFace =
-            Scene.triangleFan [ p6, p5, p0, p1 ]
-                |> Scene.colored lightBlue
+            SimpleGeometry.triangleFan [ p6, p5, p0, p1 ]
+                |> Node.colored lightBlue
 
         backRightFace =
-            Scene.triangleFan [ p3, p0, p5, p4 ]
-                |> Scene.colored orange
+            SimpleGeometry.triangleFan [ p3, p0, p5, p4 ]
+                |> Node.colored orange
     in
-    Scene.group
+    Node.group
         [ leftFace
         , rightFace
         , topFace
@@ -140,7 +141,7 @@ node =
         , backRightFace
         , bottomFace
         ]
-        |> Scene.relativeTo centerFrame
+        |> Node.relativeTo centerFrame
 
 
 vertices : List Point3d
