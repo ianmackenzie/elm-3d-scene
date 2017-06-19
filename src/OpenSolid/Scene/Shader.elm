@@ -77,14 +77,14 @@ physicallyBasedDirectionalLightShader =
         varying vec3 position;
         varying vec3 normal;
 
-        // leave out pi in denominator and then don't multiply by it later
+        // leave pi out of the denominator and then don't multiply by it later
         float normalFactor(float alphaSquared, float dotNHSquared) {
             float tmp = dotNHSquared * (alphaSquared - 1.0) + 1.0;
             return alphaSquared / (tmp * tmp);
         }
 
-        // leave out n.l and n.v in numerator and then leave them out of the
-        // denominator later
+        // leave dotNL and dotNV out of the numerator and then leave them out of
+        // the denominator later
         float geometryFactor(float dotNL, float dotNV) {
             float tmp = roughness + 1.0;
             float k = 0.125 * tmp * tmp;
