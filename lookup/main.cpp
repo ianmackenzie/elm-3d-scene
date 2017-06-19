@@ -65,6 +65,14 @@ double interpolateDerivative(double x, double x0) {
     }
 }
 
+unsigned char coarseByte(double x) {
+    return int(x * 255.0);
+}
+
+unsigned char fineByte(double x) {
+    return int(255.0 * 255.0 * std::fmod(x, 1.0 / 255.0) + 0.5);
+}
+
 int main (int argc, char** argv) {
     int width = 256;
     int height = 256;
@@ -130,11 +138,15 @@ int main (int argc, char** argv) {
                             }
                         }
 
+                        scale = std::max(0.0, std::min(scale, 1.0));
+                        offset = std::max(0.0, std::min(offset, 1.0));
+
                         int startIndex = imageX * 4 + width * 4 * (height - 1 - imageY);
-                        imageData[startIndex] = std::round(255 * scale);
-                        imageData[startIndex + 1] = std::round(255 * offset);
-                        imageData[startIndex + 2] = 0;
-                        imageData[startIndex + 3] = 255;
+
+                        imageData[startIndex] = coarseByte(scale);
+                        imageData[startIndex + 1] = fineByte(scale);
+                        imageData[startIndex + 2] = coarseByte(offset);
+                        imageData[startIndex + 3] = fineByte(offset);
                     }
                 }
             )
