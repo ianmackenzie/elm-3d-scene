@@ -11,7 +11,7 @@ type Geometry a
 
 
 type Light
-    = DirectionalLight Color Direction3d
+    = DirectionalLight { color : Vec3, direction : Vec3 }
 
 
 type Lighting

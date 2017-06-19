@@ -297,7 +297,7 @@ toEntity camera modelFrame drawable =
                 (Types.PhysicallyBasedMaterial { baseColor, roughness, metallic }) =
                     material
 
-                (Types.SingleLight (Types.DirectionalLight lightColor lightDirection)) =
+                (Types.SingleLight (Types.DirectionalLight directionalLight)) =
                     lighting
 
                 (Types.Geometry boundingBox mesh) =
@@ -310,9 +310,8 @@ toEntity camera modelFrame drawable =
                     , baseColor = Color.toVec3 baseColor
                     , roughness = roughness
                     , metallic = Shader.flag metallic
-                    , lightColor = Color.toVec3 lightColor
-                    , lightDirection =
-                        Direction3d.toVec3 (Direction3d.flip lightDirection)
+                    , lightColor = directionalLight.color
+                    , lightDirection = directionalLight.direction
                     , eyePoint = Point3d.toVec3 eyePoint
                     }
             in
