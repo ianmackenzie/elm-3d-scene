@@ -15,15 +15,10 @@ import Sphere
 import WebGL
 
 
-rgb : ( Float, Float, Float ) -> Color
-rgb ( red, green, blue ) =
-    Color.rgb (round (255 * red)) (round (255 * green)) (round (255 * blue))
-
-
 gold : SceneGraph.Material
 gold =
     Material.physicallyBased
-        { baseColor = rgb ( 1, 0.86, 0.57 )
+        { baseColor = Color.rgb 255 219 145
         , roughness = 0.4
         , metallic = True
         }
@@ -32,7 +27,7 @@ gold =
 aluminum : SceneGraph.Material
 aluminum =
     Material.physicallyBased
-        { baseColor = rgb ( 0.96, 0.96, 0.97 )
+        { baseColor = Color.rgb 245 245 247
         , roughness = 0.6
         , metallic = True
         }
@@ -69,7 +64,7 @@ lightDirection =
 
 
 lightColor =
-    rgb ( 0.5, 0.5, 0.5 )
+    Color.rgb 127 127 127
 
 
 lighting =
