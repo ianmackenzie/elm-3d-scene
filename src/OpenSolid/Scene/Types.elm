@@ -20,9 +20,9 @@ type Lighting
 
 type Material
     = PhysicallyBasedMaterial
-        { baseColor : Color
+        { baseColor : Vec3
         , roughness : Float
-        , metallic : Bool
+        , metallic : Float
         }
 
 

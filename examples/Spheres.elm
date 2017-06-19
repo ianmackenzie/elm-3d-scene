@@ -18,38 +18,22 @@ import WebGL
 
 gold : Scene.Material
 gold =
-    Material.physicallyBased
-        { baseColor = Color.rgb 255 219 145
-        , roughness = 0.4
-        , metallic = True
-        }
+    Material.metal { color = Color.rgb 255 219 145, roughness = 0.4 }
 
 
 aluminum : Scene.Material
 aluminum =
-    Material.physicallyBased
-        { baseColor = Color.rgb 245 245 247
-        , roughness = 0.6
-        , metallic = True
-        }
+    Material.metal { color = Color.rgb 245 245 247, roughness = 0.6 }
 
 
 blackPlastic : Scene.Material
 blackPlastic =
-    Material.physicallyBased
-        { baseColor = Color.black
-        , roughness = 0.25
-        , metallic = False
-        }
+    Material.nonmetal { color = Color.black, roughness = 0.25 }
 
 
 whitePlastic : Scene.Material
 whitePlastic =
-    Material.physicallyBased
-        { baseColor = Color.white
-        , roughness = 0.25
-        , metallic = False
-        }
+    Material.nonmetal { color = Color.white, roughness = 0.25 }
 
 
 direction phi theta =
