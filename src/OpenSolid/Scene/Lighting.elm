@@ -1,29 +1,17 @@
 module OpenSolid.Scene.Lighting
     exposing
-        ( Light
-        , Lighting
-        , directional
-        , single
+        ( Lighting
+        , singleLight
         )
 
-import Color exposing (Color)
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Scene.Light exposing (Light)
 import OpenSolid.Scene.Types as Types
-
-
-type alias Light =
-    Types.Light
 
 
 type alias Lighting =
     Types.Lighting
 
 
-directional : Color -> Direction3d -> Light
-directional =
-    Types.DirectionalLight
-
-
-single : Light -> Lighting
-single =
+singleLight : Light -> Lighting
+singleLight =
     Types.SingleLight

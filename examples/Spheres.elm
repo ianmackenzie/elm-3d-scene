@@ -7,6 +7,7 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
+import OpenSolid.Scene.Light as Light
 import OpenSolid.Scene.Lighting as Lighting
 import OpenSolid.Scene.Material as Material
 import OpenSolid.WebGL.Camera as Camera
@@ -68,7 +69,7 @@ lightColor =
 
 
 lighting =
-    Lighting.single (Lighting.directional lightColor lightDirection)
+    Lighting.singleLight (Light.directional lightColor lightDirection)
 
 
 goldSphere =
