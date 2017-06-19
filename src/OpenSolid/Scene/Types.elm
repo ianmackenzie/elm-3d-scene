@@ -27,7 +27,7 @@ type Material
 
 
 type Drawable
-    = ColoredGeometry Color (Geometry { vertexPosition : Vec3 })
+    = ColoredGeometry Vec3 (Geometry { vertexPosition : Vec3 })
     | ShadedGeometry Material Lighting (Geometry { vertexPosition : Vec3, vertexNormal : Vec3 })
 
 

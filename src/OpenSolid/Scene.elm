@@ -193,7 +193,7 @@ leafNode drawable =
 
 colored : Color -> Geometry { vertexPosition : Vec3 } -> Node
 colored color geometry =
-    leafNode (Types.ColoredGeometry color geometry)
+    leafNode (Types.ColoredGeometry (Color.toVec3 color) geometry)
 
 
 shaded : Material -> Lighting -> Geometry { vertexPosition : Vec3, vertexNormal : Vec3 } -> Node
@@ -283,7 +283,7 @@ toEntity camera modelFrame drawable =
                     { modelMatrix = modelMatrix
                     , modelViewMatrix = modelViewMatrix
                     , modelViewProjectionMatrix = modelViewProjectionMatrix
-                    , color = Color.toVec3 color
+                    , color = color
                     }
             in
             WebGL.entityWith settings
