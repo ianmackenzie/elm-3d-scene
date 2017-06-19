@@ -1,11 +1,11 @@
-module OpenSolid.SceneGraph.Material
+module OpenSolid.Scene.Material
     exposing
         ( Material
         , physicallyBased
         )
 
 import Color exposing (Color)
-import OpenSolid.SceneGraph.Types as Types
+import OpenSolid.Scene.Types as Types
 
 
 type alias Material =

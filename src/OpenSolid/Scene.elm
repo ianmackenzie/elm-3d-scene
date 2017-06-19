@@ -1,4 +1,4 @@
-module OpenSolid.SceneGraph
+module OpenSolid.Scene
     exposing
         ( Geometry
         , Light
@@ -29,13 +29,14 @@ import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import OpenSolid.BoundingBox3d as BoundingBox3d
+import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Polyline3d as Polyline3d
-import OpenSolid.SceneGraph.Lighting as Lighting
-import OpenSolid.SceneGraph.Shader as Shader
-import OpenSolid.SceneGraph.Types as Types
+import OpenSolid.Scene.Lighting as Lighting
+import OpenSolid.Scene.Shader as Shader
+import OpenSolid.Scene.Types as Types
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Color as Color

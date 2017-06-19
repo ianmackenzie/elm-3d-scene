@@ -6,16 +6,16 @@ import Html.Attributes as Attributes
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
-import OpenSolid.SceneGraph as SceneGraph
-import OpenSolid.SceneGraph.Lighting as Lighting
-import OpenSolid.SceneGraph.Material as Material
+import OpenSolid.Scene as Scene
+import OpenSolid.Scene.Lighting as Lighting
+import OpenSolid.Scene.Material as Material
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
 import Sphere
 import WebGL
 
 
-gold : SceneGraph.Material
+gold : Scene.Material
 gold =
     Material.physicallyBased
         { baseColor = Color.rgb 255 219 145
@@ -24,7 +24,7 @@ gold =
         }
 
 
-aluminum : SceneGraph.Material
+aluminum : Scene.Material
 aluminum =
     Material.physicallyBased
         { baseColor = Color.rgb 245 245 247
@@ -33,7 +33,7 @@ aluminum =
         }
 
 
-blackPlastic : SceneGraph.Material
+blackPlastic : Scene.Material
 blackPlastic =
     Material.physicallyBased
         { baseColor = Color.black
@@ -42,7 +42,7 @@ blackPlastic =
         }
 
 
-whitePlastic : SceneGraph.Material
+whitePlastic : Scene.Material
 whitePlastic =
     Material.physicallyBased
         { baseColor = Color.white
@@ -73,26 +73,26 @@ lighting =
 
 goldSphere =
     Sphere.sphere (Point3d ( 2, 2, 0 )) 1
-        |> SceneGraph.shaded gold lighting
+        |> Scene.shaded gold lighting
 
 
 aluminumSphere =
     Sphere.sphere (Point3d ( 2, -2, 0 )) 1
-        |> SceneGraph.shaded aluminum lighting
+        |> Scene.shaded aluminum lighting
 
 
 blackPlasticSphere =
     Sphere.sphere (Point3d ( -2, -2, 0 )) 1
-        |> SceneGraph.shaded blackPlastic lighting
+        |> Scene.shaded blackPlastic lighting
 
 
 whitePlasticSphere =
     Sphere.sphere (Point3d ( -2, 2, 0 )) 1
-        |> SceneGraph.shaded whitePlastic lighting
+        |> Scene.shaded whitePlastic lighting
 
 
 scene =
-    SceneGraph.group
+    Scene.group
         [ goldSphere
         , aluminumSphere
         , blackPlasticSphere
@@ -131,4 +131,4 @@ main : Html Never
 main =
     WebGL.toHtml
         [ Attributes.width width, Attributes.height height ]
-        (SceneGraph.toEntities camera scene)
+        (Scene.toEntities camera scene)

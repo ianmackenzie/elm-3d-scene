@@ -10,7 +10,7 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Point3d as Point3d
-import OpenSolid.SceneGraph as SceneGraph
+import OpenSolid.Scene as Scene
 
 
 height : Float
@@ -88,7 +88,7 @@ centerFrame =
     Frame3d.at (Point3d ( 0.5, 0.5, height / 2 ))
 
 
-node : SceneGraph.Node
+node : Scene.Node
 node =
     let
         orange =
@@ -104,34 +104,34 @@ node =
             Color.rgb 90 99 120
 
         leftFace =
-            SceneGraph.triangleFan [ p1, p2, p8, p7, p6 ]
-                |> SceneGraph.colored orange
+            Scene.triangleFan [ p1, p2, p8, p7, p6 ]
+                |> Scene.colored orange
 
         rightFace =
-            SceneGraph.triangleFan [ p2, p3, p4, p9, p8 ]
-                |> SceneGraph.colored lightBlue
+            Scene.triangleFan [ p2, p3, p4, p9, p8 ]
+                |> Scene.colored lightBlue
 
         topFace =
-            SceneGraph.triangleFan [ p6, p7, p9, p4, p5 ]
-                |> SceneGraph.colored green
+            Scene.triangleFan [ p6, p7, p9, p4, p5 ]
+                |> Scene.colored green
 
         triangleFace =
-            SceneGraph.triangleFan [ p7, p8, p9 ]
-                |> SceneGraph.colored darkBlue
+            Scene.triangleFan [ p7, p8, p9 ]
+                |> Scene.colored darkBlue
 
         bottomFace =
-            SceneGraph.triangleFan [ p0, p3, p2, p1 ]
-                |> SceneGraph.colored green
+            Scene.triangleFan [ p0, p3, p2, p1 ]
+                |> Scene.colored green
 
         backLeftFace =
-            SceneGraph.triangleFan [ p6, p5, p0, p1 ]
-                |> SceneGraph.colored lightBlue
+            Scene.triangleFan [ p6, p5, p0, p1 ]
+                |> Scene.colored lightBlue
 
         backRightFace =
-            SceneGraph.triangleFan [ p3, p0, p5, p4 ]
-                |> SceneGraph.colored orange
+            Scene.triangleFan [ p3, p0, p5, p4 ]
+                |> Scene.colored orange
     in
-    SceneGraph.group
+    Scene.group
         [ leftFace
         , rightFace
         , topFace
@@ -140,7 +140,7 @@ node =
         , backRightFace
         , bottomFace
         ]
-        |> SceneGraph.relativeTo centerFrame
+        |> Scene.relativeTo centerFrame
 
 
 vertices : List Point3d

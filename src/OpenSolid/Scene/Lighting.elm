@@ -1,4 +1,4 @@
-module OpenSolid.SceneGraph.Lighting
+module OpenSolid.Scene.Lighting
     exposing
         ( Light
         , Lighting
@@ -8,7 +8,7 @@ module OpenSolid.SceneGraph.Lighting
 
 import Color exposing (Color)
 import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.SceneGraph.Types as Types
+import OpenSolid.Scene.Types as Types
 
 
 type alias Light =

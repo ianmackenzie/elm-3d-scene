@@ -1,4 +1,4 @@
-module OpenSolid.SceneGraph.Types exposing (..)
+module OpenSolid.Scene.Types exposing (..)
 
 import Color exposing (Color)
 import Math.Vector3 exposing (Vec3)

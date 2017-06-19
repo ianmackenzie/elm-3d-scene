@@ -3,12 +3,12 @@ module Sphere exposing (sphere)
 import Math.Vector3 exposing (Vec3)
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
-import OpenSolid.SceneGraph as SceneGraph
-import OpenSolid.SceneGraph.Lighting as Lighting
-import OpenSolid.SceneGraph.Material as Material
+import OpenSolid.Scene as Scene
+import OpenSolid.Scene.Lighting as Lighting
+import OpenSolid.Scene.Material as Material
 
 
-sphere : Point3d -> Float -> SceneGraph.Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
+sphere : Point3d -> Float -> Scene.Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
 sphere centerPoint radius =
     let
         ( x0, y0, z0 ) =
@@ -92,4 +92,4 @@ sphere centerPoint radius =
                     )
                 |> List.concat
     in
-    SceneGraph.indexedTrianglesWithNormals pointsAndNormals faces
+    Scene.indexedTrianglesWithNormals pointsAndNormals faces

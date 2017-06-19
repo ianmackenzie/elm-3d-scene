@@ -1,4 +1,4 @@
-module OpenSolid.SceneGraph.Shader exposing (..)
+module OpenSolid.Scene.Shader exposing (..)
 
 import Math.Matrix4 as Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
