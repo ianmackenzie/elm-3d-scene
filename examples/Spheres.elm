@@ -60,6 +60,16 @@ aluminum =
     Material.metal { color = Color.rgb 245 245 247, roughness = 0.6 }
 
 
+copper : Material
+copper =
+    Material.metal { color = Color.rgb 244 162 137, roughness = 0.25 }
+
+
+chromium : Material
+chromium =
+    Material.metal { color = Color.rgb 140 141 141, roughness = 0.25 }
+
+
 blackPlastic : Material
 blackPlastic =
     Material.nonmetal { color = Color.black, roughness = 0.25 }
@@ -125,7 +135,7 @@ view model =
         Just (Ok lookupTexture) ->
             let
                 lighting =
-                    Lighting.singleLight (Light.ambient lookupTexture lightColor)
+                    Lighting.singleLight (Light.directional lightColor lightDirection)
 
                 goldSphere =
                     unitSphere
@@ -137,22 +147,22 @@ view model =
                         |> Node.shaded aluminum lighting
                         |> Node.translateBy (Vector3d ( 2, -2, 0 ))
 
-                blackPlasticSphere =
+                copperSphere =
                     unitSphere
-                        |> Node.shaded blackPlastic lighting
+                        |> Node.shaded copper lighting
                         |> Node.translateBy (Vector3d ( -2, -2, 0 ))
 
-                whitePlasticSphere =
+                chromiumSphere =
                     unitSphere
-                        |> Node.shaded whitePlastic lighting
+                        |> Node.shaded chromium lighting
                         |> Node.translateBy (Vector3d ( -2, 2, 0 ))
 
                 scene =
                     Node.group
                         [ goldSphere
                         , aluminumSphere
-                        , blackPlasticSphere
-                        , whitePlasticSphere
+                        , copperSphere
+                        , chromiumSphere
                         ]
             in
             WebGL.toHtml

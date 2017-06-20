@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.5.0">
+    <shape type="sphere">
+        <point name="center" x="2" y="2" z="0"/>
+        <float name="radius" value="1"/>
+        <bsdf type="roughconductor">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.16"/>
+            <string name="material" value="Au"/>
+        </bsdf>
+    </shape>
+    <shape type="sphere">
+        <point name="center" x="2" y="-2" z="0"/>
+        <float name="radius" value="1"/>
+        <bsdf type="roughconductor">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.36"/>
+            <string name="material" value="Al"/>
+        </bsdf>
+    </shape>
+    <shape type="sphere">
+        <point name="center" x="-2" y="-2" z="0"/>
+        <float name="radius" value="1"/>
+        <bsdf type="roughconductor">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.0625"/>
+            <string name="material" value="Cu"/>
+        </bsdf>
+    </shape>
+    <shape type="sphere">
+        <point name="center" x="-2" y="2" z="0"/>
+        <float name="radius" value="1"/>
+        <bsdf type="roughconductor">
+            <string name="distribution" value="ggx"/>
+            <float name="alpha" value="0.0625"/>
+            <string name="material" value="Cr"/>
+        </bsdf>
+    </shape>
+    <emitter type="directional">
+        <vector name="direction" x="0" y="-0.5" z="-0.866"/>
+        <spectrum name="irradiance" value="0.5"/>
+    </emitter>
+    <sensor type="perspective">
+        <transform name="toWorld">
+            <lookat origin="10, 10, 10" target="0, 0, 0" up="0, 0, 1"/>
+        </transform>
+        <float name="fov" value="30"/>
+        <film type="ldrfilm">
+            <string name="pixelFormat" value="rgba"/>
+            <integer name="width" value="1024"/>
+            <integer name="height" value="768"/>
+            <boolean name="banner" value="false"/>
+        </film>
+    </sensor>
+</scene>
