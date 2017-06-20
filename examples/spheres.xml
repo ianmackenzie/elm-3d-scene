@@ -45,6 +45,7 @@
             <lookat origin="10, 10, 10" target="0, 0, 0" up="0, 0, 1"/>
         </transform>
         <float name="fov" value="30"/>
+        <string name="fovAxis" value="y"/>
         <film type="ldrfilm">
             <string name="pixelFormat" value="rgba"/>
             <integer name="width" value="1024"/>
