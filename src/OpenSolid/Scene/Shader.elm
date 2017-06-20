@@ -128,3 +128,43 @@ physicallyBasedDirectionalLightShader =
             gl_FragColor = vec4(red, green, blue, 1.0);
         }
     |]
+
+
+physicallyBasedAmbientLightShader : WebGL.Shader {} { a | baseColor : Vec3, roughness : Float, metallic : Float, lightColor : Vec3, eyePoint : Vec3, lookupTexture : WebGL.Texture } { position : Vec3, normal : Vec3 }
+physicallyBasedAmbientLightShader =
+    [glsl|
+        precision mediump float;
+
+        uniform vec3 baseColor;
+        uniform float roughness;
+        uniform float metallic;
+        uniform vec3 lightColor;
+        uniform vec3 eyePoint;
+        uniform sampler2D lookupTexture;
+
+        varying vec3 position;
+        varying vec3 normal;
+
+        void main() {
+            vec3 normalDirection = normalize(normal);
+            vec3 viewDirection = normalize(eyePoint - position);
+            float dotNV = clamp(dot(normalDirection, viewDirection), 0.0, 1.0);
+
+            float nonmetallic = 1.0 - metallic;
+            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
+            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
+
+            vec2 textureCoordinates = vec2(dotNV, roughness);
+            vec4 textureColor = texture2D(lookupTexture, textureCoordinates);
+            float scale = textureColor.r + (1.0 / 255.0) * textureColor.g;
+            float offset = textureColor.b + (1.0 / 255.0) * textureColor.a;
+
+            vec3 specularColor = specularBaseColor * scale + vec3(1.0, 1.0, 1.0) * offset;
+            vec3 linearColor = (diffuseBaseColor + specularColor) * lightColor;
+
+            float red = pow(linearColor.r, 0.45);
+            float green = pow(linearColor.g, 0.45);
+            float blue = pow(linearColor.b, 0.45);
+            gl_FragColor = vec4(red, green, blue, 1.0);
+        }
+    |]

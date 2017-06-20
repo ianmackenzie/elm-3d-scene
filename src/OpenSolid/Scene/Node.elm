@@ -154,29 +154,52 @@ toEntity camera modelFrame drawable =
                 (Types.PhysicallyBasedMaterial { baseColor, roughness, metallic }) =
                     material
 
-                (Types.SingleLight (Types.DirectionalLight directionalLight)) =
-                    lighting
-
                 (Types.Geometry boundingBox mesh) =
                     geometry
 
-                uniforms =
-                    { modelMatrix = modelMatrix
-                    , modelViewMatrix = modelViewMatrix
-                    , modelViewProjectionMatrix = modelViewProjectionMatrix
-                    , baseColor = baseColor
-                    , roughness = roughness
-                    , metallic = metallic
-                    , lightColor = directionalLight.color
-                    , lightDirection = directionalLight.direction
-                    , eyePoint = Point3d.toVec3 eyePoint
-                    }
+                (Types.SingleLight light) =
+                    lighting
             in
-            WebGL.entityWith settings
-                Shader.positionAndNormalVertexShader
-                Shader.physicallyBasedDirectionalLightShader
-                mesh
-                uniforms
+            case light of
+                Types.AmbientLight lookupTexture lightColor ->
+                    let
+                        uniforms =
+                            { modelMatrix = modelMatrix
+                            , modelViewMatrix = modelViewMatrix
+                            , modelViewProjectionMatrix = modelViewProjectionMatrix
+                            , baseColor = baseColor
+                            , roughness = roughness
+                            , metallic = metallic
+                            , lightColor = lightColor
+                            , lookupTexture = lookupTexture
+                            , eyePoint = Point3d.toVec3 eyePoint
+                            }
+                    in
+                    WebGL.entityWith settings
+                        Shader.positionAndNormalVertexShader
+                        Shader.physicallyBasedAmbientLightShader
+                        mesh
+                        uniforms
+
+                Types.DirectionalLight directionalLight ->
+                    let
+                        uniforms =
+                            { modelMatrix = modelMatrix
+                            , modelViewMatrix = modelViewMatrix
+                            , modelViewProjectionMatrix = modelViewProjectionMatrix
+                            , baseColor = baseColor
+                            , roughness = roughness
+                            , metallic = metallic
+                            , lightColor = directionalLight.color
+                            , lightDirection = directionalLight.direction
+                            , eyePoint = Point3d.toVec3 eyePoint
+                            }
+                    in
+                    WebGL.entityWith settings
+                        Shader.positionAndNormalVertexShader
+                        Shader.physicallyBasedDirectionalLightShader
+                        mesh
+                        uniforms
 
 
 collectEntities : Camera -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity

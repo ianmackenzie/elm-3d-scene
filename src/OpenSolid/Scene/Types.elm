@@ -3,7 +3,7 @@ module OpenSolid.Scene.Types exposing (..)
 import Color exposing (Color)
 import Math.Vector3 exposing (Vec3)
 import OpenSolid.Geometry.Types exposing (..)
-import WebGL
+import WebGL exposing (Texture)
 
 
 type Geometry a
@@ -11,7 +11,8 @@ type Geometry a
 
 
 type Light
-    = DirectionalLight { color : Vec3, direction : Vec3 }
+    = AmbientLight WebGL.Texture Vec3
+    | DirectionalLight { color : Vec3, direction : Vec3 }
 
 
 type Lighting
