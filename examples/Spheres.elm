@@ -52,12 +52,12 @@ unitSphere =
 
 gold : Material
 gold =
-    Material.metal { color = Color.rgb 255 219 145, roughness = 0.4 }
+    Material.metal { color = Color.rgb 255 195 85, roughness = 0.4 }
 
 
 aluminum : Material
 aluminum =
-    Material.metal { color = Color.rgb 245 245 247, roughness = 0.6 }
+    Material.metal { color = Color.rgb 233 235 236, roughness = 0.6 }
 
 
 copper : Material
