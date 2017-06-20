@@ -93,7 +93,7 @@ lightDirection =
 
 
 lightColor =
-    Color.rgb 127 127 127
+    Color.rgb 42 42 42
 
 
 cameraFrame =
