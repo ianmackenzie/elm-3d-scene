@@ -165,7 +165,12 @@ view model =
                         , chromiumSphere
                         ]
             in
-            WebGL.toHtml
+            WebGL.toHtmlWith
+                [ WebGL.alpha True
+                , WebGL.antialias
+                , WebGL.depth 1
+                , WebGL.clearColor 1 1 1 1
+                ]
                 [ Attributes.width width, Attributes.height height ]
                 (Node.toEntities camera scene)
 
