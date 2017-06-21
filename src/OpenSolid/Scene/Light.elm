@@ -5,6 +5,7 @@ module OpenSolid.Scene.Light
         , ambient
         , directional
         , loadAmbientLookupTextureFrom
+        , point
         )
 
 import Math.Vector3 exposing (Vec3)
@@ -12,6 +13,7 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Scene.Types as Types
 import OpenSolid.WebGL.Direction3d as Direction3d
+import OpenSolid.WebGL.Point3d as Point3d
 import Task exposing (Task)
 import WebGL exposing (Texture)
 import WebGL.Texture
@@ -38,6 +40,14 @@ directional direction color =
     Types.DirectionalLight
         { color = color
         , direction = Direction3d.toVec3 (Direction3d.flip direction)
+        }
+
+
+point : Point3d -> Vec3 -> Light
+point position color =
+    Types.PointLight
+        { color = color
+        , position = Point3d.toVec3 position
         }
 
 

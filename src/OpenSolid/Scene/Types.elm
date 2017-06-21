@@ -16,6 +16,7 @@ type Geometry
 type Light
     = AmbientLight { color : Vec3, lookupTexture : WebGL.Texture }
     | DirectionalLight { color : Vec3, direction : Vec3 }
+    | PointLight { color : Vec3, position : Vec3 }
 
 
 type Material

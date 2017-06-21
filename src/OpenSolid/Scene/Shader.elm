@@ -148,24 +148,30 @@ vec3 fresnelColor(vec3 specularBaseColor, float dotVH) {
 }
 
 vec3 litColor(int lightType, vec3 lightColor, vec3 lightVector, float lightRadius, vec3 normalDirection, vec3 viewDirection, float dotNV, vec3 diffuseBaseColor, vec3 specularBaseColor, float alphaSquared) {
+    vec3 lightDirection = vec3(0.0, 0.0, 0.0);
     if (lightType == 1) {
         // Directional light
-        vec3 lightDirection = lightVector;
-        vec3 halfDirection = normalize(viewDirection + lightDirection);
-        float dotVH = clamp(dot(viewDirection, halfDirection), 0.0, 1.0);
-        float dotNH = clamp(dot(normalDirection, halfDirection), 0.0, 1.0);
-        float dotNL = clamp(dot(normalDirection, lightDirection), 0.0, 1.0);
-        float dotNHSquared = dotNH * dotNH;
-
-        float d = normalFactor(alphaSquared, dotNHSquared);
-        float g = geometryFactor(dotNL, dotNV);
-        vec3 f = fresnelColor(specularBaseColor, dotVH);
-        vec3 specularColor = (0.25 * d * g) * f;
-
-        return dotNL * (diffuseBaseColor + specularColor) * lightColor;
-    } else {
-        return vec3(0.0, 0.0, 0.0);
+        lightDirection = lightVector;
+    } else if (lightType == 2) {
+        // Point lightType
+        vec3 displacement = lightVector - position;
+        float distance = length(displacement);
+        lightDirection = displacement / distance;
+        lightColor = lightColor / (distance * distance);
     }
+
+    vec3 halfDirection = normalize(viewDirection + lightDirection);
+    float dotVH = clamp(dot(viewDirection, halfDirection), 0.0, 1.0);
+    float dotNH = clamp(dot(normalDirection, halfDirection), 0.0, 1.0);
+    float dotNL = clamp(dot(normalDirection, lightDirection), 0.0, 1.0);
+    float dotNHSquared = dotNH * dotNH;
+
+    float d = normalFactor(alphaSquared, dotNHSquared);
+    float g = geometryFactor(dotNL, dotNV);
+    vec3 f = fresnelColor(specularBaseColor, dotVH);
+    vec3 specularColor = (0.25 * d * g) * f;
+
+    return dotNL * (diffuseBaseColor + specularColor) * lightColor;
 }
 #endif
 

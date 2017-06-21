@@ -100,6 +100,19 @@ physicallyBasedLighting lights =
                         | lights = thisLight :: currentState.lights
                     }
 
+                Types.PointLight pointLight ->
+                    let
+                        thisLight =
+                            { lightType = 2
+                            , lightColor = pointLight.color
+                            , lightVector = pointLight.position
+                            , lightRadius = 0
+                            }
+                    in
+                    { currentState
+                        | lights = thisLight :: currentState.lights
+                    }
+
         initialLightingState =
             { ambientLightColor = Vector3.vec3 0 0 0
             , ambientLookupTexture = Nothing

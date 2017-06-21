@@ -132,6 +132,7 @@ view model =
                 lights =
                     [ Light.directional lightDirection (vec3 0 0.05 0.05)
                     , Light.directional Direction3d.negativeX (vec3 0.05 0 0)
+                    , Light.point (Point3d ( 0, -2, 3 )) (vec3 0.75 0.75 0.75)
                     ]
 
                 goldSphere =
