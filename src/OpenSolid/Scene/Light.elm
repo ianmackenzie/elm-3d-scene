@@ -28,7 +28,10 @@ type AmbientLookupTexture
 
 ambient : AmbientLookupTexture -> Color -> Light
 ambient (AmbientLookupTexture lookupTexture) color =
-    Types.AmbientLight lookupTexture (Color.toVec3 color)
+    Types.AmbientLight
+        { color = Color.toVec3 color
+        , lookupTexture = lookupTexture
+        }
 
 
 directional : Color -> Direction3d -> Light

@@ -161,7 +161,7 @@ toEntity camera modelFrame drawable =
                     lighting
             in
             case light of
-                Types.AmbientLight lookupTexture lightColor ->
+                Types.AmbientLight ambientLight ->
                     let
                         uniforms =
                             { modelMatrix = modelMatrix
@@ -170,8 +170,8 @@ toEntity camera modelFrame drawable =
                             , baseColor = baseColor
                             , roughness = roughness
                             , metallic = metallic
-                            , lightColor = lightColor
-                            , lookupTexture = lookupTexture
+                            , lightColor = ambientLight.color
+                            , lookupTexture = ambientLight.lookupTexture
                             , eyePoint = Point3d.toVec3 eyePoint
                             }
                     in
