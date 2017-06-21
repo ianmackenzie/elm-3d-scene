@@ -31,7 +31,7 @@ type Msg
 init : ( Model, Cmd Msg )
 init =
     ( { loadedTexture = Nothing }
-    , Task.attempt LoadComplete (Light.loadAmbientLookupTexture "lookup.png")
+    , Task.attempt LoadComplete (Light.loadAmbientLookupTextureFrom "lookup.png")
     )
 
 

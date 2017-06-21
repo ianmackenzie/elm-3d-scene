@@ -4,7 +4,7 @@ module OpenSolid.Scene.Light
         , Light
         , ambient
         , directional
-        , loadAmbientLookupTexture
+        , loadAmbientLookupTextureFrom
         )
 
 import Color exposing (Color)
@@ -42,8 +42,8 @@ directional color direction =
         }
 
 
-loadAmbientLookupTexture : String -> Task WebGL.Texture.Error AmbientLookupTexture
-loadAmbientLookupTexture url =
+loadAmbientLookupTextureFrom : String -> Task WebGL.Texture.Error AmbientLookupTexture
+loadAmbientLookupTextureFrom url =
     let
         options =
             { magnify = WebGL.Texture.linear
