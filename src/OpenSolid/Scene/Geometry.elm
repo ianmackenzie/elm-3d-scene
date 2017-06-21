@@ -2,11 +2,15 @@ module OpenSolid.Scene.Geometry
     exposing
         ( Geometry
         , indexedTriangles
+        , shaded
         , triangles
         )
 
 import OpenSolid.BoundingBox3d as BoundingBox3d
+import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Scene.Material exposing (Material)
+import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Types as Types
 import OpenSolid.Triangle3d as Triangle3d
 import OpenSolid.WebGL.Direction3d as Direction3d
@@ -17,6 +21,11 @@ import WebGL
 
 type alias Geometry =
     Types.Geometry
+
+
+shaded : Material -> Geometry -> Node
+shaded material geometry =
+    Types.LeafNode Frame3d.xyz (Types.ShadedGeometry material geometry)
 
 
 triangles : List Triangle3d -> Geometry

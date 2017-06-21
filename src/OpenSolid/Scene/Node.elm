@@ -1,43 +1,24 @@
 module OpenSolid.Scene.Node
     exposing
         ( Node
-        , colored
         , group
         , mirrorAcross
         , placeIn
         , relativeTo
         , rotateAround
-        , shaded
         , translateBy
         )
 
 import Color exposing (Color)
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Scene.Geometry exposing (Geometry)
 import OpenSolid.Scene.Material exposing (Material)
-import OpenSolid.Scene.SimpleGeometry exposing (SimpleGeometry)
 import OpenSolid.Scene.Types as Types
 import OpenSolid.WebGL.Color as Color
 
 
 type alias Node =
     Types.Node
-
-
-leaf : Types.Drawable -> Node
-leaf drawable =
-    Types.LeafNode Frame3d.xyz drawable
-
-
-colored : Color -> SimpleGeometry -> Node
-colored color geometry =
-    leaf (Types.ColoredGeometry (Color.toVec3 color) geometry)
-
-
-shaded : Material -> Geometry -> Node
-shaded material geometry =
-    leaf (Types.ShadedGeometry material geometry)
 
 
 group : List Node -> Node

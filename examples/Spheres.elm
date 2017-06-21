@@ -142,19 +142,19 @@ view model =
                     ]
 
                 goldSphere =
-                    Node.shaded gold unitSphere
+                    Geometry.shaded gold unitSphere
                         |> Node.translateBy (Vector3d ( 2, 2, 0 ))
 
                 aluminumSphere =
-                    Node.shaded aluminum unitSphere
+                    Geometry.shaded aluminum unitSphere
                         |> Node.translateBy (Vector3d ( 2, -2, 0 ))
 
                 copperSphere =
-                    Node.shaded copper unitSphere
+                    Geometry.shaded copper unitSphere
                         |> Node.translateBy (Vector3d ( -2, -2, 0 ))
 
                 chromiumSphere =
-                    Node.shaded chromium unitSphere
+                    Geometry.shaded chromium unitSphere
                         |> Node.translateBy (Vector3d ( -2, 2, 0 ))
 
                 scene =

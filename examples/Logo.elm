@@ -106,31 +106,31 @@ node =
 
         leftFace =
             SimpleGeometry.triangleFan [ p1, p2, p8, p7, p6 ]
-                |> Node.colored orange
+                |> SimpleGeometry.colored orange
 
         rightFace =
             SimpleGeometry.triangleFan [ p2, p3, p4, p9, p8 ]
-                |> Node.colored lightBlue
+                |> SimpleGeometry.colored lightBlue
 
         topFace =
             SimpleGeometry.triangleFan [ p6, p7, p9, p4, p5 ]
-                |> Node.colored green
+                |> SimpleGeometry.colored green
 
         triangleFace =
             SimpleGeometry.triangleFan [ p7, p8, p9 ]
-                |> Node.colored darkBlue
+                |> SimpleGeometry.colored darkBlue
 
         bottomFace =
             SimpleGeometry.triangleFan [ p0, p3, p2, p1 ]
-                |> Node.colored green
+                |> SimpleGeometry.colored green
 
         backLeftFace =
             SimpleGeometry.triangleFan [ p6, p5, p0, p1 ]
-                |> Node.colored lightBlue
+                |> SimpleGeometry.colored lightBlue
 
         backRightFace =
             SimpleGeometry.triangleFan [ p3, p0, p5, p4 ]
-                |> Node.colored orange
+                |> SimpleGeometry.colored orange
     in
     Node.group
         [ leftFace

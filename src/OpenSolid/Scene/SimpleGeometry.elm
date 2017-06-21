@@ -1,6 +1,7 @@
 module OpenSolid.Scene.SimpleGeometry
     exposing
         ( SimpleGeometry
+        , colored
         , indexedTriangles
         , lines
         , points
@@ -9,12 +10,16 @@ module OpenSolid.Scene.SimpleGeometry
         , triangles
         )
 
+import Color exposing (Color)
 import OpenSolid.BoundingBox3d as BoundingBox3d
+import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Polyline3d as Polyline3d
+import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Types as Types
 import OpenSolid.Triangle3d as Triangle3d
+import OpenSolid.WebGL.Color as Color
 import OpenSolid.WebGL.LineSegment3d as LineSegment3d
 import OpenSolid.WebGL.Point3d as Point3d
 import OpenSolid.WebGL.Polyline3d as Polyline3d
@@ -24,6 +29,11 @@ import WebGL
 
 type alias SimpleGeometry =
     Types.SimpleGeometry
+
+
+colored : Color -> SimpleGeometry -> Node
+colored color geometry =
+    Types.LeafNode Frame3d.xyz (Types.ColoredGeometry (Color.toVec3 color) geometry)
 
 
 triangles : List Triangle3d -> SimpleGeometry
