@@ -6,9 +6,9 @@ import Html.Attributes as Attributes
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
+import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light
-import OpenSolid.Scene.Lighting as Lighting
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
@@ -92,10 +92,6 @@ lightDirection =
     direction (degrees 30) (degrees 90)
 
 
-lightColor =
-    Color.rgb 42 42 42
-
-
 cameraFrame =
     Frame3d.lookAt
         { focalPoint = Point3d.origin
@@ -134,27 +130,31 @@ view model =
 
         Just (Ok lookupTexture) ->
             let
-                lighting =
-                    Lighting.singleLight (Light.directional lightColor lightDirection)
+                directionalColor =
+                    Color.rgb 0 12 12
+
+                ambientColor =
+                    Color.rgb 96 96 96
+
+                lights =
+                    [ Light.directional lightDirection directionalColor
+                    , Light.directional Direction3d.negativeX (Color.rgb 12 0 0)
+                    ]
 
                 goldSphere =
-                    unitSphere
-                        |> Node.shaded gold lighting
+                    Node.shaded gold unitSphere
                         |> Node.translateBy (Vector3d ( 2, 2, 0 ))
 
                 aluminumSphere =
-                    unitSphere
-                        |> Node.shaded aluminum lighting
+                    Node.shaded aluminum unitSphere
                         |> Node.translateBy (Vector3d ( 2, -2, 0 ))
 
                 copperSphere =
-                    unitSphere
-                        |> Node.shaded copper lighting
+                    Node.shaded copper unitSphere
                         |> Node.translateBy (Vector3d ( -2, -2, 0 ))
 
                 chromiumSphere =
-                    unitSphere
-                        |> Node.shaded chromium lighting
+                    Node.shaded chromium unitSphere
                         |> Node.translateBy (Vector3d ( -2, 2, 0 ))
 
                 scene =
@@ -172,7 +172,7 @@ view model =
                 , WebGL.clearColor 1 1 1 1
                 ]
                 [ Attributes.width width, Attributes.height height ]
-                (Node.toEntities camera scene)
+                (Scene.toEntities lights camera scene)
 
 
 main : Program Never Model Msg

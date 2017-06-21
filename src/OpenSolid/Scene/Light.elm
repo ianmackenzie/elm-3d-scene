@@ -34,8 +34,8 @@ ambient (AmbientLookupTexture lookupTexture) color =
         }
 
 
-directional : Color -> Direction3d -> Light
-directional color direction =
+directional : Direction3d -> Color -> Light
+directional direction color =
     Types.DirectionalLight
         { color = Color.toVec3 color
         , direction = Direction3d.toVec3 (Direction3d.flip direction)

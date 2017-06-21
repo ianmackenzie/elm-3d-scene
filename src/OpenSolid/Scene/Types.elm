@@ -1,22 +1,21 @@
 module OpenSolid.Scene.Types exposing (..)
 
-import Color exposing (Color)
 import Math.Vector3 exposing (Vec3)
 import OpenSolid.Geometry.Types exposing (..)
 import WebGL exposing (Texture)
 
 
-type Geometry a
-    = Geometry (Maybe BoundingBox3d) (WebGL.Mesh a)
+type SimpleGeometry
+    = SimpleGeometry (Maybe BoundingBox3d) (WebGL.Mesh { vertexPosition : Vec3 })
+
+
+type Geometry
+    = Geometry (Maybe BoundingBox3d) (WebGL.Mesh { vertexPosition : Vec3, vertexNormal : Vec3 })
 
 
 type Light
     = AmbientLight { color : Vec3, lookupTexture : WebGL.Texture }
     | DirectionalLight { color : Vec3, direction : Vec3 }
-
-
-type Lighting
-    = SingleLight Light
 
 
 type Material
@@ -28,8 +27,8 @@ type Material
 
 
 type Drawable
-    = ColoredGeometry Vec3 (Geometry { vertexPosition : Vec3 })
-    | ShadedGeometry Material Lighting (Geometry { vertexPosition : Vec3, vertexNormal : Vec3 })
+    = ColoredGeometry Vec3 SimpleGeometry
+    | ShadedGeometry Material Geometry
 
 
 type Node

@@ -4,7 +4,6 @@ import Math.Vector3 exposing (Vec3)
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
-import OpenSolid.Scene.Lighting as Lighting
 import OpenSolid.Scene.Material as Material
 import OpenSolid.Scene.Node as Node exposing (Node)
 

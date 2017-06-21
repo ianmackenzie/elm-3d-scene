@@ -9,7 +9,6 @@ module OpenSolid.Scene.SimpleGeometry
         , triangles
         )
 
-import Math.Vector3 exposing (Vec3)
 import OpenSolid.BoundingBox3d as BoundingBox3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
@@ -24,7 +23,7 @@ import WebGL
 
 
 type alias SimpleGeometry =
-    Types.Geometry { vertexPosition : Vec3 }
+    Types.SimpleGeometry
 
 
 triangles : List Triangle3d -> SimpleGeometry
@@ -36,7 +35,7 @@ triangles triangles_ =
         mesh =
             WebGL.triangles (List.map Triangle3d.vertexPositions triangles_)
     in
-    Types.Geometry boundingBox mesh
+    Types.SimpleGeometry boundingBox mesh
 
 
 indexedTriangles : List Point3d -> List ( Int, Int, Int ) -> SimpleGeometry
@@ -51,7 +50,7 @@ indexedTriangles vertices faces =
         mesh =
             WebGL.indexedTriangles vertexPositions faces
     in
-    Types.Geometry boundingBox mesh
+    Types.SimpleGeometry boundingBox mesh
 
 
 triangleFan : List Point3d -> SimpleGeometry
@@ -63,7 +62,7 @@ triangleFan points =
         mesh =
             WebGL.triangleFan (List.map Point3d.toVertexPosition points)
     in
-    Types.Geometry boundingBox mesh
+    Types.SimpleGeometry boundingBox mesh
 
 
 lines : List LineSegment3d -> SimpleGeometry
@@ -78,7 +77,7 @@ lines lineSegments =
         mesh =
             WebGL.lines (List.map LineSegment3d.vertexPositions lineSegments)
     in
-    Types.Geometry boundingBox mesh
+    Types.SimpleGeometry boundingBox mesh
 
 
 polyline : Polyline3d -> SimpleGeometry
@@ -90,7 +89,7 @@ polyline polyline_ =
         mesh =
             WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
     in
-    Types.Geometry boundingBox mesh
+    Types.SimpleGeometry boundingBox mesh
 
 
 points : List Point3d -> SimpleGeometry
@@ -102,4 +101,4 @@ points points_ =
         mesh =
             WebGL.points (List.map Point3d.toVertexPosition points_)
     in
-    Types.Geometry boundingBox mesh
+    Types.SimpleGeometry boundingBox mesh

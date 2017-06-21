@@ -5,7 +5,6 @@ module OpenSolid.Scene.Geometry
         , triangles
         )
 
-import Math.Vector3 exposing (Vec3)
 import OpenSolid.BoundingBox3d as BoundingBox3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Scene.Types as Types
@@ -17,7 +16,7 @@ import WebGL
 
 
 type alias Geometry =
-    Types.Geometry { vertexPosition : Vec3, vertexNormal : Vec3 }
+    Types.Geometry
 
 
 triangles : List Triangle3d -> Geometry
