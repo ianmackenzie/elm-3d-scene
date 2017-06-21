@@ -449,28 +449,19 @@ toEntity renderProperties modelFrame drawable =
 collectEntities : RenderProperties -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
 collectEntities renderProperties placementFrame node accumulated =
     case node of
-        Types.LeafNode frame drawable ->
-            let
-                modelFrame =
-                    Frame3d.placeIn placementFrame frame
+        Types.TransformedNode frame childNode ->
+            collectEntities renderProperties
+                (Frame3d.placeIn placementFrame frame)
+                childNode
+                accumulated
 
-                entity =
-                    toEntity renderProperties modelFrame drawable
-            in
-            entity :: accumulated
+        Types.LeafNode drawable ->
+            toEntity renderProperties placementFrame drawable :: accumulated
 
-        Types.GroupNode frame childNodes ->
-            let
-                localFrame =
-                    Frame3d.placeIn placementFrame frame
-
-                accumulate childNode accumulated =
-                    collectEntities renderProperties
-                        localFrame
-                        childNode
-                        accumulated
-            in
-            List.foldl accumulate accumulated childNodes
+        Types.GroupNode childNodes ->
+            List.foldl (collectEntities renderProperties placementFrame)
+                accumulated
+                childNodes
 
 
 toEntities : List Light -> Camera -> Node -> List WebGL.Entity

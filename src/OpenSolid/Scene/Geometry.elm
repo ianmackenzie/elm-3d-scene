@@ -25,7 +25,7 @@ type alias Geometry =
 
 shaded : Material -> Geometry -> Node
 shaded material geometry =
-    Types.LeafNode Frame3d.xyz (Types.ShadedGeometry material geometry)
+    Types.LeafNode (Types.ShadedGeometry material geometry)
 
 
 triangles : List Triangle3d -> Geometry

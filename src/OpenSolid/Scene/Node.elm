@@ -23,17 +23,17 @@ type alias Node =
 
 group : List Node -> Node
 group nodes =
-    Types.GroupNode Frame3d.xyz nodes
+    Types.GroupNode nodes
 
 
 transformBy : (Frame3d -> Frame3d) -> Node -> Node
 transformBy frameTransformation node =
     case node of
-        Types.LeafNode frame drawable ->
-            Types.LeafNode (frameTransformation frame) drawable
+        Types.TransformedNode frame node ->
+            Types.TransformedNode (frameTransformation frame) node
 
-        Types.GroupNode frame nodes ->
-            Types.GroupNode (frameTransformation frame) nodes
+        _ ->
+            Types.TransformedNode (frameTransformation Frame3d.xyz) node
 
 
 rotateAround : Axis3d -> Float -> Node -> Node

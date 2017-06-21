@@ -33,7 +33,7 @@ type alias SimpleGeometry =
 
 colored : Color -> SimpleGeometry -> Node
 colored color geometry =
-    Types.LeafNode Frame3d.xyz (Types.ColoredGeometry (Color.toVec3 color) geometry)
+    Types.LeafNode (Types.ColoredGeometry (Color.toVec3 color) geometry)
 
 
 triangles : List Triangle3d -> SimpleGeometry

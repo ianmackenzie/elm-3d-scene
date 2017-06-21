@@ -32,5 +32,6 @@ type Drawable
 
 
 type Node
-    = LeafNode Frame3d Drawable
-    | GroupNode Frame3d (List Node)
+    = LeafNode Drawable
+    | GroupNode (List Node)
+    | TransformedNode Frame3d Node
