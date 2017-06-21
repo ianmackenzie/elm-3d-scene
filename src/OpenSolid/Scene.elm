@@ -379,6 +379,7 @@ physicallyBasedRendererFor lights =
                     uniforms =
                         { modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , baseColor = material.baseColor
                         }
                 in
                 WebGL.entityWith settings Shader.vertex Shader.dummy mesh uniforms

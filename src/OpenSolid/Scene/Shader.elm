@@ -342,7 +342,7 @@ noAmbient4 =
     createShader { ambientLighting = False, numLights = 4 }
 
 
-dummy : WebGL.Shader {} a Varyings
+dummy : WebGL.Shader {} { a | baseColor : Vec3 } Varyings
 dummy =
     [glsl|
         precision mediump float;
@@ -350,7 +350,13 @@ dummy =
         varying vec3 position;
         varying vec3 normal;
 
+        uniform vec3 baseColor;
+
         void main() {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            // Apply gamma correction
+            float red = pow(baseColor.r, 0.45);
+            float green = pow(baseColor.g, 0.45);
+            float blue = pow(baseColor.b, 0.45);
+            gl_FragColor = vec4(red, green, blue, 1.0);
         }
     |]
