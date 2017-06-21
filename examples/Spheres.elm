@@ -127,12 +127,13 @@ view model =
         Just (Ok lookupTexture) ->
             let
                 lightDirection =
-                    direction (degrees 30) (degrees 90)
+                    direction (degrees 60) (degrees 120)
 
                 lights =
-                    [ Light.directional lightDirection (vec3 0 0.05 0.05)
-                    , Light.directional Direction3d.negativeX (vec3 0.05 0 0)
+                    [ Light.directional lightDirection (vec3 0 0.2 0.2)
+                    , Light.directional Direction3d.negativeX (vec3 0.2 0 0)
                     , Light.point (Point3d ( 0, -2, 3 )) (vec3 0.75 0.75 0.75)
+                    , Light.ambient lookupTexture (vec3 0.03 0.03 0.03)
                     ]
 
                 goldSphere =
@@ -143,20 +144,20 @@ view model =
                     Geometry.shaded aluminum unitSphere
                         |> Node.translateBy (Vector3d ( 2, -2, 0 ))
 
-                copperSphere =
-                    Geometry.shaded copper unitSphere
+                blackPlasticSphere =
+                    Geometry.shaded blackPlastic unitSphere
                         |> Node.translateBy (Vector3d ( -2, -2, 0 ))
 
-                chromiumSphere =
-                    Geometry.shaded chromium unitSphere
+                whitePlasticSphere =
+                    Geometry.shaded whitePlastic unitSphere
                         |> Node.translateBy (Vector3d ( -2, 2, 0 ))
 
                 scene =
                     Node.group
                         [ goldSphere
                         , aluminumSphere
-                        , copperSphere
-                        , chromiumSphere
+                        , blackPlasticSphere
+                        , whitePlasticSphere
                         ]
             in
             Scene.render lights camera scene
