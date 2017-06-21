@@ -11,6 +11,7 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point3d as Point3d
+import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
@@ -77,7 +78,7 @@ view angleInDegrees =
             Node.group [ topLogos, bottomLogos ]
 
         entities =
-            Node.toEntities camera scene
+            Scene.toEntities [] camera scene
 
         attributes =
             [ Attributes.width width, Attributes.height height ]

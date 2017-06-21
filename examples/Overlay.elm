@@ -13,6 +13,7 @@ import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Point3d as Point3d
+import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Svg as Svg
 import OpenSolid.WebGL.Camera as Camera
@@ -164,7 +165,7 @@ view { angleInDegrees, projectionType } =
                 ]
 
         entities =
-            Node.toEntities camera rotatedLogo
+            Scene.toEntities [] camera rotatedLogo
 
         attributes =
             [ Attributes.width width
