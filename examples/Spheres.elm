@@ -1,8 +1,8 @@
 module Spheres exposing (..)
 
-import Color exposing (Color)
 import Html exposing (Html)
 import Html.Attributes as Attributes
+import Math.Vector3 exposing (vec3)
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
@@ -52,32 +52,32 @@ unitSphere =
 
 gold : Material
 gold =
-    Material.metal { color = Color.rgb 255 195 85, roughness = 0.4 }
+    Material.metal { color = vec3 1 0.766 0.336, roughness = 0.4 }
 
 
 aluminum : Material
 aluminum =
-    Material.metal { color = Color.rgb 233 235 236, roughness = 0.6 }
+    Material.metal { color = vec3 0.913 0.921 0.925, roughness = 0.6 }
 
 
 copper : Material
 copper =
-    Material.metal { color = Color.rgb 244 162 137, roughness = 0.25 }
+    Material.metal { color = vec3 0.955 0.637 0.538, roughness = 0.25 }
 
 
 chromium : Material
 chromium =
-    Material.metal { color = Color.rgb 140 141 141, roughness = 0.25 }
+    Material.metal { color = vec3 0.55 0.556 0.554, roughness = 0.25 }
 
 
 blackPlastic : Material
 blackPlastic =
-    Material.nonmetal { color = Color.black, roughness = 0.25 }
+    Material.nonmetal { color = vec3 0 0 0, roughness = 0.25 }
 
 
 whitePlastic : Material
 whitePlastic =
-    Material.nonmetal { color = Color.white, roughness = 0.25 }
+    Material.nonmetal { color = vec3 1 1 1, roughness = 0.25 }
 
 
 direction phi theta =
@@ -86,10 +86,6 @@ direction phi theta =
         , -(sin phi * sin theta)
         , -(cos phi)
         )
-
-
-lightDirection =
-    direction (degrees 30) (degrees 90)
 
 
 cameraFrame =
@@ -130,15 +126,12 @@ view model =
 
         Just (Ok lookupTexture) ->
             let
-                directionalColor =
-                    Color.rgb 0 12 12
-
-                ambientColor =
-                    Color.rgb 96 96 96
+                lightDirection =
+                    direction (degrees 30) (degrees 90)
 
                 lights =
-                    [ Light.directional lightDirection directionalColor
-                    , Light.directional Direction3d.negativeX (Color.rgb 12 0 0)
+                    [ Light.directional lightDirection (vec3 0 0.05 0.05)
+                    , Light.directional Direction3d.negativeX (vec3 0.05 0 0)
                     ]
 
                 goldSphere =

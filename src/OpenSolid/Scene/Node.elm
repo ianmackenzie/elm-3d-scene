@@ -9,12 +9,10 @@ module OpenSolid.Scene.Node
         , translateBy
         )
 
-import Color exposing (Color)
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Scene.Material exposing (Material)
 import OpenSolid.Scene.Types as Types
-import OpenSolid.WebGL.Color as Color
 
 
 type alias Node =

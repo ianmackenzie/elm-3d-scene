@@ -7,11 +7,10 @@ module OpenSolid.Scene.Light
         , loadAmbientLookupTextureFrom
         )
 
-import Color exposing (Color)
+import Math.Vector3 exposing (Vec3)
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Scene.Types as Types
-import OpenSolid.WebGL.Color as Color
 import OpenSolid.WebGL.Direction3d as Direction3d
 import Task exposing (Task)
 import WebGL exposing (Texture)
@@ -26,18 +25,18 @@ type AmbientLookupTexture
     = AmbientLookupTexture WebGL.Texture
 
 
-ambient : AmbientLookupTexture -> Color -> Light
+ambient : AmbientLookupTexture -> Vec3 -> Light
 ambient (AmbientLookupTexture lookupTexture) color =
     Types.AmbientLight
-        { color = Color.toVec3 color
+        { color = color
         , lookupTexture = lookupTexture
         }
 
 
-directional : Direction3d -> Color -> Light
+directional : Direction3d -> Vec3 -> Light
 directional direction color =
     Types.DirectionalLight
-        { color = Color.toVec3 color
+        { color = color
         , direction = Direction3d.toVec3 (Direction3d.flip direction)
         }
 
