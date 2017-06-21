@@ -158,14 +158,7 @@ view model =
                         , chromiumSphere
                         ]
             in
-            WebGL.toHtmlWith
-                [ WebGL.alpha True
-                , WebGL.antialias
-                , WebGL.depth 1
-                , WebGL.clearColor 1 1 1 1
-                ]
-                [ Attributes.width width, Attributes.height height ]
-                (Scene.toEntities lights camera scene)
+            Scene.render lights camera scene
 
 
 main : Program Never Model Msg

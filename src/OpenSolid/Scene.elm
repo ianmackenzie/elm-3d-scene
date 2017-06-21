@@ -1,8 +1,11 @@
 module OpenSolid.Scene
     exposing
-        ( toEntities
+        ( render
+        , toEntities
         )
 
+import Html exposing (Html)
+import Html.Attributes
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
 import OpenSolid.Frame3d as Frame3d
@@ -478,3 +481,12 @@ toEntities lights camera rootNode =
             }
     in
     collectEntities renderProperties Frame3d.xyz rootNode []
+
+
+render : List Light -> Camera -> Node -> Html msg
+render lights camera rootNode =
+    WebGL.toHtml
+        [ Html.Attributes.width (round (Camera.screenWidth camera))
+        , Html.Attributes.height (round (Camera.screenHeight camera))
+        ]
+        (toEntities lights camera rootNode)

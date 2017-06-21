@@ -77,12 +77,6 @@ view angleInDegrees =
         scene =
             Node.group [ topLogos, bottomLogos ]
 
-        entities =
-            Scene.toEntities [] camera scene
-
-        attributes =
-            [ Attributes.width width, Attributes.height height ]
-
         sliderAttributes =
             [ Attributes.style [ ( "width", toString width ++ "px" ) ] ]
 
@@ -93,7 +87,7 @@ view angleInDegrees =
             }
     in
     Html.div []
-        [ Html.div [] [ WebGL.toHtml attributes entities ]
+        [ Html.div [] [ Scene.render [] camera scene ]
         , InputWidget.slider sliderAttributes sliderConfig angleInDegrees
         ]
 
