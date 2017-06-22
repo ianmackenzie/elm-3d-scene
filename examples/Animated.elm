@@ -17,7 +17,9 @@ import OpenSolid.Scene.SimpleGeometry as SimpleGeometry
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
 import Shapes
-import Time
+import Task
+import Time exposing (Time)
+import WebGL.Texture
 
 
 shape : Geometry -> Material -> ( Float, Float ) -> Node
@@ -39,7 +41,7 @@ box : Material -> ( Float, Float ) -> Node
 box =
     let
         geometry =
-            Shapes.box 2 2 2
+            Shapes.box 1.5 1.5 1.5
     in
     shape geometry
 
@@ -48,7 +50,7 @@ cylinder : Material -> ( Float, Float ) -> Node
 cylinder =
     let
         geometry =
-            Shapes.cylinder (Point3d ( 0, 0, -1 )) (Point3d ( 0, 0, 1 )) 1
+            Shapes.cylinder (Point3d ( 0, 0, -0.75 )) (Point3d ( 0, 0, 0.75 )) 1
     in
     shape geometry
 
@@ -56,15 +58,15 @@ cylinder =
 shapes : Node
 shapes =
     Node.group
-        [ sphere Materials.gold ( 4, -4 )
-        , cylinder Materials.whitePlastic ( 4, 0 )
-        , box Materials.copper ( 4, 4 )
-        , box Materials.chromium ( 0, -4 )
+        [ sphere Materials.gold ( 3, -3 )
+        , cylinder Materials.whitePlastic ( 3, 0 )
+        , sphere Materials.copper ( 3, 3 )
+        , box Materials.chromium ( 0, -3 )
         , sphere Materials.aluminum ( 0, 0 )
-        , cylinder Materials.gold ( 0, 4 )
-        , cylinder Materials.copper ( -4, -4 )
-        , box Materials.blackPlastic ( -4, 0 )
-        , sphere Materials.whitePlastic ( -4, 4 )
+        , cylinder Materials.gold ( 0, 3 )
+        , sphere Materials.copper ( -3, -3 )
+        , box Materials.blackPlastic ( -3, 0 )
+        , sphere Materials.whitePlastic ( -3, 3 )
         ]
 
 
@@ -72,7 +74,7 @@ camera =
     Camera.perspective
         { frame =
             Frame3d.lookAt
-                { eyePoint = Point3d ( 15, 15, 15 )
+                { eyePoint = Point3d ( 10, 10, 10 )
                 , focalPoint = Point3d.origin
                 , upDirection = Direction3d.positiveZ
                 }
@@ -103,18 +105,18 @@ type alias PointLight =
 
 pointLight1 : PointLight
 pointLight1 =
-    { startPoint = Point3d ( 2, 2, 0 )
-    , rotationAxis = Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees -45)
-    , color = vec3 0 0 2
+    { startPoint = Point3d ( 1.5, 1.5, 3 )
+    , rotationAxis = Axis3d.z
+    , color = vec3 0 2 10
     , rotationSpeed = degrees 188
     }
 
 
 pointLight2 : PointLight
 pointLight2 =
-    { startPoint = Point3d ( 2, -2, 0 )
+    { startPoint = Point3d ( 1.5, -1.5, 0 )
     , rotationAxis = Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
-    , color = vec3 2 0 0
+    , color = vec3 3 0 0
     , rotationSpeed = degrees 67
     }
 
@@ -131,64 +133,97 @@ pointLight2StartNode =
         |> SimpleGeometry.colored (gammaCorrected pointLight2.color)
 
 
-view : Float -> Html Float
-view time =
-    let
-        seconds =
-            Time.inSeconds time
+view : Model -> Html Msg
+view model =
+    case model.loadedTexture of
+        Nothing ->
+            Html.text "Loading texture..."
 
-        lightDirection1 =
-            Direction3d.negativeX
-                |> Direction3d.rotateAround Axis3d.z (seconds * degrees 111)
+        Just (Err _) ->
+            Html.text "Error loading texture"
 
-        lightDirection2 =
-            Direction3d.negativeY
-                |> Direction3d.rotateAround Axis3d.x (degrees 45)
-                |> Direction3d.rotateAround Axis3d.z (seconds * degrees 47)
+        Just (Ok lookupTexture) ->
+            let
+                seconds =
+                    Time.inSeconds model.time
 
-        lightPoint1 =
-            pointLight1.startPoint
-                |> Point3d.rotateAround pointLight1.rotationAxis
-                    (seconds * pointLight1.rotationSpeed)
+                lightDirection1 =
+                    Direction3d.negativeX
+                        |> Direction3d.rotateAround Axis3d.y (degrees -15)
+                        |> Direction3d.rotateAround Axis3d.z (seconds * degrees 111)
 
-        lightPoint2 =
-            pointLight2.startPoint
-                |> Point3d.rotateAround pointLight2.rotationAxis
-                    (seconds * pointLight2.rotationSpeed)
+                lightDirection2 =
+                    Direction3d.negativeY
+                        |> Direction3d.rotateAround Axis3d.x (degrees 45)
+                        |> Direction3d.rotateAround Axis3d.z (seconds * degrees 47)
 
-        lightNode1 =
-            pointLight1StartNode
-                |> Node.rotateAround pointLight1.rotationAxis
-                    (seconds * pointLight1.rotationSpeed)
+                lightPoint1 =
+                    pointLight1.startPoint
+                        |> Point3d.rotateAround pointLight1.rotationAxis
+                            (seconds * pointLight1.rotationSpeed)
 
-        lightNode2 =
-            pointLight2StartNode
-                |> Node.rotateAround pointLight2.rotationAxis
-                    (seconds * pointLight2.rotationSpeed)
+                lightPoint2 =
+                    pointLight2.startPoint
+                        |> Point3d.rotateAround pointLight2.rotationAxis
+                            (seconds * pointLight2.rotationSpeed)
 
-        lights =
-            [ Light.directional lightDirection1 (vec3 0 0.2 0.2)
-            , Light.directional lightDirection2 (vec3 0.2 0.2 0.2)
-            , Light.point lightPoint1 pointLight1.color
-            , Light.point lightPoint2 pointLight2.color
-            ]
+                lightNode1 =
+                    pointLight1StartNode
+                        |> Node.rotateAround pointLight1.rotationAxis
+                            (seconds * pointLight1.rotationSpeed)
 
-        scene =
-            Node.group [ shapes, lightNode1, lightNode2 ]
-    in
-    Scene.renderWith { devicePixelRatio = 2 } lights camera scene
+                lightNode2 =
+                    pointLight2StartNode
+                        |> Node.rotateAround pointLight2.rotationAxis
+                            (seconds * pointLight2.rotationSpeed)
+
+                lights =
+                    [ Light.directional lightDirection1 (vec3 0 0.2 0.2)
+                    , Light.directional lightDirection2 (vec3 0.3 0.3 0.3)
+                    , Light.point lightPoint1 pointLight1.color
+                    , Light.point lightPoint2 pointLight2.color
+                    , Light.ambient lookupTexture (vec3 0.01 0.01 0.01)
+                    ]
+
+                scene =
+                    Node.group [ shapes, lightNode1, lightNode2 ]
+            in
+            Scene.renderWith { devicePixelRatio = 2 } lights camera scene
 
 
-update : Float -> Float -> ( Float, Cmd Float )
-update time _ =
-    ( time, Cmd.none )
+type alias Model =
+    { loadedTexture : Maybe (Result WebGL.Texture.Error Light.AmbientLookupTexture)
+    , time : Time
+    }
 
 
-main : Program Never Float Float
+type Msg
+    = LoadComplete (Result WebGL.Texture.Error Light.AmbientLookupTexture)
+    | Tick Float
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { loadedTexture = Nothing, time = 0 }
+    , Task.attempt LoadComplete (Light.loadAmbientLookupTextureFrom "lookup.png")
+    )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update message model =
+    case message of
+        LoadComplete loadedTexture ->
+            ( { model | loadedTexture = Just loadedTexture }, Cmd.none )
+
+        Tick time ->
+            ( { model | time = time }, Cmd.none )
+
+
+main : Program Never Model Msg
 main =
     Html.program
-        { init = ( 0.0, Cmd.none )
-        , subscriptions = always (AnimationFrame.times identity)
+        { init = init
+        , subscriptions = always (AnimationFrame.times Tick)
         , update = update
         , view = view
         }
