@@ -2,6 +2,7 @@ module Spheres exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes as Attributes
+import Materials
 import Math.Vector3 exposing (vec3)
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Geometry.Types exposing (..)
@@ -9,7 +10,6 @@ import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light
-import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
