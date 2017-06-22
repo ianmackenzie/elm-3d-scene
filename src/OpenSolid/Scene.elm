@@ -1,6 +1,7 @@
 module OpenSolid.Scene
     exposing
         ( render
+        , renderWith
         , toEntities
         )
 
@@ -497,9 +498,25 @@ toEntities lights camera rootNode =
 
 
 render : List Light -> Camera -> Node -> Html msg
-render lights camera rootNode =
+render =
+    renderWith { devicePixelRatio = 1 }
+
+
+renderWith : { devicePixelRatio : Float } -> List Light -> Camera -> Node -> Html msg
+renderWith { devicePixelRatio } lights camera rootNode =
+    let
+        width =
+            Camera.screenWidth camera
+
+        height =
+            Camera.screenHeight camera
+    in
     WebGL.toHtml
-        [ Html.Attributes.width (round (Camera.screenWidth camera))
-        , Html.Attributes.height (round (Camera.screenHeight camera))
+        [ Html.Attributes.width (round (devicePixelRatio * width))
+        , Html.Attributes.height (round (devicePixelRatio * height))
+        , Html.Attributes.style
+            [ ( "width", toString width ++ "px" )
+            , ( "height", toString height ++ "px" )
+            ]
         ]
         (toEntities lights camera rootNode)
