@@ -160,7 +160,7 @@ view model =
                         , whitePlasticSphere
                         ]
             in
-            Scene.render lights camera scene
+            Scene.renderWith { devicePixelRatio = 2 } lights camera scene
 
 
 main : Program Never Model Msg
