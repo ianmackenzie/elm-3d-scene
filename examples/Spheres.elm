@@ -50,36 +50,6 @@ unitSphere =
     Shapes.sphere Point3d.origin 1.0
 
 
-gold : Material
-gold =
-    Material.metal { color = vec3 1 0.766 0.336, roughness = 0.4 }
-
-
-aluminum : Material
-aluminum =
-    Material.metal { color = vec3 0.913 0.921 0.925, roughness = 0.6 }
-
-
-copper : Material
-copper =
-    Material.metal { color = vec3 0.955 0.637 0.538, roughness = 0.25 }
-
-
-chromium : Material
-chromium =
-    Material.metal { color = vec3 0.55 0.556 0.554, roughness = 0.25 }
-
-
-blackPlastic : Material
-blackPlastic =
-    Material.nonmetal { color = vec3 0 0 0, roughness = 0.25 }
-
-
-whitePlastic : Material
-whitePlastic =
-    Material.nonmetal { color = vec3 1 1 1, roughness = 0.25 }
-
-
 direction phi theta =
     Direction3d
         ( -(sin phi * cos theta)
@@ -137,19 +107,19 @@ view model =
                     ]
 
                 goldSphere =
-                    Geometry.shaded gold unitSphere
+                    Geometry.shaded Materials.gold unitSphere
                         |> Node.translateBy (Vector3d ( 2, 2, 0 ))
 
                 aluminumSphere =
-                    Geometry.shaded aluminum unitSphere
+                    Geometry.shaded Materials.aluminum unitSphere
                         |> Node.translateBy (Vector3d ( 2, -2, 0 ))
 
                 blackPlasticSphere =
-                    Geometry.shaded blackPlastic unitSphere
+                    Geometry.shaded Materials.blackPlastic unitSphere
                         |> Node.translateBy (Vector3d ( -2, -2, 0 ))
 
                 whitePlasticSphere =
-                    Geometry.shaded whitePlastic unitSphere
+                    Geometry.shaded Materials.whitePlastic unitSphere
                         |> Node.translateBy (Vector3d ( -2, 2, 0 ))
 
                 scene =
