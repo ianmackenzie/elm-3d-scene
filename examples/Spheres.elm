@@ -13,7 +13,7 @@ import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
-import Sphere
+import Shapes
 import Task
 import WebGL
 import WebGL.Texture
@@ -47,7 +47,7 @@ subscriptions model =
 
 unitSphere : Geometry
 unitSphere =
-    Sphere.sphere Point3d.origin 1.0
+    Shapes.sphere Point3d.origin 1.0
 
 
 gold : Material
