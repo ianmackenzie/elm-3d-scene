@@ -10,7 +10,8 @@ type alias SimpleVertexAttributes =
 
 
 type SimpleGeometry
-    = SimpleGeometry (Maybe BoundingBox3d) (WebGL.Mesh SimpleVertexAttributes)
+    = SimpleGeometry BoundingBox3d (WebGL.Mesh SimpleVertexAttributes)
+    | EmptySimpleGeometry
 
 
 type alias VertexAttributes =
@@ -18,7 +19,8 @@ type alias VertexAttributes =
 
 
 type Geometry
-    = Geometry (Maybe BoundingBox3d) (WebGL.Mesh VertexAttributes)
+    = Geometry BoundingBox3d (WebGL.Mesh VertexAttributes)
+    | EmptyGeometry
 
 
 type Light
@@ -36,11 +38,12 @@ type Material
 
 
 type Drawable
-    = ColoredGeometry Vec3 SimpleGeometry
-    | ShadedGeometry Material Geometry
+    = ColoredGeometry Vec3 BoundingBox3d (WebGL.Mesh SimpleVertexAttributes)
+    | ShadedGeometry Material BoundingBox3d (WebGL.Mesh VertexAttributes)
 
 
 type Node
-    = LeafNode Drawable
+    = EmptyNode
+    | LeafNode Drawable
     | GroupNode (List Node)
     | TransformedNode Frame3d Node

@@ -429,11 +429,8 @@ toEntity renderProperties modelFrame drawable =
             ]
     in
     case drawable of
-        Types.ColoredGeometry color geometry ->
+        Types.ColoredGeometry color boundingBox mesh ->
             let
-                (Types.SimpleGeometry boundingBox mesh) =
-                    geometry
-
                 uniforms =
                     { modelMatrix = modelMatrix
                     , modelViewProjectionMatrix = modelViewProjectionMatrix
@@ -446,13 +443,10 @@ toEntity renderProperties modelFrame drawable =
                 mesh
                 uniforms
 
-        Types.ShadedGeometry material geometry ->
+        Types.ShadedGeometry material boundingBox mesh ->
             let
                 (Types.PhysicallyBasedMaterial materialProperties) =
                     material
-
-                (Types.Geometry boundingBox mesh) =
-                    geometry
             in
             renderProperties.physicallyBasedRenderer
                 settings
@@ -479,6 +473,9 @@ collectEntities renderProperties placementFrame node accumulated =
             List.foldl (collectEntities renderProperties placementFrame)
                 accumulated
                 childNodes
+
+        Types.EmptyNode ->
+            accumulated
 
 
 toEntities : List Light -> Camera -> Node -> List WebGL.Entity

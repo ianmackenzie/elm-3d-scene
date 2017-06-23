@@ -2,6 +2,7 @@ module OpenSolid.Scene.SimpleGeometry
     exposing
         ( SimpleGeometry
         , colored
+        , empty
         , indexedTriangles
         , lines
         , points
@@ -32,46 +33,63 @@ type alias SimpleGeometry =
 
 colored : Vec3 -> SimpleGeometry -> Node
 colored color geometry =
-    Types.LeafNode (Types.ColoredGeometry color geometry)
+    case geometry of
+        Types.SimpleGeometry boundingBox mesh ->
+            Types.LeafNode (Types.ColoredGeometry color boundingBox mesh)
+
+        Types.EmptySimpleGeometry ->
+            Types.EmptyNode
+
+
+empty : SimpleGeometry
+empty =
+    Types.EmptySimpleGeometry
 
 
 triangles : List Triangle3d -> SimpleGeometry
 triangles triangles_ =
-    let
-        boundingBox =
-            BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles_)
+    case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles_) of
+        Just boundingBox ->
+            let
+                mesh =
+                    WebGL.triangles
+                        (List.map Triangle3d.vertexPositions triangles_)
+            in
+            Types.SimpleGeometry boundingBox mesh
 
-        mesh =
-            WebGL.triangles (List.map Triangle3d.vertexPositions triangles_)
-    in
-    Types.SimpleGeometry boundingBox mesh
+        Nothing ->
+            Types.EmptySimpleGeometry
 
 
 indexedTriangles : List Point3d -> List ( Int, Int, Int ) -> SimpleGeometry
 indexedTriangles vertices faces =
-    let
-        boundingBox =
-            BoundingBox3d.containing vertices
+    case BoundingBox3d.containing vertices of
+        Just boundingBox ->
+            let
+                vertexPositions =
+                    List.map Point3d.toVertexPosition vertices
 
-        vertexPositions =
-            List.map Point3d.toVertexPosition vertices
+                mesh =
+                    WebGL.indexedTriangles vertexPositions faces
+            in
+            Types.SimpleGeometry boundingBox mesh
 
-        mesh =
-            WebGL.indexedTriangles vertexPositions faces
-    in
-    Types.SimpleGeometry boundingBox mesh
+        Nothing ->
+            Types.EmptySimpleGeometry
 
 
 triangleFan : List Point3d -> SimpleGeometry
 triangleFan points =
-    let
-        boundingBox =
-            BoundingBox3d.containing points
+    case BoundingBox3d.containing points of
+        Just boundingBox ->
+            let
+                mesh =
+                    WebGL.triangleFan (List.map Point3d.toVertexPosition points)
+            in
+            Types.SimpleGeometry boundingBox mesh
 
-        mesh =
-            WebGL.triangleFan (List.map Point3d.toVertexPosition points)
-    in
-    Types.SimpleGeometry boundingBox mesh
+        Nothing ->
+            Types.EmptySimpleGeometry
 
 
 lines : List LineSegment3d -> SimpleGeometry
@@ -79,35 +97,43 @@ lines lineSegments =
     let
         segmentBoundingBoxes =
             List.map LineSegment3d.boundingBox lineSegments
-
-        boundingBox =
-            BoundingBox3d.hullOf segmentBoundingBoxes
-
-        mesh =
-            WebGL.lines (List.map LineSegment3d.vertexPositions lineSegments)
     in
-    Types.SimpleGeometry boundingBox mesh
+    case BoundingBox3d.hullOf segmentBoundingBoxes of
+        Just boundingBox ->
+            let
+                mesh =
+                    WebGL.lines
+                        (List.map LineSegment3d.vertexPositions lineSegments)
+            in
+            Types.SimpleGeometry boundingBox mesh
+
+        Nothing ->
+            Types.EmptySimpleGeometry
 
 
 polyline : Polyline3d -> SimpleGeometry
 polyline polyline_ =
-    let
-        boundingBox =
-            Polyline3d.boundingBox polyline_
+    case Polyline3d.boundingBox polyline_ of
+        Just boundingBox ->
+            let
+                mesh =
+                    WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
+            in
+            Types.SimpleGeometry boundingBox mesh
 
-        mesh =
-            WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
-    in
-    Types.SimpleGeometry boundingBox mesh
+        Nothing ->
+            Types.EmptySimpleGeometry
 
 
 points : List Point3d -> SimpleGeometry
 points points_ =
-    let
-        boundingBox =
-            BoundingBox3d.containing points_
+    case BoundingBox3d.containing points_ of
+        Just boundingBox ->
+            let
+                mesh =
+                    WebGL.points (List.map Point3d.toVertexPosition points_)
+            in
+            Types.SimpleGeometry boundingBox mesh
 
-        mesh =
-            WebGL.points (List.map Point3d.toVertexPosition points_)
-    in
-    Types.SimpleGeometry boundingBox mesh
+        Nothing ->
+            Types.EmptySimpleGeometry

@@ -1,6 +1,7 @@
 module OpenSolid.Scene.Node
     exposing
         ( Node
+        , empty
         , group
         , mirrorAcross
         , placeIn
@@ -19,6 +20,11 @@ type alias Node =
     Types.Node
 
 
+empty : Node
+empty =
+    Types.EmptyNode
+
+
 group : List Node -> Node
 group nodes =
     Types.GroupNode nodes
@@ -30,7 +36,13 @@ transformBy frameTransformation node =
         Types.TransformedNode frame node ->
             Types.TransformedNode (frameTransformation frame) node
 
-        _ ->
+        Types.EmptyNode ->
+            Types.EmptyNode
+
+        Types.LeafNode drawable ->
+            Types.TransformedNode (frameTransformation Frame3d.xyz) node
+
+        Types.GroupNode childNodes ->
             Types.TransformedNode (frameTransformation Frame3d.xyz) node
 
 

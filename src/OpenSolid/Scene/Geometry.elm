@@ -1,6 +1,7 @@
 module OpenSolid.Scene.Geometry
     exposing
         ( Geometry
+        , empty
         , faces
         , facets
         , indexedFaces
@@ -26,20 +27,34 @@ type alias Geometry =
 
 shaded : Material -> Geometry -> Node
 shaded material geometry =
-    Types.LeafNode (Types.ShadedGeometry material geometry)
+    case geometry of
+        Types.Geometry boundingBox mesh ->
+            Types.LeafNode (Types.ShadedGeometry material boundingBox mesh)
+
+        Types.EmptyGeometry ->
+            Types.EmptyNode
+
+
+empty : Geometry
+empty =
+    Types.EmptyGeometry
 
 
 facets : List Triangle3d -> Geometry
 facets triangles =
-    let
-        boundingBox =
-            BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles)
+    case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles) of
+        Just boundingBox ->
+            let
+                attributes =
+                    List.map Triangle3d.vertexPositionsAndNormals triangles
 
-        mesh =
-            WebGL.triangles
-                (List.map Triangle3d.vertexPositionsAndNormals triangles)
-    in
-    Types.Geometry boundingBox mesh
+                mesh =
+                    WebGL.triangles attributes
+            in
+            Types.Geometry boundingBox mesh
+
+        Nothing ->
+            Types.EmptyGeometry
 
 
 type alias Vertex =
@@ -71,14 +86,16 @@ faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
 
 faces : List ( ( Point3d, Direction3d ), ( Point3d, Direction3d ), ( Point3d, Direction3d ) ) -> Geometry
 faces vertexTriples =
-    let
-        boundingBox =
-            BoundingBox3d.hullOf (List.map faceBoundingBox vertexTriples)
+    case BoundingBox3d.hullOf (List.map faceBoundingBox vertexTriples) of
+        Just boundingBox ->
+            let
+                mesh =
+                    WebGL.triangles (List.map faceAttributes vertexTriples)
+            in
+            Types.Geometry boundingBox mesh
 
-        mesh =
-            WebGL.triangles (List.map faceAttributes vertexTriples)
-    in
-    Types.Geometry boundingBox mesh
+        Nothing ->
+            Types.EmptyGeometry
 
 
 vertexAttributes : Vertex -> Types.VertexAttributes
@@ -93,14 +110,17 @@ indexedFaces vertices faces =
     let
         vertexPoints =
             List.map Tuple.first vertices
-
-        boundingBox =
-            BoundingBox3d.containing vertexPoints
-
-        attributes =
-            List.map vertexAttributes vertices
-
-        mesh =
-            WebGL.indexedTriangles attributes faces
     in
-    Types.Geometry boundingBox mesh
+    case BoundingBox3d.containing vertexPoints of
+        Just boundingBox ->
+            let
+                attributes =
+                    List.map vertexAttributes vertices
+
+                mesh =
+                    WebGL.indexedTriangles attributes faces
+            in
+            Types.Geometry boundingBox mesh
+
+        Nothing ->
+            Types.EmptyGeometry
