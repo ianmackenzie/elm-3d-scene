@@ -5,12 +5,20 @@ import OpenSolid.Geometry.Types exposing (..)
 import WebGL exposing (Texture)
 
 
+type alias SimpleVertexAttributes =
+    { vertexPosition : Vec3 }
+
+
 type SimpleGeometry
-    = SimpleGeometry (Maybe BoundingBox3d) (WebGL.Mesh { vertexPosition : Vec3 })
+    = SimpleGeometry (Maybe BoundingBox3d) (WebGL.Mesh SimpleVertexAttributes)
+
+
+type alias VertexAttributes =
+    { vertexPosition : Vec3, vertexNormal : Vec3 }
 
 
 type Geometry
-    = Geometry (Maybe BoundingBox3d) (WebGL.Mesh { vertexPosition : Vec3, vertexNormal : Vec3 })
+    = Geometry (Maybe BoundingBox3d) (WebGL.Mesh VertexAttributes)
 
 
 type Light

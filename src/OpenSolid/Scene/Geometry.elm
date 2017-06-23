@@ -1,9 +1,10 @@
 module OpenSolid.Scene.Geometry
     exposing
         ( Geometry
-        , indexedTriangles
+        , faces
+        , facets
+        , indexedFaces
         , shaded
-        , triangles
         )
 
 import OpenSolid.BoundingBox3d as BoundingBox3d
@@ -28,21 +29,67 @@ shaded material geometry =
     Types.LeafNode (Types.ShadedGeometry material geometry)
 
 
-triangles : List Triangle3d -> Geometry
-triangles triangles_ =
+facets : List Triangle3d -> Geometry
+facets triangles =
     let
         boundingBox =
-            BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles_)
+            BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles)
 
         mesh =
             WebGL.triangles
-                (List.map Triangle3d.vertexPositionsAndNormals triangles_)
+                (List.map Triangle3d.vertexPositionsAndNormals triangles)
     in
     Types.Geometry boundingBox mesh
 
 
-indexedTriangles : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry
-indexedTriangles vertices faces =
+type alias Vertex =
+    ( Point3d, Direction3d )
+
+
+type alias FaceVertices =
+    ( Vertex, Vertex, Vertex )
+
+
+faceBoundingBox : FaceVertices -> BoundingBox3d
+faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
+    Triangle3d.boundingBox (Triangle3d ( p1, p2, p3 ))
+
+
+faceAttributes : FaceVertices -> ( Types.VertexAttributes, Types.VertexAttributes, Types.VertexAttributes )
+faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
+    ( { vertexPosition = Point3d.toVec3 p1
+      , vertexNormal = Direction3d.toVec3 n1
+      }
+    , { vertexPosition = Point3d.toVec3 p2
+      , vertexNormal = Direction3d.toVec3 n2
+      }
+    , { vertexPosition = Point3d.toVec3 p3
+      , vertexNormal = Direction3d.toVec3 n3
+      }
+    )
+
+
+faces : List ( ( Point3d, Direction3d ), ( Point3d, Direction3d ), ( Point3d, Direction3d ) ) -> Geometry
+faces vertexTriples =
+    let
+        boundingBox =
+            BoundingBox3d.hullOf (List.map faceBoundingBox vertexTriples)
+
+        mesh =
+            WebGL.triangles (List.map faceAttributes vertexTriples)
+    in
+    Types.Geometry boundingBox mesh
+
+
+vertexAttributes : Vertex -> Types.VertexAttributes
+vertexAttributes ( point, normalDirection ) =
+    { vertexPosition = Point3d.toVec3 point
+    , vertexNormal = Direction3d.toVec3 normalDirection
+    }
+
+
+indexedFaces : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry
+indexedFaces vertices faces =
     let
         vertexPoints =
             List.map Tuple.first vertices
@@ -50,15 +97,10 @@ indexedTriangles vertices faces =
         boundingBox =
             BoundingBox3d.containing vertexPoints
 
-        toAttributes ( point, normalDirection ) =
-            { vertexPosition = Point3d.toVec3 point
-            , vertexNormal = Direction3d.toVec3 normalDirection
-            }
-
-        vertexAttributes =
-            List.map toAttributes vertices
+        attributes =
+            List.map vertexAttributes vertices
 
         mesh =
-            WebGL.indexedTriangles vertexAttributes faces
+            WebGL.indexedTriangles attributes faces
     in
     Types.Geometry boundingBox mesh

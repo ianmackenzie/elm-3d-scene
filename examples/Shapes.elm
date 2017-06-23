@@ -98,7 +98,7 @@ sphere centerPoint radius =
                     )
                 |> List.concat
     in
-    Geometry.indexedTriangles pointsAndNormals faces
+    Geometry.indexedFaces pointsAndNormals faces
 
 
 cylinder : Point3d -> Point3d -> Float -> Geometry
@@ -168,49 +168,32 @@ cylinder startPoint endPoint radius =
                         endNormal =
                             Direction3d ( cos endAngle, sin endAngle, 0.0 )
                                 |> Direction3d.placeIn frame
-
-                        vertices =
-                            [ ( p0, negativeZDirection )
-                            , ( p1, negativeZDirection )
-                            , ( p0, startNormal )
-                            , ( p1, endNormal )
-                            , ( p2, startNormal )
-                            , ( p3, endNormal )
-                            , ( p2, zDirection )
-                            , ( p3, zDirection )
-                            ]
-
-                        offset =
-                            8 * index + 2
-
-                        faces =
-                            [ ( 0, offset + 1, offset )
-                            , ( offset + 2, offset + 3, offset + 5 )
-                            , ( offset + 2, offset + 5, offset + 4 )
-                            , ( 1, offset + 6, offset + 7 )
-                            ]
                     in
-                    ( vertices, faces )
+                    [ ( ( startPoint, negativeZDirection )
+                      , ( p0, negativeZDirection )
+                      , ( p1, negativeZDirection )
+                      )
+                    , ( ( p0, startNormal )
+                      , ( p1, endNormal )
+                      , ( p3, endNormal )
+                      )
+                    , ( ( p0, startNormal )
+                      , ( p3, endNormal )
+                      , ( p2, startNormal )
+                      )
+                    , ( ( endPoint, zDirection )
+                      , ( p2, zDirection )
+                      , ( p3, zDirection )
+                      )
+                    ]
 
                 wedges =
-                    List.range 0 (subdivisions - 1)
-                        |> List.map wedge
-
-                ( vertices, faces ) =
-                    List.unzip wedges
-
-                startVertex =
-                    ( startPoint, negativeZDirection )
-
-                endVertex =
-                    ( endPoint, zDirection )
+                    List.range 0 (subdivisions - 1) |> List.map wedge
             in
-            Geometry.indexedTriangles
-                (startVertex :: endVertex :: List.concat vertices)
-                (List.concat faces)
+            Geometry.faces (List.concat wedges)
 
         Nothing ->
-            Geometry.triangles []
+            Geometry.faces []
 
 
 box : Float -> Float -> Float -> Geometry
@@ -240,7 +223,7 @@ box x y z =
         p7 =
             Point3d ( -x / 2, y / 2, z / 2 )
     in
-    Geometry.triangles
+    Geometry.facets
         [ Triangle3d ( p0, p2, p1 )
         , Triangle3d ( p0, p3, p2 )
         , Triangle3d ( p4, p5, p6 )
