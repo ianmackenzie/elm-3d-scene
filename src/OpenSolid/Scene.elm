@@ -1,6 +1,9 @@
 module OpenSolid.Scene
     exposing
-        ( render
+        ( RenderOption
+        , devicePixelRatio
+        , gammaCorrection
+        , render
         , renderWith
         , toEntities
         )
@@ -496,17 +499,62 @@ toEntities lights camera rootNode =
 
 render : List Light -> Camera -> Node -> Html msg
 render =
-    renderWith { devicePixelRatio = 1 }
+    renderWith []
 
 
-renderWith : { devicePixelRatio : Float } -> List Light -> Camera -> Node -> Html msg
-renderWith { devicePixelRatio } lights camera rootNode =
+type RenderOption
+    = DevicePixelRatio Float
+    | GammaCorrection (Maybe Float)
+
+
+devicePixelRatio : Float -> RenderOption
+devicePixelRatio =
+    DevicePixelRatio
+
+
+gammaCorrection : Maybe Float -> RenderOption
+gammaCorrection =
+    GammaCorrection
+
+
+type alias RenderOptions =
+    { devicePixelRatio : Float
+    , gammaCorrection : Maybe Float
+    }
+
+
+defaultRenderOptions : RenderOptions
+defaultRenderOptions =
+    { devicePixelRatio = 1
+    , gammaCorrection = Just 0.45
+    }
+
+
+collectRenderOptions : List RenderOption -> RenderOptions
+collectRenderOptions optionList =
+    let
+        addOption option currentOptions =
+            case option of
+                DevicePixelRatio value ->
+                    { currentOptions | devicePixelRatio = value }
+
+                GammaCorrection setting ->
+                    { currentOptions | gammaCorrection = setting }
+    in
+    List.foldl addOption defaultRenderOptions optionList
+
+
+renderWith : List RenderOption -> List Light -> Camera -> Node -> Html msg
+renderWith optionList lights camera rootNode =
     let
         width =
             Camera.screenWidth camera
 
         height =
             Camera.screenHeight camera
+
+        { devicePixelRatio, gammaCorrection } =
+            collectRenderOptions optionList
     in
     WebGL.toHtml
         [ Html.Attributes.width (round (devicePixelRatio * width))
