@@ -89,6 +89,8 @@ uniform float metallic;
 
 uniform vec3 eyePoint;
 
+uniform float gammaCorrection;
+
 #ifdef AMBIENT
 uniform vec3 ambientLightColor;
 uniform sampler2D ambientLookupTexture;
@@ -221,9 +223,9 @@ void main() {
 #endif
 
     // Apply gamma correction
-    float red = pow(linearColor.r, 0.45);
-    float green = pow(linearColor.g, 0.45);
-    float blue = pow(linearColor.b, 0.45);
+    float red = pow(linearColor.r, gammaCorrection);
+    float green = pow(linearColor.g, gammaCorrection);
+    float blue = pow(linearColor.b, gammaCorrection);
     gl_FragColor = vec4(red, green, blue, 1.0);
 }
 """
@@ -253,6 +255,7 @@ type alias BaseUniforms a =
         , baseColor : Vec3
         , roughness : Float
         , metallic : Float
+        , gammaCorrection : Float
     }
 
 
@@ -347,7 +350,7 @@ noAmbient4 =
     createShader { ambientLighting = False, numLights = 4 }
 
 
-dummy : WebGL.Shader {} { a | baseColor : Vec3 } Varyings
+dummy : WebGL.Shader {} { a | baseColor : Vec3, gammaCorrection : Float } Varyings
 dummy =
     [glsl|
         precision mediump float;
@@ -357,11 +360,13 @@ dummy =
 
         uniform vec3 baseColor;
 
+        uniform float gammaCorrection;
+
         void main() {
             // Apply gamma correction
-            float red = pow(baseColor.r, 0.45);
-            float green = pow(baseColor.g, 0.45);
-            float blue = pow(baseColor.b, 0.45);
+            float red = pow(baseColor.r, gammaCorrection);
+            float green = pow(baseColor.g, gammaCorrection);
+            float blue = pow(baseColor.b, gammaCorrection);
             gl_FragColor = vec4(red, green, blue, 1.0);
         }
     |]

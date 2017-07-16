@@ -187,8 +187,13 @@ view model =
 
                 scene =
                     Node.group [ shapes, lightNode1, lightNode2 ]
+
+                renderOptions =
+                    [ Scene.devicePixelRatio 2
+                    , Scene.gammaCorrection 0.45
+                    ]
             in
-            Scene.renderWith [ Scene.devicePixelRatio 2 ] lights camera scene
+            Scene.renderWith renderOptions lights camera scene
 
 
 type alias Model =
