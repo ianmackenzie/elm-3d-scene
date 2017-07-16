@@ -247,13 +247,12 @@ createShader { ambientLighting, numLights } =
     WebGL.unsafeShader (definitions ++ "\n" ++ shaderSource)
 
 
-type alias BaseUniforms =
-    { modelMatrix : Mat4
-    , modelViewProjectionMatrix : Mat4
-    , eyePoint : Vec3
-    , baseColor : Vec3
-    , roughness : Float
-    , metallic : Float
+type alias BaseUniforms a =
+    { a
+        | eyePoint : Vec3
+        , baseColor : Vec3
+        , roughness : Float
+        , metallic : Float
     }
 
 
@@ -303,47 +302,47 @@ type alias Light4Uniforms a =
         }
 
 
-ambientOnly : WebGL.Shader {} (AmbientUniforms BaseUniforms) Varyings
+ambientOnly : WebGL.Shader {} (AmbientUniforms (BaseUniforms a)) Varyings
 ambientOnly =
     createShader { ambientLighting = True, numLights = 0 }
 
 
-ambient1 : WebGL.Shader {} (AmbientUniforms (Light1Uniforms BaseUniforms)) Varyings
+ambient1 : WebGL.Shader {} (AmbientUniforms (Light1Uniforms (BaseUniforms a))) Varyings
 ambient1 =
     createShader { ambientLighting = True, numLights = 1 }
 
 
-ambient2 : WebGL.Shader {} (AmbientUniforms (Light2Uniforms BaseUniforms)) Varyings
+ambient2 : WebGL.Shader {} (AmbientUniforms (Light2Uniforms (BaseUniforms a))) Varyings
 ambient2 =
     createShader { ambientLighting = True, numLights = 2 }
 
 
-ambient3 : WebGL.Shader {} (AmbientUniforms (Light3Uniforms BaseUniforms)) Varyings
+ambient3 : WebGL.Shader {} (AmbientUniforms (Light3Uniforms (BaseUniforms a))) Varyings
 ambient3 =
     createShader { ambientLighting = True, numLights = 3 }
 
 
-ambient4 : WebGL.Shader {} (AmbientUniforms (Light4Uniforms BaseUniforms)) Varyings
+ambient4 : WebGL.Shader {} (AmbientUniforms (Light4Uniforms (BaseUniforms a))) Varyings
 ambient4 =
     createShader { ambientLighting = True, numLights = 4 }
 
 
-noAmbient1 : WebGL.Shader {} (Light1Uniforms BaseUniforms) Varyings
+noAmbient1 : WebGL.Shader {} (Light1Uniforms (BaseUniforms a)) Varyings
 noAmbient1 =
     createShader { ambientLighting = False, numLights = 1 }
 
 
-noAmbient2 : WebGL.Shader {} (Light2Uniforms BaseUniforms) Varyings
+noAmbient2 : WebGL.Shader {} (Light2Uniforms (BaseUniforms a)) Varyings
 noAmbient2 =
     createShader { ambientLighting = False, numLights = 2 }
 
 
-noAmbient3 : WebGL.Shader {} (Light3Uniforms BaseUniforms) Varyings
+noAmbient3 : WebGL.Shader {} (Light3Uniforms (BaseUniforms a)) Varyings
 noAmbient3 =
     createShader { ambientLighting = False, numLights = 3 }
 
 
-noAmbient4 : WebGL.Shader {} (Light4Uniforms BaseUniforms) Varyings
+noAmbient4 : WebGL.Shader {} (Light4Uniforms (BaseUniforms a)) Varyings
 noAmbient4 =
     createShader { ambientLighting = False, numLights = 4 }
 
