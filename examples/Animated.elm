@@ -16,6 +16,7 @@ import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Frame3d as Frame3d
+import PointLight exposing (PointLight(..))
 import Shapes
 import Task
 import Time exposing (Time)
@@ -55,150 +56,192 @@ cylinder =
     shape geometry
 
 
-shapes : Node
-shapes =
-    Node.group
-        [ sphere Materials.gold ( 3, -3 )
-        , cylinder Materials.whitePlastic ( 3, 0 )
-        , sphere Materials.copper ( 3, 3 )
-        , box Materials.chromium ( 0, -3 )
-        , sphere Materials.aluminum ( 0, 0 )
-        , cylinder Materials.gold ( 0, 3 )
-        , sphere Materials.copper ( -3, -3 )
-        , box Materials.blackPlastic ( -3, 0 )
-        , sphere Materials.whitePlastic ( -3, 3 )
-        ]
-
-
-camera : Camera
-camera =
-    Camera.perspective
-        { frame =
-            Frame3d.lookAt
-                { eyePoint = Point3d ( 10, 10, 10 )
-                , focalPoint = Point3d.origin
-                , upDirection = Direction3d.positiveZ
-                }
-        , screenWidth = 1024
-        , screenHeight = 768
-        , verticalFov = degrees 30
-        , zNear = 0.1
-        , zFar = 100
-        }
-
-
-type alias PointLight =
-    { startPoint : Point3d
-    , rotationAxis : Axis3d
-    , color : Vec3
-    , rotationSpeed : Float
-    }
-
-
-pointLight1 : PointLight
-pointLight1 =
-    { startPoint = Point3d ( 1.5, 1.5, 3 )
-    , rotationAxis = Axis3d.z
-    , color = vec3 0 2 10
-    , rotationSpeed = degrees 125
-    }
-
-
-pointLight2 : PointLight
-pointLight2 =
-    { startPoint = Point3d ( 1.5, -1.5, 0 )
-    , rotationAxis = Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
-    , color = vec3 3 0 0
-    , rotationSpeed = degrees 67
-    }
-
-
-pointLightRadius : Float
-pointLightRadius =
-    0.05
-
-
-pointLightColorScale : Float
-pointLightColorScale =
-    1.0 / (pointLightRadius * pointLightRadius)
-
-
-pointLightGeometry : Geometry
-pointLightGeometry =
-    Shapes.sphere Point3d.origin pointLightRadius
-
-
 view : Model -> Html Msg
-view model =
-    case model.loadedTexture of
-        Nothing ->
-            Html.text "Loading texture..."
+view =
+    let
+        camera =
+            Camera.perspective
+                { frame =
+                    Frame3d.lookAt
+                        { eyePoint = Point3d ( 10, 10, 10 )
+                        , focalPoint = Point3d.origin
+                        , upDirection = Direction3d.positiveZ
+                        }
+                , screenWidth = 1024
+                , screenHeight = 768
+                , verticalFov = degrees 30
+                , zNear = 0.1
+                , zFar = 100
+                }
 
-        Just (Err _) ->
-            Html.text "Error loading texture"
+        shapes =
+            Node.group
+                [ sphere Materials.gold ( 3, -3 )
+                , cylinder Materials.whitePlastic ( 3, 0 )
+                , sphere Materials.copper ( 3, 3 )
+                , box Materials.chromium ( 0, -3 )
+                , sphere Materials.aluminum ( 0, 0 )
+                , cylinder Materials.gold ( 0, 3 )
+                , sphere Materials.copper ( -3, -3 )
+                , box Materials.blackPlastic ( -3, 0 )
+                , sphere Materials.whitePlastic ( -3, 3 )
+                ]
 
-        Just (Ok lookupTexture) ->
-            let
-                seconds =
-                    Time.inSeconds model.time
+        pointLight1StartPoint =
+            Point3d ( 1.5, 1.5, 3 )
 
-                lightDirection1 =
-                    Direction3d.negativeX
-                        |> Direction3d.rotateAround Axis3d.y (degrees -15)
-                        |> Direction3d.rotateAround Axis3d.z (seconds * degrees 111)
+        pointLight1RotationAxis =
+            Axis3d.z
 
-                lightDirection2 =
-                    Direction3d.negativeY
-                        |> Direction3d.rotateAround Axis3d.x (degrees 45)
-                        |> Direction3d.rotateAround Axis3d.z (seconds * degrees 47)
+        pointLight1Color =
+            vec3 0 2 10
 
-                lightPoint pointLight =
-                    pointLight.startPoint
-                        |> Point3d.rotateAround pointLight.rotationAxis
-                            (seconds * pointLight.rotationSpeed)
+        pointLight2StartPoint =
+            Point3d ( 1.5, -1.5, 0 )
 
-                lightPoint1 =
-                    lightPoint pointLight1
+        pointLight2RotationAxis =
+            Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
 
-                lightPoint2 =
-                    lightPoint pointLight2
+        pointLight2Color =
+            vec3 3 0 0
 
-                lightNode point color =
-                    let
-                        scaledColor =
-                            Vector3.scale pointLightColorScale color
-                    in
-                    pointLightGeometry
-                        |> Geometry.shaded (Material.emissive scaledColor)
-                        |> Node.placeIn (Frame3d.at point)
+        pointLightRadius =
+            0.05
 
-                lightNode1 =
-                    lightNode lightPoint1 pointLight1.color
+        directionalLight1StartDirection =
+            Direction3d.negativeX
+                |> Direction3d.rotateAround Axis3d.y (degrees -15)
 
-                lightNode2 =
-                    lightNode lightPoint2 pointLight2.color
+        directionalLight1Color =
+            vec3 0 0.1 0.02
 
-                lights =
-                    [ Light.directional lightDirection1 (vec3 0 0.1 0.02)
-                    , Light.directional lightDirection2 (vec3 0.3 0.3 0.3)
-                    , Light.point lightPoint1 pointLight1.color
-                    , Light.point lightPoint2 pointLight2.color
-                    , Light.ambient lookupTexture (vec3 0.01 0.01 0.01)
-                    , Light.point (Point3d ( 8, 8, 5 )) (vec3 5 5 5)
-                    , Light.point (Point3d ( 8, -8, 5 )) (vec3 5 5 5)
-                    , Light.point (Point3d ( -8, 8, 5 )) (vec3 5 5 5)
-                    , Light.point (Point3d ( -8, -8, 5 )) (vec3 5 5 5)
-                    ]
+        directionalLight2StartDirection =
+            Direction3d.negativeY
+                |> Direction3d.rotateAround Axis3d.x (degrees 45)
 
-                scene =
-                    Node.group [ shapes, lightNode1, lightNode2 ]
+        directionalLight2Color =
+            vec3 0.3 0.3 0.3
 
-                renderOptions =
-                    [ Scene.devicePixelRatio 2
-                    , Scene.gammaCorrection 0.45
-                    ]
-            in
-            Scene.renderWith renderOptions lights camera scene
+        ambientLightColor =
+            vec3 0.01 0.01 0.01
+
+        overheadLight1Point =
+            Point3d ( 8, 8, 5 )
+
+        overheadLight2Point =
+            Point3d ( 8, -8, 5 )
+
+        overheadLight3Point =
+            Point3d ( -8, 8, 5 )
+
+        overheadLight4Point =
+            Point3d ( -8, -8, 5 )
+
+        overheadLightColor =
+            vec3 5 5 5
+    in
+    \model ->
+        case model.loadedTexture of
+            Nothing ->
+                Html.text "Loading texture..."
+
+            Just (Err _) ->
+                Html.text "Error loading texture"
+
+            Just (Ok lookupTexture) ->
+                let
+                    seconds =
+                        Time.inSeconds model.time
+
+                    lightDirection1 =
+                        directionalLight1StartDirection
+                            |> Direction3d.rotateAround Axis3d.z
+                                (seconds * degrees 111)
+
+                    lightDirection2 =
+                        directionalLight2StartDirection
+                            |> Direction3d.rotateAround Axis3d.z
+                                (seconds * degrees 47)
+
+                    lightPoint1 =
+                        pointLight1StartPoint
+                            |> Point3d.rotateAround pointLight1RotationAxis
+                                (seconds * degrees 67)
+
+                    lightPoint2 =
+                        pointLight2StartPoint
+                            |> Point3d.rotateAround pointLight2RotationAxis
+                                (seconds * degrees 67)
+
+                    pointLight1 =
+                        PointLight
+                            { position = lightPoint1
+                            , radius = pointLightRadius
+                            , color = pointLight1Color
+                            }
+
+                    pointLight2 =
+                        PointLight
+                            { position = lightPoint2
+                            , radius = pointLightRadius
+                            , color = pointLight2Color
+                            }
+
+                    overheadLight1 =
+                        PointLight
+                            { position = overheadLight1Point
+                            , radius = pointLightRadius
+                            , color = overheadLightColor
+                            }
+
+                    overheadLight2 =
+                        PointLight
+                            { position = overheadLight2Point
+                            , radius = pointLightRadius
+                            , color = overheadLightColor
+                            }
+
+                    overheadLight3 =
+                        PointLight
+                            { position = overheadLight3Point
+                            , radius = pointLightRadius
+                            , color = overheadLightColor
+                            }
+
+                    overheadLight4 =
+                        PointLight
+                            { position = overheadLight4Point
+                            , radius = pointLightRadius
+                            , color = overheadLightColor
+                            }
+
+                    lights =
+                        [ Light.ambient lookupTexture ambientLightColor
+                        , Light.directional lightDirection1
+                            directionalLight1Color
+                        , Light.directional lightDirection2
+                            directionalLight2Color
+                        , PointLight.light pointLight1
+                        , PointLight.light pointLight2
+                        , PointLight.light overheadLight1
+                        , PointLight.light overheadLight2
+                        , PointLight.light overheadLight3
+                        , PointLight.light overheadLight4
+                        ]
+
+                    scene =
+                        Node.group
+                            [ shapes
+                            , PointLight.node pointLight1
+                            , PointLight.node pointLight2
+                            ]
+
+                    renderOptions =
+                        [ Scene.devicePixelRatio 2
+                        , Scene.gammaCorrection 0.45
+                        ]
+                in
+                Scene.renderWith renderOptions lights camera scene
 
 
 type alias Model =
