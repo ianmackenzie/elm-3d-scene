@@ -5,14 +5,16 @@ module OpenSolid.Scene.Node
         , group
         , mirrorAcross
         , placeIn
+        , projectOnto
         , relativeTo
         , rotateAround
+        , scaleAbout
         , translateBy
         )
 
-import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Scene.Material exposing (Material)
+import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Types as Types
 
 
@@ -30,42 +32,55 @@ group nodes =
     Types.GroupNode nodes
 
 
-transformBy : (Frame3d -> Frame3d) -> Node -> Node
-transformBy frameTransformation node =
+transformBy : (Placement -> Placement) -> Node -> Node
+transformBy placementTransformation node =
     case node of
-        Types.TransformedNode frame node ->
-            Types.TransformedNode (frameTransformation frame) node
+        Types.TransformedNode placement node ->
+            Types.TransformedNode (placementTransformation placement)
+                node
 
         Types.EmptyNode ->
             Types.EmptyNode
 
         Types.LeafNode drawable ->
-            Types.TransformedNode (frameTransformation Frame3d.xyz) node
+            Types.TransformedNode (placementTransformation Placement.identity)
+                node
 
         Types.GroupNode childNodes ->
-            Types.TransformedNode (frameTransformation Frame3d.xyz) node
+            Types.TransformedNode (placementTransformation Placement.identity)
+                node
 
 
 rotateAround : Axis3d -> Float -> Node -> Node
 rotateAround axis angle node =
-    transformBy (Frame3d.rotateAround axis angle) node
+    transformBy (Placement.rotateAround axis angle) node
 
 
 translateBy : Vector3d -> Node -> Node
 translateBy displacement node =
-    transformBy (Frame3d.translateBy displacement) node
+    transformBy (Placement.translateBy displacement) node
 
 
 mirrorAcross : Plane3d -> Node -> Node
 mirrorAcross plane node =
-    transformBy (Frame3d.mirrorAcross plane) node
+    transformBy (Placement.mirrorAcross plane) node
 
 
 relativeTo : Frame3d -> Node -> Node
 relativeTo frame node =
-    transformBy (Frame3d.relativeTo frame) node
+    transformBy (Placement.relativeTo frame) node
 
 
 placeIn : Frame3d -> Node -> Node
 placeIn frame node =
-    transformBy (Frame3d.placeIn frame) node
+    transformBy (Placement.placeIn frame) node
+
+
+projectOnto : Plane3d -> Node -> Node
+projectOnto plane node =
+    transformBy (Placement.projectOnto plane) node
+
+
+scaleAbout : Point3d -> Float -> Node -> Node
+scaleAbout point scale node =
+    transformBy (Placement.scaleAbout point scale) node

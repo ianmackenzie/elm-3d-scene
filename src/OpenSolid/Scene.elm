@@ -17,6 +17,7 @@ import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Scene.Light exposing (Light)
 import OpenSolid.Scene.Node exposing (Node)
+import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Shader as Shader
 import OpenSolid.Scene.Types as Types
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
@@ -786,14 +787,15 @@ physicallyBasedRendererFor lights =
                 WebGL.entityWith settings Shader.vertex Shader.dummy mesh uniforms
 
 
-toEntity : RenderProperties -> Frame3d -> Types.Drawable -> WebGL.Entity
-toEntity renderProperties modelFrame drawable =
+toEntity : RenderProperties -> Placement -> Types.Drawable -> WebGL.Entity
+toEntity renderProperties placement drawable =
     let
         modelMatrix =
-            Frame3d.modelMatrix modelFrame
+            Placement.toMatrix placement
 
         modelViewMatrix =
-            Frame3d.modelViewMatrix renderProperties.cameraFrame modelFrame
+            Placement.toMatrix
+                (Placement.relativeTo renderProperties.cameraFrame placement)
 
         projectionMatrix =
             renderProperties.projectionMatrix
@@ -802,7 +804,7 @@ toEntity renderProperties modelFrame drawable =
             Math.Matrix4.mul projectionMatrix modelViewMatrix
 
         cullSetting =
-            if Frame3d.isRightHanded modelFrame then
+            if Placement.isRightHanded placement then
                 WebGL.Settings.back
             else
                 WebGL.Settings.front
@@ -866,20 +868,20 @@ toEntity renderProperties modelFrame drawable =
                         uniforms
 
 
-collectEntities : RenderProperties -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity
-collectEntities renderProperties placementFrame node accumulated =
+collectEntities : RenderProperties -> Placement -> Node -> List WebGL.Entity -> List WebGL.Entity
+collectEntities renderProperties currentPlacement node accumulated =
     case node of
-        Types.TransformedNode frame childNode ->
+        Types.TransformedNode placement childNode ->
             collectEntities renderProperties
-                (Frame3d.placeIn placementFrame frame)
+                (Placement.compose placement currentPlacement)
                 childNode
                 accumulated
 
         Types.LeafNode drawable ->
-            toEntity renderProperties placementFrame drawable :: accumulated
+            toEntity renderProperties currentPlacement drawable :: accumulated
 
         Types.GroupNode childNodes ->
-            List.foldl (collectEntities renderProperties placementFrame)
+            List.foldl (collectEntities renderProperties currentPlacement)
                 accumulated
                 childNodes
 
@@ -906,7 +908,7 @@ toEntitiesWith options lights camera rootNode =
             , gammaCorrection = getGammaCorrection options
             }
     in
-    collectEntities renderProperties Frame3d.xyz rootNode []
+    collectEntities renderProperties Placement.identity rootNode []
 
 
 render : List Light -> Camera -> Node -> Html msg

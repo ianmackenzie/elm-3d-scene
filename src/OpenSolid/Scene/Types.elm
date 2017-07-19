@@ -43,8 +43,18 @@ type Drawable
     | ShadedGeometry Material BoundingBox3d (WebGL.Mesh VertexAttributes)
 
 
+type Placement
+    = Placement
+        { originPoint : Point3d
+        , xVector : Vector3d
+        , yVector : Vector3d
+        , zVector : Vector3d
+        , isRightHanded : Bool
+        }
+
+
 type Node
     = EmptyNode
     | LeafNode Drawable
     | GroupNode (List Node)
-    | TransformedNode Frame3d Node
+    | TransformedNode Placement Node
