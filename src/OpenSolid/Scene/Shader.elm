@@ -141,6 +141,34 @@ uniform vec3 lightVector4;
 uniform float lightRadius4;
 #endif
 
+#ifdef LIGHT5
+uniform int lightType5;
+uniform vec3 lightColor5;
+uniform vec3 lightVector5;
+uniform float lightRadius5;
+#endif
+
+#ifdef LIGHT6
+uniform int lightType6;
+uniform vec3 lightColor6;
+uniform vec3 lightVector6;
+uniform float lightRadius6;
+#endif
+
+#ifdef LIGHT7
+uniform int lightType7;
+uniform vec3 lightColor7;
+uniform vec3 lightVector7;
+uniform float lightRadius7;
+#endif
+
+#ifdef LIGHT8
+uniform int lightType8;
+uniform vec3 lightColor8;
+uniform vec3 lightVector8;
+uniform float lightRadius8;
+#endif
+
 varying vec3 position;
 varying vec3 normal;
 
@@ -239,6 +267,22 @@ void main() {
     linearColor += litColor(lightType4, lightColor4, lightVector4, lightRadius4, normalDirection, viewDirection, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
 #endif
 
+#ifdef LIGHT5
+    linearColor += litColor(lightType5, lightColor5, lightVector5, lightRadius5, normalDirection, viewDirection, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
+#endif
+
+#ifdef LIGHT6
+    linearColor += litColor(lightType6, lightColor6, lightVector6, lightRadius6, normalDirection, viewDirection, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
+#endif
+
+#ifdef LIGHT7
+    linearColor += litColor(lightType7, lightColor7, lightVector7, lightRadius7, normalDirection, viewDirection, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
+#endif
+
+#ifdef LIGHT8
+    linearColor += litColor(lightType8, lightColor8, lightVector8, lightRadius8, normalDirection, viewDirection, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
+#endif
+
     // Apply gamma correction
     float red = pow(linearColor.r, gammaCorrection);
     float green = pow(linearColor.g, gammaCorrection);
@@ -322,6 +366,46 @@ type alias Light4Uniforms a =
         }
 
 
+type alias Light5Uniforms a =
+    Light4Uniforms
+        { a
+            | lightType5 : Int
+            , lightColor5 : Vec3
+            , lightVector5 : Vec3
+            , lightRadius5 : Float
+        }
+
+
+type alias Light6Uniforms a =
+    Light5Uniforms
+        { a
+            | lightType6 : Int
+            , lightColor6 : Vec3
+            , lightVector6 : Vec3
+            , lightRadius6 : Float
+        }
+
+
+type alias Light7Uniforms a =
+    Light6Uniforms
+        { a
+            | lightType7 : Int
+            , lightColor7 : Vec3
+            , lightVector7 : Vec3
+            , lightRadius7 : Float
+        }
+
+
+type alias Light8Uniforms a =
+    Light7Uniforms
+        { a
+            | lightType8 : Int
+            , lightColor8 : Vec3
+            , lightVector8 : Vec3
+            , lightRadius8 : Float
+        }
+
+
 ambientOnly : WebGL.Shader {} (AmbientUniforms (BaseUniforms a)) Varyings
 ambientOnly =
     createShader { ambientLighting = True, numLights = 0 }
@@ -347,6 +431,26 @@ ambient4 =
     createShader { ambientLighting = True, numLights = 4 }
 
 
+ambient5 : WebGL.Shader {} (AmbientUniforms (Light5Uniforms (BaseUniforms a))) Varyings
+ambient5 =
+    createShader { ambientLighting = True, numLights = 5 }
+
+
+ambient6 : WebGL.Shader {} (AmbientUniforms (Light6Uniforms (BaseUniforms a))) Varyings
+ambient6 =
+    createShader { ambientLighting = True, numLights = 6 }
+
+
+ambient7 : WebGL.Shader {} (AmbientUniforms (Light7Uniforms (BaseUniforms a))) Varyings
+ambient7 =
+    createShader { ambientLighting = True, numLights = 7 }
+
+
+ambient8 : WebGL.Shader {} (AmbientUniforms (Light8Uniforms (BaseUniforms a))) Varyings
+ambient8 =
+    createShader { ambientLighting = True, numLights = 8 }
+
+
 noAmbient1 : WebGL.Shader {} (Light1Uniforms (BaseUniforms a)) Varyings
 noAmbient1 =
     createShader { ambientLighting = False, numLights = 1 }
@@ -365,6 +469,26 @@ noAmbient3 =
 noAmbient4 : WebGL.Shader {} (Light4Uniforms (BaseUniforms a)) Varyings
 noAmbient4 =
     createShader { ambientLighting = False, numLights = 4 }
+
+
+noAmbient5 : WebGL.Shader {} (Light5Uniforms (BaseUniforms a)) Varyings
+noAmbient5 =
+    createShader { ambientLighting = False, numLights = 5 }
+
+
+noAmbient6 : WebGL.Shader {} (Light6Uniforms (BaseUniforms a)) Varyings
+noAmbient6 =
+    createShader { ambientLighting = False, numLights = 6 }
+
+
+noAmbient7 : WebGL.Shader {} (Light7Uniforms (BaseUniforms a)) Varyings
+noAmbient7 =
+    createShader { ambientLighting = False, numLights = 7 }
+
+
+noAmbient8 : WebGL.Shader {} (Light8Uniforms (BaseUniforms a)) Varyings
+noAmbient8 =
+    createShader { ambientLighting = False, numLights = 8 }
 
 
 dummy : WebGL.Shader {} { a | baseColor : Vec3, gammaCorrection : Float } Varyings

@@ -65,10 +65,18 @@ type PhysicallyBasedLighting
     | AmbientLighting2 AmbientProperties LightProperties LightProperties
     | AmbientLighting3 AmbientProperties LightProperties LightProperties LightProperties
     | AmbientLighting4 AmbientProperties LightProperties LightProperties LightProperties LightProperties
+    | AmbientLighting5 AmbientProperties LightProperties LightProperties LightProperties LightProperties LightProperties
+    | AmbientLighting6 AmbientProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
+    | AmbientLighting7 AmbientProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
+    | AmbientLighting8 AmbientProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
     | NoAmbientLighting1 LightProperties
     | NoAmbientLighting2 LightProperties LightProperties
     | NoAmbientLighting3 LightProperties LightProperties LightProperties
     | NoAmbientLighting4 LightProperties LightProperties LightProperties LightProperties
+    | NoAmbientLighting5 LightProperties LightProperties LightProperties LightProperties LightProperties
+    | NoAmbientLighting6 LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
+    | NoAmbientLighting7 LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
+    | NoAmbientLighting8 LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
     | DummyLighting
 
 
@@ -153,6 +161,18 @@ physicallyBasedLighting lights =
                 [ light1, light2, light3, light4 ] ->
                     AmbientLighting4 ambientProperties light1 light2 light3 light4
 
+                [ light1, light2, light3, light4, light5 ] ->
+                    AmbientLighting5 ambientProperties light1 light2 light3 light4 light5
+
+                [ light1, light2, light3, light4, light5, light6 ] ->
+                    AmbientLighting6 ambientProperties light1 light2 light3 light4 light5 light6
+
+                [ light1, light2, light3, light4, light5, light6, light7 ] ->
+                    AmbientLighting7 ambientProperties light1 light2 light3 light4 light5 light6 light7
+
+                [ light1, light2, light3, light4, light5, light6, light7, light8 ] ->
+                    AmbientLighting8 ambientProperties light1 light2 light3 light4 light5 light6 light7 light8
+
                 _ ->
                     DummyLighting
 
@@ -172,6 +192,18 @@ physicallyBasedLighting lights =
 
                 [ light1, light2, light3, light4 ] ->
                     NoAmbientLighting4 light1 light2 light3 light4
+
+                [ light1, light2, light3, light4, light5 ] ->
+                    NoAmbientLighting5 light1 light2 light3 light4 light5
+
+                [ light1, light2, light3, light4, light5, light6 ] ->
+                    NoAmbientLighting6 light1 light2 light3 light4 light5 light6
+
+                [ light1, light2, light3, light4, light5, light6, light7 ] ->
+                    NoAmbientLighting7 light1 light2 light3 light4 light5 light6 light7
+
+                [ light1, light2, light3, light4, light5, light6, light7, light8 ] ->
+                    NoAmbientLighting8 light1 light2 light3 light4 light5 light6 light7 light8
 
                 _ ->
                     DummyLighting
@@ -305,6 +337,178 @@ physicallyBasedRendererFor lights =
                 in
                 WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
 
+        AmbientLighting5 ambientProperties light1 light2 light3 light4 light5 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , ambientLightColor = ambientProperties.color
+                        , ambientLookupTexture = ambientProperties.lookupTexture
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+
+        AmbientLighting6 ambientProperties light1 light2 light3 light4 light5 light6 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , ambientLightColor = ambientProperties.color
+                        , ambientLookupTexture = ambientProperties.lookupTexture
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        , lightType6 = light6.lightType
+                        , lightColor6 = light6.lightColor
+                        , lightVector6 = light6.lightVector
+                        , lightRadius6 = light6.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+
+        AmbientLighting7 ambientProperties light1 light2 light3 light4 light5 light6 light7 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , ambientLightColor = ambientProperties.color
+                        , ambientLookupTexture = ambientProperties.lookupTexture
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        , lightType6 = light6.lightType
+                        , lightColor6 = light6.lightColor
+                        , lightVector6 = light6.lightVector
+                        , lightRadius6 = light6.lightRadius
+                        , lightType7 = light7.lightType
+                        , lightColor7 = light7.lightColor
+                        , lightVector7 = light7.lightVector
+                        , lightRadius7 = light7.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+
+        AmbientLighting8 ambientProperties light1 light2 light3 light4 light5 light6 light7 light8 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , ambientLightColor = ambientProperties.color
+                        , ambientLookupTexture = ambientProperties.lookupTexture
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        , lightType6 = light6.lightType
+                        , lightColor6 = light6.lightColor
+                        , lightVector6 = light6.lightVector
+                        , lightRadius6 = light6.lightRadius
+                        , lightType7 = light7.lightType
+                        , lightColor7 = light7.lightColor
+                        , lightVector7 = light7.lightVector
+                        , lightRadius7 = light7.lightRadius
+                        , lightType8 = light8.lightType
+                        , lightColor8 = light8.lightColor
+                        , lightVector8 = light8.lightVector
+                        , lightRadius8 = light8.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+
         NoAmbientLighting1 light1 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
                 let
@@ -401,6 +605,170 @@ physicallyBasedRendererFor lights =
                         , lightColor4 = light4.lightColor
                         , lightVector4 = light4.lightVector
                         , lightRadius4 = light4.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+
+        NoAmbientLighting5 light1 light2 light3 light4 light5 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+
+        NoAmbientLighting6 light1 light2 light3 light4 light5 light6 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        , lightType6 = light6.lightType
+                        , lightColor6 = light6.lightColor
+                        , lightVector6 = light6.lightVector
+                        , lightRadius6 = light6.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+
+        NoAmbientLighting7 light1 light2 light3 light4 light5 light6 light7 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        , lightType6 = light6.lightType
+                        , lightColor6 = light6.lightColor
+                        , lightVector6 = light6.lightVector
+                        , lightRadius6 = light6.lightRadius
+                        , lightType7 = light7.lightType
+                        , lightColor7 = light7.lightColor
+                        , lightVector7 = light7.lightVector
+                        , lightRadius7 = light7.lightRadius
+                        }
+                in
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+
+        NoAmbientLighting8 light1 light2 light3 light4 light5 light6 light7 light8 ->
+            \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+                let
+                    uniforms =
+                        { modelMatrix = modelMatrix
+                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , eyePoint = eyePoint
+                        , baseColor = material.baseColor
+                        , roughness = material.roughness
+                        , metallic = material.metallic
+                        , gammaCorrection = gammaCorrection
+                        , lightType1 = light1.lightType
+                        , lightColor1 = light1.lightColor
+                        , lightVector1 = light1.lightVector
+                        , lightRadius1 = light1.lightRadius
+                        , lightType2 = light2.lightType
+                        , lightColor2 = light2.lightColor
+                        , lightVector2 = light2.lightVector
+                        , lightRadius2 = light2.lightRadius
+                        , lightType3 = light3.lightType
+                        , lightColor3 = light3.lightColor
+                        , lightVector3 = light3.lightVector
+                        , lightRadius3 = light3.lightRadius
+                        , lightType4 = light4.lightType
+                        , lightColor4 = light4.lightColor
+                        , lightVector4 = light4.lightVector
+                        , lightRadius4 = light4.lightRadius
+                        , lightType5 = light5.lightType
+                        , lightColor5 = light5.lightColor
+                        , lightVector5 = light5.lightVector
+                        , lightRadius5 = light5.lightRadius
+                        , lightType6 = light6.lightType
+                        , lightColor6 = light6.lightColor
+                        , lightVector6 = light6.lightVector
+                        , lightRadius6 = light6.lightRadius
+                        , lightType7 = light7.lightType
+                        , lightColor7 = light7.lightColor
+                        , lightVector7 = light7.lightVector
+                        , lightRadius7 = light7.lightRadius
+                        , lightType8 = light8.lightType
+                        , lightColor8 = light8.lightColor
+                        , lightVector8 = light8.lightVector
+                        , lightRadius8 = light8.lightRadius
                         }
                 in
                 WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
