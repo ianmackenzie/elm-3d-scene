@@ -6,6 +6,7 @@ module OpenSolid.Scene.Shader
         , ambient4
         , ambientOnly
         , dummy
+        , emissive
         , noAmbient1
         , noAmbient2
         , noAmbient3
@@ -74,6 +75,22 @@ simple =
 
         void main () {
             gl_FragColor = vec4(color, 1.0);
+        }
+    |]
+
+
+emissive : WebGL.Shader {} { a | gammaCorrectedColor : Vec3 } Varyings
+emissive =
+    [glsl|
+        precision mediump float;
+
+        uniform vec3 gammaCorrectedColor;
+
+        varying vec3 position;
+        varying vec3 normal;
+
+        void main () {
+            gl_FragColor = vec4(gammaCorrectedColor, 1.0);
         }
     |]
 

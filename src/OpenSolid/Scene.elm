@@ -460,18 +460,42 @@ toEntity renderProperties modelFrame drawable =
                 uniforms
 
         Types.ShadedGeometry material boundingBox mesh ->
-            let
-                (Types.PhysicallyBasedMaterial materialProperties) =
-                    material
-            in
-            renderProperties.physicallyBasedRenderer
-                settings
-                renderProperties.eyePoint
-                modelMatrix
-                modelViewProjectionMatrix
-                materialProperties
-                renderProperties.gammaCorrection
-                mesh
+            case material of
+                Types.PhysicallyBasedMaterial materialProperties ->
+                    renderProperties.physicallyBasedRenderer
+                        settings
+                        renderProperties.eyePoint
+                        modelMatrix
+                        modelViewProjectionMatrix
+                        materialProperties
+                        renderProperties.gammaCorrection
+                        mesh
+
+                Types.EmissiveMaterial color ->
+                    let
+                        ( r, g, b ) =
+                            Vector3.toTuple color
+
+                        gammaCorrection =
+                            renderProperties.gammaCorrection
+
+                        gammaCorrectedColor =
+                            Vector3.vec3
+                                (r ^ gammaCorrection)
+                                (g ^ gammaCorrection)
+                                (b ^ gammaCorrection)
+
+                        uniforms =
+                            { modelMatrix = modelMatrix
+                            , modelViewProjectionMatrix = modelViewProjectionMatrix
+                            , gammaCorrectedColor = gammaCorrectedColor
+                            }
+                    in
+                    WebGL.entityWith settings
+                        Shader.vertex
+                        Shader.emissive
+                        mesh
+                        uniforms
 
 
 collectEntities : RenderProperties -> Frame3d -> Node -> List WebGL.Entity -> List WebGL.Entity

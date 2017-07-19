@@ -35,6 +35,7 @@ type Material
         , roughness : Float
         , metallic : Float
         }
+    | EmissiveMaterial Vec3
 
 
 type Drawable

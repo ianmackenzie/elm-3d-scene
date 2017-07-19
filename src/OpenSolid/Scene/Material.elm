@@ -1,6 +1,7 @@
 module OpenSolid.Scene.Material
     exposing
         ( Material
+        , emissive
         , metal
         , nonmetal
         )
@@ -29,3 +30,8 @@ nonmetal { color, roughness } =
         , roughness = roughness
         , metallic = 0.0
         }
+
+
+emissive : Vec3 -> Material
+emissive =
+    Types.EmissiveMaterial
