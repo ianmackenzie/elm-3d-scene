@@ -14,7 +14,7 @@ import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
-import OpenSolid.WebGL.Camera as Camera
+import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Frame3d as Frame3d
 import Shapes
 import Task
@@ -70,6 +70,7 @@ shapes =
         ]
 
 
+camera : Camera
 camera =
     Camera.perspective
         { frame =
