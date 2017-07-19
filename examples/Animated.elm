@@ -187,7 +187,7 @@ view model =
                     lightNode lightPoint2 pointLight2.color
 
                 lights =
-                    [ Light.directional lightDirection1 (vec3 0 0.1 0)
+                    [ Light.directional lightDirection1 (vec3 0 0.1 0.02)
                     , Light.directional lightDirection2 (vec3 0.3 0.3 0.3)
                     , Light.point lightPoint1 pointLight1.color
                     , Light.point lightPoint2 pointLight2.color
