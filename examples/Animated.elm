@@ -87,15 +87,6 @@ camera =
         }
 
 
-gammaCorrected : Vec3 -> Vec3
-gammaCorrected color =
-    let
-        ( r, g, b ) =
-            Vector3.toTuple color
-    in
-    vec3 (r ^ 0.45) (g ^ 0.45) (b ^ 0.45)
-
-
 type alias PointLight =
     { startPoint : Point3d
     , rotationAxis : Axis3d
