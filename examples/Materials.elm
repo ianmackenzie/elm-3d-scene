@@ -29,12 +29,12 @@ copper =
 
 chromium : Material
 chromium =
-    Material.metal { color = vec3 0.55 0.556 0.554, roughness = 0.25 }
+    Material.metal { color = vec3 0.55 0.556 0.554, roughness = 0.5 }
 
 
 blackPlastic : Material
 blackPlastic =
-    Material.nonmetal { color = vec3 0 0 0, roughness = 0.25 }
+    Material.nonmetal { color = vec3 0 0 0, roughness = 0.5 }
 
 
 whitePlastic : Material
