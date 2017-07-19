@@ -6,6 +6,7 @@ import Materials
 import Math.Vector3 as Vector3 exposing (Vec3, vec3)
 import OpenSolid.Axis3d as Axis3d
 import OpenSolid.Direction3d as Direction3d
+import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
@@ -121,16 +122,19 @@ pointLight2 =
     }
 
 
-pointLight1StartNode : Node
-pointLight1StartNode =
-    SimpleGeometry.points [ pointLight1.startPoint ]
-        |> SimpleGeometry.colored (gammaCorrected pointLight1.color)
+pointLightRadius : Float
+pointLightRadius =
+    0.05
 
 
-pointLight2StartNode : Node
-pointLight2StartNode =
-    SimpleGeometry.points [ pointLight2.startPoint ]
-        |> SimpleGeometry.colored (gammaCorrected pointLight2.color)
+pointLightColorScale : Float
+pointLightColorScale =
+    1.0 / (pointLightRadius * pointLightRadius)
+
+
+pointLightGeometry : Geometry
+pointLightGeometry =
+    Shapes.sphere Point3d.origin pointLightRadius
 
 
 view : Model -> Html Msg
@@ -167,15 +171,20 @@ view model =
                         |> Point3d.rotateAround pointLight2.rotationAxis
                             (seconds * pointLight2.rotationSpeed)
 
+                lightNode point color =
+                    let
+                        scaledColor =
+                            Vector3.scale pointLightColorScale color
+                    in
+                    pointLightGeometry
+                        |> Geometry.shaded (Material.emissive scaledColor)
+                        |> Node.placeIn (Frame3d.at point)
+
                 lightNode1 =
-                    pointLight1StartNode
-                        |> Node.rotateAround pointLight1.rotationAxis
-                            (seconds * pointLight1.rotationSpeed)
+                    lightNode lightPoint1 pointLight1.color
 
                 lightNode2 =
-                    pointLight2StartNode
-                        |> Node.rotateAround pointLight2.rotationAxis
-                            (seconds * pointLight2.rotationSpeed)
+                    lightNode lightPoint2 pointLight2.color
 
                 lights =
                     [ Light.directional lightDirection1 (vec3 0 0.2 0.2)
