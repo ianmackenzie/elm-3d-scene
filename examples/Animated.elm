@@ -109,7 +109,7 @@ pointLight1 =
     { startPoint = Point3d ( 1.5, 1.5, 3 )
     , rotationAxis = Axis3d.z
     , color = vec3 0 2 10
-    , rotationSpeed = degrees 188
+    , rotationSpeed = degrees 125
     }
 
 
@@ -187,7 +187,7 @@ view model =
                     lightNode lightPoint2 pointLight2.color
 
                 lights =
-                    [ Light.directional lightDirection1 (vec3 0 0.2 0.2)
+                    [ Light.directional lightDirection1 (vec3 0 0.1 0)
                     , Light.directional lightDirection2 (vec3 0.3 0.3 0.3)
                     , Light.point lightPoint1 pointLight1.color
                     , Light.point lightPoint2 pointLight2.color
