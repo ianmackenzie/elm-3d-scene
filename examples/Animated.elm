@@ -11,7 +11,7 @@ import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
-import OpenSolid.Scene.Light as Light
+import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.Scene.SimpleGeometry as SimpleGeometry
@@ -137,6 +137,11 @@ pointLightGeometry =
     Shapes.sphere Point3d.origin pointLightRadius
 
 
+whiteLight : ( Float, Float, Float ) -> Light
+whiteLight ( x, y, z ) =
+    Light.point (Point3d ( x, y, z )) (vec3 5 5 5)
+
+
 view : Model -> Html Msg
 view model =
     case model.loadedTexture of
@@ -192,6 +197,10 @@ view model =
                     , Light.point lightPoint1 pointLight1.color
                     , Light.point lightPoint2 pointLight2.color
                     , Light.ambient lookupTexture (vec3 0.01 0.01 0.01)
+                    , whiteLight ( 8, 8, 5 )
+                    , whiteLight ( 8, -8, 5 )
+                    , whiteLight ( -8, 8, 5 )
+                    , whiteLight ( -8, -8, 5 )
                     ]
 
                 scene =
