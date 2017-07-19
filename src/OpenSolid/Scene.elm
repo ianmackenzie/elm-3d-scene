@@ -1,6 +1,9 @@
 module OpenSolid.Scene
     exposing
         ( RenderOption
+        , alpha
+        , antialias
+        , clearColor
         , devicePixelRatio
         , gammaCorrection
         , render
@@ -9,6 +12,7 @@ module OpenSolid.Scene
         , toEntitiesWith
         )
 
+import Color exposing (Color)
 import Html exposing (Html)
 import Html.Attributes
 import Math.Matrix4 exposing (Mat4)
@@ -919,6 +923,9 @@ render =
 type RenderOption
     = DevicePixelRatio Float
     | GammaCorrection Float
+    | Antialias Bool
+    | Alpha Bool
+    | ClearColor Color
 
 
 devicePixelRatio : Float -> RenderOption
@@ -929,6 +936,21 @@ devicePixelRatio =
 gammaCorrection : Float -> RenderOption
 gammaCorrection =
     GammaCorrection
+
+
+antialias : Bool -> RenderOption
+antialias =
+    Antialias
+
+
+alpha : Bool -> RenderOption
+alpha =
+    Alpha
+
+
+clearColor : Color -> RenderOption
+clearColor =
+    ClearColor
 
 
 getDevicePixelRatio : List RenderOption -> Float
@@ -965,6 +987,57 @@ getGammaCorrection options =
     List.foldl update defaultValue options
 
 
+getAntialias : List RenderOption -> Bool
+getAntialias options =
+    let
+        defaultValue =
+            True
+
+        update option oldValue =
+            case option of
+                Antialias newValue ->
+                    newValue
+
+                _ ->
+                    oldValue
+    in
+    List.foldl update defaultValue options
+
+
+getAlpha : List RenderOption -> Bool
+getAlpha options =
+    let
+        defaultValue =
+            True
+
+        update option oldValue =
+            case option of
+                Alpha newValue ->
+                    newValue
+
+                _ ->
+                    oldValue
+    in
+    List.foldl update defaultValue options
+
+
+getClearColor : List RenderOption -> Color
+getClearColor options =
+    let
+        defaultValue =
+            Color.rgba 0 0 0 0.0
+
+        update option oldValue =
+            case option of
+                ClearColor newValue ->
+                    newValue
+
+                _ ->
+                    oldValue
+    in
+    List.foldl update defaultValue options
+
+
 renderWith : List RenderOption -> List Light -> Camera -> Node -> Html msg
 renderWith options lights camera rootNode =
     let
@@ -976,8 +1049,33 @@ renderWith options lights camera rootNode =
 
         devicePixelRatio =
             getDevicePixelRatio options
+
+        antialias =
+            getAntialias options
+
+        alpha =
+            getAlpha options
+
+        clearColor =
+            Color.toRgb (getClearColor options)
+
+        clearColorOption =
+            WebGL.clearColor
+                (toFloat clearColor.red / 255)
+                (toFloat clearColor.green / 255)
+                (toFloat clearColor.blue / 255)
+                clearColor.alpha
+
+        commonOptions =
+            [ WebGL.depth 1, WebGL.alpha alpha, clearColorOption ]
+
+        webGLOptions =
+            if antialias then
+                WebGL.antialias :: commonOptions
+            else
+                commonOptions
     in
-    WebGL.toHtml
+    WebGL.toHtmlWith webGLOptions
         [ Html.Attributes.width (round (devicePixelRatio * width))
         , Html.Attributes.height (round (devicePixelRatio * height))
         , Html.Attributes.style
