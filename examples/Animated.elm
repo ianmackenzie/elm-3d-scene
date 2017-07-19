@@ -152,15 +152,16 @@ view model =
                         |> Direction3d.rotateAround Axis3d.x (degrees 45)
                         |> Direction3d.rotateAround Axis3d.z (seconds * degrees 47)
 
+                lightPoint pointLight =
+                    pointLight.startPoint
+                        |> Point3d.rotateAround pointLight.rotationAxis
+                            (seconds * pointLight.rotationSpeed)
+
                 lightPoint1 =
-                    pointLight1.startPoint
-                        |> Point3d.rotateAround pointLight1.rotationAxis
-                            (seconds * pointLight1.rotationSpeed)
+                    lightPoint pointLight1
 
                 lightPoint2 =
-                    pointLight2.startPoint
-                        |> Point3d.rotateAround pointLight2.rotationAxis
-                            (seconds * pointLight2.rotationSpeed)
+                    lightPoint pointLight2
 
                 lightNode point color =
                     let
