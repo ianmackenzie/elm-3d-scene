@@ -128,11 +128,6 @@ pointLightGeometry =
     Shapes.sphere Point3d.origin pointLightRadius
 
 
-whiteLight : ( Float, Float, Float ) -> Light
-whiteLight ( x, y, z ) =
-    Light.point (Point3d ( x, y, z )) (vec3 5 5 5)
-
-
 view : Model -> Html Msg
 view model =
     case model.loadedTexture of
@@ -188,10 +183,10 @@ view model =
                     , Light.point lightPoint1 pointLight1.color
                     , Light.point lightPoint2 pointLight2.color
                     , Light.ambient lookupTexture (vec3 0.01 0.01 0.01)
-                    , whiteLight ( 8, 8, 5 )
-                    , whiteLight ( 8, -8, 5 )
-                    , whiteLight ( -8, 8, 5 )
-                    , whiteLight ( -8, -8, 5 )
+                    , Light.point (Point3d ( 8, 8, 5 )) (vec3 5 5 5)
+                    , Light.point (Point3d ( 8, -8, 5 )) (vec3 5 5 5)
+                    , Light.point (Point3d ( -8, 8, 5 )) (vec3 5 5 5)
+                    , Light.point (Point3d ( -8, -8, 5 )) (vec3 5 5 5)
                     ]
 
                 scene =
