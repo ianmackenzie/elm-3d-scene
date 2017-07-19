@@ -4,6 +4,10 @@ module OpenSolid.Scene.Shader
         , ambient2
         , ambient3
         , ambient4
+        , ambient5
+        , ambient6
+        , ambient7
+        , ambient8
         , ambientOnly
         , dummy
         , emissive
@@ -11,6 +15,10 @@ module OpenSolid.Scene.Shader
         , noAmbient2
         , noAmbient3
         , noAmbient4
+        , noAmbient5
+        , noAmbient6
+        , noAmbient7
+        , noAmbient8
         , simple
         , simpleVertex
         , vertex

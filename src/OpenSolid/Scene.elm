@@ -372,7 +372,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius5 = light5.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.ambient5 mesh uniforms
 
         AmbientLighting6 ambientProperties light1 light2 light3 light4 light5 light6 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -413,7 +413,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius6 = light6.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.ambient6 mesh uniforms
 
         AmbientLighting7 ambientProperties light1 light2 light3 light4 light5 light6 light7 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -458,7 +458,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius7 = light7.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.ambient7 mesh uniforms
 
         AmbientLighting8 ambientProperties light1 light2 light3 light4 light5 light6 light7 light8 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -507,7 +507,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius8 = light8.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.ambient8 mesh uniforms
 
         NoAmbientLighting1 light1 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -642,7 +642,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius5 = light5.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient5 mesh uniforms
 
         NoAmbientLighting6 light1 light2 light3 light4 light5 light6 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -681,7 +681,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius6 = light6.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient6 mesh uniforms
 
         NoAmbientLighting7 light1 light2 light3 light4 light5 light6 light7 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -724,7 +724,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius7 = light7.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient7 mesh uniforms
 
         NoAmbientLighting8 light1 light2 light3 light4 light5 light6 light7 light8 ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
@@ -771,7 +771,7 @@ physicallyBasedRendererFor lights =
                         , lightRadius8 = light8.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+                WebGL.entityWith settings Shader.vertex Shader.noAmbient8 mesh uniforms
 
         DummyLighting ->
             \settings eyePoint modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
