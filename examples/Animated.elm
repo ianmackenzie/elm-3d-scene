@@ -14,6 +14,7 @@ import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
+import OpenSolid.SketchPlane3d as SketchPlane3d
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Frame3d as Frame3d
 import PointLight exposing (PointLight(..))
@@ -108,16 +109,8 @@ view =
         pointLightRadius =
             0.05
 
-        directionalLight1StartDirection =
-            Direction3d.negativeX
-                |> Direction3d.rotateAround Axis3d.y (degrees -15)
-
         directionalLight1Color =
             vec3 0 0.1 0.02
-
-        directionalLight2StartDirection =
-            Direction3d.negativeY
-                |> Direction3d.rotateAround Axis3d.x (degrees 45)
 
         directionalLight2Color =
             vec3 0.3 0.3 0.3
@@ -154,14 +147,16 @@ view =
                         Time.inSeconds model.time
 
                     lightDirection1 =
-                        directionalLight1StartDirection
-                            |> Direction3d.rotateAround Axis3d.z
-                                (seconds * degrees 111)
+                        Direction3d.spherical SketchPlane3d.xy
+                            { elevation = degrees -15
+                            , azimuth = degrees 180 + seconds * degrees 111
+                            }
 
                     lightDirection2 =
-                        directionalLight2StartDirection
-                            |> Direction3d.rotateAround Axis3d.z
-                                (seconds * degrees 47)
+                        Direction3d.spherical SketchPlane3d.xy
+                            { elevation = degrees -45
+                            , azimuth = degrees 270 + seconds * degrees 47
+                            }
 
                     lightPoint1 =
                         pointLight1StartPoint
