@@ -171,7 +171,7 @@ view =
                     lightPoint2 =
                         pointLight2StartPoint
                             |> Point3d.rotateAround pointLight2RotationAxis
-                                (seconds * degrees 67)
+                                (seconds * degrees 71)
 
                     pointLight1 =
                         PointLight
