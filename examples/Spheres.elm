@@ -79,7 +79,7 @@ camera =
         { frame = cameraFrame
         , screenWidth = width
         , screenHeight = height
-        , verticalFov = degrees 30
+        , verticalFieldOfView = degrees 30
         , zNear = 0.1
         , zFar = 100
         }

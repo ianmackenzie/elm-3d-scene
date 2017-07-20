@@ -79,7 +79,7 @@ view { angleInDegrees, projectionType } =
                         { frame = eyeFrame
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
-                        , verticalFov = degrees 30
+                        , verticalFieldOfView = degrees 30
                         , zNear = 0.1
                         , zFar = 100
                         }

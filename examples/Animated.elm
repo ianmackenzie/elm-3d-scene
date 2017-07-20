@@ -70,7 +70,7 @@ view =
                         }
                 , screenWidth = 1024
                 , screenHeight = 768
-                , verticalFov = degrees 30
+                , verticalFieldOfView = degrees 30
                 , zNear = 0.1
                 , zFar = 100
                 }
