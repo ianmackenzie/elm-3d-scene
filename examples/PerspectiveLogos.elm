@@ -46,8 +46,8 @@ view angleInDegrees =
                 , screenWidth = toFloat width
                 , screenHeight = toFloat height
                 , verticalFieldOfView = degrees 30
-                , zNear = 0.1
-                , zFar = 100
+                , nearClipDistance = 0.1
+                , farClipDistance = 100
                 }
 
         angle =

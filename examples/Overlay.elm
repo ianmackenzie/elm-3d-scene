@@ -80,8 +80,8 @@ view { angleInDegrees, projectionType } =
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
                         , verticalFieldOfView = degrees 30
-                        , zNear = 0.1
-                        , zFar = 100
+                        , nearClipDistance = 0.1
+                        , farClipDistance = 100
                         }
 
                 Orthographic ->
@@ -90,8 +90,8 @@ view { angleInDegrees, projectionType } =
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
                         , viewportHeight = 2
-                        , zNear = 0.1
-                        , zFar = 100
+                        , nearClipDistance = 0.1
+                        , farClipDistance = 100
                         }
 
         angle =

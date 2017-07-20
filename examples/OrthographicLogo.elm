@@ -60,8 +60,8 @@ view angleInDegrees =
                 , screenWidth = toFloat width
                 , screenHeight = toFloat height
                 , viewportHeight = 3
-                , zNear = 0.1
-                , zFar = 100
+                , nearClipDistance = 0.1
+                , farClipDistance = 100
                 }
 
         angle =
