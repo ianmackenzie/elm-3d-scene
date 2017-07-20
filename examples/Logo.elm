@@ -5,14 +5,13 @@ module Logo
         , vertices
         )
 
-import Color
+import Math.Vector3 exposing (Vec3, vec3)
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.Scene.SimpleGeometry as SimpleGeometry exposing (SimpleGeometry)
-import OpenSolid.WebGL.Color as Color
 
 
 height : Float
@@ -94,16 +93,16 @@ node : Node
 node =
     let
         orange =
-            Color.rgb 240 173 0 |> Color.toVec3
+            vec3 0.941 0.678 0
 
         green =
-            Color.rgb 127 209 59 |> Color.toVec3
+            vec3 0.498 0.819 0.231
 
         lightBlue =
-            Color.rgb 96 181 204 |> Color.toVec3
+            vec3 0.376 0.709 0.8
 
         darkBlue =
-            Color.rgb 90 99 120 |> Color.toVec3
+            vec3 0.352 0.388 0.338
 
         leftFace =
             SimpleGeometry.triangleFan [ p1, p2, p8, p7, p6 ]
