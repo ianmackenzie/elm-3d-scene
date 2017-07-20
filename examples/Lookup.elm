@@ -26,13 +26,13 @@ update (LoadComplete result) _ =
     ( Just result, Cmd.none )
 
 
-vertexShader : Shader { vertexPosition : Vec2 } a {}
+vertexShader : Shader { position : Vec2 } a {}
 vertexShader =
     [glsl|
-        attribute vec2 vertexPosition;
+        attribute vec2 position;
 
         void main() {
-            gl_Position = vec4(vertexPosition.x, vertexPosition.y, 0, 1);
+            gl_Position = vec4(position.x, position.y, 0, 1);
         }
     |]
 
@@ -62,7 +62,7 @@ textureImage texture =
             Texture.size texture
 
         vertex x y =
-            { vertexPosition = Math.Vector2.vec2 x y }
+            { position = Math.Vector2.vec2 x y }
 
         quad =
             WebGL.triangles

@@ -6,7 +6,7 @@ import WebGL exposing (Texture)
 
 
 type alias SimpleVertexAttributes =
-    { vertexPosition : Vec3 }
+    { position : Vec3 }
 
 
 type SimpleGeometry
@@ -15,7 +15,7 @@ type SimpleGeometry
 
 
 type alias VertexAttributes =
-    { vertexPosition : Vec3, vertexNormal : Vec3 }
+    { position : Vec3, normal : Vec3 }
 
 
 type Geometry

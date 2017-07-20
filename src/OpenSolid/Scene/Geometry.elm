@@ -72,15 +72,9 @@ faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
 
 faceAttributes : FaceVertices -> ( Types.VertexAttributes, Types.VertexAttributes, Types.VertexAttributes )
 faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
-    ( { vertexPosition = Point3d.toVec3 p1
-      , vertexNormal = Direction3d.toVec3 n1
-      }
-    , { vertexPosition = Point3d.toVec3 p2
-      , vertexNormal = Direction3d.toVec3 n2
-      }
-    , { vertexPosition = Point3d.toVec3 p3
-      , vertexNormal = Direction3d.toVec3 n3
-      }
+    ( { position = Point3d.toVec3 p1, normal = Direction3d.toVec3 n1 }
+    , { position = Point3d.toVec3 p2, normal = Direction3d.toVec3 n2 }
+    , { position = Point3d.toVec3 p3, normal = Direction3d.toVec3 n3 }
     )
 
 
@@ -100,8 +94,8 @@ faces vertexTriples =
 
 vertexAttributes : Vertex -> Types.VertexAttributes
 vertexAttributes ( point, normalDirection ) =
-    { vertexPosition = Point3d.toVec3 point
-    , vertexNormal = Direction3d.toVec3 normalDirection
+    { position = Point3d.toVec3 point
+    , normal = Direction3d.toVec3 normalDirection
     }
 
 

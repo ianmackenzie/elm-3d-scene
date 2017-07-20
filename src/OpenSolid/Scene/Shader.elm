@@ -30,56 +30,56 @@ import WebGL
 
 
 type alias Varyings =
-    { position : Vec3
-    , normal : Vec3
+    { interpolatedPosition : Vec3
+    , interpolatedNormal : Vec3
     }
 
 
-simpleVertex : WebGL.Shader { vertexPosition : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { position : Vec3 }
+simpleVertex : WebGL.Shader { position : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { interpolatedPosition : Vec3 }
 simpleVertex =
     [glsl|
-        attribute vec3 vertexPosition;
+        attribute vec3 position;
 
         uniform mat4 modelMatrix;
         uniform mat4 modelViewProjectionMatrix;
 
-        varying vec3 position;
+        varying vec3 interpolatedPosition;
 
         void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(vertexPosition, 1.0);
-          position = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
+          gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);
+          interpolatedPosition = (modelMatrix * vec4(position, 1.0)).xyz;
         }
     |]
 
 
-vertex : WebGL.Shader { vertexPosition : Vec3, vertexNormal : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } Varyings
+vertex : WebGL.Shader { position : Vec3, normal : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } Varyings
 vertex =
     [glsl|
-        attribute vec3 vertexPosition;
-        attribute vec3 vertexNormal;
+        attribute vec3 position;
+        attribute vec3 normal;
 
         uniform mat4 modelMatrix;
         uniform mat4 modelViewProjectionMatrix;
 
-        varying vec3 position;
-        varying vec3 normal;
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
 
         void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(vertexPosition, 1.0);
-          position = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
-          normal = (modelMatrix * vec4(vertexNormal, 0.0)).xyz;
+          gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);
+          interpolatedPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+          interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
         }
     |]
 
 
-simple : WebGL.Shader {} { a | color : Vec3 } { position : Vec3 }
+simple : WebGL.Shader {} { a | color : Vec3 } { interpolatedPosition : Vec3 }
 simple =
     [glsl|
         precision mediump float;
 
         uniform vec3 color;
 
-        varying vec3 position;
+        varying vec3 interpolatedPosition;
 
         void main () {
             gl_FragColor = vec4(color, 1.0);
@@ -94,8 +94,8 @@ emissive =
 
         uniform vec3 gammaCorrectedColor;
 
-        varying vec3 position;
-        varying vec3 normal;
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
 
         void main () {
             gl_FragColor = vec4(gammaCorrectedColor, 1.0);
@@ -177,8 +177,8 @@ uniform vec3 lightVector8;
 uniform float lightRadius8;
 #endif
 
-varying vec3 position;
-varying vec3 normal;
+varying vec3 interpolatedPosition;
+varying vec3 interpolatedNormal;
 
 #ifdef LIGHT1
 // Leave pi out of the denominator and then don't multiply by it later
@@ -209,7 +209,7 @@ vec3 litColor(int lightType, vec3 lightColor, vec3 lightVector, float lightRadiu
         lightDirection = lightVector;
     } else if (lightType == 2) {
         // Point lightType
-        vec3 displacement = lightVector - position;
+        vec3 displacement = lightVector - interpolatedPosition;
         float distance = length(displacement);
         lightDirection = displacement / distance;
         lightColor = lightColor / (distance * distance);
@@ -243,8 +243,8 @@ vec3 ambientLitColor(float dotNV, vec3 specularBaseColor, vec3 diffuseBaseColor)
 #endif
 
 void main() {
-    vec3 normalDirection = normalize(normal);
-    vec3 viewDirection = normalize(eyePoint - position);
+    vec3 normalDirection = normalize(interpolatedNormal);
+    vec3 viewDirection = normalize(eyePoint - interpolatedPosition);
     float dotNV = clamp(dot(normalDirection, viewDirection), 0.0, 1.0);
 
     float nonmetallic = 1.0 - metallic;
@@ -504,8 +504,8 @@ dummy =
     [glsl|
         precision mediump float;
 
-        varying vec3 position;
-        varying vec3 normal;
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
 
         uniform vec3 baseColor;
 

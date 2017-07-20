@@ -60,7 +60,7 @@ type alias PhysicallyBasedRenderer =
     -> Mat4
     -> MaterialProperties
     -> Float
-    -> WebGL.Mesh { vertexPosition : Vec3, vertexNormal : Vec3 }
+    -> WebGL.Mesh { position : Vec3, normal : Vec3 }
     -> WebGL.Entity
 
 

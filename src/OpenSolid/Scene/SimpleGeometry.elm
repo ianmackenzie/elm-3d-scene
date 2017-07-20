@@ -66,8 +66,11 @@ indexedTriangles vertices faces =
     case BoundingBox3d.containing vertices of
         Just boundingBox ->
             let
+                toPositionAttribute point =
+                    { position = Point3d.toVec3 point }
+
                 vertexPositions =
-                    List.map Point3d.toVertexPosition vertices
+                    List.map toPositionAttribute vertices
 
                 mesh =
                     WebGL.indexedTriangles vertexPositions faces
@@ -83,8 +86,11 @@ triangleFan points =
     case BoundingBox3d.containing points of
         Just boundingBox ->
             let
+                toPositionAttribute point =
+                    { position = Point3d.toVec3 point }
+
                 mesh =
-                    WebGL.triangleFan (List.map Point3d.toVertexPosition points)
+                    WebGL.triangleFan (List.map toPositionAttribute points)
             in
             Types.SimpleGeometry boundingBox mesh
 
@@ -130,8 +136,11 @@ points points_ =
     case BoundingBox3d.containing points_ of
         Just boundingBox ->
             let
+                toPositionAttribute point =
+                    { position = Point3d.toVec3 point }
+
                 mesh =
-                    WebGL.points (List.map Point3d.toVertexPosition points_)
+                    WebGL.points (List.map toPositionAttribute points_)
             in
             Types.SimpleGeometry boundingBox mesh
 
