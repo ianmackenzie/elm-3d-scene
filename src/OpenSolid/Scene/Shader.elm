@@ -47,9 +47,9 @@ simpleVertex =
         varying vec3 interpolatedPosition;
 
         void main () {
-          vec4 scaledPosition = vec4(modelScale * position, 1.0);
-          gl_Position = modelViewProjectionMatrix * scaledPosition;
-          interpolatedPosition = (modelMatrix * scaledPosition).xyz;
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            gl_Position = modelViewProjectionMatrix * scaledPosition;
+            interpolatedPosition = (modelMatrix * scaledPosition).xyz;
         }
     |]
 
@@ -68,10 +68,10 @@ vertex =
         varying vec3 interpolatedNormal;
 
         void main () {
-          vec4 scaledPosition = vec4(modelScale * position, 1.0);
-          gl_Position = modelViewProjectionMatrix * scaledPosition;
-          interpolatedPosition = (modelMatrix * scaledPosition).xyz;
-          interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            gl_Position = modelViewProjectionMatrix * scaledPosition;
+            interpolatedPosition = (modelMatrix * scaledPosition).xyz;
+            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
         }
     |]
 
