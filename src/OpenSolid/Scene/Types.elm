@@ -45,10 +45,8 @@ type Drawable
 
 type Placement
     = Placement
-        { originPoint : Point3d
-        , xVector : Vector3d
-        , yVector : Vector3d
-        , zVector : Vector3d
+        { frame : Frame3d
+        , scale : Float
         , isRightHanded : Bool
         }
 

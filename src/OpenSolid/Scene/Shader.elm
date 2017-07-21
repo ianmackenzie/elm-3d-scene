@@ -35,29 +35,32 @@ type alias Varyings =
     }
 
 
-simpleVertex : WebGL.Shader { position : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { interpolatedPosition : Vec3 }
+simpleVertex : WebGL.Shader { position : Vec3 } { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { interpolatedPosition : Vec3 }
 simpleVertex =
     [glsl|
         attribute vec3 position;
 
+        uniform float modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 modelViewProjectionMatrix;
 
         varying vec3 interpolatedPosition;
 
         void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);
-          interpolatedPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+          vec4 scaledPosition = vec4(modelScale * position, 1.0);
+          gl_Position = modelViewProjectionMatrix * scaledPosition;
+          interpolatedPosition = (modelMatrix * scaledPosition).xyz;
         }
     |]
 
 
-vertex : WebGL.Shader { position : Vec3, normal : Vec3 } { a | modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } Varyings
+vertex : WebGL.Shader { position : Vec3, normal : Vec3 } { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } Varyings
 vertex =
     [glsl|
         attribute vec3 position;
         attribute vec3 normal;
 
+        uniform float modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 modelViewProjectionMatrix;
 
@@ -65,8 +68,9 @@ vertex =
         varying vec3 interpolatedNormal;
 
         void main () {
-          gl_Position = modelViewProjectionMatrix * vec4(position, 1.0);
-          interpolatedPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+          vec4 scaledPosition = vec4(modelScale * position, 1.0);
+          gl_Position = modelViewProjectionMatrix * scaledPosition;
+          interpolatedPosition = (modelMatrix * scaledPosition).xyz;
           interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
         }
     |]

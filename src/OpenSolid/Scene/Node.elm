@@ -5,7 +5,6 @@ module OpenSolid.Scene.Node
         , group
         , mirrorAcross
         , placeIn
-        , projectOnto
         , relativeTo
         , rotateAround
         , scaleAbout
@@ -74,11 +73,6 @@ relativeTo frame node =
 placeIn : Frame3d -> Node -> Node
 placeIn frame node =
     transformBy (Placement.placeIn frame) node
-
-
-projectOnto : Plane3d -> Node -> Node
-projectOnto plane node =
-    transformBy (Placement.projectOnto plane) node
 
 
 scaleAbout : Point3d -> Float -> Node -> Node
