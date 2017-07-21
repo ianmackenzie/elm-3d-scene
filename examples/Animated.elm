@@ -1,6 +1,10 @@
 module Animated exposing (..)
 
 import AnimationFrame
+import Color
+import Element
+import Element.Attributes as Attributes
+import Element.Events as Events
 import Html exposing (Html)
 import Materials
 import Math.Vector3 as Vector3 exposing (Vec3, vec3)
@@ -19,6 +23,10 @@ import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Frame3d as Frame3d
 import PointLight exposing (PointLight(..))
 import Shapes
+import Style
+import Style.Border as Border
+import Style.Color as Color
+import Style.Font as Font
 import Task
 import Time exposing (Time)
 import WebGL.Texture
@@ -55,6 +63,13 @@ cylinder =
             Shapes.cylinder (Point3d ( 0, 0, -0.75 )) (Point3d ( 0, 0, 0.75 )) 1
     in
     shape geometry
+
+
+type Styles
+    = DefaultStyle
+    | PanelStyle
+    | OuterStyle
+    | HeadingStyle
 
 
 view : Model -> Html Msg
@@ -132,6 +147,19 @@ view =
 
         overheadLightColor =
             vec3 5 5 5
+
+        styleSheet =
+            Style.styleSheet
+                [ Style.style DefaultStyle []
+                , Style.style PanelStyle
+                    [ Color.background Color.lightGrey
+                    , Border.right 1
+                    , Border.solid
+                    , Color.border Color.darkGrey
+                    ]
+                , Style.style OuterStyle []
+                , Style.style HeadingStyle [ Font.size 18 ]
+                ]
     in
     \model ->
         case model.loadedTexture of
@@ -210,49 +238,146 @@ view =
                             , color = overheadLightColor
                             }
 
+                    addIf flag item list =
+                        if flag model then
+                            item :: list
+                        else
+                            list
+
                     lights =
-                        [ Light.ambient lookupTexture ambientLightColor
-                        , Light.directional lightDirection1
-                            directionalLight1Color
-                        , Light.directional lightDirection2
-                            directionalLight2Color
-                        , PointLight.light pointLight1
-                        , PointLight.light pointLight2
-                        , PointLight.light overheadLight1
-                        , PointLight.light overheadLight2
-                        , PointLight.light overheadLight3
-                        , PointLight.light overheadLight4
-                        ]
+                        []
+                            |> addIf .ambientEnabled
+                                (Light.ambient lookupTexture ambientLightColor)
+                            |> addIf .directional1Enabled
+                                (Light.directional lightDirection1
+                                    directionalLight1Color
+                                )
+                            |> addIf .directional2Enabled
+                                (Light.directional lightDirection2
+                                    directionalLight2Color
+                                )
+                            |> addIf .point1Enabled
+                                (PointLight.light pointLight1)
+                            |> addIf .point2Enabled
+                                (PointLight.light pointLight2)
+                            |> addIf .overheadEnabled
+                                (PointLight.light overheadLight1)
+                            |> addIf .overheadEnabled
+                                (PointLight.light overheadLight2)
+                            |> addIf .overheadEnabled
+                                (PointLight.light overheadLight3)
+                            |> addIf .overheadEnabled
+                                (PointLight.light overheadLight4)
 
                     scene =
                         Node.group
-                            [ shapes
-                            , PointLight.node pointLight1
-                            , PointLight.node pointLight2
-                            ]
+                            ([ shapes ]
+                                |> addIf .point1Enabled
+                                    (PointLight.node pointLight1)
+                                |> addIf .point2Enabled
+                                    (PointLight.node pointLight2)
+                            )
 
                     renderOptions =
                         [ Scene.devicePixelRatio 2
                         , Scene.gammaCorrection 0.45
                         ]
+
+                    sceneElement =
+                        Element.html
+                            (Scene.renderWith renderOptions lights camera scene)
+
+                    checkbox value message label =
+                        Element.checkbox value
+                            DefaultStyle
+                            [ Events.onCheck message ]
+                            (Element.text label)
+
+                    ambientCheckbox =
+                        checkbox model.ambientEnabled
+                            SetAmbientEnabled
+                            "Ambient"
+
+                    directional1Checkbox =
+                        checkbox model.directional1Enabled
+                            SetDirectional1Enabled
+                            "Green directional"
+
+                    directional2Checkbox =
+                        checkbox model.directional2Enabled
+                            SetDirectional2Enabled
+                            "White directional"
+
+                    point1Checkbox =
+                        checkbox model.point1Enabled
+                            SetPoint1Enabled
+                            "Blue point"
+
+                    point2Checkbox =
+                        checkbox model.point2Enabled
+                            SetPoint2Enabled
+                            "Red point"
+
+                    overheadCheckbox =
+                        checkbox model.overheadEnabled
+                            SetOverheadEnabled
+                            "White overhead"
+
+                    checkboxes =
+                        Element.column PanelStyle
+                            [ Attributes.spacing 5, Attributes.padding 7.5 ]
+                            [ Element.el HeadingStyle [] (Element.text "Lights")
+                            , Element.spacer 1
+                            , ambientCheckbox
+                            , directional1Checkbox
+                            , directional2Checkbox
+                            , point1Checkbox
+                            , point2Checkbox
+                            , overheadCheckbox
+                            ]
+
+                    layout =
+                        Element.row OuterStyle
+                            [ Attributes.height (Attributes.percent 100) ]
+                            [ checkboxes, sceneElement ]
                 in
-                Scene.renderWith renderOptions lights camera scene
+                Element.viewport styleSheet layout
 
 
 type alias Model =
     { loadedTexture : Maybe (Result WebGL.Texture.Error Light.AmbientLookupTexture)
     , time : Time
+    , ambientEnabled : Bool
+    , directional1Enabled : Bool
+    , directional2Enabled : Bool
+    , point1Enabled : Bool
+    , point2Enabled : Bool
+    , overheadEnabled : Bool
     }
 
 
 type Msg
     = LoadComplete (Result WebGL.Texture.Error Light.AmbientLookupTexture)
+    | SetAmbientEnabled Bool
+    | SetDirectional1Enabled Bool
+    | SetDirectional2Enabled Bool
+    | SetPoint1Enabled Bool
+    | SetPoint2Enabled Bool
+    | SetOverheadEnabled Bool
     | Tick Float
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { loadedTexture = Nothing, time = 0 }
+    ( { loadedTexture = Nothing
+      , time = 0
+      , ambientEnabled = True
+      , directional1Enabled = True
+      , directional2Enabled = True
+      , point1Enabled = True
+      , point2Enabled = True
+      , overheadEnabled = True
+      }
     , Task.attempt LoadComplete (Light.loadAmbientLookupTextureFrom "lookup.png")
     )
 
@@ -265,6 +390,24 @@ update message model =
 
         Tick time ->
             ( { model | time = time }, Cmd.none )
+
+        SetAmbientEnabled value ->
+            ( { model | ambientEnabled = value }, Cmd.none )
+
+        SetDirectional1Enabled value ->
+            ( { model | directional1Enabled = value }, Cmd.none )
+
+        SetDirectional2Enabled value ->
+            ( { model | directional2Enabled = value }, Cmd.none )
+
+        SetPoint1Enabled value ->
+            ( { model | point1Enabled = value }, Cmd.none )
+
+        SetPoint2Enabled value ->
+            ( { model | point2Enabled = value }, Cmd.none )
+
+        SetOverheadEnabled value ->
+            ( { model | overheadEnabled = value }, Cmd.none )
 
 
 main : Program Never Model Msg
