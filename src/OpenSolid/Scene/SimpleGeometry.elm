@@ -51,9 +51,15 @@ triangles triangles_ =
     case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles_) of
         Just boundingBox ->
             let
+                toAttributes triangle =
+                    let
+                        ( p1, p2, p3 ) =
+                            Triangle3d.vertexPositions triangle
+                    in
+                    ( { position = p1 }, { position = p2 }, { position = p3 } )
+
                 mesh =
-                    WebGL.triangles
-                        (List.map Triangle3d.vertexPositions triangles_)
+                    WebGL.triangles (List.map toAttributes triangles_)
             in
             Types.SimpleGeometry boundingBox mesh
 
@@ -66,14 +72,14 @@ indexedTriangles vertices faces =
     case BoundingBox3d.containing vertices of
         Just boundingBox ->
             let
-                toPositionAttribute point =
+                toAttribute point =
                     { position = Point3d.toVec3 point }
 
-                vertexPositions =
-                    List.map toPositionAttribute vertices
+                vertexAttributes =
+                    List.map toAttribute vertices
 
                 mesh =
-                    WebGL.indexedTriangles vertexPositions faces
+                    WebGL.indexedTriangles vertexAttributes faces
             in
             Types.SimpleGeometry boundingBox mesh
 
@@ -86,11 +92,11 @@ triangleFan points =
     case BoundingBox3d.containing points of
         Just boundingBox ->
             let
-                toPositionAttribute point =
+                toAttribute point =
                     { position = Point3d.toVec3 point }
 
                 mesh =
-                    WebGL.triangleFan (List.map toPositionAttribute points)
+                    WebGL.triangleFan (List.map toAttribute points)
             in
             Types.SimpleGeometry boundingBox mesh
 
@@ -107,9 +113,15 @@ lines lineSegments =
     case BoundingBox3d.hullOf segmentBoundingBoxes of
         Just boundingBox ->
             let
+                toAttributes lineSegment =
+                    let
+                        ( p1, p2 ) =
+                            LineSegment3d.vertexPositions lineSegment
+                    in
+                    ( { position = p1 }, { position = p2 } )
+
                 mesh =
-                    WebGL.lines
-                        (List.map LineSegment3d.vertexPositions lineSegments)
+                    WebGL.lines (List.map toAttributes lineSegments)
             in
             Types.SimpleGeometry boundingBox mesh
 
@@ -122,8 +134,15 @@ polyline polyline_ =
     case Polyline3d.boundingBox polyline_ of
         Just boundingBox ->
             let
+                toAttribute point =
+                    { position = Point3d.toVec3 point }
+
+                vertexAttributes =
+                    Polyline3d.vertices polyline_
+                        |> List.map toAttribute
+
                 mesh =
-                    WebGL.lineStrip (Polyline3d.vertexPositions polyline_)
+                    WebGL.lineStrip vertexAttributes
             in
             Types.SimpleGeometry boundingBox mesh
 
@@ -136,11 +155,11 @@ points points_ =
     case BoundingBox3d.containing points_ of
         Just boundingBox ->
             let
-                toPositionAttribute point =
+                toAttribute point =
                     { position = Point3d.toVec3 point }
 
                 mesh =
-                    WebGL.points (List.map toPositionAttribute points_)
+                    WebGL.points (List.map toAttribute points_)
             in
             Types.SimpleGeometry boundingBox mesh
 

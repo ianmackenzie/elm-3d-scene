@@ -45,8 +45,23 @@ facets triangles =
     case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles) of
         Just boundingBox ->
             let
+                vertexAttributes ( position, normal ) =
+                    { position = position
+                    , normal = normal
+                    }
+
+                toAttributes triangle =
+                    let
+                        ( v1, v2, v3 ) =
+                            Triangle3d.vertexPositionsAndNormals triangle
+                    in
+                    ( vertexAttributes v1
+                    , vertexAttributes v2
+                    , vertexAttributes v3
+                    )
+
                 attributes =
-                    List.map Triangle3d.vertexPositionsAndNormals triangles
+                    List.map toAttributes triangles
 
                 mesh =
                     WebGL.triangles attributes
