@@ -65,11 +65,7 @@ scaleAbout referencePoint scalingFactor placement =
     Types.Placement
         { frame = Frame3d.moveTo scaledOrigin currentFrame
         , scale = scalingFactor * scale placement
-        , isRightHanded =
-            if scalingFactor >= 0.0 then
-                isRightHanded placement
-            else
-                not (isRightHanded placement)
+        , isRightHanded = isRightHanded placement == (scalingFactor >= 0.0)
         }
 
 
