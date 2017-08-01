@@ -54,9 +54,12 @@ triangles triangles_ =
                 toAttributes triangle =
                     let
                         ( p1, p2, p3 ) =
-                            Triangle3d.vertexPositions triangle
+                            Triangle3d.vertices triangle
                     in
-                    ( { position = p1 }, { position = p2 }, { position = p3 } )
+                    ( { position = Point3d.toVec3 p1 }
+                    , { position = Point3d.toVec3 p2 }
+                    , { position = Point3d.toVec3 p3 }
+                    )
 
                 mesh =
                     WebGL.triangles (List.map toAttributes triangles_)
@@ -116,9 +119,11 @@ lines lineSegments =
                 toAttributes lineSegment =
                     let
                         ( p1, p2 ) =
-                            LineSegment3d.vertexPositions lineSegment
+                            LineSegment3d.endpoints lineSegment
                     in
-                    ( { position = p1 }, { position = p2 } )
+                    ( { position = Point3d.toVec3 p1 }
+                    , { position = Point3d.toVec3 p2 }
+                    )
 
                 mesh =
                     WebGL.lines (List.map toAttributes lineSegments)

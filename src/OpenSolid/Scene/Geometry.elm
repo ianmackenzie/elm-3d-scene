@@ -8,6 +8,7 @@ module OpenSolid.Scene.Geometry
         , shaded
         )
 
+import Math.Vector3 exposing (Vec3, vec3)
 import OpenSolid.BoundingBox3d as BoundingBox3d
 import OpenSolid.Frame3d as Frame3d
 import OpenSolid.Geometry.Types exposing (..)
@@ -45,19 +46,24 @@ facets triangles =
     case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles) of
         Just boundingBox ->
             let
-                vertexAttributes ( position, normal ) =
-                    { position = position
+                vertexAttributes point normal =
+                    { position = Point3d.toVec3 point
                     , normal = normal
                     }
 
                 toAttributes triangle =
                     let
-                        ( v1, v2, v3 ) =
-                            Triangle3d.vertexPositionsAndNormals triangle
+                        ( p1, p2, p3 ) =
+                            Triangle3d.vertices triangle
+
+                        normalVector =
+                            Triangle3d.normalDirection triangle
+                                |> Maybe.map Direction3d.toVec3
+                                |> Maybe.withDefault (vec3 0 0 0)
                     in
-                    ( vertexAttributes v1
-                    , vertexAttributes v2
-                    , vertexAttributes v3
+                    ( vertexAttributes p1 normalVector
+                    , vertexAttributes p2 normalVector
+                    , vertexAttributes p3 normalVector
                     )
 
                 attributes =
