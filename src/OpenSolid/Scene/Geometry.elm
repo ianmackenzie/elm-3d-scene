@@ -9,16 +9,15 @@ module OpenSolid.Scene.Geometry
         )
 
 import Math.Vector3 exposing (Vec3, vec3)
-import OpenSolid.BoundingBox3d as BoundingBox3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
+import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
+import OpenSolid.Interop.LinearAlgebra.Direction3d as Direction3d
+import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
+import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Material exposing (Material)
 import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Types as Types
-import OpenSolid.Triangle3d as Triangle3d
-import OpenSolid.WebGL.Direction3d as Direction3d
-import OpenSolid.WebGL.Point3d as Point3d
-import OpenSolid.WebGL.Triangle3d as Triangle3d
+import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
 import WebGL
 
 
@@ -88,7 +87,7 @@ type alias FaceVertices =
 
 faceBoundingBox : FaceVertices -> BoundingBox3d
 faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
-    Triangle3d.boundingBox (Triangle3d ( p1, p2, p3 ))
+    Triangle3d.boundingBox (Triangle3d.withVertices ( p1, p2, p3 ))
 
 
 faceAttributes : FaceVertices -> ( Types.VertexAttributes, Types.VertexAttributes, Types.VertexAttributes )

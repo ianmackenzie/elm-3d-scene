@@ -12,18 +12,14 @@ module OpenSolid.Scene.SimpleGeometry
         )
 
 import Math.Vector3 exposing (Vec3)
-import OpenSolid.BoundingBox3d as BoundingBox3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.LineSegment3d as LineSegment3d
-import OpenSolid.Polyline3d as Polyline3d
+import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
+import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
+import OpenSolid.LineSegment3d as LineSegment3d exposing (LineSegment3d)
+import OpenSolid.Point3d as Point3d exposing (Point3d)
+import OpenSolid.Polyline3d as Polyline3d exposing (Polyline3d)
 import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Types as Types
-import OpenSolid.Triangle3d as Triangle3d
-import OpenSolid.WebGL.LineSegment3d as LineSegment3d
-import OpenSolid.WebGL.Point3d as Point3d
-import OpenSolid.WebGL.Polyline3d as Polyline3d
-import OpenSolid.WebGL.Triangle3d as Triangle3d
+import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
 import WebGL
 
 

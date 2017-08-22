@@ -5,13 +5,11 @@ module Shapes
         , sphere
         )
 
-import Math.Vector3 exposing (Vec3)
-import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Point3d as Point3d
+import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
+import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
+import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
-import OpenSolid.Scene.Material as Material
-import OpenSolid.Scene.Node as Node exposing (Node)
+import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
 
 
 sphere : Point3d -> Float -> Geometry
@@ -37,12 +35,12 @@ sphere centerPoint radius =
                         angleValues
                             |> List.map
                                 (\phi ->
-                                    ( Point3d
+                                    ( Point3d.withCoordinates
                                         ( x0 + radius * sin phi * cos theta
                                         , y0 + radius * sin phi * sin theta
                                         , z0 + radius * cos phi
                                         )
-                                    , Direction3d
+                                    , Direction3d.withComponents
                                         ( sin phi * cos theta
                                         , sin phi * sin theta
                                         , cos phi
@@ -103,7 +101,7 @@ sphere centerPoint radius =
 
 cylinder : Point3d -> Point3d -> Float -> Geometry
 cylinder startPoint endPoint radius =
-    case Point3d.directionFrom startPoint endPoint of
+    case Direction3d.from startPoint endPoint of
         Just zDirection ->
             let
                 ( xDirection, yDirection ) =
@@ -116,7 +114,7 @@ cylinder startPoint endPoint radius =
                     Point3d.distanceFrom startPoint endPoint
 
                 frame =
-                    Frame3d
+                    Frame3d.with
                         { originPoint = startPoint
                         , xDirection = xDirection
                         , yDirection = yDirection
@@ -162,11 +160,19 @@ cylinder startPoint endPoint radius =
                             Point3d.in_ frame ( endX, endY, length )
 
                         startNormal =
-                            Direction3d ( cos startAngle, sin startAngle, 0.0 )
+                            Direction3d.withComponents
+                                ( cos startAngle
+                                , sin startAngle
+                                , 0.0
+                                )
                                 |> Direction3d.placeIn frame
 
                         endNormal =
-                            Direction3d ( cos endAngle, sin endAngle, 0.0 )
+                            Direction3d.withComponents
+                                ( cos endAngle
+                                , sin endAngle
+                                , 0.0
+                                )
                                 |> Direction3d.placeIn frame
                     in
                     [ ( ( startPoint, negativeZDirection )
@@ -200,40 +206,40 @@ box : Float -> Float -> Float -> Geometry
 box x y z =
     let
         p0 =
-            Point3d ( -x / 2, -y / 2, -z / 2 )
+            Point3d.withCoordinates ( -x / 2, -y / 2, -z / 2 )
 
         p1 =
-            Point3d ( x / 2, -y / 2, -z / 2 )
+            Point3d.withCoordinates ( x / 2, -y / 2, -z / 2 )
 
         p2 =
-            Point3d ( x / 2, y / 2, -z / 2 )
+            Point3d.withCoordinates ( x / 2, y / 2, -z / 2 )
 
         p3 =
-            Point3d ( -x / 2, y / 2, -z / 2 )
+            Point3d.withCoordinates ( -x / 2, y / 2, -z / 2 )
 
         p4 =
-            Point3d ( -x / 2, -y / 2, z / 2 )
+            Point3d.withCoordinates ( -x / 2, -y / 2, z / 2 )
 
         p5 =
-            Point3d ( x / 2, -y / 2, z / 2 )
+            Point3d.withCoordinates ( x / 2, -y / 2, z / 2 )
 
         p6 =
-            Point3d ( x / 2, y / 2, z / 2 )
+            Point3d.withCoordinates ( x / 2, y / 2, z / 2 )
 
         p7 =
-            Point3d ( -x / 2, y / 2, z / 2 )
+            Point3d.withCoordinates ( -x / 2, y / 2, z / 2 )
     in
     Geometry.facets
-        [ Triangle3d ( p0, p2, p1 )
-        , Triangle3d ( p0, p3, p2 )
-        , Triangle3d ( p4, p5, p6 )
-        , Triangle3d ( p4, p6, p7 )
-        , Triangle3d ( p1, p2, p6 )
-        , Triangle3d ( p1, p6, p5 )
-        , Triangle3d ( p0, p7, p3 )
-        , Triangle3d ( p0, p4, p7 )
-        , Triangle3d ( p0, p1, p5 )
-        , Triangle3d ( p0, p5, p4 )
-        , Triangle3d ( p3, p6, p2 )
-        , Triangle3d ( p3, p7, p6 )
+        [ Triangle3d.withVertices ( p0, p2, p1 )
+        , Triangle3d.withVertices ( p0, p3, p2 )
+        , Triangle3d.withVertices ( p4, p5, p6 )
+        , Triangle3d.withVertices ( p4, p6, p7 )
+        , Triangle3d.withVertices ( p1, p2, p6 )
+        , Triangle3d.withVertices ( p1, p6, p5 )
+        , Triangle3d.withVertices ( p0, p7, p3 )
+        , Triangle3d.withVertices ( p0, p4, p7 )
+        , Triangle3d.withVertices ( p0, p1, p5 )
+        , Triangle3d.withVertices ( p0, p5, p4 )
+        , Triangle3d.withVertices ( p3, p6, p2 )
+        , Triangle3d.withVertices ( p3, p7, p6 )
         ]

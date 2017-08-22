@@ -1,7 +1,8 @@
 module OpenSolid.Scene.Types exposing (..)
 
 import Math.Vector3 exposing (Vec3)
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
+import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import WebGL exposing (Texture)
 
 

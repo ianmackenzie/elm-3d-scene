@@ -8,17 +8,16 @@ import Element.Events as Events
 import Html exposing (Html)
 import Materials
 import Math.Vector3 as Vector3 exposing (Vec3, vec3)
-import OpenSolid.Axis3d as Axis3d
-import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Point3d as Point3d
+import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
+import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
+import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.SketchPlane3d as SketchPlane3d
+import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import OpenSolid.WebGL.Frame3d as Frame3d
 import PointLight exposing (PointLight(..))
@@ -35,7 +34,7 @@ import WebGL.Texture
 shape : Geometry -> Material -> ( Float, Float ) -> Node
 shape geometry material ( x, y ) =
     Geometry.shaded material geometry
-        |> Node.translateBy (Vector3d ( x, y, 0 ))
+        |> Node.translateBy (Vector3d.withComponents ( x, y, 0 ))
 
 
 sphere : Material -> ( Float, Float ) -> Node
@@ -60,7 +59,10 @@ cylinder : Material -> ( Float, Float ) -> Node
 cylinder =
     let
         geometry =
-            Shapes.cylinder (Point3d ( 0, 0, -0.75 )) (Point3d ( 0, 0, 0.75 )) 1
+            Shapes.cylinder
+                (Point3d.withCoordinates ( 0, 0, -0.75 ))
+                (Point3d.withCoordinates ( 0, 0, 0.75 ))
+                1
     in
     shape geometry
 
@@ -79,7 +81,7 @@ view =
             Camera.perspective
                 { frame =
                     Frame3d.lookAt
-                        { eyePoint = Point3d ( 10, 10, 10 )
+                        { eyePoint = Point3d.withCoordinates ( 10, 10, 10 )
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
                         }
@@ -104,7 +106,7 @@ view =
                 ]
 
         pointLight1StartPoint =
-            Point3d ( 1.5, 1.5, 3 )
+            Point3d.withCoordinates ( 1.5, 1.5, 3 )
 
         pointLight1RotationAxis =
             Axis3d.z
@@ -113,7 +115,7 @@ view =
             vec3 0 2 10
 
         pointLight2StartPoint =
-            Point3d ( 1.5, -1.5, 0 )
+            Point3d.withCoordinates ( 1.5, -1.5, 0 )
 
         pointLight2RotationAxis =
             Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
@@ -134,16 +136,16 @@ view =
             vec3 0.01 0.01 0.01
 
         overheadLight1Point =
-            Point3d ( 8, 8, 5 )
+            Point3d.withCoordinates ( 8, 8, 5 )
 
         overheadLight2Point =
-            Point3d ( 8, -8, 5 )
+            Point3d.withCoordinates ( 8, -8, 5 )
 
         overheadLight3Point =
-            Point3d ( -8, 8, 5 )
+            Point3d.withCoordinates ( -8, 8, 5 )
 
         overheadLight4Point =
-            Point3d ( -8, -8, 5 )
+            Point3d.withCoordinates ( -8, -8, 5 )
 
         overheadLightColor =
             vec3 5 5 5

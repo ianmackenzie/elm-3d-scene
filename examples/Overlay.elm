@@ -5,17 +5,17 @@ import Html.Attributes as Attributes
 import Kintail.InputWidget as InputWidget
 import Logo
 import OpenSolid.Axis3d as Axis3d
+import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Frame2d as Frame2d
 import OpenSolid.LineSegment3d as LineSegment3d
-import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Svg as Svg
+import OpenSolid.Vector2d as Vector2d
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
 import OpenSolid.WebGL.LineSegment3d as LineSegment3d
@@ -61,7 +61,7 @@ view { angleInDegrees, projectionType } =
             600
 
         eyePoint =
-            Point3d ( 4, 0, 0 )
+            Point3d.withCoordinates ( 4, 0, 0 )
                 |> Point3d.rotateAround Axis3d.y (degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
@@ -114,7 +114,7 @@ view { angleInDegrees, projectionType } =
                             , Svg.Attributes.strokeWidth "2"
                             , Svg.Attributes.fill "none"
                             ]
-                            (Circle2d { centerPoint = vertex, radius = 7 })
+                            (Circle2d.with { centerPoint = vertex, radius = 7 })
                     )
 
         svgLines =
@@ -140,13 +140,16 @@ view { angleInDegrees, projectionType } =
                             , Svg.Attributes.fontFamily "monospace"
                             , Svg.Attributes.fontSize "20px"
                             ]
-                            (vertex |> Point2d.translateBy (Vector2d ( 10, 0 )))
+                            (vertex
+                                |> Point2d.translateBy
+                                    (Vector2d.withComponents ( 10, 0 ))
+                            )
                             ("p" ++ toString index)
                     )
 
         topLeftFrame =
-            Frame2d
-                { originPoint = Point2d ( 0, height )
+            Frame2d.with
+                { originPoint = Point2d.withCoordinates ( 0, height )
                 , xDirection = Direction2d.positiveX
                 , yDirection = Direction2d.negativeY
                 }

@@ -6,9 +6,8 @@ module PointLight
         )
 
 import Math.Vector3 exposing (Vec3)
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Point3d as Point3d
+import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
+import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material

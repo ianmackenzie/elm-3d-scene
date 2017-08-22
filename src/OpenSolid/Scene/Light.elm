@@ -9,11 +9,11 @@ module OpenSolid.Scene.Light
         )
 
 import Math.Vector3 exposing (Vec3)
-import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
+import OpenSolid.Interop.LinearAlgebra.Direction3d as Direction3d
+import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
+import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Types as Types
-import OpenSolid.WebGL.Direction3d as Direction3d
-import OpenSolid.WebGL.Point3d as Point3d
 import Task exposing (Task)
 import WebGL exposing (Texture)
 import WebGL.Texture

@@ -14,12 +14,12 @@ module OpenSolid.Scene.Placement
         , translateBy
         )
 
-import Math.Matrix4 exposing (Mat4)
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Point3d as Point3d
+import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
+import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
+import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
+import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Types as Types
-import OpenSolid.Vector3d as Vector3d
+import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 
 
 type alias Placement =

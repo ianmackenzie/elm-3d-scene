@@ -6,7 +6,8 @@
     "source-directories": [
         "src",
         "../geometry/src",
-        "../webgl/src"
+        "../webgl/src",
+        "../linear-algebra-interop/src"
     ],
     "exposed-modules": [],
     "dependencies": {

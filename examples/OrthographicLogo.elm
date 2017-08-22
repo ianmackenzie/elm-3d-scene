@@ -1,22 +1,16 @@
 module OrthographicLogo exposing (..)
 
-import AnimationFrame
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Kintail.InputWidget as InputWidget
 import Logo
 import OpenSolid.Axis3d as Axis3d
 import OpenSolid.Direction3d as Direction3d
-import OpenSolid.Frame3d as Frame3d
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.WebGL.Camera as Camera
 import OpenSolid.WebGL.Frame3d as Frame3d
-import Time
-import WebGL
 
 
 view : Float -> Html Float
@@ -44,7 +38,7 @@ view angleInDegrees =
             eyeDistance * sin eyeElevation
 
         eyePoint =
-            Point3d ( eyeX, 0, eyeZ )
+            Point3d.withCoordinates ( eyeX, 0, eyeZ )
                 |> Point3d.rotateAround Axis3d.z eyeAzimuth
 
         eyeFrame =
