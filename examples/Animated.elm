@@ -177,14 +177,16 @@ view =
                         Time.inSeconds model.time
 
                     lightDirection1 =
-                        Direction3d.spherical SketchPlane3d.xy
-                            { elevation = degrees -15
+                        Direction3d.with
+                            { referencePlane = SketchPlane3d.xy
+                            , elevation = degrees -15
                             , azimuth = degrees 180 + seconds * degrees 111
                             }
 
                     lightDirection2 =
-                        Direction3d.spherical SketchPlane3d.xy
-                            { elevation = degrees -45
+                        Direction3d.with
+                            { referencePlane = SketchPlane3d.xy
+                            , elevation = degrees -45
                             , azimuth = degrees 270 + seconds * degrees 47
                             }
 
