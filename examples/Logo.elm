@@ -151,20 +151,20 @@ vertices =
 
 edges : List LineSegment3d
 edges =
-    [ LineSegment3d.withEndpoints ( p0, p1 )
-    , LineSegment3d.withEndpoints ( p1, p2 )
-    , LineSegment3d.withEndpoints ( p2, p3 )
-    , LineSegment3d.withEndpoints ( p3, p0 )
-    , LineSegment3d.withEndpoints ( p0, p5 )
-    , LineSegment3d.withEndpoints ( p1, p6 )
-    , LineSegment3d.withEndpoints ( p2, p8 )
-    , LineSegment3d.withEndpoints ( p3, p4 )
-    , LineSegment3d.withEndpoints ( p5, p6 )
-    , LineSegment3d.withEndpoints ( p6, p7 )
-    , LineSegment3d.withEndpoints ( p7, p8 )
-    , LineSegment3d.withEndpoints ( p8, p9 )
-    , LineSegment3d.withEndpoints ( p7, p9 )
-    , LineSegment3d.withEndpoints ( p9, p4 )
-    , LineSegment3d.withEndpoints ( p4, p5 )
+    [ LineSegment3d.from p0 p1
+    , LineSegment3d.from p1 p2
+    , LineSegment3d.from p2 p3
+    , LineSegment3d.from p3 p0
+    , LineSegment3d.from p0 p5
+    , LineSegment3d.from p1 p6
+    , LineSegment3d.from p2 p8
+    , LineSegment3d.from p3 p4
+    , LineSegment3d.from p5 p6
+    , LineSegment3d.from p6 p7
+    , LineSegment3d.from p7 p8
+    , LineSegment3d.from p8 p9
+    , LineSegment3d.from p7 p9
+    , LineSegment3d.from p9 p4
+    , LineSegment3d.from p4 p5
     ]
         |> List.map (LineSegment3d.relativeTo centerFrame)
