@@ -40,11 +40,10 @@ sphere centerPoint radius =
                                         , y0 + radius * sin phi * sin theta
                                         , z0 + radius * cos phi
                                         )
-                                    , Direction3d.withComponents
-                                        ( sin phi * cos theta
-                                        , sin phi * sin theta
-                                        , cos phi
-                                        )
+                                    , Direction3d.with
+                                        { azimuth = theta
+                                        , elevation = pi / 2 - phi
+                                        }
                                     )
                                 )
                     )
@@ -160,19 +159,17 @@ cylinder startPoint endPoint radius =
                             Point3d.in_ frame ( endX, endY, length )
 
                         startNormal =
-                            Direction3d.withComponents
-                                ( cos startAngle
-                                , sin startAngle
-                                , 0.0
-                                )
+                            Direction3d.with
+                                { azimuth = startAngle
+                                , elevation = 0
+                                }
                                 |> Direction3d.placeIn frame
 
                         endNormal =
-                            Direction3d.withComponents
-                                ( cos endAngle
-                                , sin endAngle
-                                , 0.0
-                                )
+                            Direction3d.with
+                                { azimuth = endAngle
+                                , elevation = 0
+                                }
                                 |> Direction3d.placeIn frame
                     in
                     [ ( ( startPoint, negativeZDirection )

@@ -49,15 +49,6 @@ unitSphere =
     Shapes.sphere Point3d.origin 1.0
 
 
-direction : Float -> Float -> Direction3d
-direction phi theta =
-    Direction3d.withComponents
-        ( -(sin phi * cos theta)
-        , -(sin phi * sin theta)
-        , -(cos phi)
-        )
-
-
 cameraFrame : Frame3d
 cameraFrame =
     Frame3d.lookAt
@@ -101,7 +92,10 @@ view model =
         Just (Ok lookupTexture) ->
             let
                 lightDirection =
-                    direction (degrees 60) (degrees 120)
+                    Direction3d.with
+                        { elevation = degrees -30
+                        , azimuth = degrees -60
+                        }
 
                 lights =
                     [ Light.directional lightDirection (vec3 0 0.2 0.2)
