@@ -113,7 +113,7 @@ cylinder startPoint endPoint radius =
                     Point3d.distanceFrom startPoint endPoint
 
                 frame =
-                    Frame3d.with
+                    Frame3d.unsafe
                         { originPoint = startPoint
                         , xDirection = xDirection
                         , yDirection = yDirection
