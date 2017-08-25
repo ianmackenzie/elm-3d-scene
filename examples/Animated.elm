@@ -178,15 +178,13 @@ view =
 
                     lightDirection1 =
                         Direction3d.with
-                            { referencePlane = SketchPlane3d.xy
-                            , elevation = degrees -15
+                            { elevation = degrees -15
                             , azimuth = degrees 180 + seconds * degrees 111
                             }
 
                     lightDirection2 =
                         Direction3d.with
-                            { referencePlane = SketchPlane3d.xy
-                            , elevation = degrees -45
+                            { elevation = degrees -45
                             , azimuth = degrees 270 + seconds * degrees 47
                             }
 
