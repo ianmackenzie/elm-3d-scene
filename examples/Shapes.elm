@@ -103,9 +103,6 @@ cylinder startPoint endPoint radius =
     case Direction3d.from startPoint endPoint of
         Just zDirection ->
             let
-                ( xDirection, yDirection ) =
-                    Direction3d.perpendicularBasis zDirection
-
                 negativeZDirection =
                     Direction3d.flip zDirection
 
@@ -113,10 +110,8 @@ cylinder startPoint endPoint radius =
                     Point3d.distanceFrom startPoint endPoint
 
                 frame =
-                    Frame3d.unsafe
+                    Frame3d.with
                         { originPoint = startPoint
-                        , xDirection = xDirection
-                        , yDirection = yDirection
                         , zDirection = zDirection
                         }
 
