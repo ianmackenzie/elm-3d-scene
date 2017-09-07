@@ -3,6 +3,7 @@ module Sprocket exposing (..)
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
+import Kintail.InputWidget as InputWidget
 import Materials
 import Math.Vector3 exposing (Vec3, vec3)
 import Mouse
@@ -43,13 +44,14 @@ type Msg
     = StartRotatingAt Point2d
     | PointerMovedTo Point2d
     | StopRotating
-    | SetWindowSize Window.Size
+    | NumTeethChanged Int
 
 
 type alias Model =
     { dragPoint : Maybe Point2d
-    , windowSize : Maybe Window.Size
     , placementFrame : Frame3d
+    , numTeeth : Int
+    , sprocketNode : () -> Node
     }
 
 
@@ -57,18 +59,28 @@ type alias Model =
 -- Rendering
 
 
-camera : Window.Size -> Camera
-camera { width, height } =
+screenWidth : Int
+screenWidth =
+    1024
+
+
+screenHeight : Int
+screenHeight =
+    768
+
+
+camera : Camera
+camera =
     Camera.perspective
         { frame =
             Camera.lookAt
-                { eyePoint = Point3d.withCoordinates ( 10, 0, 5 )
+                { eyePoint = Point3d.withCoordinates ( 8, 0, 4 )
                 , focalPoint = Point3d.origin
                 , upDirection = Direction3d.z
                 }
         , verticalFieldOfView = degrees 30
-        , screenWidth = toFloat width
-        , screenHeight = toFloat height
+        , screenWidth = toFloat screenWidth
+        , screenHeight = toFloat screenHeight
         , nearClipDistance = 0.1
         , farClipDistance = 100
         }
@@ -76,6 +88,22 @@ camera { width, height } =
 
 
 -- Interactivity
+
+
+createSprocketNode : Int -> Node
+createSprocketNode numTeeth =
+    let
+        sprocketBody =
+            sprocketWith
+                { bore = 0.5
+                , pitch = 0.25
+                , thickness = 0.125
+                , numTeeth = numTeeth
+                , toothHeight = 0.175
+                , rollerDiameter = 0.125
+                }
+    in
+    Geometry.body tolerance sprocketBody |> Geometry.shaded Materials.aluminum
 
 
 mousePositionToPoint : Mouse.Position -> Point2d
@@ -91,16 +119,17 @@ touchToPoint touch =
 init : ( Model, Cmd Msg )
 init =
     let
+        initialNumTeeth =
+            32
+
         model =
             { dragPoint = Nothing
-            , windowSize = Nothing
             , placementFrame = Frame3d.xyz
+            , numTeeth = initialNumTeeth
+            , sprocketNode = always (createSprocketNode initialNumTeeth)
             }
-
-        cmd =
-            Task.perform SetWindowSize Window.size
     in
-    ( model, cmd )
+    ( model, Cmd.none )
 
 
 dragAttributes : List (Attribute Msg)
@@ -248,18 +277,6 @@ sprocketWith { bore, pitch, numTeeth, thickness, rollerDiameter, toothHeight } =
         |> Body3d.translateBy (Vector3d.withComponents ( 0, 0, -thickness / 2 ))
 
 
-sprocket : Body3d
-sprocket =
-    sprocketWith
-        { bore = 0.5
-        , pitch = 0.25
-        , thickness = 0.125
-        , numTeeth = 32
-        , toothHeight = 0.175
-        , rollerDiameter = 0.125
-        }
-
-
 hub : Body3d
 hub =
     let
@@ -297,13 +314,16 @@ shaft =
         |> Body3d.translateBy (Vector3d.withComponents ( 0, 0, -1.5 ))
 
 
-scene : Node
-scene =
-    Node.group
-        [ Geometry.body 0.001 sprocket |> Geometry.shaded Materials.aluminum
-        , Geometry.body 0.001 hub |> Geometry.shaded Materials.aluminum
-        , Geometry.body 0.001 shaft |> Geometry.shaded Materials.gold
-        ]
+tolerance : Float
+tolerance =
+    0.001
+
+
+staticNodes : List Node
+staticNodes =
+    [ Geometry.body tolerance hub |> Geometry.shaded Materials.aluminum
+    , Geometry.body tolerance shaft |> Geometry.shaded Materials.gold
+    ]
 
 
 lights : List Light
@@ -323,17 +343,26 @@ lights =
 
 
 view : Model -> Html Msg
-view model =
-    case model.windowSize of
-        Just windowSize ->
-            Html.div dragAttributes
-                [ Scene.render lights
-                    (camera windowSize)
-                    (Node.placeIn model.placementFrame scene)
-                ]
+view { placementFrame, numTeeth, sprocketNode } =
+    let
+        sliderAttributes =
+            [ Attributes.style [ ( "width", toString screenWidth ++ "px" ) ] ]
 
-        _ ->
-            Html.text "Initializing..."
+        sliderConfig =
+            { min = 20
+            , max = 64
+            , step = 1
+            }
+
+        scene =
+            Node.group (sprocketNode () :: staticNodes)
+    in
+    Html.div []
+        [ Html.div dragAttributes
+            [ Scene.render lights camera (Node.placeIn placementFrame scene) ]
+        , InputWidget.slider sliderAttributes sliderConfig (toFloat numTeeth)
+            |> Html.map (round >> NumTeethChanged)
+        ]
 
 
 rotate : Frame3d -> Float -> Float -> Frame3d
@@ -395,25 +424,26 @@ update message model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        SetWindowSize windowSize ->
-            ( { model | windowSize = Just windowSize }, Cmd.none )
+        NumTeethChanged numTeeth ->
+            ( { model
+                | numTeeth = numTeeth
+                , sprocketNode = always (createSprocketNode numTeeth)
+              }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    let
-        dragEvents =
-            case model.dragPoint of
-                Just _ ->
-                    Sub.batch
-                        [ Mouse.moves (mousePositionToPoint >> PointerMovedTo)
-                        , Mouse.ups (always StopRotating)
-                        ]
+    case model.dragPoint of
+        Just _ ->
+            Sub.batch
+                [ Mouse.moves (mousePositionToPoint >> PointerMovedTo)
+                , Mouse.ups (always StopRotating)
+                ]
 
-                Nothing ->
-                    Sub.none
-    in
-    Sub.batch [ dragEvents, Window.resizes SetWindowSize ]
+        Nothing ->
+            Sub.none
 
 
 main : Program Never Model Msg
