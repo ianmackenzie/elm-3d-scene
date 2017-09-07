@@ -68,7 +68,7 @@ triangles triangles_ =
 
 indexedTriangles : List Point3d -> List ( Int, Int, Int ) -> SimpleGeometry
 indexedTriangles vertices faces =
-    case BoundingBox3d.containing vertices of
+    case Point3d.hullOf vertices of
         Just boundingBox ->
             let
                 toAttribute point =
@@ -88,7 +88,7 @@ indexedTriangles vertices faces =
 
 triangleFan : List Point3d -> SimpleGeometry
 triangleFan points =
-    case BoundingBox3d.containing points of
+    case Point3d.hullOf points of
         Just boundingBox ->
             let
                 toAttribute point =
@@ -153,7 +153,7 @@ polyline polyline_ =
 
 points : List Point3d -> SimpleGeometry
 points points_ =
-    case BoundingBox3d.containing points_ of
+    case Point3d.hullOf points_ of
         Just boundingBox ->
             let
                 toAttribute point =

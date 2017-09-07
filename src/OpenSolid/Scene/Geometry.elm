@@ -133,7 +133,7 @@ indexedFaces vertices faces =
         vertexPoints =
             List.map Tuple.first vertices
     in
-    case BoundingBox3d.containing vertexPoints of
+    case Point3d.hullOf vertexPoints of
         Just boundingBox ->
             let
                 attributes =
