@@ -7,10 +7,13 @@
         "src",
         "../geometry/src",
         "../webgl/src",
-        "../linear-algebra-interop/src"
+        "../linear-algebra-interop/src",
+        "../parametric/src",
+        "../mesh/src"
     ],
     "exposed-modules": [],
     "dependencies": {
+        "Skinney/elm-array-exploration": "2.0.5 <= v < 3.0.0",
         "elm-community/linear-algebra": "3.1.0 <= v < 4.0.0",
         "elm-community/webgl": "2.0.3 <= v < 3.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0",

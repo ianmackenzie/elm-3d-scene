@@ -10,6 +10,7 @@ import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
+import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 
 
 sphere : Point3d -> Float -> Geometry
@@ -44,6 +45,7 @@ sphere centerPoint radius =
                                         { azimuth = theta
                                         , elevation = pi / 2 - phi
                                         }
+                                        |> Direction3d.toVector
                                     )
                                 )
                     )
@@ -103,8 +105,11 @@ cylinder startPoint endPoint radius =
     case Direction3d.from startPoint endPoint of
         Just zDirection ->
             let
-                negativeZDirection =
-                    Direction3d.flip zDirection
+                zVector =
+                    Direction3d.toVector zDirection
+
+                negativeZVector =
+                    Vector3d.flip zVector
 
                 length =
                     Point3d.distanceFrom startPoint endPoint
@@ -159,6 +164,7 @@ cylinder startPoint endPoint radius =
                                 , elevation = 0
                                 }
                                 |> Direction3d.placeIn frame
+                                |> Direction3d.toVector
 
                         endNormal =
                             Direction3d.with
@@ -166,10 +172,11 @@ cylinder startPoint endPoint radius =
                                 , elevation = 0
                                 }
                                 |> Direction3d.placeIn frame
+                                |> Direction3d.toVector
                     in
-                    [ ( ( startPoint, negativeZDirection )
-                      , ( p0, negativeZDirection )
-                      , ( p1, negativeZDirection )
+                    [ ( ( startPoint, negativeZVector )
+                      , ( p0, negativeZVector )
+                      , ( p1, negativeZVector )
                       )
                     , ( ( p0, startNormal )
                       , ( p1, endNormal )
@@ -179,9 +186,9 @@ cylinder startPoint endPoint radius =
                       , ( p3, endNormal )
                       , ( p2, startNormal )
                       )
-                    , ( ( endPoint, zDirection )
-                      , ( p2, zDirection )
-                      , ( p3, zDirection )
+                    , ( ( endPoint, zVector )
+                      , ( p2, zVector )
+                      , ( p3, zVector )
                       )
                     ]
 

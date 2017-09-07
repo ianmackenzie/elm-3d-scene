@@ -1,23 +1,31 @@
 module OpenSolid.Scene.Geometry
     exposing
         ( Geometry
+        , body
         , empty
         , faces
         , facets
         , indexedFaces
+        , mesh
         , shaded
+        , surface
         )
 
+import Array.Hamt as Array
 import Math.Vector3 exposing (Vec3, vec3)
+import OpenSolid.Body3d as Body3d exposing (Body3d)
 import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
-import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Interop.LinearAlgebra.Direction3d as Direction3d
 import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
+import OpenSolid.Interop.LinearAlgebra.Vector3d as Vector3d
+import OpenSolid.Mesh as Mesh exposing (Mesh)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene.Material exposing (Material)
 import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Types as Types
+import OpenSolid.Surface3d as Surface3d exposing (Surface3d)
 import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
+import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 import WebGL
 
 
@@ -78,7 +86,7 @@ facets triangles =
 
 
 type alias Vertex =
-    ( Point3d, Direction3d )
+    ( Point3d, Vector3d )
 
 
 type alias FaceVertices =
@@ -92,13 +100,13 @@ faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
 
 faceAttributes : FaceVertices -> ( Types.VertexAttributes, Types.VertexAttributes, Types.VertexAttributes )
 faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
-    ( { position = Point3d.toVec3 p1, normal = Direction3d.toVec3 n1 }
-    , { position = Point3d.toVec3 p2, normal = Direction3d.toVec3 n2 }
-    , { position = Point3d.toVec3 p3, normal = Direction3d.toVec3 n3 }
+    ( { position = Point3d.toVec3 p1, normal = Vector3d.toVec3 n1 }
+    , { position = Point3d.toVec3 p2, normal = Vector3d.toVec3 n2 }
+    , { position = Point3d.toVec3 p3, normal = Vector3d.toVec3 n3 }
     )
 
 
-faces : List ( ( Point3d, Direction3d ), ( Point3d, Direction3d ), ( Point3d, Direction3d ) ) -> Geometry
+faces : List ( ( Point3d, Vector3d ), ( Point3d, Vector3d ), ( Point3d, Vector3d ) ) -> Geometry
 faces vertexTriples =
     case BoundingBox3d.hullOf (List.map faceBoundingBox vertexTriples) of
         Just boundingBox ->
@@ -113,13 +121,13 @@ faces vertexTriples =
 
 
 vertexAttributes : Vertex -> Types.VertexAttributes
-vertexAttributes ( point, normalDirection ) =
+vertexAttributes ( point, normalVector ) =
     { position = Point3d.toVec3 point
-    , normal = Direction3d.toVec3 normalDirection
+    , normal = Vector3d.toVec3 normalVector
     }
 
 
-indexedFaces : List ( Point3d, Direction3d ) -> List ( Int, Int, Int ) -> Geometry
+indexedFaces : List ( Point3d, Vector3d ) -> List ( Int, Int, Int ) -> Geometry
 indexedFaces vertices faces =
     let
         vertexPoints =
@@ -138,3 +146,21 @@ indexedFaces vertices faces =
 
         Nothing ->
             Types.EmptyGeometry
+
+
+mesh : Mesh ( Point3d, Vector3d ) -> Geometry
+mesh mesh_ =
+    indexedFaces (Array.toList (Mesh.vertices mesh_)) (Mesh.faceIndices mesh_)
+
+
+surface : Float -> Surface3d -> Geometry
+surface tolerance surface_ =
+    mesh (Surface3d.toMesh tolerance surface_)
+
+
+body : Float -> Body3d -> Geometry
+body tolerance body_ =
+    Body3d.surfaces body_
+        |> List.map (Surface3d.toMesh tolerance)
+        |> Mesh.combine
+        |> mesh
