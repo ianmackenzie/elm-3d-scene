@@ -16,10 +16,8 @@ import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
-import OpenSolid.SketchPlane3d as SketchPlane3d
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
-import OpenSolid.WebGL.Frame3d as Frame3d
 import PointLight exposing (PointLight(..))
 import Shapes
 import Style
@@ -80,7 +78,7 @@ view =
         camera =
             Camera.perspective
                 { frame =
-                    Frame3d.lookAt
+                    Camera.lookAt
                         { eyePoint = Point3d.withCoordinates ( 10, 10, 10 )
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
