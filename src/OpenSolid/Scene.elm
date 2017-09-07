@@ -18,6 +18,7 @@ import Html.Attributes
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
+import OpenSolid.Interop.LinearAlgebra.Frame3d as Frame3d
 import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
 import OpenSolid.Scene.Light exposing (Light)
 import OpenSolid.Scene.Node exposing (Node)
@@ -25,7 +26,6 @@ import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Shader as Shader
 import OpenSolid.Scene.Types as Types
 import OpenSolid.WebGL.Camera as Camera exposing (Camera)
-import OpenSolid.WebGL.Frame3d as Frame3d
 import WebGL
 import WebGL.Settings
 import WebGL.Settings.DepthTest
@@ -86,7 +86,7 @@ type PhysicallyBasedLighting
 
 
 type alias RenderProperties =
-    { cameraFrame : Frame3d
+    { camera : Camera
     , eyePoint : Vec3
     , projectionMatrix : Mat4
     , physicallyBasedRenderer : PhysicallyBasedRenderer
@@ -819,10 +819,10 @@ toEntity renderProperties placement drawable =
             Placement.frame placement
 
         modelMatrix =
-            Frame3d.modelMatrix placementFrame
+            Frame3d.toMat4 placementFrame
 
         modelViewMatrix =
-            Frame3d.modelViewMatrix renderProperties.cameraFrame placementFrame
+            Camera.modelViewMatrix renderProperties.camera placementFrame
 
         projectionMatrix =
             renderProperties.projectionMatrix
@@ -927,12 +927,10 @@ toEntities =
 toEntitiesWith : List RenderOption -> List Light -> Camera -> Node -> List WebGL.Entity
 toEntitiesWith options lights camera rootNode =
     let
-        cameraFrame =
-            Camera.frame camera
-
         renderProperties =
-            { cameraFrame = cameraFrame
-            , eyePoint = Point3d.toVec3 (Frame3d.originPoint cameraFrame)
+            { camera = camera
+            , eyePoint =
+                Point3d.toVec3 (Frame3d.originPoint (Camera.frame camera))
             , projectionMatrix = Camera.projectionMatrix camera
             , physicallyBasedRenderer = physicallyBasedRendererFor lights
             , gammaCorrection = getGammaCorrection options
