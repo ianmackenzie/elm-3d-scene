@@ -131,7 +131,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialNumTeeth =
-            32
+            20
 
         model =
             { dragPoint = Nothing
