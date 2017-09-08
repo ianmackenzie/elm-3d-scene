@@ -7,7 +7,7 @@
         ".",
         "../src",
         "../../geometry/src",
-        "../../webgl/src",
+        "../../camera/src",
         "../../svg/src",
         "../../linear-algebra-interop/src",
         "../../mesh/src",

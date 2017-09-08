@@ -3,6 +3,7 @@ module Spheres exposing (..)
 import Html exposing (Html)
 import Materials
 import Math.Vector3 exposing (vec3)
+import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.Point3d as Point3d
@@ -11,8 +12,6 @@ import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Vector3d as Vector3d
-import OpenSolid.WebGL.Camera as Camera exposing (Camera)
-import OpenSolid.WebGL.Frame3d as Frame3d
 import Shapes
 import Task
 import WebGL.Texture
@@ -51,7 +50,7 @@ unitSphere =
 
 cameraFrame : Frame3d
 cameraFrame =
-    Frame3d.lookAt
+    Camera.lookAt
         { focalPoint = Point3d.origin
         , eyePoint = Point3d.withCoordinates ( 10, 10, 10 )
         , upDirection = Direction3d.positiveZ

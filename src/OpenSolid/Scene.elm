@@ -17,6 +17,7 @@ import Html exposing (Html)
 import Html.Attributes
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
+import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.Interop.LinearAlgebra.Frame3d as Frame3d
 import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
@@ -25,7 +26,6 @@ import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Shader as Shader
 import OpenSolid.Scene.Types as Types
-import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import WebGL
 import WebGL.Settings
 import WebGL.Settings.DepthTest

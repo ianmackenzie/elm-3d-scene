@@ -9,6 +9,7 @@ import Html exposing (Html)
 import Materials
 import Math.Vector3 as Vector3 exposing (Vec3, vec3)
 import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
+import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene as Scene
@@ -17,7 +18,6 @@ import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
-import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import PointLight exposing (PointLight(..))
 import Shapes
 import Style

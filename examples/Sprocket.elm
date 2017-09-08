@@ -14,6 +14,7 @@ import OpenSolid.Axis2d as Axis2d
 import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
 import OpenSolid.Body3d as Body3d exposing (Body3d)
 import OpenSolid.BoundaryType as BoundaryType
+import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Curve2d as Curve2d exposing (Curve2d)
 import OpenSolid.Curve3d as Curve3d
@@ -35,7 +36,6 @@ import OpenSolid.SketchPlane3d as SketchPlane3d exposing (SketchPlane3d)
 import OpenSolid.Surface3d as Surface3d
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
-import OpenSolid.WebGL.Camera as Camera exposing (Camera)
 import Shapes
 import SingleTouch
 import Task

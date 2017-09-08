@@ -5,6 +5,9 @@ import Html.Attributes as Attributes
 import Kintail.InputWidget as InputWidget
 import Logo
 import OpenSolid.Axis3d as Axis3d
+import OpenSolid.Camera as Camera
+import OpenSolid.Camera.LineSegment3d as LineSegment3d
+import OpenSolid.Camera.Point3d as Point3d
 import OpenSolid.Circle2d as Circle2d
 import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Direction3d as Direction3d
@@ -16,10 +19,6 @@ import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Svg as Svg
 import OpenSolid.Vector2d as Vector2d
-import OpenSolid.WebGL.Camera as Camera
-import OpenSolid.WebGL.Frame3d as Frame3d
-import OpenSolid.WebGL.LineSegment3d as LineSegment3d
-import OpenSolid.WebGL.Point3d as Point3d
 import Svg exposing (Svg)
 import Svg.Attributes
 import WebGL
@@ -66,7 +65,7 @@ view { angleInDegrees, projectionType } =
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
         eyeFrame =
-            Frame3d.lookAt
+            Camera.lookAt
                 { focalPoint = Point3d.origin
                 , eyePoint = eyePoint
                 , upDirection = Direction3d.z

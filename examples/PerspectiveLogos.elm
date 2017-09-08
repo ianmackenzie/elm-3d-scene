@@ -5,14 +5,13 @@ import Html.Attributes as Attributes
 import Kintail.InputWidget as InputWidget
 import Logo
 import OpenSolid.Axis3d as Axis3d
+import OpenSolid.Camera as Camera
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Vector3d as Vector3d
-import OpenSolid.WebGL.Camera as Camera
-import OpenSolid.WebGL.Frame3d as Frame3d
 
 
 view : Float -> Html Float
@@ -30,7 +29,7 @@ view angleInDegrees =
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
         eyeFrame =
-            Frame3d.lookAt
+            Camera.lookAt
                 { focalPoint = Point3d.origin
                 , eyePoint = eyePoint
                 , upDirection = Direction3d.z
