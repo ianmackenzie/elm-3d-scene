@@ -52,7 +52,7 @@ cameraFrame : Frame3d
 cameraFrame =
     Camera.lookAt
         { focalPoint = Point3d.origin
-        , eyePoint = Point3d.withCoordinates ( 10, 10, 10 )
+        , eyePoint = Point3d.fromCoordinates ( 10, 10, 10 )
         , upDirection = Direction3d.positiveZ
         }
 
@@ -99,7 +99,7 @@ view model =
                 lights =
                     [ Light.directional lightDirection (vec3 0 0.2 0.2)
                     , Light.directional Direction3d.negativeX (vec3 0.2 0 0)
-                    , Light.point (Point3d.withCoordinates ( 0, -2, 3 ))
+                    , Light.point (Point3d.fromCoordinates ( 0, -2, 3 ))
                         (vec3 0.75 0.75 0.75)
                     , Light.ambient lookupTexture (vec3 0.03 0.03 0.03)
                     ]
@@ -107,22 +107,22 @@ view model =
                 goldSphere =
                     Geometry.shaded Materials.gold unitSphere
                         |> Node.translateBy
-                            (Vector3d.withComponents ( 2, 2, 0 ))
+                            (Vector3d.fromComponents ( 2, 2, 0 ))
 
                 aluminumSphere =
                     Geometry.shaded Materials.aluminum unitSphere
                         |> Node.translateBy
-                            (Vector3d.withComponents ( 2, -2, 0 ))
+                            (Vector3d.fromComponents ( 2, -2, 0 ))
 
                 blackPlasticSphere =
                     Geometry.shaded Materials.blackPlastic unitSphere
                         |> Node.translateBy
-                            (Vector3d.withComponents ( -2, -2, 0 ))
+                            (Vector3d.fromComponents ( -2, -2, 0 ))
 
                 whitePlasticSphere =
                     Geometry.shaded Materials.whitePlastic unitSphere
                         |> Node.translateBy
-                            (Vector3d.withComponents ( -2, 2, 0 ))
+                            (Vector3d.fromComponents ( -2, 2, 0 ))
 
                 scene =
                     Node.group

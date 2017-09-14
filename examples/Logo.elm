@@ -40,52 +40,52 @@ p0 =
 
 p1 : Point3d
 p1 =
-    Point3d.withCoordinates ( 1, 0, 0 )
+    Point3d.fromCoordinates ( 1, 0, 0 )
 
 
 p2 : Point3d
 p2 =
-    Point3d.withCoordinates ( 1, 1, 0 )
+    Point3d.fromCoordinates ( 1, 1, 0 )
 
 
 p3 : Point3d
 p3 =
-    Point3d.withCoordinates ( 0, 1, 0 )
+    Point3d.fromCoordinates ( 0, 1, 0 )
 
 
 p4 : Point3d
 p4 =
-    Point3d.withCoordinates ( 0, 1, height )
+    Point3d.fromCoordinates ( 0, 1, height )
 
 
 p5 : Point3d
 p5 =
-    Point3d.withCoordinates ( 0, 0, height )
+    Point3d.fromCoordinates ( 0, 0, height )
 
 
 p6 : Point3d
 p6 =
-    Point3d.withCoordinates ( 1, 0, height )
+    Point3d.fromCoordinates ( 1, 0, height )
 
 
 p7 : Point3d
 p7 =
-    Point3d.withCoordinates ( 1, 1 - yOffset, height )
+    Point3d.fromCoordinates ( 1, 1 - yOffset, height )
 
 
 p8 : Point3d
 p8 =
-    Point3d.withCoordinates ( 1, 1, height - zOffset )
+    Point3d.fromCoordinates ( 1, 1, height - zOffset )
 
 
 p9 : Point3d
 p9 =
-    Point3d.withCoordinates ( 1 - xOffset, 1, height )
+    Point3d.fromCoordinates ( 1 - xOffset, 1, height )
 
 
 centerFrame : Frame3d
 centerFrame =
-    Frame3d.at (Point3d.withCoordinates ( 0.5, 0.5, height / 2 ))
+    Frame3d.at (Point3d.fromCoordinates ( 0.5, 0.5, height / 2 ))
 
 
 node : Node

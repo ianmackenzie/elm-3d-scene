@@ -83,7 +83,7 @@ camera =
     Camera.perspective
         { frame =
             Camera.lookAt
-                { eyePoint = Point3d.withCoordinates ( 6, 0, 3 )
+                { eyePoint = Point3d.fromCoordinates ( 6, 0, 3 )
                 , focalPoint = Point3d.origin
                 , upDirection = Direction3d.z
                 }
@@ -114,17 +114,17 @@ createSprocketNode numTeeth =
     in
     Geometry.body tolerance sprocketBody
         |> Geometry.shaded Materials.aluminum
-        |> Node.translateBy (Vector3d.withComponents ( 0, 0, -0.25 ))
+        |> Node.translateBy (Vector3d.fromComponents ( 0, 0, -0.25 ))
 
 
 mousePositionToPoint : Mouse.Position -> Point2d
 mousePositionToPoint mousePosition =
-    Point2d.withCoordinates ( toFloat mousePosition.x, toFloat mousePosition.y )
+    Point2d.fromCoordinates ( toFloat mousePosition.x, toFloat mousePosition.y )
 
 
 touchToPoint : Touch -> Point2d
 touchToPoint touch =
-    Point2d.withCoordinates ( touch.clientX, touch.clientY )
+    Point2d.fromCoordinates ( touch.clientX, touch.clientY )
 
 
 init : ( Model, Cmd Msg )
@@ -208,43 +208,43 @@ bearingRaces { bore, outerDiameter, externalRaceDiameter, internalRaceDiameter, 
             2 * acos (gap / (2 * ballRadius))
 
         p1 =
-            Point2d.withCoordinates ( -halfWidth, innerRadius )
+            Point2d.fromCoordinates ( -halfWidth, innerRadius )
 
         p2 =
-            Point2d.withCoordinates ( halfWidth, innerRadius )
+            Point2d.fromCoordinates ( halfWidth, innerRadius )
 
         p3 =
-            Point2d.withCoordinates ( halfWidth, innerRaceOuterRadius )
+            Point2d.fromCoordinates ( halfWidth, innerRaceOuterRadius )
 
         p4 =
-            Point2d.withCoordinates ( trackHalfWidth, innerRaceOuterRadius )
+            Point2d.fromCoordinates ( trackHalfWidth, innerRaceOuterRadius )
 
         p5 =
-            Point2d.withCoordinates ( -trackHalfWidth, innerRaceOuterRadius )
+            Point2d.fromCoordinates ( -trackHalfWidth, innerRaceOuterRadius )
 
         p6 =
-            Point2d.withCoordinates ( -halfWidth, innerRaceOuterRadius )
+            Point2d.fromCoordinates ( -halfWidth, innerRaceOuterRadius )
 
         p7 =
-            Point2d.withCoordinates ( -halfWidth, outerRaceInnerRadius )
+            Point2d.fromCoordinates ( -halfWidth, outerRaceInnerRadius )
 
         p8 =
-            Point2d.withCoordinates ( -trackHalfWidth, outerRaceInnerRadius )
+            Point2d.fromCoordinates ( -trackHalfWidth, outerRaceInnerRadius )
 
         p9 =
-            Point2d.withCoordinates ( trackHalfWidth, outerRaceInnerRadius )
+            Point2d.fromCoordinates ( trackHalfWidth, outerRaceInnerRadius )
 
         p10 =
-            Point2d.withCoordinates ( halfWidth, outerRaceInnerRadius )
+            Point2d.fromCoordinates ( halfWidth, outerRaceInnerRadius )
 
         p11 =
-            Point2d.withCoordinates ( halfWidth, outerRadius )
+            Point2d.fromCoordinates ( halfWidth, outerRadius )
 
         p12 =
-            Point2d.withCoordinates ( -halfWidth, outerRadius )
+            Point2d.fromCoordinates ( -halfWidth, outerRadius )
 
         centerPoint =
-            Point2d.withCoordinates
+            Point2d.fromCoordinates
                 ( 0
                 , (innerRaceOuterRadius + outerRaceInnerRadius) / 2
                 )
@@ -333,22 +333,22 @@ sprocketWith { bore, pitch, numTeeth, thickness, rollerDiameter, toothHeight } =
             pitch / (2 * sin theta)
 
         c1 =
-            Point2d.withPolarCoordinates ( r, pi / 2 - theta )
+            Point2d.fromPolarCoordinates ( r, pi / 2 - theta )
 
         c2 =
-            Point2d.withPolarCoordinates ( r, pi / 2 + theta )
+            Point2d.fromPolarCoordinates ( r, pi / 2 + theta )
 
         rollerRadius =
             rollerDiameter / 2
 
         p1 =
-            Point2d.withPolarCoordinates ( r - rollerRadius, pi / 2 - theta )
+            Point2d.fromPolarCoordinates ( r - rollerRadius, pi / 2 - theta )
 
         p0 =
             p1 |> Point2d.projectOnto Axis2d.y
 
         p2 =
-            c1 |> Point2d.translateBy (Vector2d.withComponents ( -rollerRadius, 0 ))
+            c1 |> Point2d.translateBy (Vector2d.fromComponents ( -rollerRadius, 0 ))
 
         arc1 =
             Curve2d.arc <|
@@ -374,10 +374,10 @@ sprocketWith { bore, pitch, numTeeth, thickness, rollerDiameter, toothHeight } =
             p3 |> Point2d.projectOnto Axis2d.y
 
         p5 =
-            Point2d.withCoordinates ( 0, bore / 2 )
+            Point2d.fromCoordinates ( 0, bore / 2 )
 
         p6 =
-            Point2d.withPolarCoordinates ( bore / 2, pi / 2 - theta )
+            Point2d.fromPolarCoordinates ( bore / 2, pi / 2 - theta )
 
         arc3 =
             Curve2d.arc <|
@@ -432,16 +432,16 @@ sprocketWith { bore, pitch, numTeeth, thickness, rollerDiameter, toothHeight } =
             Region2d.fuse wedges
     in
     Body3d.extrusion region SketchPlane3d.xy thickness
-        |> Body3d.translateBy (Vector3d.withComponents ( 0, 0, -thickness / 2 ))
+        |> Body3d.translateBy (Vector3d.fromComponents ( 0, 0, -thickness / 2 ))
 
 
 hub : Body3d
 hub =
     let
         lineSegment =
-            LineSegment2d.withEndpoints
-                ( Point2d.withCoordinates ( 0.25, 0 )
-                , Point2d.withCoordinates ( 0.625, 0 )
+            LineSegment2d.fromEndpoints
+                ( Point2d.fromCoordinates ( 0.25, 0 )
+                , Point2d.fromCoordinates ( 0.625, 0 )
                 )
 
         region =
@@ -451,7 +451,7 @@ hub =
                 (turns 1)
     in
     Body3d.extrusion region SketchPlane3d.xy 0.5
-        |> Body3d.translateBy (Vector3d.withComponents ( 0, 0, -0.25 ))
+        |> Body3d.translateBy (Vector3d.fromComponents ( 0, 0, -0.25 ))
 
 
 shaft : Body3d
@@ -470,7 +470,7 @@ shaft =
             Region2d.fan Point2d.origin curve
     in
     Body3d.extrusion region SketchPlane3d.xy 3
-        |> Body3d.translateBy (Vector3d.withComponents ( 0, 0, -1.5 ))
+        |> Body3d.translateBy (Vector3d.fromComponents ( 0, 0, -1.5 ))
 
 
 tolerance : Float
@@ -522,7 +522,7 @@ bearingNode =
             (internalRaceDiameter + externalRaceDiameter) / 4
 
         firstBallPoint =
-            Point3d.withCoordinates ( ballPathRadius, 0, 0 )
+            Point3d.fromCoordinates ( ballPathRadius, 0, 0 )
 
         firstBall =
             Shapes.sphere firstBallPoint (ballDiameter / 2)
@@ -542,8 +542,8 @@ bearingNode =
             Node.group (racesNode :: ballNodes)
     in
     Node.group
-        [ singleBearing |> Node.translateBy (Vector3d.withComponents ( 0, 0, 1.125 ))
-        , singleBearing |> Node.translateBy (Vector3d.withComponents ( 0, 0, -1.125 ))
+        [ singleBearing |> Node.translateBy (Vector3d.fromComponents ( 0, 0, 1.125 ))
+        , singleBearing |> Node.translateBy (Vector3d.fromComponents ( 0, 0, -1.125 ))
         ]
 
 
@@ -556,10 +556,10 @@ lights =
         color =
             vec3 10 10 10
     in
-    [ Light.point (Point3d.withCoordinates ( d, d, d )) color
-    , Light.point (Point3d.withCoordinates ( d, -d, d )) color
-    , Light.point (Point3d.withCoordinates ( -d, d, d )) color
-    , Light.point (Point3d.withCoordinates ( -d, -d, d )) color
+    [ Light.point (Point3d.fromCoordinates ( d, d, d )) color
+    , Light.point (Point3d.fromCoordinates ( d, -d, d )) color
+    , Light.point (Point3d.fromCoordinates ( -d, d, d )) color
+    , Light.point (Point3d.fromCoordinates ( -d, -d, d )) color
     ]
 
 
@@ -596,7 +596,7 @@ rotate : Frame3d -> Float -> Float -> Frame3d
 rotate frame dx dy =
     let
         dragVector =
-            Vector2d.withComponents ( dx, dy )
+            Vector2d.fromComponents ( dx, dy )
     in
     case Vector2d.direction dragVector of
         Just direction2d ->

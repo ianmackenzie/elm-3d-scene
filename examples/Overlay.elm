@@ -60,7 +60,7 @@ view { angleInDegrees, projectionType } =
             600
 
         eyePoint =
-            Point3d.withCoordinates ( 4, 0, 0 )
+            Point3d.fromCoordinates ( 4, 0, 0 )
                 |> Point3d.rotateAround Axis3d.y (degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
@@ -141,13 +141,13 @@ view { angleInDegrees, projectionType } =
                             ]
                             (vertex
                                 |> Point2d.translateBy
-                                    (Vector2d.withComponents ( 10, 0 ))
+                                    (Vector2d.fromComponents ( 10, 0 ))
                             )
                             ("p" ++ toString index)
                     )
 
         topLeftFrame =
-            Frame2d.at (Point2d.withCoordinates ( 0, height ))
+            Frame2d.at (Point2d.fromCoordinates ( 0, height ))
                 |> Frame2d.flipY
 
         svgElement =

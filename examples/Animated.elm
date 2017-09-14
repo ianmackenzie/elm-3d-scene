@@ -32,7 +32,7 @@ import WebGL.Texture
 shape : Geometry -> Material -> ( Float, Float ) -> Node
 shape geometry material ( x, y ) =
     Geometry.shaded material geometry
-        |> Node.translateBy (Vector3d.withComponents ( x, y, 0 ))
+        |> Node.translateBy (Vector3d.fromComponents ( x, y, 0 ))
 
 
 sphere : Material -> ( Float, Float ) -> Node
@@ -58,8 +58,8 @@ cylinder =
     let
         geometry =
             Shapes.cylinder
-                (Point3d.withCoordinates ( 0, 0, -0.75 ))
-                (Point3d.withCoordinates ( 0, 0, 0.75 ))
+                (Point3d.fromCoordinates ( 0, 0, -0.75 ))
+                (Point3d.fromCoordinates ( 0, 0, 0.75 ))
                 1
     in
     shape geometry
@@ -79,7 +79,7 @@ view =
             Camera.perspective
                 { frame =
                     Camera.lookAt
-                        { eyePoint = Point3d.withCoordinates ( 10, 10, 10 )
+                        { eyePoint = Point3d.fromCoordinates ( 10, 10, 10 )
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
                         }
@@ -104,7 +104,7 @@ view =
                 ]
 
         pointLight1StartPoint =
-            Point3d.withCoordinates ( 1.5, 1.5, 3 )
+            Point3d.fromCoordinates ( 1.5, 1.5, 3 )
 
         pointLight1RotationAxis =
             Axis3d.z
@@ -113,7 +113,7 @@ view =
             vec3 0 2 10
 
         pointLight2StartPoint =
-            Point3d.withCoordinates ( 1.5, -1.5, 0 )
+            Point3d.fromCoordinates ( 1.5, -1.5, 0 )
 
         pointLight2RotationAxis =
             Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
@@ -134,16 +134,16 @@ view =
             vec3 0.01 0.01 0.01
 
         overheadLight1Point =
-            Point3d.withCoordinates ( 8, 8, 5 )
+            Point3d.fromCoordinates ( 8, 8, 5 )
 
         overheadLight2Point =
-            Point3d.withCoordinates ( 8, -8, 5 )
+            Point3d.fromCoordinates ( 8, -8, 5 )
 
         overheadLight3Point =
-            Point3d.withCoordinates ( -8, 8, 5 )
+            Point3d.fromCoordinates ( -8, 8, 5 )
 
         overheadLight4Point =
-            Point3d.withCoordinates ( -8, -8, 5 )
+            Point3d.fromCoordinates ( -8, -8, 5 )
 
         overheadLightColor =
             vec3 5 5 5

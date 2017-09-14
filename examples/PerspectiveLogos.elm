@@ -24,7 +24,7 @@ view angleInDegrees =
             600
 
         eyePoint =
-            Point3d.withCoordinates ( 10, 0, 0 )
+            Point3d.fromCoordinates ( 10, 0, 0 )
                 |> Point3d.rotateAround Axis3d.y (degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
@@ -53,7 +53,7 @@ view angleInDegrees =
 
         rightLogo =
             rotatedLogo
-                |> Node.translateBy (Vector3d.withComponents ( 1, 1, 0.75 ))
+                |> Node.translateBy (Vector3d.fromComponents ( 1, 1, 0.75 ))
 
         leftLogo =
             rightLogo |> Node.mirrorAcross Plane3d.zx

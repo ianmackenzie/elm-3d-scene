@@ -37,7 +37,7 @@ view angleInDegrees =
             eyeDistance * sin eyeElevation
 
         eyePoint =
-            Point3d.withCoordinates ( eyeX, 0, eyeZ )
+            Point3d.fromCoordinates ( eyeX, 0, eyeZ )
                 |> Point3d.rotateAround Axis3d.z eyeAzimuth
 
         eyeFrame =

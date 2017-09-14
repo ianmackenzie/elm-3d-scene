@@ -95,7 +95,7 @@ type alias FaceVertices =
 
 faceBoundingBox : FaceVertices -> BoundingBox3d
 faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
-    Triangle3d.boundingBox (Triangle3d.withVertices ( p1, p2, p3 ))
+    Triangle3d.boundingBox (Triangle3d.fromVertices ( p1, p2, p3 ))
 
 
 faceAttributes : FaceVertices -> ( Types.VertexAttributes, Types.VertexAttributes, Types.VertexAttributes )

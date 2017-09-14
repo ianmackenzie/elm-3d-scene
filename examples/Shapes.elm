@@ -36,7 +36,7 @@ sphere centerPoint radius =
                         angleValues
                             |> List.map
                                 (\phi ->
-                                    ( Point3d.withCoordinates
+                                    ( Point3d.fromCoordinates
                                         ( x0 + radius * sin phi * cos theta
                                         , y0 + radius * sin phi * sin theta
                                         , z0 + radius * cos phi
@@ -205,40 +205,40 @@ box : Float -> Float -> Float -> Geometry
 box x y z =
     let
         p0 =
-            Point3d.withCoordinates ( -x / 2, -y / 2, -z / 2 )
+            Point3d.fromCoordinates ( -x / 2, -y / 2, -z / 2 )
 
         p1 =
-            Point3d.withCoordinates ( x / 2, -y / 2, -z / 2 )
+            Point3d.fromCoordinates ( x / 2, -y / 2, -z / 2 )
 
         p2 =
-            Point3d.withCoordinates ( x / 2, y / 2, -z / 2 )
+            Point3d.fromCoordinates ( x / 2, y / 2, -z / 2 )
 
         p3 =
-            Point3d.withCoordinates ( -x / 2, y / 2, -z / 2 )
+            Point3d.fromCoordinates ( -x / 2, y / 2, -z / 2 )
 
         p4 =
-            Point3d.withCoordinates ( -x / 2, -y / 2, z / 2 )
+            Point3d.fromCoordinates ( -x / 2, -y / 2, z / 2 )
 
         p5 =
-            Point3d.withCoordinates ( x / 2, -y / 2, z / 2 )
+            Point3d.fromCoordinates ( x / 2, -y / 2, z / 2 )
 
         p6 =
-            Point3d.withCoordinates ( x / 2, y / 2, z / 2 )
+            Point3d.fromCoordinates ( x / 2, y / 2, z / 2 )
 
         p7 =
-            Point3d.withCoordinates ( -x / 2, y / 2, z / 2 )
+            Point3d.fromCoordinates ( -x / 2, y / 2, z / 2 )
     in
     Geometry.facets
-        [ Triangle3d.withVertices ( p0, p2, p1 )
-        , Triangle3d.withVertices ( p0, p3, p2 )
-        , Triangle3d.withVertices ( p4, p5, p6 )
-        , Triangle3d.withVertices ( p4, p6, p7 )
-        , Triangle3d.withVertices ( p1, p2, p6 )
-        , Triangle3d.withVertices ( p1, p6, p5 )
-        , Triangle3d.withVertices ( p0, p7, p3 )
-        , Triangle3d.withVertices ( p0, p4, p7 )
-        , Triangle3d.withVertices ( p0, p1, p5 )
-        , Triangle3d.withVertices ( p0, p5, p4 )
-        , Triangle3d.withVertices ( p3, p6, p2 )
-        , Triangle3d.withVertices ( p3, p7, p6 )
+        [ Triangle3d.fromVertices ( p0, p2, p1 )
+        , Triangle3d.fromVertices ( p0, p3, p2 )
+        , Triangle3d.fromVertices ( p4, p5, p6 )
+        , Triangle3d.fromVertices ( p4, p6, p7 )
+        , Triangle3d.fromVertices ( p1, p2, p6 )
+        , Triangle3d.fromVertices ( p1, p6, p5 )
+        , Triangle3d.fromVertices ( p0, p7, p3 )
+        , Triangle3d.fromVertices ( p0, p4, p7 )
+        , Triangle3d.fromVertices ( p0, p1, p5 )
+        , Triangle3d.fromVertices ( p0, p5, p4 )
+        , Triangle3d.fromVertices ( p3, p6, p2 )
+        , Triangle3d.fromVertices ( p3, p7, p6 )
         ]
