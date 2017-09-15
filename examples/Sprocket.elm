@@ -39,10 +39,8 @@ import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 import OpenSolid.Viewpoint as Viewpoint
 import Shapes
 import SingleTouch
-import Task
 import Time exposing (Time)
 import Touch exposing (Touch, TouchEvent(..))
-import Window
 
 
 -- Types
