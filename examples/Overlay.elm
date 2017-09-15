@@ -9,7 +9,6 @@ import OpenSolid.Camera as Camera
 import OpenSolid.Camera.LineSegment3d as LineSegment3d
 import OpenSolid.Camera.Point3d as Point3d
 import OpenSolid.Circle2d as Circle2d
-import OpenSolid.Direction2d as Direction2d
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Frame2d as Frame2d
 import OpenSolid.LineSegment3d as LineSegment3d
