@@ -36,6 +36,7 @@ import OpenSolid.SketchPlane3d as SketchPlane3d exposing (SketchPlane3d)
 import OpenSolid.Surface3d as Surface3d
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
+import OpenSolid.Viewpoint as Viewpoint
 import Shapes
 import SingleTouch
 import Task
@@ -81,8 +82,8 @@ screenHeight =
 camera : Camera
 camera =
     Camera.perspective
-        { frame =
-            Camera.lookAt
+        { viewpoint =
+            Viewpoint.lookAt
                 { eyePoint = Point3d.fromCoordinates ( 6, 0, 3 )
                 , focalPoint = Point3d.origin
                 , upDirection = Direction3d.z

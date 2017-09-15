@@ -10,6 +10,7 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
+import OpenSolid.Viewpoint as Viewpoint
 
 
 view : Float -> Html Float
@@ -40,8 +41,8 @@ view angleInDegrees =
             Point3d.fromCoordinates ( eyeX, 0, eyeZ )
                 |> Point3d.rotateAround Axis3d.z eyeAzimuth
 
-        eyeFrame =
-            Camera.lookAt
+        viewpoint =
+            Viewpoint.lookAt
                 { focalPoint = Point3d.origin
                 , eyePoint = eyePoint
                 , upDirection = Direction3d.z
@@ -49,7 +50,7 @@ view angleInDegrees =
 
         camera =
             Camera.orthographic
-                { frame = eyeFrame
+                { viewpoint = viewpoint
                 , screenWidth = toFloat width
                 , screenHeight = toFloat height
                 , viewportHeight = 3

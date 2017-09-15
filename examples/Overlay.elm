@@ -19,6 +19,7 @@ import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Svg as Svg
 import OpenSolid.Vector2d as Vector2d
+import OpenSolid.Viewpoint as Viewpoint
 import Svg exposing (Svg)
 import Svg.Attributes
 import WebGL
@@ -64,8 +65,8 @@ view { angleInDegrees, projectionType } =
                 |> Point3d.rotateAround Axis3d.y (degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (degrees 60)
 
-        eyeFrame =
-            Camera.lookAt
+        viewpoint =
+            Viewpoint.lookAt
                 { focalPoint = Point3d.origin
                 , eyePoint = eyePoint
                 , upDirection = Direction3d.z
@@ -75,7 +76,7 @@ view { angleInDegrees, projectionType } =
             case projectionType of
                 Perspective ->
                     Camera.perspective
-                        { frame = eyeFrame
+                        { viewpoint = viewpoint
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
                         , verticalFieldOfView = degrees 30
@@ -85,7 +86,7 @@ view { angleInDegrees, projectionType } =
 
                 Orthographic ->
                     Camera.orthographic
-                        { frame = eyeFrame
+                        { viewpoint = viewpoint
                         , screenWidth = toFloat width
                         , screenHeight = toFloat height
                         , viewportHeight = 2

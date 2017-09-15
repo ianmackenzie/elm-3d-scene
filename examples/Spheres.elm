@@ -5,13 +5,13 @@ import Materials
 import Math.Vector3 exposing (vec3)
 import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
-import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
 import OpenSolid.Scene.Light as Light
 import OpenSolid.Scene.Node as Node
 import OpenSolid.Vector3d as Vector3d
+import OpenSolid.Viewpoint as Viewpoint exposing (Viewpoint)
 import Shapes
 import Task
 import WebGL.Texture
@@ -48,9 +48,9 @@ unitSphere =
     Shapes.sphere Point3d.origin 1.0
 
 
-cameraFrame : Frame3d
-cameraFrame =
-    Camera.lookAt
+viewpoint : Viewpoint
+viewpoint =
+    Viewpoint.lookAt
         { focalPoint = Point3d.origin
         , eyePoint = Point3d.fromCoordinates ( 10, 10, 10 )
         , upDirection = Direction3d.positiveZ
@@ -70,7 +70,7 @@ height =
 camera : Camera
 camera =
     Camera.perspective
-        { frame = cameraFrame
+        { viewpoint = viewpoint
         , screenWidth = width
         , screenHeight = height
         , verticalFieldOfView = degrees 30

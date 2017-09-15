@@ -18,6 +18,7 @@ import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
+import OpenSolid.Viewpoint as Viewpoint
 import PointLight exposing (PointLight(..))
 import Shapes
 import Style
@@ -77,8 +78,8 @@ view =
     let
         camera =
             Camera.perspective
-                { frame =
-                    Camera.lookAt
+                { viewpoint =
+                    Viewpoint.lookAt
                         { eyePoint = Point3d.fromCoordinates ( 10, 10, 10 )
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
