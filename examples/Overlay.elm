@@ -147,7 +147,7 @@ view { angleInDegrees, projectionType } =
                     )
 
         topLeftFrame =
-            Frame2d.at (Point2d.fromCoordinates ( 0, height ))
+            Frame2d.atPoint (Point2d.fromCoordinates ( 0, height ))
                 |> Frame2d.flipY
 
         svgElement =
