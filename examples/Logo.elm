@@ -85,7 +85,7 @@ p9 =
 
 centerFrame : Frame3d
 centerFrame =
-    Frame3d.at (Point3d.fromCoordinates ( 0.5, 0.5, height / 2 ))
+    Frame3d.atPoint (Point3d.fromCoordinates ( 0.5, 0.5, height / 2 ))
 
 
 node : Node

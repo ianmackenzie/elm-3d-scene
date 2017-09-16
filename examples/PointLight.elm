@@ -63,4 +63,4 @@ node pointLight =
     baseGeometry
         |> Geometry.shaded (Material.emissive emissiveColor)
         |> Node.scaleAbout Point3d.origin (radius pointLight)
-        |> Node.placeIn (Frame3d.at (position pointLight))
+        |> Node.placeIn (Frame3d.atPoint (position pointLight))
