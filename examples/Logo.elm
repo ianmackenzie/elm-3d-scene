@@ -1,7 +1,7 @@
 module Logo
     exposing
-        ( edges
-        , node
+        ( drawable
+        , edges
         , vertices
         )
 
@@ -9,8 +9,7 @@ import Math.Vector3 exposing (Vec3, vec3)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.LineSegment3d as LineSegment3d exposing (LineSegment3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene.Node as Node exposing (Node)
-import OpenSolid.Scene.SimpleGeometry as SimpleGeometry exposing (SimpleGeometry)
+import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
 
 
 height : Float
@@ -88,8 +87,8 @@ centerFrame =
     Frame3d.atPoint (Point3d.fromCoordinates ( 0.5, 0.5, height / 2 ))
 
 
-node : Node
-node =
+drawable : Drawable
+drawable =
     let
         orange =
             vec3 0.941 0.678 0
@@ -104,34 +103,27 @@ node =
             vec3 0.352 0.388 0.338
 
         leftFace =
-            SimpleGeometry.triangleFan [ p1, p2, p8, p7, p6 ]
-                |> SimpleGeometry.colored orange
+            Drawable.triangleFan orange [ p1, p2, p8, p7, p6 ]
 
         rightFace =
-            SimpleGeometry.triangleFan [ p2, p3, p4, p9, p8 ]
-                |> SimpleGeometry.colored lightBlue
+            Drawable.triangleFan lightBlue [ p2, p3, p4, p9, p8 ]
 
         topFace =
-            SimpleGeometry.triangleFan [ p6, p7, p9, p4, p5 ]
-                |> SimpleGeometry.colored green
+            Drawable.triangleFan green [ p6, p7, p9, p4, p5 ]
 
         triangleFace =
-            SimpleGeometry.triangleFan [ p7, p8, p9 ]
-                |> SimpleGeometry.colored darkBlue
+            Drawable.triangleFan darkBlue [ p7, p8, p9 ]
 
         bottomFace =
-            SimpleGeometry.triangleFan [ p0, p3, p2, p1 ]
-                |> SimpleGeometry.colored green
+            Drawable.triangleFan green [ p0, p3, p2, p1 ]
 
         backLeftFace =
-            SimpleGeometry.triangleFan [ p6, p5, p0, p1 ]
-                |> SimpleGeometry.colored lightBlue
+            Drawable.triangleFan lightBlue [ p6, p5, p0, p1 ]
 
         backRightFace =
-            SimpleGeometry.triangleFan [ p3, p0, p5, p4 ]
-                |> SimpleGeometry.colored orange
+            Drawable.triangleFan orange [ p3, p0, p5, p4 ]
     in
-    Node.group
+    Drawable.group
         [ leftFace
         , rightFace
         , topFace
@@ -140,7 +132,7 @@ node =
         , backRightFace
         , bottomFace
         ]
-        |> Node.relativeTo centerFrame
+        |> Drawable.relativeTo centerFrame
 
 
 vertices : List Point3d

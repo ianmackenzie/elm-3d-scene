@@ -20,8 +20,8 @@ import Math.Vector3 as Vector3 exposing (Vec3)
 import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Interop.LinearAlgebra.Frame3d as Frame3d
 import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
+import OpenSolid.Scene.Drawable exposing (Drawable)
 import OpenSolid.Scene.Light exposing (Light)
-import OpenSolid.Scene.Node exposing (Node)
 import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Shader as Shader
 import OpenSolid.Scene.Types as Types
@@ -809,8 +809,8 @@ physicallyBasedRendererFor lights =
                 WebGL.entityWith settings Shader.vertex Shader.dummy mesh uniforms
 
 
-toEntity : RenderProperties -> Placement -> Types.Drawable -> WebGL.Entity
-toEntity renderProperties placement drawable =
+toEntity : RenderProperties -> Placement -> Types.Mesh -> WebGL.Entity
+toEntity renderProperties placement mesh =
     let
         modelScale =
             Placement.scale placement
@@ -841,8 +841,8 @@ toEntity renderProperties placement drawable =
             , WebGL.Settings.cullFace cullSetting
             ]
     in
-    case drawable of
-        Types.ColoredGeometry color boundingBox mesh ->
+    case mesh of
+        Types.SimpleMesh boundingBox color webGlMesh ->
             let
                 uniforms =
                     { modelScale = modelScale
@@ -854,10 +854,10 @@ toEntity renderProperties placement drawable =
             WebGL.entityWith settings
                 Shader.simpleVertex
                 Shader.simple
-                mesh
+                webGlMesh
                 uniforms
 
-        Types.ShadedGeometry material boundingBox mesh ->
+        Types.Mesh boundingBox material webGlMesh ->
             case material of
                 Types.PhysicallyBasedMaterial materialProperties ->
                     renderProperties.physicallyBasedRenderer
@@ -868,7 +868,7 @@ toEntity renderProperties placement drawable =
                         modelViewProjectionMatrix
                         materialProperties
                         renderProperties.gammaCorrection
-                        mesh
+                        webGlMesh
 
                 Types.EmissiveMaterial color ->
                     let
@@ -894,38 +894,38 @@ toEntity renderProperties placement drawable =
                     WebGL.entityWith settings
                         Shader.vertex
                         Shader.emissive
-                        mesh
+                        webGlMesh
                         uniforms
 
 
-collectEntities : RenderProperties -> Placement -> Node -> List WebGL.Entity -> List WebGL.Entity
+collectEntities : RenderProperties -> Placement -> Drawable -> List WebGL.Entity -> List WebGL.Entity
 collectEntities renderProperties currentPlacement node accumulated =
     case node of
-        Types.TransformedNode placement childNode ->
+        Types.TransformedDrawable placement childDrawable ->
             collectEntities renderProperties
                 (Placement.compose placement currentPlacement)
-                childNode
+                childDrawable
                 accumulated
 
-        Types.LeafNode drawable ->
-            toEntity renderProperties currentPlacement drawable :: accumulated
+        Types.MeshDrawable mesh ->
+            toEntity renderProperties currentPlacement mesh :: accumulated
 
-        Types.GroupNode childNodes ->
+        Types.DrawableGroup childDrawables ->
             List.foldl (collectEntities renderProperties currentPlacement)
                 accumulated
-                childNodes
+                childDrawables
 
-        Types.EmptyNode ->
+        Types.EmptyDrawable ->
             accumulated
 
 
-toEntities : List Light -> Camera -> Node -> List WebGL.Entity
+toEntities : List Light -> Camera -> Drawable -> List WebGL.Entity
 toEntities =
     toEntitiesWith []
 
 
-toEntitiesWith : List RenderOption -> List Light -> Camera -> Node -> List WebGL.Entity
-toEntitiesWith options lights camera rootNode =
+toEntitiesWith : List RenderOption -> List Light -> Camera -> Drawable -> List WebGL.Entity
+toEntitiesWith options lights camera rootDrawable =
     let
         renderProperties =
             { camera = camera
@@ -936,10 +936,10 @@ toEntitiesWith options lights camera rootNode =
             , gammaCorrection = getGammaCorrection options
             }
     in
-    collectEntities renderProperties Placement.identity rootNode []
+    collectEntities renderProperties Placement.identity rootDrawable []
 
 
-render : List Light -> Camera -> Node -> Html msg
+render : List Light -> Camera -> Drawable -> Html msg
 render =
     renderWith []
 
@@ -1062,7 +1062,7 @@ getClearColor options =
     List.foldl update defaultValue options
 
 
-renderWith : List RenderOption -> List Light -> Camera -> Node -> Html msg
+renderWith : List RenderOption -> List Light -> Camera -> Drawable -> Html msg
 renderWith options lights camera rootNode =
     let
         width =

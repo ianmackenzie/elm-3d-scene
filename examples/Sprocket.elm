@@ -29,9 +29,8 @@ import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Rectangle2d as Rectangle2d exposing (Rectangle2d)
 import OpenSolid.Region2d as Region2d exposing (Region2d)
 import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
+import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
 import OpenSolid.Scene.Light as Light exposing (Light)
-import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.SketchPlane3d as SketchPlane3d exposing (SketchPlane3d)
 import OpenSolid.Surface3d as Surface3d
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
@@ -58,7 +57,7 @@ type alias Model =
     { dragPoint : Maybe Point2d
     , placementFrame : Frame3d
     , numTeeth : Int
-    , sprocketNode : () -> Node
+    , sprocketDrawable : () -> Drawable
     , rotationAngle : Float
     }
 
@@ -98,8 +97,8 @@ camera =
 -- Interactivity
 
 
-createSprocketNode : Int -> Node
-createSprocketNode numTeeth =
+createSprocketDrawable : Int -> Drawable
+createSprocketDrawable numTeeth =
     let
         sprocketBody =
             sprocketWith
@@ -111,9 +110,8 @@ createSprocketNode numTeeth =
                 , rollerDiameter = 0.125
                 }
     in
-    Geometry.body tolerance sprocketBody
-        |> Geometry.shaded Materials.aluminum
-        |> Node.translateBy (Vector3d.fromComponents ( 0, 0, -0.25 ))
+    Drawable.body tolerance Materials.aluminum sprocketBody
+        |> Drawable.translateBy (Vector3d.fromComponents ( 0, 0, -0.25 ))
 
 
 mousePositionToPoint : Mouse.Position -> Point2d
@@ -136,7 +134,7 @@ init =
             { dragPoint = Nothing
             , placementFrame = Frame3d.xyz
             , numTeeth = initialNumTeeth
-            , sprocketNode = always (createSprocketNode initialNumTeeth)
+            , sprocketDrawable = always (createSprocketDrawable initialNumTeeth)
             , rotationAngle = 0
             }
     in
@@ -477,16 +475,16 @@ tolerance =
     0.001
 
 
-staticNodes : Node
-staticNodes =
-    Node.group
-        [ Geometry.body tolerance hub |> Geometry.shaded Materials.aluminum
-        , Geometry.body tolerance shaft |> Geometry.shaded Materials.gold
+staticDrawables : Drawable
+staticDrawables =
+    Drawable.group
+        [ Drawable.body tolerance Materials.aluminum hub
+        , Drawable.body tolerance Materials.gold shaft
         ]
 
 
-bearingNode : Node
-bearingNode =
+bearingDrawable : Drawable
+bearingDrawable =
     let
         externalRaceDiameter =
             1.0625
@@ -507,9 +505,8 @@ bearingNode =
                 , ballDiameter = ballDiameter
                 }
 
-        racesNode =
-            Geometry.body tolerance races
-                |> Geometry.shaded Materials.chromium
+        racesDrawable =
+            Drawable.body tolerance Materials.chromium races
 
         numBalls =
             8
@@ -524,25 +521,26 @@ bearingNode =
             Point3d.fromCoordinates ( ballPathRadius, 0, 0 )
 
         firstBall =
-            Shapes.sphere firstBallPoint (ballDiameter / 2)
-                |> Geometry.shaded Materials.whitePlastic
+            Shapes.sphere Materials.whitePlastic
+                firstBallPoint
+                (ballDiameter / 2)
 
         toBall index =
             let
                 angle =
                     toFloat index * ballAngle
             in
-            Node.rotateAround Axis3d.z angle firstBall
+            Drawable.rotateAround Axis3d.z angle firstBall
 
-        ballNodes =
+        ballDrawables =
             List.map toBall (List.range 0 (numBalls - 1))
 
         singleBearing =
-            Node.group (racesNode :: ballNodes)
+            Drawable.group (racesDrawable :: ballDrawables)
     in
-    Node.group
-        [ singleBearing |> Node.translateBy (Vector3d.fromComponents ( 0, 0, 1.125 ))
-        , singleBearing |> Node.translateBy (Vector3d.fromComponents ( 0, 0, -1.125 ))
+    Drawable.group
+        [ singleBearing |> Drawable.translateBy (Vector3d.fromComponents ( 0, 0, 1.125 ))
+        , singleBearing |> Drawable.translateBy (Vector3d.fromComponents ( 0, 0, -1.125 ))
         ]
 
 
@@ -563,7 +561,7 @@ lights =
 
 
 view : Model -> Html Msg
-view { placementFrame, numTeeth, sprocketNode, rotationAngle } =
+view { placementFrame, numTeeth, sprocketDrawable, rotationAngle } =
     let
         sliderAttributes =
             [ Attributes.style [ ( "width", toString screenWidth ++ "px" ) ] ]
@@ -574,18 +572,18 @@ view { placementFrame, numTeeth, sprocketNode, rotationAngle } =
             , step = 1
             }
 
-        shaftNode =
-            Node.group [ sprocketNode (), staticNodes ]
+        shaftDrawable =
+            Drawable.group [ sprocketDrawable (), staticDrawables ]
 
         scene =
-            Node.group
-                [ shaftNode |> Node.rotateAround Axis3d.z rotationAngle
-                , bearingNode |> Node.rotateAround Axis3d.z (rotationAngle / 2)
+            Drawable.group
+                [ shaftDrawable |> Drawable.rotateAround Axis3d.z rotationAngle
+                , bearingDrawable |> Drawable.rotateAround Axis3d.z (rotationAngle / 2)
                 ]
     in
     Html.div []
         [ Html.div dragAttributes
-            [ Scene.render lights camera (Node.placeIn placementFrame scene) ]
+            [ Scene.render lights camera (Drawable.placeIn placementFrame scene) ]
         , InputWidget.slider sliderAttributes sliderConfig (toFloat numTeeth)
             |> Html.map (round >> NumTeethChanged)
         ]
@@ -653,7 +651,7 @@ update message model =
         NumTeethChanged numTeeth ->
             ( { model
                 | numTeeth = numTeeth
-                , sprocketNode = always (createSprocketNode numTeeth)
+                , sprocketDrawable = always (createSprocketDrawable numTeeth)
               }
             , Cmd.none
             )

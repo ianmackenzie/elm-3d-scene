@@ -10,7 +10,7 @@ import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Plane3d as Plane3d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Node as Node
+import OpenSolid.Scene.Drawable as Drawable
 import OpenSolid.Vector3d as Vector3d
 import OpenSolid.Viewpoint as Viewpoint
 
@@ -50,29 +50,29 @@ view angleInDegrees =
             degrees angleInDegrees
 
         rotatedLogo =
-            Logo.node |> Node.rotateAround Axis3d.z angle
+            Logo.drawable |> Drawable.rotateAround Axis3d.z angle
 
         rightLogo =
             rotatedLogo
-                |> Node.translateBy (Vector3d.fromComponents ( 1, 1, 0.75 ))
+                |> Drawable.translateBy (Vector3d.fromComponents ( 1, 1, 0.75 ))
 
         leftLogo =
-            rightLogo |> Node.mirrorAcross Plane3d.zx
+            rightLogo |> Drawable.mirrorAcross Plane3d.zx
 
         frontLogos =
-            Node.group [ rightLogo, leftLogo ]
+            Drawable.group [ rightLogo, leftLogo ]
 
         backLogos =
-            frontLogos |> Node.mirrorAcross Plane3d.yz
+            frontLogos |> Drawable.mirrorAcross Plane3d.yz
 
         topLogos =
-            Node.group [ frontLogos, backLogos ]
+            Drawable.group [ frontLogos, backLogos ]
 
         bottomLogos =
-            topLogos |> Node.mirrorAcross Plane3d.xy
+            topLogos |> Drawable.mirrorAcross Plane3d.xy
 
         scene =
-            Node.group [ topLogos, bottomLogos ]
+            Drawable.group [ topLogos, bottomLogos ]
 
         sliderAttributes =
             [ Attributes.style [ ( "width", toString width ++ "px" ) ] ]

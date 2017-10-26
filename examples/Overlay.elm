@@ -15,7 +15,7 @@ import OpenSolid.LineSegment3d as LineSegment3d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Node as Node
+import OpenSolid.Scene.Drawable as Drawable
 import OpenSolid.Svg as Svg
 import OpenSolid.Vector2d as Vector2d
 import OpenSolid.Viewpoint as Viewpoint
@@ -97,7 +97,7 @@ view { angleInDegrees, projectionType } =
             degrees angleInDegrees
 
         rotatedLogo =
-            Logo.node |> Node.rotateAround Axis3d.z angle
+            Logo.drawable |> Drawable.rotateAround Axis3d.z angle
 
         vertices2d =
             Logo.vertices

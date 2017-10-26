@@ -10,24 +10,8 @@ type alias SimpleVertexAttributes =
     { position : Vec3 }
 
 
-type SimpleGeometry
-    = SimpleGeometry BoundingBox3d (WebGL.Mesh SimpleVertexAttributes)
-    | EmptySimpleGeometry
-
-
 type alias VertexAttributes =
     { position : Vec3, normal : Vec3 }
-
-
-type Geometry
-    = Geometry BoundingBox3d (WebGL.Mesh VertexAttributes)
-    | EmptyGeometry
-
-
-type Light
-    = AmbientLight { color : Vec3, lookupTexture : WebGL.Texture }
-    | DirectionalLight { color : Vec3, direction : Vec3 }
-    | PointLight { color : Vec3, position : Vec3 }
 
 
 type Material
@@ -39,11 +23,6 @@ type Material
     | EmissiveMaterial Vec3
 
 
-type Drawable
-    = ColoredGeometry Vec3 BoundingBox3d (WebGL.Mesh SimpleVertexAttributes)
-    | ShadedGeometry Material BoundingBox3d (WebGL.Mesh VertexAttributes)
-
-
 type Placement
     = Placement
         { frame : Frame3d
@@ -52,8 +31,19 @@ type Placement
         }
 
 
-type Node
-    = EmptyNode
-    | LeafNode Drawable
-    | GroupNode (List Node)
-    | TransformedNode Placement Node
+type Mesh
+    = Mesh BoundingBox3d Material (WebGL.Mesh VertexAttributes)
+    | SimpleMesh BoundingBox3d Vec3 (WebGL.Mesh SimpleVertexAttributes)
+
+
+type Drawable
+    = MeshDrawable Mesh
+    | EmptyDrawable
+    | DrawableGroup (List Drawable)
+    | TransformedDrawable Placement Drawable
+
+
+type Light
+    = AmbientLight { color : Vec3, lookupTexture : WebGL.Texture }
+    | DirectionalLight { color : Vec3, direction : Vec3 }
+    | PointLight { color : Vec3, position : Vec3 }

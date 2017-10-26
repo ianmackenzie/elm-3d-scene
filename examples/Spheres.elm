@@ -7,10 +7,8 @@ import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
+import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
 import OpenSolid.Scene.Light as Light
-import OpenSolid.Scene.Node as Node
-import OpenSolid.Vector3d as Vector3d
 import OpenSolid.Viewpoint as Viewpoint exposing (Viewpoint)
 import Shapes
 import Task
@@ -38,14 +36,32 @@ update (LoadComplete loadedTexture) _ =
     ( { loadedTexture = Just loadedTexture }, Cmd.none )
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+goldSphere : Drawable
+goldSphere =
+    Shapes.sphere Materials.gold
+        (Point3d.fromCoordinates ( 2, 2, 0 ))
+        1.0
 
 
-unitSphere : Geometry
-unitSphere =
-    Shapes.sphere Point3d.origin 1.0
+aluminumSphere : Drawable
+aluminumSphere =
+    Shapes.sphere Materials.aluminum
+        (Point3d.fromCoordinates ( 2, -2, 0 ))
+        1.0
+
+
+blackPlasticSphere : Drawable
+blackPlasticSphere =
+    Shapes.sphere Materials.blackPlastic
+        (Point3d.fromCoordinates ( -2, -2, 0 ))
+        1.0
+
+
+whitePlasticSphere : Drawable
+whitePlasticSphere =
+    Shapes.sphere Materials.whitePlastic
+        (Point3d.fromCoordinates ( -2, 2, 0 ))
+        1.0
 
 
 viewpoint : Viewpoint
@@ -104,28 +120,8 @@ view model =
                     , Light.ambient lookupTexture (vec3 0.03 0.03 0.03)
                     ]
 
-                goldSphere =
-                    Geometry.shaded Materials.gold unitSphere
-                        |> Node.translateBy
-                            (Vector3d.fromComponents ( 2, 2, 0 ))
-
-                aluminumSphere =
-                    Geometry.shaded Materials.aluminum unitSphere
-                        |> Node.translateBy
-                            (Vector3d.fromComponents ( 2, -2, 0 ))
-
-                blackPlasticSphere =
-                    Geometry.shaded Materials.blackPlastic unitSphere
-                        |> Node.translateBy
-                            (Vector3d.fromComponents ( -2, -2, 0 ))
-
-                whitePlasticSphere =
-                    Geometry.shaded Materials.whitePlastic unitSphere
-                        |> Node.translateBy
-                            (Vector3d.fromComponents ( -2, 2, 0 ))
-
                 scene =
-                    Node.group
+                    Drawable.group
                         [ goldSphere
                         , aluminumSphere
                         , blackPlasticSphere
@@ -141,5 +137,5 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         }

@@ -9,7 +9,7 @@ import OpenSolid.Camera as Camera
 import OpenSolid.Direction3d as Direction3d
 import OpenSolid.Point3d as Point3d
 import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Node as Node
+import OpenSolid.Scene.Drawable as Drawable
 import OpenSolid.Viewpoint as Viewpoint
 
 
@@ -62,8 +62,8 @@ view angleInDegrees =
             degrees angleInDegrees
 
         scene =
-            Logo.node
-                |> Node.rotateAround Axis3d.z angle
+            Logo.drawable
+                |> Drawable.rotateAround Axis3d.z angle
 
         sliderAttributes =
             [ Attributes.style [ ( "width", toString width ++ "px" ) ] ]

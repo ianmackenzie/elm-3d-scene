@@ -13,10 +13,9 @@ import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
+import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
 import OpenSolid.Scene.Light as Light exposing (Light)
 import OpenSolid.Scene.Material as Material exposing (Material)
-import OpenSolid.Scene.Node as Node exposing (Node)
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 import OpenSolid.Viewpoint as Viewpoint
 import PointLight exposing (PointLight(..))
@@ -30,40 +29,28 @@ import Time exposing (Time)
 import WebGL.Texture
 
 
-shape : Geometry -> Material -> ( Float, Float ) -> Node
-shape geometry material ( x, y ) =
-    Geometry.shaded material geometry
-        |> Node.translateBy (Vector3d.fromComponents ( x, y, 0 ))
+translateBy : ( Float, Float ) -> Drawable -> Drawable
+translateBy ( x, y ) =
+    Drawable.translateBy (Vector3d.fromComponents ( x, y, 0 ))
 
 
-sphere : Material -> ( Float, Float ) -> Node
-sphere =
-    let
-        geometry =
-            Shapes.sphere Point3d.origin 1
-    in
-    shape geometry
+sphere : Material -> ( Float, Float ) -> Drawable
+sphere material offset =
+    Shapes.sphere material Point3d.origin 1 |> translateBy offset
 
 
-box : Material -> ( Float, Float ) -> Node
-box =
-    let
-        geometry =
-            Shapes.box 1.5 1.5 1.5
-    in
-    shape geometry
+box : Material -> ( Float, Float ) -> Drawable
+box material offset =
+    Shapes.box material 1.5 1.5 1.5 |> translateBy offset
 
 
-cylinder : Material -> ( Float, Float ) -> Node
-cylinder =
-    let
-        geometry =
-            Shapes.cylinder
-                (Point3d.fromCoordinates ( 0, 0, -0.75 ))
-                (Point3d.fromCoordinates ( 0, 0, 0.75 ))
-                1
-    in
-    shape geometry
+cylinder : Material -> ( Float, Float ) -> Drawable
+cylinder material offset =
+    Shapes.cylinder material
+        (Point3d.fromCoordinates ( 0, 0, -0.75 ))
+        (Point3d.fromCoordinates ( 0, 0, 0.75 ))
+        1
+        |> translateBy offset
 
 
 type Styles
@@ -92,7 +79,7 @@ view =
                 }
 
         shapes =
-            Node.group
+            Drawable.group
                 [ sphere Materials.gold ( 3, -3 )
                 , cylinder Materials.whitePlastic ( 3, 0 )
                 , sphere Materials.copper ( 3, 3 )
@@ -104,26 +91,53 @@ view =
                 , sphere Materials.whitePlastic ( -3, 3 )
                 ]
 
-        pointLight1StartPoint =
-            Point3d.fromCoordinates ( 1.5, 1.5, 3 )
+        pointLightRadius =
+            0.05
+
+        pointLight1Start =
+            PointLight.at (Point3d.fromCoordinates ( 1.5, 1.5, 3 ))
+                { color = vec3 0 2 10
+                , radius = pointLightRadius
+                }
 
         pointLight1RotationAxis =
             Axis3d.z
 
-        pointLight1Color =
-            vec3 0 2 10
-
-        pointLight2StartPoint =
-            Point3d.fromCoordinates ( 1.5, -1.5, 0 )
+        pointLight2Start =
+            PointLight.at (Point3d.fromCoordinates ( 1.5, -1.5, 0 ))
+                { color = vec3 3 0 0
+                , radius = pointLightRadius
+                }
 
         pointLight2RotationAxis =
             Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
 
-        pointLight2Color =
-            vec3 3 0 0
+        overheadLightColor =
+            vec3 5 5 5
 
-        pointLightRadius =
-            0.05
+        overheadLight1 =
+            PointLight.at (Point3d.fromCoordinates ( 8, 8, 5 ))
+                { color = overheadLightColor
+                , radius = pointLightRadius
+                }
+
+        overheadLight2 =
+            PointLight.at (Point3d.fromCoordinates ( 8, -8, 5 ))
+                { color = overheadLightColor
+                , radius = pointLightRadius
+                }
+
+        overheadLight3 =
+            PointLight.at (Point3d.fromCoordinates ( -8, 8, 5 ))
+                { color = overheadLightColor
+                , radius = pointLightRadius
+                }
+
+        overheadLight4 =
+            PointLight.at (Point3d.fromCoordinates ( -8, -8, 5 ))
+                { color = overheadLightColor
+                , radius = pointLightRadius
+                }
 
         directionalLight1Color =
             vec3 0 0.1 0.02
@@ -133,21 +147,6 @@ view =
 
         ambientLightColor =
             vec3 0.01 0.01 0.01
-
-        overheadLight1Point =
-            Point3d.fromCoordinates ( 8, 8, 5 )
-
-        overheadLight2Point =
-            Point3d.fromCoordinates ( 8, -8, 5 )
-
-        overheadLight3Point =
-            Point3d.fromCoordinates ( -8, 8, 5 )
-
-        overheadLight4Point =
-            Point3d.fromCoordinates ( -8, -8, 5 )
-
-        overheadLightColor =
-            vec3 5 5 5
 
         styleSheet =
             Style.styleSheet
@@ -187,57 +186,15 @@ view =
                             , azimuth = degrees 270 + seconds * degrees 47
                             }
 
-                    lightPoint1 =
-                        pointLight1StartPoint
-                            |> Point3d.rotateAround pointLight1RotationAxis
+                    pointLight1 =
+                        pointLight1Start
+                            |> PointLight.rotateAround pointLight1RotationAxis
                                 (seconds * degrees 67)
 
-                    lightPoint2 =
-                        pointLight2StartPoint
-                            |> Point3d.rotateAround pointLight2RotationAxis
-                                (seconds * degrees 71)
-
-                    pointLight1 =
-                        PointLight
-                            { position = lightPoint1
-                            , radius = pointLightRadius
-                            , color = pointLight1Color
-                            }
-
                     pointLight2 =
-                        PointLight
-                            { position = lightPoint2
-                            , radius = pointLightRadius
-                            , color = pointLight2Color
-                            }
-
-                    overheadLight1 =
-                        PointLight
-                            { position = overheadLight1Point
-                            , radius = pointLightRadius
-                            , color = overheadLightColor
-                            }
-
-                    overheadLight2 =
-                        PointLight
-                            { position = overheadLight2Point
-                            , radius = pointLightRadius
-                            , color = overheadLightColor
-                            }
-
-                    overheadLight3 =
-                        PointLight
-                            { position = overheadLight3Point
-                            , radius = pointLightRadius
-                            , color = overheadLightColor
-                            }
-
-                    overheadLight4 =
-                        PointLight
-                            { position = overheadLight4Point
-                            , radius = pointLightRadius
-                            , color = overheadLightColor
-                            }
+                        pointLight2Start
+                            |> PointLight.rotateAround pointLight2RotationAxis
+                                (seconds * degrees 71)
 
                     addIf flag item list =
                         if flag model then
@@ -271,12 +228,12 @@ view =
                                 (PointLight.light overheadLight4)
 
                     scene =
-                        Node.group
+                        Drawable.group
                             ([ shapes ]
                                 |> addIf .point1Enabled
-                                    (PointLight.node pointLight1)
+                                    (PointLight.drawable pointLight1)
                                 |> addIf .point2Enabled
-                                    (PointLight.node pointLight2)
+                                    (PointLight.drawable pointLight2)
                             )
 
                     renderOptions =

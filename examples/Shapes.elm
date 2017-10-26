@@ -8,13 +8,14 @@ module Shapes
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene.Geometry as Geometry exposing (Geometry)
+import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
+import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
 import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
 
 
-sphere : Point3d -> Float -> Geometry
-sphere centerPoint radius =
+sphere : Material -> Point3d -> Float -> Drawable
+sphere material centerPoint radius =
     let
         ( x0, y0, z0 ) =
             Point3d.coordinates centerPoint
@@ -97,11 +98,11 @@ sphere centerPoint radius =
                     )
                 |> List.concat
     in
-    Geometry.indexedFaces pointsAndNormals faces
+    Drawable.indexedFaces material pointsAndNormals faces
 
 
-cylinder : Point3d -> Point3d -> Float -> Geometry
-cylinder startPoint endPoint radius =
+cylinder : Material -> Point3d -> Point3d -> Float -> Drawable
+cylinder material startPoint endPoint radius =
     case Direction3d.from startPoint endPoint of
         Just zDirection ->
             let
@@ -195,14 +196,14 @@ cylinder startPoint endPoint radius =
                 wedges =
                     List.range 0 (subdivisions - 1) |> List.map wedge
             in
-            Geometry.faces (List.concat wedges)
+            Drawable.faces material (List.concat wedges)
 
         Nothing ->
-            Geometry.faces []
+            Drawable.empty
 
 
-box : Float -> Float -> Float -> Geometry
-box x y z =
+box : Material -> Float -> Float -> Float -> Drawable
+box material x y z =
     let
         p0 =
             Point3d.fromCoordinates ( -x / 2, -y / 2, -z / 2 )
@@ -228,7 +229,7 @@ box x y z =
         p7 =
             Point3d.fromCoordinates ( -x / 2, y / 2, z / 2 )
     in
-    Geometry.facets
+    Drawable.triangles material
         [ Triangle3d.fromVertices ( p0, p2, p1 )
         , Triangle3d.fromVertices ( p0, p3, p2 )
         , Triangle3d.fromVertices ( p4, p5, p6 )
