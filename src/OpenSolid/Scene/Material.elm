@@ -6,7 +6,9 @@ module OpenSolid.Scene.Material
         , nonmetal
         )
 
+import Color exposing (Color)
 import Math.Vector3 exposing (Vec3)
+import OpenSolid.Scene.Color as Color
 import OpenSolid.Scene.Types as Types
 
 
@@ -14,9 +16,14 @@ type alias Material =
     Types.Material
 
 
+flat : Color -> Material
+flat color =
+    Types.SimpleMaterial Types.FlatColor (Color.toVec3 color)
+
+
 metal : { color : Vec3, roughness : Float } -> Material
 metal { color, roughness } =
-    Types.PhysicallyBasedMaterial
+    Types.PhysicalMaterial
         { baseColor = color
         , roughness = roughness
         , metallic = 1.0
@@ -25,7 +32,7 @@ metal { color, roughness } =
 
 nonmetal : { color : Vec3, roughness : Float } -> Material
 nonmetal { color, roughness } =
-    Types.PhysicallyBasedMaterial
+    Types.PhysicalMaterial
         { baseColor = color
         , roughness = roughness
         , metallic = 0.0
@@ -34,4 +41,4 @@ nonmetal { color, roughness } =
 
 emissive : Vec3 -> Material
 emissive =
-    Types.EmissiveMaterial
+    Types.SimpleMaterial Types.EmissiveColor

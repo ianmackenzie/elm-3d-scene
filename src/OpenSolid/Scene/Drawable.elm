@@ -21,6 +21,7 @@ module OpenSolid.Scene.Drawable
         )
 
 import Array.Hamt as Array exposing (Array)
+import Color exposing (Color)
 import Math.Vector3 exposing (Vec3, vec3)
 import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
 import OpenSolid.Body3d as Body3d exposing (Body3d)
@@ -34,6 +35,7 @@ import OpenSolid.Mesh as Mesh exposing (Mesh)
 import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Polyline3d as Polyline3d exposing (Polyline3d)
+import OpenSolid.Scene.Color as Color
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Types as Types
@@ -52,7 +54,7 @@ empty =
     Types.EmptyDrawable
 
 
-lineSegments : Vec3 -> List LineSegment3d -> Drawable
+lineSegments : Color -> List LineSegment3d -> Drawable
 lineSegments color lineSegments_ =
     let
         segmentBoundingBoxes =
@@ -61,74 +63,94 @@ lineSegments color lineSegments_ =
     case BoundingBox3d.hullOf segmentBoundingBoxes of
         Just boundingBox ->
             let
+                vertexAttributes =
+                    simpleAttributes (Color.toVec3 color)
+
                 toAttributes lineSegment =
                     let
                         ( p1, p2 ) =
                             LineSegment3d.endpoints lineSegment
                     in
-                    ( { position = Point3d.toVec3 p1 }
-                    , { position = Point3d.toVec3 p2 }
-                    )
+                    ( vertexAttributes p1, vertexAttributes p2 )
 
                 mesh =
                     WebGL.lines (List.map toAttributes lineSegments_)
             in
-            Types.MeshDrawable <| Types.SimpleMesh boundingBox color mesh
+            Types.MeshDrawable <|
+                Types.SimpleMesh Types.FlatColor boundingBox mesh
 
         Nothing ->
             Types.EmptyDrawable
 
 
-polyline : Vec3 -> Polyline3d -> Drawable
+polyline : Color -> Polyline3d -> Drawable
 polyline color polyline_ =
     case Polyline3d.boundingBox polyline_ of
         Just boundingBox ->
             let
-                toAttribute point =
-                    { position = Point3d.toVec3 point }
+                toAttributes =
+                    simpleAttributes (Color.toVec3 color)
 
                 vertexAttributes =
                     Polyline3d.vertices polyline_
-                        |> List.map toAttribute
+                        |> List.map toAttributes
 
-                mesh =
+                webGLMesh =
                     WebGL.lineStrip vertexAttributes
             in
-            Types.MeshDrawable <| Types.SimpleMesh boundingBox color mesh
+            Types.MeshDrawable <|
+                Types.SimpleMesh Types.FlatColor boundingBox webGLMesh
 
         Nothing ->
             Types.EmptyDrawable
 
 
-points : Vec3 -> List Point3d -> Drawable
+points : Color -> List Point3d -> Drawable
 points color points_ =
     case Point3d.hullOf points_ of
         Just boundingBox ->
             let
-                toAttribute point =
-                    { position = Point3d.toVec3 point }
+                toAttributes =
+                    simpleAttributes (Color.toVec3 color)
 
                 mesh =
-                    WebGL.points (List.map toAttribute points_)
+                    WebGL.points <| List.map toAttributes points_
             in
-            Types.MeshDrawable <| Types.SimpleMesh boundingBox color mesh
+            Types.MeshDrawable <|
+                Types.SimpleMesh Types.FlatColor boundingBox mesh
 
         Nothing ->
             Types.EmptyDrawable
 
 
-triangleFan : Vec3 -> List Point3d -> Drawable
+physicalAttributes : { baseColor : Vec3, roughness : Float, metallic : Float } -> Point3d -> Vec3 -> Types.PhysicalAttributes
+physicalAttributes { baseColor, roughness, metallic } point normal =
+    { position = Point3d.toVec3 point
+    , normal = normal
+    , baseColor = baseColor
+    , roughness = roughness
+    , metallic = metallic
+    }
+
+
+simpleAttributes : Vec3 -> Point3d -> Types.SimpleAttributes
+simpleAttributes color point =
+    { position = Point3d.toVec3 point
+    , color = color
+    }
+
+
+triangleFan : Color -> List Point3d -> Drawable
 triangleFan color points =
     case Point3d.hullOf points of
         Just boundingBox ->
             let
-                toAttribute point =
-                    { position = Point3d.toVec3 point }
-
                 mesh =
-                    WebGL.triangleFan (List.map toAttribute points)
+                    WebGL.triangleFan <|
+                        List.map (simpleAttributes (Color.toVec3 color)) points
             in
-            Types.MeshDrawable <| Types.SimpleMesh boundingBox color mesh
+            Types.MeshDrawable <|
+                Types.SimpleMesh Types.FlatColor boundingBox mesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -138,34 +160,47 @@ triangles : Material -> List Triangle3d -> Drawable
 triangles material triangles =
     case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles) of
         Just boundingBox ->
-            let
-                vertexAttributes point normal =
-                    { position = Point3d.toVec3 point
-                    , normal = normal
-                    }
-
-                toAttributes triangle =
+            case material of
+                Types.SimpleMaterial colorType color ->
                     let
-                        ( p1, p2, p3 ) =
-                            Triangle3d.vertices triangle
+                        toAttributes triangle =
+                            let
+                                ( p1, p2, p3 ) =
+                                    Triangle3d.vertices triangle
+                            in
+                            ( simpleAttributes color p1
+                            , simpleAttributes color p2
+                            , simpleAttributes color p3
+                            )
 
-                        normalVector =
-                            Triangle3d.normalDirection triangle
-                                |> Maybe.map Direction3d.toVec3
-                                |> Maybe.withDefault (vec3 0 0 0)
+                        webGLMesh =
+                            WebGL.triangles (List.map toAttributes triangles)
                     in
-                    ( vertexAttributes p1 normalVector
-                    , vertexAttributes p2 normalVector
-                    , vertexAttributes p3 normalVector
-                    )
+                    Types.MeshDrawable <|
+                        Types.SimpleMesh colorType boundingBox webGLMesh
 
-                attributes =
-                    List.map toAttributes triangles
+                Types.PhysicalMaterial properties ->
+                    let
+                        toAttributes triangle =
+                            let
+                                ( p1, p2, p3 ) =
+                                    Triangle3d.vertices triangle
 
-                mesh =
-                    WebGL.triangles attributes
-            in
-            Types.MeshDrawable <| Types.Mesh boundingBox material mesh
+                                normal =
+                                    Triangle3d.normalDirection triangle
+                                        |> Maybe.map Direction3d.toVec3
+                                        |> Maybe.withDefault (vec3 0 0 0)
+                            in
+                            ( physicalAttributes properties p1 normal
+                            , physicalAttributes properties p2 normal
+                            , physicalAttributes properties p3 normal
+                            )
+
+                        webGLMesh =
+                            WebGL.triangles (List.map toAttributes triangles)
+                    in
+                    Types.MeshDrawable <|
+                        Types.PhysicalMesh boundingBox webGLMesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -184,33 +219,43 @@ faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
     Triangle3d.boundingBox (Triangle3d.fromVertices ( p1, p2, p3 ))
 
 
-faceAttributes : FaceVertices -> ( Types.VertexAttributes, Types.VertexAttributes, Types.VertexAttributes )
-faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
-    ( { position = Point3d.toVec3 p1, normal = Vector3d.toVec3 n1 }
-    , { position = Point3d.toVec3 p2, normal = Vector3d.toVec3 n2 }
-    , { position = Point3d.toVec3 p3, normal = Vector3d.toVec3 n3 }
-    )
-
-
 faces : Material -> List ( ( Point3d, Vector3d ), ( Point3d, Vector3d ), ( Point3d, Vector3d ) ) -> Drawable
 faces material vertexTriples =
     case BoundingBox3d.hullOf (List.map faceBoundingBox vertexTriples) of
         Just boundingBox ->
-            let
-                mesh =
-                    WebGL.triangles (List.map faceAttributes vertexTriples)
-            in
-            Types.MeshDrawable <| Types.Mesh boundingBox material mesh
+            case material of
+                Types.SimpleMaterial colorType color ->
+                    let
+                        faceAttributes ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
+                            ( simpleAttributes color p1
+                            , simpleAttributes color p2
+                            , simpleAttributes color p3
+                            )
+
+                        mesh =
+                            WebGL.triangles <|
+                                List.map faceAttributes vertexTriples
+                    in
+                    Types.MeshDrawable <|
+                        Types.SimpleMesh colorType boundingBox mesh
+
+                Types.PhysicalMaterial properties ->
+                    let
+                        faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
+                            ( physicalAttributes properties p1 (Vector3d.toVec3 n1)
+                            , physicalAttributes properties p2 (Vector3d.toVec3 n2)
+                            , physicalAttributes properties p3 (Vector3d.toVec3 n3)
+                            )
+
+                        mesh =
+                            WebGL.triangles <|
+                                List.map faceAttributes vertexTriples
+                    in
+                    Types.MeshDrawable <|
+                        Types.PhysicalMesh boundingBox mesh
 
         Nothing ->
             Types.EmptyDrawable
-
-
-vertexAttributes : Vertex -> Types.VertexAttributes
-vertexAttributes ( point, normalVector ) =
-    { position = Point3d.toVec3 point
-    , normal = Vector3d.toVec3 normalVector
-    }
 
 
 indexedFaces : Material -> List ( Point3d, Vector3d ) -> List ( Int, Int, Int ) -> Drawable
@@ -221,14 +266,31 @@ indexedFaces material vertices faces =
     in
     case Point3d.hullOf vertexPoints of
         Just boundingBox ->
-            let
-                attributes =
-                    List.map vertexAttributes vertices
+            case material of
+                Types.SimpleMaterial colorType color ->
+                    let
+                        webGLMesh =
+                            WebGL.indexedTriangles
+                                (List.map (simpleAttributes color) vertexPoints)
+                                faces
+                    in
+                    Types.MeshDrawable <|
+                        Types.SimpleMesh colorType boundingBox webGLMesh
 
-                mesh =
-                    WebGL.indexedTriangles attributes faces
-            in
-            Types.MeshDrawable <| Types.Mesh boundingBox material mesh
+                Types.PhysicalMaterial properties ->
+                    let
+                        toAttributes ( point, normalDirection ) =
+                            physicalAttributes properties
+                                point
+                                (Vector3d.toVec3 normalDirection)
+
+                        webGLMesh =
+                            WebGL.indexedTriangles
+                                (List.map toAttributes vertices)
+                                faces
+                    in
+                    Types.MeshDrawable <|
+                        Types.PhysicalMesh boundingBox webGLMesh
 
         Nothing ->
             Types.EmptyDrawable

@@ -1,64 +1,80 @@
 module OpenSolid.Scene.Shader
     exposing
-        ( ambient1
-        , ambient2
-        , ambient3
-        , ambient4
-        , ambient5
-        , ambient6
-        , ambient7
-        , ambient8
-        , ambientOnly
-        , dummy
-        , emissive
-        , noAmbient1
-        , noAmbient2
-        , noAmbient3
-        , noAmbient4
-        , noAmbient5
-        , noAmbient6
-        , noAmbient7
-        , noAmbient8
-        , simple
+        ( ambient1Fragment
+        , ambient2Fragment
+        , ambient3Fragment
+        , ambient4Fragment
+        , ambient5Fragment
+        , ambient6Fragment
+        , ambient7Fragment
+        , ambient8Fragment
+        , ambientOnlyFragment
+        , dummyFragment
+        , emissiveFragment
+        , flatFragment
+        , noAmbient1Fragment
+        , noAmbient2Fragment
+        , noAmbient3Fragment
+        , noAmbient4Fragment
+        , noAmbient5Fragment
+        , noAmbient6Fragment
+        , noAmbient7Fragment
+        , noAmbient8Fragment
+        , physicalVertex
         , simpleVertex
-        , vertex
         )
 
 import Math.Matrix4 as Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
+import OpenSolid.Scene.Types as Types
 import WebGL
 
 
-type alias Varyings =
+type alias SimpleVaryings =
     { interpolatedPosition : Vec3
-    , interpolatedNormal : Vec3
+    , interpolatedColor : Vec3
     }
 
 
-simpleVertex : WebGL.Shader { position : Vec3 } { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } { interpolatedPosition : Vec3 }
+type alias PhysicalVaryings =
+    { interpolatedPosition : Vec3
+    , interpolatedNormal : Vec3
+    , interpolatedBaseColor : Vec3
+    , interpolatedRoughness : Float
+    , interpolatedMetallic : Float
+    }
+
+
+simpleVertex : WebGL.Shader Types.SimpleAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } SimpleVaryings
 simpleVertex =
     [glsl|
         attribute vec3 position;
+        attribute vec3 color;
 
         uniform float modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 modelViewProjectionMatrix;
 
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedColor;
 
         void main () {
             vec4 scaledPosition = vec4(modelScale * position, 1.0);
             gl_Position = modelViewProjectionMatrix * scaledPosition;
             interpolatedPosition = (modelMatrix * scaledPosition).xyz;
+            interpolatedColor = color;
         }
     |]
 
 
-vertex : WebGL.Shader { position : Vec3, normal : Vec3 } { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } Varyings
-vertex =
+physicalVertex : WebGL.Shader Types.PhysicalAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } PhysicalVaryings
+physicalVertex =
     [glsl|
         attribute vec3 position;
         attribute vec3 normal;
+        attribute vec3 baseColor;
+        attribute float roughness;
+        attribute float metallic;
 
         uniform float modelScale;
         uniform mat4 modelMatrix;
@@ -66,58 +82,61 @@ vertex =
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
+        varying vec3 interpolatedBaseColor;
+        varying float interpolatedRoughness;
+        varying float interpolatedMetallic;
 
         void main () {
             vec4 scaledPosition = vec4(modelScale * position, 1.0);
             gl_Position = modelViewProjectionMatrix * scaledPosition;
             interpolatedPosition = (modelMatrix * scaledPosition).xyz;
             interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            interpolatedBaseColor = baseColor;
+            interpolatedRoughness = roughness;
+            interpolatedMetallic = metallic;
         }
     |]
 
 
-simple : WebGL.Shader {} { a | color : Vec3 } { interpolatedPosition : Vec3 }
-simple =
+flatFragment : WebGL.Shader {} a SimpleVaryings
+flatFragment =
     [glsl|
         precision mediump float;
 
-        uniform vec3 color;
-
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedColor;
 
         void main () {
-            gl_FragColor = vec4(color, 1.0);
+            gl_FragColor = vec4(interpolatedColor, 1.0);
         }
     |]
 
 
-emissive : WebGL.Shader {} { a | gammaCorrectedColor : Vec3 } Varyings
-emissive =
+emissiveFragment : WebGL.Shader {} { a | gammaCorrection : Float } SimpleVaryings
+emissiveFragment =
     [glsl|
         precision mediump float;
 
-        uniform vec3 gammaCorrectedColor;
+        uniform float gammaCorrection;
 
         varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
+        varying vec3 interpolatedColor;
 
         void main () {
-            gl_FragColor = vec4(gammaCorrectedColor, 1.0);
+            float red = pow(interpolatedColor.r, gammaCorrection);
+            float green = pow(interpolatedColor.g, gammaCorrection);
+            float blue = pow(interpolatedColor.b, gammaCorrection);
+            gl_FragColor = vec4(red, green, blue, 1.0);
         }
     |]
 
 
-shaderSource : String
-shaderSource =
+physicalFragmentSource : String
+physicalFragmentSource =
     """
 precision mediump float;
 
-uniform vec3 baseColor;
-uniform float roughness;
-uniform float metallic;
-
 uniform vec3 eyePoint;
-
 uniform float gammaCorrection;
 
 #ifdef AMBIENT
@@ -183,6 +202,9 @@ uniform float lightRadius8;
 
 varying vec3 interpolatedPosition;
 varying vec3 interpolatedNormal;
+varying vec3 interpolatedBaseColor;
+varying float interpolatedRoughness;
+varying float interpolatedMetallic;
 
 #ifdef LIGHT1
 // Leave pi out of the denominator and then don't multiply by it later
@@ -194,7 +216,7 @@ float normalFactor(float alphaSquared, float dotNHSquared) {
 // Leave dotNL and dotNV out of the numerator and then leave them out of
 // the denominator later
 float geometryFactor(float dotNL, float dotNV) {
-    float tmp = roughness + 1.0;
+    float tmp = interpolatedRoughness + 1.0;
     float k = 0.125 * tmp * tmp;
     float oneMinusK = 1.0 - k;
     return 1.0 / ((dotNL * oneMinusK + k) * (dotNV * oneMinusK + k));
@@ -236,7 +258,7 @@ vec3 litColor(int lightType, vec3 lightColor, vec3 lightVector, float lightRadiu
 
 #ifdef AMBIENT
 vec3 ambientLitColor(float dotNV, vec3 specularBaseColor, vec3 diffuseBaseColor) {
-    vec2 textureCoordinates = vec2(dotNV, roughness);
+    vec2 textureCoordinates = vec2(dotNV, interpolatedRoughness);
     vec4 textureColor = texture2D(ambientLookupTexture, textureCoordinates);
     float scale = textureColor.r + (1.0 / 255.0) * textureColor.g;
     float offset = textureColor.b + (1.0 / 255.0) * textureColor.a;
@@ -251,9 +273,9 @@ void main() {
     vec3 viewDirection = normalize(eyePoint - interpolatedPosition);
     float dotNV = clamp(dot(normalDirection, viewDirection), 0.0, 1.0);
 
-    float nonmetallic = 1.0 - metallic;
-    vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
-    vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
+    float nonmetallic = 1.0 - interpolatedMetallic;
+    vec3 diffuseBaseColor = nonmetallic * 0.96 * interpolatedBaseColor;
+    vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + interpolatedMetallic * interpolatedBaseColor;
 
     vec3 linearColor = vec3(0.0, 0.0, 0.0);
 
@@ -262,7 +284,7 @@ void main() {
 #endif
 
 #ifdef LIGHT1
-    float alpha = roughness * roughness;
+    float alpha = interpolatedRoughness * interpolatedRoughness;
     float alphaSquared = alpha * alpha;
     linearColor += litColor(lightType1, lightColor1, lightVector1, lightRadius1, normalDirection, viewDirection, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
 #endif
@@ -304,8 +326,8 @@ void main() {
 """
 
 
-createShader : { ambientLighting : Bool, numLights : Int } -> WebGL.Shader {} a Varyings
-createShader { ambientLighting, numLights } =
+physicalFragment : { ambientLighting : Bool, numLights : Int } -> WebGL.Shader {} a PhysicalVaryings
+physicalFragment { ambientLighting, numLights } =
     let
         addAmbientDefinition definitions =
             if ambientLighting then
@@ -319,24 +341,15 @@ createShader { ambientLighting, numLights } =
                 |> addAmbientDefinition
                 |> String.join "\n"
     in
-    WebGL.unsafeShader (definitions ++ "\n" ++ shaderSource)
+    WebGL.unsafeShader (definitions ++ "\n" ++ physicalFragmentSource)
 
 
 type alias BaseUniforms a =
-    { a
-        | eyePoint : Vec3
-        , baseColor : Vec3
-        , roughness : Float
-        , metallic : Float
-        , gammaCorrection : Float
-    }
+    { a | eyePoint : Vec3, gammaCorrection : Float }
 
 
 type alias AmbientUniforms a =
-    { a
-        | ambientLightColor : Vec3
-        , ambientLookupTexture : WebGL.Texture
-    }
+    { a | ambientLightColor : Vec3, ambientLookupTexture : WebGL.Texture }
 
 
 type alias Light1Uniforms a =
@@ -418,108 +431,109 @@ type alias Light8Uniforms a =
         }
 
 
-ambientOnly : WebGL.Shader {} (AmbientUniforms (BaseUniforms a)) Varyings
-ambientOnly =
-    createShader { ambientLighting = True, numLights = 0 }
+ambientOnlyFragment : WebGL.Shader {} (AmbientUniforms (BaseUniforms a)) PhysicalVaryings
+ambientOnlyFragment =
+    physicalFragment { ambientLighting = True, numLights = 0 }
 
 
-ambient1 : WebGL.Shader {} (AmbientUniforms (Light1Uniforms (BaseUniforms a))) Varyings
-ambient1 =
-    createShader { ambientLighting = True, numLights = 1 }
+ambient1Fragment : WebGL.Shader {} (AmbientUniforms (Light1Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient1Fragment =
+    physicalFragment { ambientLighting = True, numLights = 1 }
 
 
-ambient2 : WebGL.Shader {} (AmbientUniforms (Light2Uniforms (BaseUniforms a))) Varyings
-ambient2 =
-    createShader { ambientLighting = True, numLights = 2 }
+ambient2Fragment : WebGL.Shader {} (AmbientUniforms (Light2Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient2Fragment =
+    physicalFragment { ambientLighting = True, numLights = 2 }
 
 
-ambient3 : WebGL.Shader {} (AmbientUniforms (Light3Uniforms (BaseUniforms a))) Varyings
-ambient3 =
-    createShader { ambientLighting = True, numLights = 3 }
+ambient3Fragment : WebGL.Shader {} (AmbientUniforms (Light3Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient3Fragment =
+    physicalFragment { ambientLighting = True, numLights = 3 }
 
 
-ambient4 : WebGL.Shader {} (AmbientUniforms (Light4Uniforms (BaseUniforms a))) Varyings
-ambient4 =
-    createShader { ambientLighting = True, numLights = 4 }
+ambient4Fragment : WebGL.Shader {} (AmbientUniforms (Light4Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient4Fragment =
+    physicalFragment { ambientLighting = True, numLights = 4 }
 
 
-ambient5 : WebGL.Shader {} (AmbientUniforms (Light5Uniforms (BaseUniforms a))) Varyings
-ambient5 =
-    createShader { ambientLighting = True, numLights = 5 }
+ambient5Fragment : WebGL.Shader {} (AmbientUniforms (Light5Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient5Fragment =
+    physicalFragment { ambientLighting = True, numLights = 5 }
 
 
-ambient6 : WebGL.Shader {} (AmbientUniforms (Light6Uniforms (BaseUniforms a))) Varyings
-ambient6 =
-    createShader { ambientLighting = True, numLights = 6 }
+ambient6Fragment : WebGL.Shader {} (AmbientUniforms (Light6Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient6Fragment =
+    physicalFragment { ambientLighting = True, numLights = 6 }
 
 
-ambient7 : WebGL.Shader {} (AmbientUniforms (Light7Uniforms (BaseUniforms a))) Varyings
-ambient7 =
-    createShader { ambientLighting = True, numLights = 7 }
+ambient7Fragment : WebGL.Shader {} (AmbientUniforms (Light7Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient7Fragment =
+    physicalFragment { ambientLighting = True, numLights = 7 }
 
 
-ambient8 : WebGL.Shader {} (AmbientUniforms (Light8Uniforms (BaseUniforms a))) Varyings
-ambient8 =
-    createShader { ambientLighting = True, numLights = 8 }
+ambient8Fragment : WebGL.Shader {} (AmbientUniforms (Light8Uniforms (BaseUniforms a))) PhysicalVaryings
+ambient8Fragment =
+    physicalFragment { ambientLighting = True, numLights = 8 }
 
 
-noAmbient1 : WebGL.Shader {} (Light1Uniforms (BaseUniforms a)) Varyings
-noAmbient1 =
-    createShader { ambientLighting = False, numLights = 1 }
+noAmbient1Fragment : WebGL.Shader {} (Light1Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient1Fragment =
+    physicalFragment { ambientLighting = False, numLights = 1 }
 
 
-noAmbient2 : WebGL.Shader {} (Light2Uniforms (BaseUniforms a)) Varyings
-noAmbient2 =
-    createShader { ambientLighting = False, numLights = 2 }
+noAmbient2Fragment : WebGL.Shader {} (Light2Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient2Fragment =
+    physicalFragment { ambientLighting = False, numLights = 2 }
 
 
-noAmbient3 : WebGL.Shader {} (Light3Uniforms (BaseUniforms a)) Varyings
-noAmbient3 =
-    createShader { ambientLighting = False, numLights = 3 }
+noAmbient3Fragment : WebGL.Shader {} (Light3Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient3Fragment =
+    physicalFragment { ambientLighting = False, numLights = 3 }
 
 
-noAmbient4 : WebGL.Shader {} (Light4Uniforms (BaseUniforms a)) Varyings
-noAmbient4 =
-    createShader { ambientLighting = False, numLights = 4 }
+noAmbient4Fragment : WebGL.Shader {} (Light4Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient4Fragment =
+    physicalFragment { ambientLighting = False, numLights = 4 }
 
 
-noAmbient5 : WebGL.Shader {} (Light5Uniforms (BaseUniforms a)) Varyings
-noAmbient5 =
-    createShader { ambientLighting = False, numLights = 5 }
+noAmbient5Fragment : WebGL.Shader {} (Light5Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient5Fragment =
+    physicalFragment { ambientLighting = False, numLights = 5 }
 
 
-noAmbient6 : WebGL.Shader {} (Light6Uniforms (BaseUniforms a)) Varyings
-noAmbient6 =
-    createShader { ambientLighting = False, numLights = 6 }
+noAmbient6Fragment : WebGL.Shader {} (Light6Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient6Fragment =
+    physicalFragment { ambientLighting = False, numLights = 6 }
 
 
-noAmbient7 : WebGL.Shader {} (Light7Uniforms (BaseUniforms a)) Varyings
-noAmbient7 =
-    createShader { ambientLighting = False, numLights = 7 }
+noAmbient7Fragment : WebGL.Shader {} (Light7Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient7Fragment =
+    physicalFragment { ambientLighting = False, numLights = 7 }
 
 
-noAmbient8 : WebGL.Shader {} (Light8Uniforms (BaseUniforms a)) Varyings
-noAmbient8 =
-    createShader { ambientLighting = False, numLights = 8 }
+noAmbient8Fragment : WebGL.Shader {} (Light8Uniforms (BaseUniforms a)) PhysicalVaryings
+noAmbient8Fragment =
+    physicalFragment { ambientLighting = False, numLights = 8 }
 
 
-dummy : WebGL.Shader {} { a | baseColor : Vec3, gammaCorrection : Float } Varyings
-dummy =
+dummyFragment : WebGL.Shader {} { a | gammaCorrection : Float } PhysicalVaryings
+dummyFragment =
     [glsl|
         precision mediump float;
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
-
-        uniform vec3 baseColor;
+        varying vec3 interpolatedBaseColor;
+        varying float interpolatedRoughness;
+        varying float interpolatedMetallic;
 
         uniform float gammaCorrection;
 
         void main() {
             // Apply gamma correction
-            float red = pow(baseColor.r, gammaCorrection);
-            float green = pow(baseColor.g, gammaCorrection);
-            float blue = pow(baseColor.b, gammaCorrection);
+            float red = pow(interpolatedBaseColor.r, gammaCorrection);
+            float green = pow(interpolatedBaseColor.g, gammaCorrection);
+            float blue = pow(interpolatedBaseColor.b, gammaCorrection);
             gl_FragColor = vec4(red, green, blue, 1.0);
         }
     |]

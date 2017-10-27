@@ -45,22 +45,14 @@ type alias LightProperties =
     }
 
 
-type alias MaterialProperties =
-    { baseColor : Vec3
-    , roughness : Float
-    , metallic : Float
-    }
-
-
 type alias PhysicallyBasedRenderer =
     List WebGL.Settings.Setting
     -> Vec3
     -> Float
     -> Mat4
     -> Mat4
-    -> MaterialProperties
     -> Float
-    -> WebGL.Mesh { position : Vec3, normal : Vec3 }
+    -> WebGL.Mesh Types.PhysicalAttributes
     -> WebGL.Entity
 
 
@@ -218,34 +210,28 @@ physicallyBasedRendererFor : List Light -> PhysicallyBasedRenderer
 physicallyBasedRendererFor lights =
     case physicallyBasedLighting lights of
         AmbientOnlyLighting ambientProperties ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambientOnly mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambientOnlyFragment mesh uniforms
 
         AmbientLighting1 ambientProperties light1 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -255,19 +241,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius1 = light1.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient1 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient1Fragment mesh uniforms
 
         AmbientLighting2 ambientProperties light1 light2 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -281,19 +264,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius2 = light2.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient2 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient2Fragment mesh uniforms
 
         AmbientLighting3 ambientProperties light1 light2 light3 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -311,19 +291,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius3 = light3.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient3 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient3Fragment mesh uniforms
 
         AmbientLighting4 ambientProperties light1 light2 light3 light4 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -345,19 +322,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius4 = light4.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient4 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient4Fragment mesh uniforms
 
         AmbientLighting5 ambientProperties light1 light2 light3 light4 light5 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -383,19 +357,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius5 = light5.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient5 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient5Fragment mesh uniforms
 
         AmbientLighting6 ambientProperties light1 light2 light3 light4 light5 light6 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -425,19 +396,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius6 = light6.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient6 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient6Fragment mesh uniforms
 
         AmbientLighting7 ambientProperties light1 light2 light3 light4 light5 light6 light7 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -471,19 +439,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius7 = light7.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient7 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient7Fragment mesh uniforms
 
         AmbientLighting8 ambientProperties light1 light2 light3 light4 light5 light6 light7 light8 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , ambientLightColor = ambientProperties.color
                         , ambientLookupTexture = ambientProperties.lookupTexture
@@ -521,19 +486,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius8 = light8.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.ambient8 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.ambient8Fragment mesh uniforms
 
         NoAmbientLighting1 light1 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -541,19 +503,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius1 = light1.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient1 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient1Fragment mesh uniforms
 
         NoAmbientLighting2 light1 light2 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -565,19 +524,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius2 = light2.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient2 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient2Fragment mesh uniforms
 
         NoAmbientLighting3 light1 light2 light3 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -593,19 +549,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius3 = light3.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient3 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient3Fragment mesh uniforms
 
         NoAmbientLighting4 light1 light2 light3 light4 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -625,19 +578,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius4 = light4.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient4 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient4Fragment mesh uniforms
 
         NoAmbientLighting5 light1 light2 light3 light4 light5 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -661,19 +611,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius5 = light5.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient5 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient5Fragment mesh uniforms
 
         NoAmbientLighting6 light1 light2 light3 light4 light5 light6 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -701,19 +648,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius6 = light6.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient6 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient6Fragment mesh uniforms
 
         NoAmbientLighting7 light1 light2 light3 light4 light5 light6 light7 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -745,19 +689,16 @@ physicallyBasedRendererFor lights =
                         , lightRadius7 = light7.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient7 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient7Fragment mesh uniforms
 
         NoAmbientLighting8 light1 light2 light3 light4 light5 light6 light7 light8 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
                         , eyePoint = eyePoint
-                        , baseColor = material.baseColor
-                        , roughness = material.roughness
-                        , metallic = material.metallic
                         , gammaCorrection = gammaCorrection
                         , lightType1 = light1.lightType
                         , lightColor1 = light1.lightColor
@@ -793,20 +734,19 @@ physicallyBasedRendererFor lights =
                         , lightRadius8 = light8.lightRadius
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.noAmbient8 mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbient8Fragment mesh uniforms
 
         DummyLighting ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix material gammaCorrection mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gammaCorrection mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , modelViewProjectionMatrix = modelViewProjectionMatrix
-                        , baseColor = material.baseColor
                         , gammaCorrection = gammaCorrection
                         }
                 in
-                WebGL.entityWith settings Shader.vertex Shader.dummy mesh uniforms
+                WebGL.entityWith settings Shader.physicalVertex Shader.dummyFragment mesh uniforms
 
 
 toEntity : RenderProperties -> Placement -> Types.Mesh -> WebGL.Entity
@@ -842,60 +782,46 @@ toEntity renderProperties placement mesh =
             ]
     in
     case mesh of
-        Types.SimpleMesh boundingBox color webGlMesh ->
-            let
-                uniforms =
-                    { modelScale = modelScale
-                    , modelMatrix = modelMatrix
-                    , modelViewProjectionMatrix = modelViewProjectionMatrix
-                    , color = color
-                    }
-            in
-            WebGL.entityWith settings
-                Shader.simpleVertex
-                Shader.simple
-                webGlMesh
-                uniforms
-
-        Types.Mesh boundingBox material webGlMesh ->
-            case material of
-                Types.PhysicallyBasedMaterial materialProperties ->
-                    renderProperties.physicallyBasedRenderer
-                        settings
-                        renderProperties.eyePoint
-                        modelScale
-                        modelMatrix
-                        modelViewProjectionMatrix
-                        materialProperties
-                        renderProperties.gammaCorrection
-                        webGlMesh
-
-                Types.EmissiveMaterial color ->
+        Types.SimpleMesh colorType boundingBox webGlMesh ->
+            case colorType of
+                Types.FlatColor ->
                     let
-                        ( r, g, b ) =
-                            Vector3.toTuple color
-
-                        gammaCorrection =
-                            renderProperties.gammaCorrection
-
-                        gammaCorrectedColor =
-                            Vector3.vec3
-                                (r ^ gammaCorrection)
-                                (g ^ gammaCorrection)
-                                (b ^ gammaCorrection)
-
                         uniforms =
                             { modelScale = modelScale
                             , modelMatrix = modelMatrix
                             , modelViewProjectionMatrix = modelViewProjectionMatrix
-                            , gammaCorrectedColor = gammaCorrectedColor
                             }
                     in
                     WebGL.entityWith settings
-                        Shader.vertex
-                        Shader.emissive
+                        Shader.simpleVertex
+                        Shader.flatFragment
                         webGlMesh
                         uniforms
+
+                Types.EmissiveColor ->
+                    let
+                        uniforms =
+                            { modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , modelViewProjectionMatrix = modelViewProjectionMatrix
+                            , gammaCorrection = renderProperties.gammaCorrection
+                            }
+                    in
+                    WebGL.entityWith settings
+                        Shader.simpleVertex
+                        Shader.emissiveFragment
+                        webGlMesh
+                        uniforms
+
+        Types.PhysicalMesh boundingBox webGlMesh ->
+            renderProperties.physicallyBasedRenderer
+                settings
+                renderProperties.eyePoint
+                modelScale
+                modelMatrix
+                modelViewProjectionMatrix
+                renderProperties.gammaCorrection
+                webGlMesh
 
 
 collectEntities : RenderProperties -> Placement -> Drawable -> List WebGL.Entity -> List WebGL.Entity

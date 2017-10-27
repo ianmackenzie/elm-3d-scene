@@ -6,21 +6,33 @@ import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import WebGL exposing (Texture)
 
 
-type alias SimpleVertexAttributes =
-    { position : Vec3 }
+type alias SimpleAttributes =
+    { position : Vec3
+    , color : Vec3
+    }
 
 
-type alias VertexAttributes =
-    { position : Vec3, normal : Vec3 }
+type alias PhysicalAttributes =
+    { position : Vec3
+    , normal : Vec3
+    , baseColor : Vec3
+    , roughness : Float
+    , metallic : Float
+    }
 
 
 type Material
-    = PhysicallyBasedMaterial
+    = SimpleMaterial ColorType Vec3
+    | PhysicalMaterial
         { baseColor : Vec3
         , roughness : Float
         , metallic : Float
         }
-    | EmissiveMaterial Vec3
+
+
+type ColorType
+    = FlatColor
+    | EmissiveColor
 
 
 type Placement
@@ -32,8 +44,8 @@ type Placement
 
 
 type Mesh
-    = Mesh BoundingBox3d Material (WebGL.Mesh VertexAttributes)
-    | SimpleMesh BoundingBox3d Vec3 (WebGL.Mesh SimpleVertexAttributes)
+    = SimpleMesh ColorType BoundingBox3d (WebGL.Mesh SimpleAttributes)
+    | PhysicalMesh BoundingBox3d (WebGL.Mesh PhysicalAttributes)
 
 
 type Drawable

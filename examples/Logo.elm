@@ -5,7 +5,7 @@ module Logo
         , vertices
         )
 
-import Math.Vector3 exposing (Vec3, vec3)
+import Color
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.LineSegment3d as LineSegment3d exposing (LineSegment3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
@@ -91,16 +91,16 @@ drawable : Drawable
 drawable =
     let
         orange =
-            vec3 0.941 0.678 0
+            Color.rgb 240 173 0
 
         green =
-            vec3 0.498 0.819 0.231
+            Color.rgb 127 209 59
 
         lightBlue =
-            vec3 0.376 0.709 0.8
+            Color.rgb 96 181 204
 
         darkBlue =
-            vec3 0.352 0.388 0.338
+            Color.rgb 90 99 86
 
         leftFace =
             Drawable.triangleFan orange [ p1, p2, p8, p7, p6 ]
