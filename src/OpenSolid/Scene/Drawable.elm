@@ -6,7 +6,7 @@ module OpenSolid.Scene.Drawable
         , faces
         , group
         , indexedFaces
-        , lines
+        , lineSegments
         , mesh
         , mirrorAcross
         , placeIn
@@ -52,11 +52,11 @@ empty =
     Types.EmptyDrawable
 
 
-lines : Vec3 -> List LineSegment3d -> Drawable
-lines color lineSegments =
+lineSegments : Vec3 -> List LineSegment3d -> Drawable
+lineSegments color lineSegments_ =
     let
         segmentBoundingBoxes =
-            List.map LineSegment3d.boundingBox lineSegments
+            List.map LineSegment3d.boundingBox lineSegments_
     in
     case BoundingBox3d.hullOf segmentBoundingBoxes of
         Just boundingBox ->
@@ -71,7 +71,7 @@ lines color lineSegments =
                     )
 
                 mesh =
-                    WebGL.lines (List.map toAttributes lineSegments)
+                    WebGL.lines (List.map toAttributes lineSegments_)
             in
             Types.MeshDrawable <| Types.SimpleMesh boundingBox color mesh
 
