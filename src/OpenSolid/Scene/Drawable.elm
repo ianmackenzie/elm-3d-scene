@@ -254,9 +254,19 @@ body tolerance material body_ =
         |> mesh material
 
 
+isNotEmpty : Drawable -> Bool
+isNotEmpty drawable =
+    drawable /= Types.EmptyDrawable
+
+
 group : List Drawable -> Drawable
 group drawables =
-    Types.DrawableGroup drawables
+    case List.filter isNotEmpty drawables of
+        [] ->
+            Types.EmptyDrawable
+
+        nonEmptyDrawables ->
+            Types.DrawableGroup nonEmptyDrawables
 
 
 transformBy : (Placement -> Placement) -> Drawable -> Drawable
