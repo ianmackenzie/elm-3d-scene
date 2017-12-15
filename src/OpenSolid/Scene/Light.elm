@@ -8,7 +8,7 @@ module OpenSolid.Scene.Light
         , point
         )
 
-import Math.Vector3 exposing (Vec3)
+import Math.Vector3 exposing (vec3)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Interop.LinearAlgebra.Direction3d as Direction3d
 import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
@@ -27,26 +27,26 @@ type AmbientLookupTexture
     = AmbientLookupTexture WebGL.Texture
 
 
-ambient : AmbientLookupTexture -> Vec3 -> Light
-ambient (AmbientLookupTexture lookupTexture) color =
+ambient : AmbientLookupTexture -> ( Float, Float, Float ) -> Light
+ambient (AmbientLookupTexture lookupTexture) ( r, g, b ) =
     Types.AmbientLight
-        { color = color
+        { color = vec3 r g b
         , lookupTexture = lookupTexture
         }
 
 
-directional : Direction3d -> Vec3 -> Light
-directional direction color =
+directional : Direction3d -> ( Float, Float, Float ) -> Light
+directional direction ( r, g, b ) =
     Types.DirectionalLight
-        { color = color
+        { color = vec3 r g b
         , direction = Direction3d.toVec3 (Direction3d.flip direction)
         }
 
 
-point : Point3d -> Vec3 -> Light
-point position color =
+point : Point3d -> ( Float, Float, Float ) -> Light
+point position ( r, g, b ) =
     Types.PointLight
-        { color = color
+        { color = vec3 r g b
         , position = Point3d.toVec3 position
         }
 

@@ -11,7 +11,7 @@ module PointLight
         , translateBy
         )
 
-import Math.Vector3 exposing (Vec3)
+import Color
 import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
 import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
@@ -26,23 +26,26 @@ import Shapes
 type PointLight
     = PointLight
         { position : Point3d
-        , color : Vec3
+        , color : ( Float, Float, Float )
         , radius : Float
         , baseDrawable : Drawable
         }
 
 
-at : Point3d -> { color : Vec3, radius : Float } -> PointLight
+at : Point3d -> { color : ( Float, Float, Float ), radius : Float } -> PointLight
 at position { color, radius } =
     let
         ( r, g, b ) =
-            Math.Vector3.toTuple color
+            color
 
         scale =
             1.0 / (radius * radius)
 
+        scaled component =
+            round (255 * min (scale * component) 1)
+
         emissiveColor =
-            Math.Vector3.vec3 (scale * r) (scale * g) (scale * b)
+            Color.rgb (scaled r) (scaled g) (scaled b)
 
         material =
             Material.emissive emissiveColor

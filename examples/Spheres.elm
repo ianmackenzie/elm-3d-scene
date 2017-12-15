@@ -2,7 +2,6 @@ module Spheres exposing (..)
 
 import Html exposing (Html)
 import Materials
-import Math.Vector3 exposing (vec3)
 import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Point3d as Point3d
@@ -113,11 +112,11 @@ view model =
                         }
 
                 lights =
-                    [ Light.directional lightDirection (vec3 0 0.2 0.2)
-                    , Light.directional Direction3d.negativeX (vec3 0.2 0 0)
+                    [ Light.directional lightDirection ( 0, 0.2, 0.2 )
+                    , Light.directional Direction3d.negativeX ( 0.2, 0, 0 )
                     , Light.point (Point3d.fromCoordinates ( 0, -2, 3 ))
-                        (vec3 0.75 0.75 0.75)
-                    , Light.ambient lookupTexture (vec3 0.03 0.03 0.03)
+                        ( 0.75, 0.75, 0.75 )
+                    , Light.ambient lookupTexture ( 0.03, 0.03, 0.03 )
                     ]
 
                 scene =

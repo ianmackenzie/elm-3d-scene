@@ -1,5 +1,6 @@
 module OpenSolid.Scene.Types exposing (..)
 
+import Color exposing (Color)
 import Math.Vector3 exposing (Vec3)
 import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
@@ -7,26 +8,38 @@ import WebGL exposing (Texture)
 
 
 type alias SimpleAttributes =
-    { position : Vec3
-    , color : Vec3
+    { x : Float
+    , y : Float
+    , z : Float
+    , r : Float
+    , g : Float
+    , b : Float
     }
 
 
 type alias PhysicalAttributes =
-    { position : Vec3
-    , normal : Vec3
-    , baseColor : Vec3
-    , roughness : Float
-    , metallic : Float
+    { x : Float
+    , y : Float
+    , z : Float
+    , nx : Float
+    , ny : Float
+    , nz : Float
+    , r : Float
+    , g : Float
+    , b : Float
+    , rg : Float
+    , mt : Float
     }
 
 
 type Material
-    = SimpleMaterial ColorType Vec3
+    = SimpleMaterial ColorType Color
     | PhysicalMaterial
-        { baseColor : Vec3
-        , roughness : Float
-        , metallic : Float
+        { r : Float
+        , g : Float
+        , b : Float
+        , rg : Float
+        , mt : Float
         }
 
 

@@ -22,20 +22,16 @@ module OpenSolid.Scene.Drawable
 
 import Array.Hamt as Array exposing (Array)
 import Color exposing (Color)
-import Math.Vector3 exposing (Vec3, vec3)
 import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
 import OpenSolid.Body3d as Body3d exposing (Body3d)
 import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
+import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
 import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
-import OpenSolid.Interop.LinearAlgebra.Direction3d as Direction3d
-import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
-import OpenSolid.Interop.LinearAlgebra.Vector3d as Vector3d
 import OpenSolid.LineSegment3d as LineSegment3d exposing (LineSegment3d)
 import OpenSolid.Mesh as Mesh exposing (Mesh)
 import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
 import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Polyline3d as Polyline3d exposing (Polyline3d)
-import OpenSolid.Scene.Color as Color
 import OpenSolid.Scene.Material as Material exposing (Material)
 import OpenSolid.Scene.Placement as Placement exposing (Placement)
 import OpenSolid.Scene.Types as Types
@@ -64,7 +60,7 @@ lineSegments color lineSegments_ =
         Just boundingBox ->
             let
                 vertexAttributes =
-                    simpleAttributes (Color.toVec3 color)
+                    simpleAttributes color
 
                 toAttributes lineSegment =
                     let
@@ -89,7 +85,7 @@ polyline color polyline_ =
         Just boundingBox ->
             let
                 toAttributes =
-                    simpleAttributes (Color.toVec3 color)
+                    simpleAttributes color
 
                 vertexAttributes =
                     Polyline3d.vertices polyline_
@@ -111,7 +107,7 @@ points color points_ =
         Just boundingBox ->
             let
                 toAttributes =
-                    simpleAttributes (Color.toVec3 color)
+                    simpleAttributes color
 
                 mesh =
                     WebGL.points <| List.map toAttributes points_
@@ -123,21 +119,53 @@ points color points_ =
             Types.EmptyDrawable
 
 
-physicalAttributes : { baseColor : Vec3, roughness : Float, metallic : Float } -> Point3d -> Vec3 -> Types.PhysicalAttributes
-physicalAttributes { baseColor, roughness, metallic } point normal =
-    { position = Point3d.toVec3 point
-    , normal = normal
-    , baseColor = baseColor
-    , roughness = roughness
-    , metallic = metallic
+physicalAttributes : { r : Float, g : Float, b : Float, rg : Float, mt : Float } -> Point3d -> Vector3d -> Types.PhysicalAttributes
+physicalAttributes { r, g, b, rg, mt } point normal =
+    let
+        ( x, y, z ) =
+            Point3d.coordinates point
+
+        ( nx, ny, nz ) =
+            Vector3d.components normal
+    in
+    { x = x
+    , y = y
+    , z = z
+    , nx = nx
+    , ny = ny
+    , nz = nz
+    , r = r
+    , g = g
+    , b = b
+    , rg = rg
+    , mt = mt
     }
 
 
-simpleAttributes : Vec3 -> Point3d -> Types.SimpleAttributes
-simpleAttributes color point =
-    { position = Point3d.toVec3 point
-    , color = color
-    }
+simpleAttributes : Color -> Point3d -> Types.SimpleAttributes
+simpleAttributes color =
+    let
+        { red, green, blue } =
+            Color.toRgb color
+
+        ( r, g, b ) =
+            ( toFloat red / 255
+            , toFloat green / 255
+            , toFloat blue / 255
+            )
+    in
+    \point ->
+        let
+            ( x, y, z ) =
+                Point3d.coordinates point
+        in
+        { x = x
+        , y = y
+        , z = z
+        , r = r
+        , g = g
+        , b = b
+        }
 
 
 triangleFan : Color -> List Point3d -> Drawable
@@ -147,7 +175,7 @@ triangleFan color points =
             let
                 mesh =
                     WebGL.triangleFan <|
-                        List.map (simpleAttributes (Color.toVec3 color)) points
+                        List.map (simpleAttributes color) points
             in
             Types.MeshDrawable <|
                 Types.SimpleMesh Types.FlatColor boundingBox mesh
@@ -163,14 +191,17 @@ triangles material triangles =
             case material of
                 Types.SimpleMaterial colorType color ->
                     let
+                        vertexAttributes =
+                            simpleAttributes color
+
                         toAttributes triangle =
                             let
                                 ( p1, p2, p3 ) =
                                     Triangle3d.vertices triangle
                             in
-                            ( simpleAttributes color p1
-                            , simpleAttributes color p2
-                            , simpleAttributes color p3
+                            ( vertexAttributes p1
+                            , vertexAttributes p2
+                            , vertexAttributes p3
                             )
 
                         webGLMesh =
@@ -187,9 +218,12 @@ triangles material triangles =
                                     Triangle3d.vertices triangle
 
                                 normal =
-                                    Triangle3d.normalDirection triangle
-                                        |> Maybe.map Direction3d.toVec3
-                                        |> Maybe.withDefault (vec3 0 0 0)
+                                    case Triangle3d.normalDirection triangle of
+                                        Just direction ->
+                                            Direction3d.toVector direction
+
+                                        Nothing ->
+                                            Vector3d.zero
                             in
                             ( physicalAttributes properties p1 normal
                             , physicalAttributes properties p2 normal
@@ -242,9 +276,9 @@ faces material vertexTriples =
                 Types.PhysicalMaterial properties ->
                     let
                         faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
-                            ( physicalAttributes properties p1 (Vector3d.toVec3 n1)
-                            , physicalAttributes properties p2 (Vector3d.toVec3 n2)
-                            , physicalAttributes properties p3 (Vector3d.toVec3 n3)
+                            ( physicalAttributes properties p1 n1
+                            , physicalAttributes properties p2 n2
+                            , physicalAttributes properties p3 n3
                             )
 
                         mesh =
@@ -280,9 +314,7 @@ indexedFaces material vertices faces =
                 Types.PhysicalMaterial properties ->
                     let
                         toAttributes ( point, normalDirection ) =
-                            physicalAttributes properties
-                                point
-                                (Vector3d.toVec3 normalDirection)
+                            physicalAttributes properties point normalDirection
 
                         webGLMesh =
                             WebGL.indexedTriangles

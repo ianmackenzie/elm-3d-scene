@@ -48,8 +48,12 @@ type alias PhysicalVaryings =
 simpleVertex : WebGL.Shader Types.SimpleAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } SimpleVaryings
 simpleVertex =
     [glsl|
-        attribute vec3 position;
-        attribute vec3 color;
+        attribute float x;
+        attribute float y;
+        attribute float z;
+        attribute float r;
+        attribute float g;
+        attribute float b;
 
         uniform float modelScale;
         uniform mat4 modelMatrix;
@@ -59,10 +63,10 @@ simpleVertex =
         varying vec3 interpolatedColor;
 
         void main () {
-            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 scaledPosition = vec4(modelScale * x, modelScale * y, modelScale * z, 1.0);
             gl_Position = modelViewProjectionMatrix * scaledPosition;
             interpolatedPosition = (modelMatrix * scaledPosition).xyz;
-            interpolatedColor = color;
+            interpolatedColor = vec3(r, g, b);
         }
     |]
 
@@ -70,11 +74,17 @@ simpleVertex =
 physicalVertex : WebGL.Shader Types.PhysicalAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } PhysicalVaryings
 physicalVertex =
     [glsl|
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec3 baseColor;
-        attribute float roughness;
-        attribute float metallic;
+        attribute float x;
+        attribute float y;
+        attribute float z;
+        attribute float nx;
+        attribute float ny;
+        attribute float nz;
+        attribute float r;
+        attribute float g;
+        attribute float b;
+        attribute float rg;
+        attribute float mt;
 
         uniform float modelScale;
         uniform mat4 modelMatrix;
@@ -87,13 +97,13 @@ physicalVertex =
         varying float interpolatedMetallic;
 
         void main () {
-            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 scaledPosition = vec4(modelScale * x, modelScale * y, modelScale * z, 1.0);
             gl_Position = modelViewProjectionMatrix * scaledPosition;
             interpolatedPosition = (modelMatrix * scaledPosition).xyz;
-            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
-            interpolatedBaseColor = baseColor;
-            interpolatedRoughness = roughness;
-            interpolatedMetallic = metallic;
+            interpolatedNormal = (modelMatrix * vec4(nx, ny, nz, 0.0)).xyz;
+            interpolatedBaseColor = vec3(r, g, b);
+            interpolatedRoughness = rg;
+            interpolatedMetallic = mt;
         }
     |]
 

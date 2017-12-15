@@ -6,7 +6,6 @@ import Html.Attributes as Attributes
 import Html.Events as Events
 import Kintail.InputWidget as InputWidget
 import Materials
-import Math.Vector3 exposing (Vec3, vec3)
 import Mouse
 import OpenSolid.Arc2d as Arc2d
 import OpenSolid.Arc3d as Arc3d
@@ -551,7 +550,7 @@ lights =
             3
 
         color =
-            vec3 10 10 10
+            ( 10, 10, 10 )
     in
     [ Light.point (Point3d.fromCoordinates ( d, d, d )) color
     , Light.point (Point3d.fromCoordinates ( d, -d, d )) color

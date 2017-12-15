@@ -7,7 +7,6 @@ import Element.Attributes as Attributes
 import Element.Events as Events
 import Html exposing (Html)
 import Materials
-import Math.Vector3 as Vector3 exposing (Vec3, vec3)
 import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
 import OpenSolid.Camera as Camera exposing (Camera)
 import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
@@ -96,7 +95,7 @@ view =
 
         pointLight1Start =
             PointLight.at (Point3d.fromCoordinates ( 1.5, 1.5, 3 ))
-                { color = vec3 0 2 10
+                { color = ( 0, 2, 10 )
                 , radius = pointLightRadius
                 }
 
@@ -105,7 +104,7 @@ view =
 
         pointLight2Start =
             PointLight.at (Point3d.fromCoordinates ( 1.5, -1.5, 0 ))
-                { color = vec3 3 0 0
+                { color = ( 3, 0, 0 )
                 , radius = pointLightRadius
                 }
 
@@ -113,7 +112,7 @@ view =
             Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
 
         overheadLightColor =
-            vec3 5 5 5
+            ( 5, 5, 5 )
 
         overheadLight1 =
             PointLight.at (Point3d.fromCoordinates ( 8, 8, 5 ))
@@ -140,13 +139,13 @@ view =
                 }
 
         directionalLight1Color =
-            vec3 0 0.1 0.02
+            ( 0, 0.1, 0.02 )
 
         directionalLight2Color =
-            vec3 0.3 0.3 0.3
+            ( 0.3, 0.3, 0.3 )
 
         ambientLightColor =
-            vec3 0.01 0.01 0.01
+            ( 0.01, 0.01, 0.01 )
 
         styleSheet =
             Style.styleSheet
