@@ -1,6 +1,7 @@
 module Sprocket exposing (..)
 
 import AnimationFrame
+import Dict exposing (Dict)
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
@@ -57,6 +58,7 @@ type alias Model =
     , placementFrame : Frame3d
     , numTeeth : Int
     , sprocketDrawable : () -> Drawable
+    , cachedDrawables : Dict Int (() -> Drawable)
     , rotationAngle : Float
     }
 
@@ -135,6 +137,7 @@ init =
             , numTeeth = initialNumTeeth
             , sprocketDrawable = always (createSprocketDrawable initialNumTeeth)
             , rotationAngle = 0
+            , cachedDrawables = Dict.empty
             }
     in
     ( model, Cmd.none )
@@ -648,9 +651,28 @@ update message model =
                     ( model, Cmd.none )
 
         NumTeethChanged numTeeth ->
+            let
+                ( updatedDrawable, updatedCache ) =
+                    case Dict.get numTeeth model.cachedDrawables of
+                        Just cachedDrawable ->
+                            ( cachedDrawable, model.cachedDrawables )
+
+                        Nothing ->
+                            let
+                                updatedDrawable =
+                                    always (createSprocketDrawable numTeeth)
+
+                                updatedCache =
+                                    Dict.insert numTeeth
+                                        updatedDrawable
+                                        model.cachedDrawables
+                            in
+                            ( updatedDrawable, updatedCache )
+            in
             ( { model
                 | numTeeth = numTeeth
-                , sprocketDrawable = always (createSprocketDrawable numTeeth)
+                , sprocketDrawable = updatedDrawable
+                , cachedDrawables = updatedCache
               }
             , Cmd.none
             )
