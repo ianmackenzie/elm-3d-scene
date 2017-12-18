@@ -1,4 +1,4 @@
-module Shaft exposing (Shaft, with)
+module Shaft exposing (Shaft, fromEndpoints)
 
 import OpenSolid.Arc2d as Arc2d exposing (Arc2d)
 import OpenSolid.Axis2d as Axis2d exposing (Axis2d)
@@ -25,8 +25,8 @@ type Shaft
         }
 
 
-with : { startPoint : Point3d, endPoint : Point3d, diameter : Float, flatLength : Float, flatThickness : Float } -> Maybe Shaft
-with { startPoint, endPoint, diameter, flatLength, flatThickness } =
+fromEndpoints : { startPoint : Point3d, endPoint : Point3d, diameter : Float, flatLength : Float, flatThickness : Float } -> Maybe Shaft
+fromEndpoints { startPoint, endPoint, diameter, flatLength, flatThickness } =
     case Vector3d.lengthAndDirection (Vector3d.from startPoint endPoint) of
         Just ( length, direction ) ->
             if diameter <= 0 then
