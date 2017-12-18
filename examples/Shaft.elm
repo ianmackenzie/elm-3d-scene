@@ -1,4 +1,4 @@
-module Shaft exposing (Shaft, fromEndpoints)
+module Shaft exposing (Shaft, body, fromEndpoints)
 
 import OpenSolid.Arc2d as Arc2d exposing (Arc2d)
 import OpenSolid.Axis2d as Axis2d exposing (Axis2d)
