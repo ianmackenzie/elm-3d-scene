@@ -1,7 +1,7 @@
 module Sprocket exposing (..)
 
 import AnimationFrame
-import Dict exposing (Dict)
+import Color
 import Html exposing (Attribute, Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
@@ -31,6 +31,7 @@ import OpenSolid.Region2d as Region2d exposing (Region2d)
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
 import OpenSolid.Scene.Light as Light exposing (Light)
+import OpenSolid.Scene.Material as Material
 import OpenSolid.SketchPlane3d as SketchPlane3d exposing (SketchPlane3d)
 import OpenSolid.Surface3d as Surface3d
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
@@ -50,6 +51,9 @@ type Msg
     | PointerMovedTo Point2d
     | StopRotating
     | NumTeethChanged Int
+    | HubDiameterChanged Float
+    | HubWidthChanged Float
+    | MaterialChanged Material
     | Tick Time
 
 
@@ -57,10 +61,35 @@ type alias Model =
     { dragPoint : Maybe Point2d
     , placementFrame : Frame3d
     , numTeeth : Int
+    , hubDiameter : Float
+    , hubWidth : Float
+    , material : Material
     , sprocketDrawable : () -> Drawable
-    , cachedDrawables : Dict Int (() -> Drawable)
     , rotationAngle : Float
     }
+
+
+type Material
+    = Aluminum
+    | Copper
+    | WhitePlastic
+    | BluePlastic
+
+
+materialDescription : Material -> String
+materialDescription material =
+    case material of
+        Aluminum ->
+            "Aluminum"
+
+        Copper ->
+            "Copper"
+
+        WhitePlastic ->
+            "White plastic"
+
+        BluePlastic ->
+            "Blue plastic"
 
 
 
@@ -69,12 +98,12 @@ type alias Model =
 
 screenWidth : Int
 screenWidth =
-    1024
+    800
 
 
 screenHeight : Int
 screenHeight =
-    768
+    600
 
 
 camera : Camera
@@ -82,7 +111,7 @@ camera =
     Camera.perspective
         { viewpoint =
             Viewpoint.lookAt
-                { eyePoint = Point3d.fromCoordinates ( 6, 0, 3 )
+                { eyePoint = Point3d.fromCoordinates ( 5, 0, 3 )
                 , focalPoint = Point3d.origin
                 , upDirection = Direction3d.z
                 }
@@ -98,9 +127,12 @@ camera =
 -- Interactivity
 
 
-createSprocketDrawable : Int -> Drawable
-createSprocketDrawable numTeeth =
+createSprocketDrawable : { numTeeth : Int, hubWidth : Float, hubDiameter : Float, material : Material } -> Drawable
+createSprocketDrawable { numTeeth, hubWidth, hubDiameter, material } =
     let
+        offset =
+            Vector3d.fromComponents ( 0, 0, -0.25 )
+
         sprocketBody =
             sprocketWith
                 { bore = 0.5
@@ -110,9 +142,44 @@ createSprocketDrawable numTeeth =
                 , toothHeight = 0.175
                 , rollerDiameter = 0.125
                 }
+                |> Body3d.translateBy offset
+
+        hubBody =
+            let
+                lineSegment =
+                    LineSegment2d.fromEndpoints
+                        ( Point2d.fromCoordinates ( 0.25, 0 )
+                        , Point2d.fromCoordinates ( hubDiameter / 2, 0 )
+                        )
+
+                region =
+                    Region2d.revolution
+                        (Curve2d.lineSegment lineSegment)
+                        Point2d.origin
+                        (turns 1)
+            in
+            Body3d.extrusion region SketchPlane3d.xy hubWidth
+                |> Body3d.translateBy (Vector3d.fromComponents ( 0, 0, 0.0625 ))
+                |> Body3d.translateBy offset
+
+        drawableMaterial =
+            case material of
+                Aluminum ->
+                    Materials.aluminum
+
+                Copper ->
+                    Materials.copper
+
+                WhitePlastic ->
+                    Materials.whitePlastic
+
+                BluePlastic ->
+                    Material.nonmetal { color = Color.blue, roughness = 0.25 }
     in
-    Drawable.body tolerance Materials.aluminum sprocketBody
-        |> Drawable.translateBy (Vector3d.fromComponents ( 0, 0, -0.25 ))
+    Drawable.group
+        [ Drawable.body tolerance drawableMaterial sprocketBody
+        , Drawable.body tolerance drawableMaterial hubBody
+        ]
 
 
 mousePositionToPoint : Mouse.Position -> Point2d
@@ -131,13 +198,34 @@ init =
         initialNumTeeth =
             20
 
+        initialHubDiameter =
+            1.25
+
+        initialHubWidth =
+            0.5
+
+        initialMaterial =
+            Aluminum
+
         model =
             { dragPoint = Nothing
-            , placementFrame = Frame3d.xyz
+            , placementFrame =
+                Frame3d.xyz
+                    |> Frame3d.rotateAroundOwn Frame3d.zAxis (degrees -60)
+                    |> Frame3d.rotateAroundOwn Frame3d.yAxis (degrees -90)
             , numTeeth = initialNumTeeth
-            , sprocketDrawable = always (createSprocketDrawable initialNumTeeth)
+            , hubDiameter = initialHubDiameter
+            , hubWidth = initialHubWidth
+            , sprocketDrawable =
+                always <|
+                    createSprocketDrawable
+                        { numTeeth = initialNumTeeth
+                        , hubDiameter = initialHubDiameter
+                        , hubWidth = initialHubWidth
+                        , material = initialMaterial
+                        }
             , rotationAngle = 0
-            , cachedDrawables = Dict.empty
+            , material = initialMaterial
             }
     in
     ( model, Cmd.none )
@@ -434,25 +522,6 @@ sprocketWith { bore, pitch, numTeeth, thickness, rollerDiameter, toothHeight } =
         |> Body3d.translateBy (Vector3d.fromComponents ( 0, 0, -thickness / 2 ))
 
 
-hub : Body3d
-hub =
-    let
-        lineSegment =
-            LineSegment2d.fromEndpoints
-                ( Point2d.fromCoordinates ( 0.25, 0 )
-                , Point2d.fromCoordinates ( 0.625, 0 )
-                )
-
-        region =
-            Region2d.revolution
-                (Curve2d.lineSegment lineSegment)
-                Point2d.origin
-                (turns 1)
-    in
-    Body3d.extrusion region SketchPlane3d.xy 0.5
-        |> Body3d.translateBy (Vector3d.fromComponents ( 0, 0, -0.25 ))
-
-
 shaft : Body3d
 shaft =
     let
@@ -480,8 +549,7 @@ tolerance =
 staticDrawables : Drawable
 staticDrawables =
     Drawable.group
-        [ Drawable.body tolerance Materials.aluminum hub
-        , Drawable.body tolerance Materials.gold shaft
+        [ Drawable.body tolerance Materials.gold shaft
         ]
 
 
@@ -563,15 +631,27 @@ lights =
 
 
 view : Model -> Html Msg
-view { placementFrame, numTeeth, sprocketDrawable, rotationAngle } =
+view { placementFrame, numTeeth, hubDiameter, hubWidth, sprocketDrawable, rotationAngle, material } =
     let
         sliderAttributes =
             [ Attributes.style [ ( "width", toString screenWidth ++ "px" ) ] ]
 
-        sliderConfig =
-            { min = 20
+        numTeethConfig =
+            { min = 10
             , max = 64
             , step = 1
+            }
+
+        hubDiameterConfig =
+            { min = 0.625
+            , max = 3
+            , step = 0.0625
+            }
+
+        hubWidthConfig =
+            { min = 0.125
+            , max = 1
+            , step = 0.0625
             }
 
         shaftDrawable =
@@ -582,12 +662,31 @@ view { placementFrame, numTeeth, sprocketDrawable, rotationAngle } =
                 [ shaftDrawable |> Drawable.rotateAround Axis3d.z rotationAngle
                 , bearingDrawable |> Drawable.rotateAround Axis3d.z (rotationAngle / 2)
                 ]
+
+        heading text =
+            Html.h3 [] [ Html.text text ]
+
+        materials =
+            [ Aluminum, Copper, WhitePlastic, BluePlastic ]
+
+        divStyle =
+            Attributes.style [ ( "width", toString screenWidth ++ "px" ) ]
     in
     Html.div []
-        [ Html.div dragAttributes
+        [ Html.div (divStyle :: dragAttributes)
             [ Scene.render lights camera (Drawable.placeIn placementFrame scene) ]
-        , InputWidget.slider sliderAttributes sliderConfig (toFloat numTeeth)
+        , heading ("Number of teeth: " ++ toString numTeeth)
+        , InputWidget.slider sliderAttributes numTeethConfig (toFloat numTeeth)
             |> Html.map (round >> NumTeethChanged)
+        , heading ("Hub diameter: " ++ toString hubDiameter)
+        , InputWidget.slider sliderAttributes hubDiameterConfig hubDiameter
+            |> Html.map HubDiameterChanged
+        , heading ("Hub width: " ++ toString hubWidth)
+        , InputWidget.slider sliderAttributes hubWidthConfig hubWidth
+            |> Html.map HubWidthChanged
+        , heading "Material:"
+        , InputWidget.comboBox [] materialDescription materials material
+            |> Html.map MaterialChanged
         ]
 
 
@@ -651,28 +750,61 @@ update message model =
                     ( model, Cmd.none )
 
         NumTeethChanged numTeeth ->
-            let
-                ( updatedDrawable, updatedCache ) =
-                    case Dict.get numTeeth model.cachedDrawables of
-                        Just cachedDrawable ->
-                            ( cachedDrawable, model.cachedDrawables )
-
-                        Nothing ->
-                            let
-                                updatedDrawable =
-                                    always (createSprocketDrawable numTeeth)
-
-                                updatedCache =
-                                    Dict.insert numTeeth
-                                        updatedDrawable
-                                        model.cachedDrawables
-                            in
-                            ( updatedDrawable, updatedCache )
-            in
             ( { model
                 | numTeeth = numTeeth
-                , sprocketDrawable = updatedDrawable
-                , cachedDrawables = updatedCache
+                , sprocketDrawable =
+                    always <|
+                        createSprocketDrawable
+                            { numTeeth = numTeeth
+                            , hubDiameter = model.hubDiameter
+                            , hubWidth = model.hubWidth
+                            , material = model.material
+                            }
+              }
+            , Cmd.none
+            )
+
+        HubWidthChanged hubWidth ->
+            ( { model
+                | hubWidth = hubWidth
+                , sprocketDrawable =
+                    always <|
+                        createSprocketDrawable
+                            { numTeeth = model.numTeeth
+                            , hubDiameter = model.hubDiameter
+                            , hubWidth = hubWidth
+                            , material = model.material
+                            }
+              }
+            , Cmd.none
+            )
+
+        HubDiameterChanged hubDiameter ->
+            ( { model
+                | hubDiameter = hubDiameter
+                , sprocketDrawable =
+                    always <|
+                        createSprocketDrawable
+                            { numTeeth = model.numTeeth
+                            , hubDiameter = hubDiameter
+                            , hubWidth = model.hubWidth
+                            , material = model.material
+                            }
+              }
+            , Cmd.none
+            )
+
+        MaterialChanged material ->
+            ( { model
+                | material = material
+                , sprocketDrawable =
+                    always <|
+                        createSprocketDrawable
+                            { numTeeth = model.numTeeth
+                            , hubDiameter = model.hubDiameter
+                            , hubWidth = model.hubWidth
+                            , material = material
+                            }
               }
             , Cmd.none
             )

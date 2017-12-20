@@ -1,0 +1,52 @@
+ <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Sprocket</title>
+  <style type="text/css">
+    /* Special styling for WebKit/Blink */
+    input[type=range] {
+      margin: 10px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      border: 1px solid #000000;
+      height: 36px;
+      width: 36px;
+      border-radius: 18px;
+      background: #ffffff;
+      cursor: pointer;
+      margin-top: -14px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+    }
+
+    /* All the same stuff for Firefox */
+    input[type=range]::-moz-range-thumb {
+      border: 1px solid #000000;
+      height: 36px;
+      width: 36px;
+      border-radius: 18px;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    /* All the same stuff for IE */
+    input[type=range]::-ms-thumb {
+      border: 1px solid #000000;
+      height: 36px;
+      width: 36px;
+      border-radius: 18px;
+      background: #ffffff;
+      cursor: pointer;
+    }
+  </style>
+  </head>
+  <body>
+    <div id="main"></div>
+    <script src="sprocket.js"></script>
+    <script>
+      var node = document.getElementById('main');
+      var app = Elm.Sprocket.embed(node);
+    </script>
+  </body>
+</html>
