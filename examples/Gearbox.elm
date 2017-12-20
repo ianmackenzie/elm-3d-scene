@@ -77,7 +77,7 @@ camera =
     Camera.perspective
         { viewpoint =
             Viewpoint.lookAt
-                { eyePoint = Point3d.fromCoordinates ( 10, 0, 5 )
+                { eyePoint = Point3d.fromCoordinates ( 6, 6, 8 )
                 , focalPoint = Point3d.origin
                 , upDirection = Direction3d.z
                 }
@@ -188,13 +188,16 @@ rotate frame dx dy =
     case Vector2d.direction dragVector of
         Just direction2d ->
             let
+                sketchPlane =
+                    Viewpoint.viewPlane (Camera.viewpoint camera)
+
                 axialDirection =
-                    Direction3d.on SketchPlane3d.yz <|
+                    Direction3d.on sketchPlane <|
                         Direction2d.perpendicularTo direction2d
 
                 rotationAxis =
                     Axis3d.with
-                        { originPoint = Point3d.origin
+                        { originPoint = Frame3d.originPoint frame
                         , direction = axialDirection
                         }
 
