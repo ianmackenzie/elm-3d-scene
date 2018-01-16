@@ -115,7 +115,7 @@ cylinder material startPoint endPoint radius =
                 length =
                     Point3d.distanceFrom startPoint endPoint
 
-                frame =
+                localFrame =
                     Frame3d.with
                         { originPoint = startPoint
                         , zDirection = zDirection
@@ -148,23 +148,27 @@ cylinder material startPoint endPoint radius =
                             radius * sin endAngle
 
                         p0 =
-                            Point3d.in_ frame ( startX, startY, 0.0 )
+                            Point3d.fromCoordinatesIn localFrame
+                                ( startX, startY, 0.0 )
 
                         p1 =
-                            Point3d.in_ frame ( endX, endY, 0.0 )
+                            Point3d.fromCoordinatesIn localFrame
+                                ( endX, endY, 0.0 )
 
                         p2 =
-                            Point3d.in_ frame ( startX, startY, length )
+                            Point3d.fromCoordinatesIn localFrame
+                                ( startX, startY, length )
 
                         p3 =
-                            Point3d.in_ frame ( endX, endY, length )
+                            Point3d.fromCoordinatesIn localFrame
+                                ( endX, endY, length )
 
                         startNormal =
                             Direction3d.with
                                 { azimuth = startAngle
                                 , elevation = 0
                                 }
-                                |> Direction3d.placeIn frame
+                                |> Direction3d.placeIn localFrame
                                 |> Direction3d.toVector
 
                         endNormal =
@@ -172,7 +176,7 @@ cylinder material startPoint endPoint radius =
                                 { azimuth = endAngle
                                 , elevation = 0
                                 }
-                                |> Direction3d.placeIn frame
+                                |> Direction3d.placeIn localFrame
                                 |> Direction3d.toVector
                     in
                     [ ( ( startPoint, negativeZVector )

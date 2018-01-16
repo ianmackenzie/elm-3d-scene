@@ -56,8 +56,8 @@ lineSegments color lineSegments_ =
         segmentBoundingBoxes =
             List.map LineSegment3d.boundingBox lineSegments_
     in
-    case BoundingBox3d.hullOf segmentBoundingBoxes of
-        Just boundingBox ->
+    case BoundingBox3d.aggregate segmentBoundingBoxes of
+        Just overallBoundingBox ->
             let
                 vertexAttributes =
                     simpleAttributes color
@@ -73,7 +73,7 @@ lineSegments color lineSegments_ =
                     WebGL.lines (List.map toAttributes lineSegments_)
             in
             Types.MeshDrawable <|
-                Types.SimpleMesh Types.FlatColor boundingBox mesh
+                Types.SimpleMesh Types.FlatColor overallBoundingBox mesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -103,7 +103,7 @@ polyline color polyline_ =
 
 points : Color -> List Point3d -> Drawable
 points color points_ =
-    case Point3d.hullOf points_ of
+    case BoundingBox3d.containingPoints points_ of
         Just boundingBox ->
             let
                 toAttributes =
@@ -170,7 +170,7 @@ simpleAttributes color =
 
 triangleFan : Color -> List Point3d -> Drawable
 triangleFan color points =
-    case Point3d.hullOf points of
+    case BoundingBox3d.containingPoints points of
         Just boundingBox ->
             let
                 mesh =
@@ -186,8 +186,8 @@ triangleFan color points =
 
 triangles : Material -> List Triangle3d -> Drawable
 triangles material triangles =
-    case BoundingBox3d.hullOf (List.map Triangle3d.boundingBox triangles) of
-        Just boundingBox ->
+    case BoundingBox3d.aggregate (List.map Triangle3d.boundingBox triangles) of
+        Just overallBoundingBox ->
             case material of
                 Types.SimpleMaterial colorType color ->
                     let
@@ -208,7 +208,7 @@ triangles material triangles =
                             WebGL.triangles (List.map toAttributes triangles)
                     in
                     Types.MeshDrawable <|
-                        Types.SimpleMesh colorType boundingBox webGLMesh
+                        Types.SimpleMesh colorType overallBoundingBox webGLMesh
 
                 Types.PhysicalMaterial properties ->
                     let
@@ -234,7 +234,7 @@ triangles material triangles =
                             WebGL.triangles (List.map toAttributes triangles)
                     in
                     Types.MeshDrawable <|
-                        Types.PhysicalMesh boundingBox webGLMesh
+                        Types.PhysicalMesh overallBoundingBox webGLMesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -255,8 +255,8 @@ faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
 
 faces : Material -> List ( ( Point3d, Vector3d ), ( Point3d, Vector3d ), ( Point3d, Vector3d ) ) -> Drawable
 faces material vertexTriples =
-    case BoundingBox3d.hullOf (List.map faceBoundingBox vertexTriples) of
-        Just boundingBox ->
+    case BoundingBox3d.aggregate (List.map faceBoundingBox vertexTriples) of
+        Just overallBoundingBox ->
             case material of
                 Types.SimpleMaterial colorType color ->
                     let
@@ -271,7 +271,7 @@ faces material vertexTriples =
                                 List.map faceAttributes vertexTriples
                     in
                     Types.MeshDrawable <|
-                        Types.SimpleMesh colorType boundingBox mesh
+                        Types.SimpleMesh colorType overallBoundingBox mesh
 
                 Types.PhysicalMaterial properties ->
                     let
@@ -286,7 +286,7 @@ faces material vertexTriples =
                                 List.map faceAttributes vertexTriples
                     in
                     Types.MeshDrawable <|
-                        Types.PhysicalMesh boundingBox mesh
+                        Types.PhysicalMesh overallBoundingBox mesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -298,7 +298,7 @@ indexedFaces material vertices faces =
         vertexPoints =
             List.map Tuple.first vertices
     in
-    case Point3d.hullOf vertexPoints of
+    case BoundingBox3d.containingPoints vertexPoints of
         Just boundingBox ->
             case material of
                 Types.SimpleMaterial colorType color ->
