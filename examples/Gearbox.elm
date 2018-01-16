@@ -17,7 +17,6 @@ import OpenSolid.Point3d as Point3d exposing (Point3d)
 import OpenSolid.Scene as Scene
 import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
 import OpenSolid.Scene.Light as Light exposing (Light)
-import OpenSolid.SketchPlane3d as SketchPlane3d exposing (SketchPlane3d)
 import OpenSolid.Vector2d as Vector2d exposing (Vector2d)
 import OpenSolid.Viewpoint as Viewpoint exposing (Viewpoint)
 import Shaft
