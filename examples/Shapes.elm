@@ -1,17 +1,16 @@
-module Shapes
-    exposing
-        ( box
-        , cylinder
-        , sphere
-        )
+module Shapes exposing
+    ( box
+    , cylinder
+    , sphere
+    )
 
-import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
-import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
-import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
-import OpenSolid.Scene.Material as Material exposing (Material)
-import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
-import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
+import Direction3d exposing (Direction3d)
+import Frame3d exposing (Frame3d)
+import Point3d exposing (Point3d)
+import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Material as Material exposing (Material)
+import Triangle3d exposing (Triangle3d)
+import Vector3d exposing (Vector3d)
 
 
 sphere : Material -> Point3d -> Float -> Drawable
@@ -42,10 +41,9 @@ sphere material centerPoint radius =
                                         , y0 + radius * sin phi * sin theta
                                         , z0 + radius * cos phi
                                         )
-                                    , Direction3d.with
-                                        { azimuth = theta
-                                        , elevation = pi / 2 - phi
-                                        }
+                                    , Direction3d.fromAzimuthAndElevation
+                                        theta
+                                        (pi / 2 - phi)
                                         |> Direction3d.toVector
                                     )
                                 )
@@ -56,7 +54,7 @@ sphere material centerPoint radius =
             List.range 0 (subdivisions - 1)
 
         linearIndex thetaIndex phiIndex =
-            (thetaIndex % subdivisions) * subdivisions + (phiIndex % subdivisions)
+            (thetaIndex |> modBy subdivisions) * subdivisions + (phiIndex |> modBy subdivisions)
 
         faces =
             startIndices
@@ -110,16 +108,13 @@ cylinder material startPoint endPoint radius =
                     Direction3d.toVector zDirection
 
                 negativeZVector =
-                    Vector3d.flip zVector
+                    Vector3d.reverse zVector
 
                 length =
                     Point3d.distanceFrom startPoint endPoint
 
                 localFrame =
-                    Frame3d.with
-                        { originPoint = startPoint
-                        , zDirection = zDirection
-                        }
+                    Frame3d.withZDirection zDirection startPoint
 
                 subdivisions =
                     72
@@ -164,18 +159,12 @@ cylinder material startPoint endPoint radius =
                                 ( endX, endY, length )
 
                         startNormal =
-                            Direction3d.with
-                                { azimuth = startAngle
-                                , elevation = 0
-                                }
+                            Direction3d.fromAzimuthAndElevation startAngle 0
                                 |> Direction3d.placeIn localFrame
                                 |> Direction3d.toVector
 
                         endNormal =
-                            Direction3d.with
-                                { azimuth = endAngle
-                                , elevation = 0
-                                }
+                            Direction3d.fromAzimuthAndElevation endAngle 0
                                 |> Direction3d.placeIn localFrame
                                 |> Direction3d.toVector
                     in

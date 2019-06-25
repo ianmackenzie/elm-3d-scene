@@ -1,35 +1,34 @@
-module Materials
-    exposing
-        ( aluminum
-        , blackPlastic
-        , chromium
-        , copper
-        , gold
-        , whitePlastic
-        )
+module Materials exposing
+    ( aluminum
+    , blackPlastic
+    , chromium
+    , copper
+    , gold
+    , whitePlastic
+    )
 
 import Color
-import OpenSolid.Scene.Material as Material exposing (Material)
+import Scene3d.Material as Material exposing (Material)
 
 
 gold : Material
 gold =
-    Material.metal { color = Color.rgb 255 195 86, roughness = 0.4 }
+    Material.metal { color = Color.rgb255 255 195 86, roughness = 0.4 }
 
 
 aluminum : Material
 aluminum =
-    Material.metal { color = Color.rgb 233 235 236, roughness = 0.6 }
+    Material.metal { color = Color.rgb255 233 235 236, roughness = 0.6 }
 
 
 copper : Material
 copper =
-    Material.metal { color = Color.rgb 244 162 137, roughness = 0.25 }
+    Material.metal { color = Color.rgb255 244 162 137, roughness = 0.25 }
 
 
 chromium : Material
 chromium =
-    Material.metal { color = Color.rgb 140 142 141, roughness = 0.5 }
+    Material.metal { color = Color.rgb255 140 142 141, roughness = 0.5 }
 
 
 blackPlastic : Material

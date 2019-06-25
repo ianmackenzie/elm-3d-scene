@@ -1,22 +1,20 @@
-module OpenSolid.Scene.Light
-    exposing
-        ( AmbientLookupTexture
-        , Light
-        , ambient
-        , directional
-        , loadAmbientLookupTextureFrom
-        , point
-        )
+module Scene3d.Light exposing
+    ( AmbientLookupTexture
+    , Light
+    , ambient
+    , directional
+    , loadAmbientLookupTextureFrom
+    , point
+    )
 
+import Direction3d exposing (Direction3d)
+import Geometry.Interop.LinearAlgebra.Direction3d as Direction3d
+import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Math.Vector3 exposing (vec3)
-import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
-import OpenSolid.Interop.LinearAlgebra.Direction3d as Direction3d
-import OpenSolid.Interop.LinearAlgebra.Point3d as Point3d
-import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene.Types as Types
+import Point3d exposing (Point3d)
+import Scene3d.Types as Types
 import Task exposing (Task)
-import WebGL exposing (Texture)
-import WebGL.Texture
+import WebGL.Texture exposing (Texture)
 
 
 type alias Light =
@@ -24,7 +22,7 @@ type alias Light =
 
 
 type AmbientLookupTexture
-    = AmbientLookupTexture WebGL.Texture
+    = AmbientLookupTexture Texture
 
 
 ambient : AmbientLookupTexture -> ( Float, Float, Float ) -> Light
@@ -39,7 +37,7 @@ directional : Direction3d -> ( Float, Float, Float ) -> Light
 directional direction ( r, g, b ) =
     Types.DirectionalLight
         { color = vec3 r g b
-        , direction = Direction3d.toVec3 (Direction3d.flip direction)
+        , direction = Direction3d.toVec3 (Direction3d.reverse direction)
         }
 
 

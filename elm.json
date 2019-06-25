@@ -1,0 +1,25 @@
+{
+    "type": "package",
+    "name": "ianmackenzie/elm-3d-scene",
+    "summary": "OpenSolid-based 3D scene graph package",
+    "license": "MPL-2.0",
+    "version": "1.0.0",
+    "exposed-modules": [],
+    "elm-version": "0.19.0 <= v < 0.20.0",
+    "dependencies": {
+        "avh4/elm-color": "1.0.0 <= v < 2.0.0",
+        "elm/core": "1.0.0 <= v < 2.0.0",
+        "elm/html": "1.0.0 <= v < 2.0.0",
+        "elm-explorations/linear-algebra": "1.0.3 <= v < 2.0.0",
+        "elm-explorations/webgl": "1.1.0 <= v < 2.0.0",
+        "ianmackenzie/elm-3d-camera": "1.1.0 <= v < 2.0.0",
+        "ianmackenzie/elm-geometry": "1.2.1 <= v < 2.0.0",
+        "ianmackenzie/elm-geometry-linear-algebra-interop": "1.0.2 <= v < 2.0.0",
+        "ianmackenzie/elm-triangular-mesh": "1.0.2 <= v < 2.0.0"
+    },
+    "test-dependencies": {
+        "elm/random": "1.0.0 <= v < 2.0.0",
+        "elm-community/list-extra": "8.0.0 <= v < 9.0.0",
+        "elm-explorations/test": "1.1.0 <= v < 2.0.0"
+    }
+}

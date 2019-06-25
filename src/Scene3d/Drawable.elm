@@ -1,43 +1,39 @@
-module OpenSolid.Scene.Drawable
-    exposing
-        ( Drawable
-        , body
-        , empty
-        , faces
-        , group
-        , indexedFaces
-        , lineSegments
-        , mesh
-        , mirrorAcross
-        , placeIn
-        , points
-        , polyline
-        , relativeTo
-        , rotateAround
-        , scaleAbout
-        , translateBy
-        , triangleFan
-        , triangles
-        )
+module Scene3d.Drawable exposing
+    ( Drawable
+    , empty
+    , faces
+    , group
+    , indexedFaces
+    , lineSegments
+    , mesh
+    , mirrorAcross
+    , placeIn
+    , points
+    , polyline
+    , relativeTo
+    , rotateAround
+    , scaleAbout
+    , translateBy
+    , triangleFan
+    , triangles
+    )
 
-import Array.Hamt as Array exposing (Array)
+import Array
+import Axis3d exposing (Axis3d)
+import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
-import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
-import OpenSolid.Body3d as Body3d exposing (Body3d)
-import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
-import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
-import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
-import OpenSolid.LineSegment3d as LineSegment3d exposing (LineSegment3d)
-import OpenSolid.Mesh as Mesh exposing (Mesh)
-import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
-import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Polyline3d as Polyline3d exposing (Polyline3d)
-import OpenSolid.Scene.Material as Material exposing (Material)
-import OpenSolid.Scene.Placement as Placement exposing (Placement)
-import OpenSolid.Scene.Types as Types
-import OpenSolid.Surface3d as Surface3d exposing (Surface3d)
-import OpenSolid.Triangle3d as Triangle3d exposing (Triangle3d)
-import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
+import Direction3d exposing (Direction3d)
+import Frame3d exposing (Frame3d)
+import LineSegment3d exposing (LineSegment3d)
+import Plane3d exposing (Plane3d)
+import Point3d exposing (Point3d)
+import Polyline3d exposing (Polyline3d)
+import Scene3d.Material as Material exposing (Material)
+import Scene3d.Placement as Placement exposing (Placement)
+import Scene3d.Types as Types
+import Triangle3d exposing (Triangle3d)
+import TriangularMesh exposing (TriangularMesh)
+import Vector3d exposing (Vector3d)
 import WebGL
 
 
@@ -69,11 +65,11 @@ lineSegments color lineSegments_ =
                     in
                     ( vertexAttributes p1, vertexAttributes p2 )
 
-                mesh =
+                lineMesh =
                     WebGL.lines (List.map toAttributes lineSegments_)
             in
             Types.MeshDrawable <|
-                Types.SimpleMesh Types.FlatColor overallBoundingBox mesh
+                Types.SimpleMesh Types.FlatColor overallBoundingBox lineMesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -109,11 +105,11 @@ points color points_ =
                 toAttributes =
                     simpleAttributes color
 
-                mesh =
+                pointsMesh =
                     WebGL.points <| List.map toAttributes points_
             in
             Types.MeshDrawable <|
-                Types.SimpleMesh Types.FlatColor boundingBox mesh
+                Types.SimpleMesh Types.FlatColor boundingBox pointsMesh
 
         Nothing ->
             Types.EmptyDrawable
@@ -146,13 +142,7 @@ simpleAttributes : Color -> Point3d -> Types.SimpleAttributes
 simpleAttributes color =
     let
         { red, green, blue } =
-            Color.toRgb color
-
-        ( r, g, b ) =
-            ( toFloat red / 255
-            , toFloat green / 255
-            , toFloat blue / 255
-            )
+            Color.toRgba color
     in
     \point ->
         let
@@ -162,31 +152,31 @@ simpleAttributes color =
         { x = x
         , y = y
         , z = z
-        , r = r
-        , g = g
-        , b = b
+        , r = red
+        , g = green
+        , b = blue
         }
 
 
 triangleFan : Color -> List Point3d -> Drawable
-triangleFan color points =
-    case BoundingBox3d.containingPoints points of
+triangleFan color givenPoints =
+    case BoundingBox3d.containingPoints givenPoints of
         Just boundingBox ->
             let
-                mesh =
+                fanMesh =
                     WebGL.triangleFan <|
-                        List.map (simpleAttributes color) points
+                        List.map (simpleAttributes color) givenPoints
             in
             Types.MeshDrawable <|
-                Types.SimpleMesh Types.FlatColor boundingBox mesh
+                Types.SimpleMesh Types.FlatColor boundingBox fanMesh
 
         Nothing ->
             Types.EmptyDrawable
 
 
 triangles : Material -> List Triangle3d -> Drawable
-triangles material triangles =
-    case BoundingBox3d.aggregate (List.map Triangle3d.boundingBox triangles) of
+triangles material givenTriangles =
+    case BoundingBox3d.aggregate (List.map Triangle3d.boundingBox givenTriangles) of
         Just overallBoundingBox ->
             case material of
                 Types.SimpleMaterial colorType color ->
@@ -205,7 +195,7 @@ triangles material triangles =
                             )
 
                         webGLMesh =
-                            WebGL.triangles (List.map toAttributes triangles)
+                            WebGL.triangles (List.map toAttributes givenTriangles)
                     in
                     Types.MeshDrawable <|
                         Types.SimpleMesh colorType overallBoundingBox webGLMesh
@@ -231,7 +221,7 @@ triangles material triangles =
                             )
 
                         webGLMesh =
-                            WebGL.triangles (List.map toAttributes triangles)
+                            WebGL.triangles (List.map toAttributes givenTriangles)
                     in
                     Types.MeshDrawable <|
                         Types.PhysicalMesh overallBoundingBox webGLMesh
@@ -266,12 +256,12 @@ faces material vertexTriples =
                             , simpleAttributes color p3
                             )
 
-                        mesh =
+                        facesMesh =
                             WebGL.triangles <|
                                 List.map faceAttributes vertexTriples
                     in
                     Types.MeshDrawable <|
-                        Types.SimpleMesh colorType overallBoundingBox mesh
+                        Types.SimpleMesh colorType overallBoundingBox facesMesh
 
                 Types.PhysicalMaterial properties ->
                     let
@@ -281,19 +271,19 @@ faces material vertexTriples =
                             , physicalAttributes properties p3 n3
                             )
 
-                        mesh =
+                        facesMesh =
                             WebGL.triangles <|
                                 List.map faceAttributes vertexTriples
                     in
                     Types.MeshDrawable <|
-                        Types.PhysicalMesh overallBoundingBox mesh
+                        Types.PhysicalMesh overallBoundingBox facesMesh
 
         Nothing ->
             Types.EmptyDrawable
 
 
 indexedFaces : Material -> List ( Point3d, Vector3d ) -> List ( Int, Int, Int ) -> Drawable
-indexedFaces material vertices faces =
+indexedFaces material vertices givenFaces =
     let
         vertexPoints =
             List.map Tuple.first vertices
@@ -306,7 +296,7 @@ indexedFaces material vertices faces =
                         webGLMesh =
                             WebGL.indexedTriangles
                                 (List.map (simpleAttributes color) vertexPoints)
-                                faces
+                                givenFaces
                     in
                     Types.MeshDrawable <|
                         Types.SimpleMesh colorType boundingBox webGLMesh
@@ -319,7 +309,7 @@ indexedFaces material vertices faces =
                         webGLMesh =
                             WebGL.indexedTriangles
                                 (List.map toAttributes vertices)
-                                faces
+                                givenFaces
                     in
                     Types.MeshDrawable <|
                         Types.PhysicalMesh boundingBox webGLMesh
@@ -328,24 +318,11 @@ indexedFaces material vertices faces =
             Types.EmptyDrawable
 
 
-mesh : Material -> Mesh ( Point3d, Vector3d ) -> Drawable
+mesh : Material -> TriangularMesh ( Point3d, Vector3d ) -> Drawable
 mesh material mesh_ =
     indexedFaces material
-        (Array.toList (Mesh.vertices mesh_))
-        (Mesh.faceIndices mesh_)
-
-
-surface : Float -> Material -> Surface3d -> Drawable
-surface tolerance material surface_ =
-    mesh material (Surface3d.toMesh tolerance surface_)
-
-
-body : Float -> Material -> Body3d -> Drawable
-body tolerance material body_ =
-    Body3d.surfaces body_
-        |> List.map (Surface3d.toMesh tolerance)
-        |> Mesh.combine
-        |> mesh material
+        (Array.toList (TriangularMesh.vertices mesh_))
+        (TriangularMesh.faceIndices mesh_)
 
 
 isNotEmpty : Drawable -> Bool
@@ -364,11 +341,11 @@ group drawables =
 
 
 transformBy : (Placement -> Placement) -> Drawable -> Drawable
-transformBy placementTransformation drawable =
-    case drawable of
-        Types.TransformedDrawable placement drawable ->
+transformBy placementTransformation givenDrawable =
+    case givenDrawable of
+        Types.TransformedDrawable placement transformedDrawable ->
             Types.TransformedDrawable (placementTransformation placement)
-                drawable
+                transformedDrawable
 
         Types.EmptyDrawable ->
             Types.EmptyDrawable
@@ -376,39 +353,39 @@ transformBy placementTransformation drawable =
         Types.MeshDrawable _ ->
             Types.TransformedDrawable
                 (placementTransformation Placement.identity)
-                drawable
+                givenDrawable
 
         Types.DrawableGroup _ ->
             Types.TransformedDrawable
                 (placementTransformation Placement.identity)
-                drawable
+                givenDrawable
 
 
 rotateAround : Axis3d -> Float -> Drawable -> Drawable
-rotateAround axis angle drawable =
-    transformBy (Placement.rotateAround axis angle) drawable
+rotateAround axis angle givenDrawable =
+    transformBy (Placement.rotateAround axis angle) givenDrawable
 
 
 translateBy : Vector3d -> Drawable -> Drawable
-translateBy displacement drawable =
-    transformBy (Placement.translateBy displacement) drawable
+translateBy displacement givenDrawable =
+    transformBy (Placement.translateBy displacement) givenDrawable
 
 
 mirrorAcross : Plane3d -> Drawable -> Drawable
-mirrorAcross plane drawable =
-    transformBy (Placement.mirrorAcross plane) drawable
+mirrorAcross plane givenDrawable =
+    transformBy (Placement.mirrorAcross plane) givenDrawable
 
 
 relativeTo : Frame3d -> Drawable -> Drawable
-relativeTo frame drawable =
-    transformBy (Placement.relativeTo frame) drawable
+relativeTo frame givenDrawable =
+    transformBy (Placement.relativeTo frame) givenDrawable
 
 
 placeIn : Frame3d -> Drawable -> Drawable
-placeIn frame drawable =
-    transformBy (Placement.placeIn frame) drawable
+placeIn frame givenDrawable =
+    transformBy (Placement.placeIn frame) givenDrawable
 
 
 scaleAbout : Point3d -> Float -> Drawable -> Drawable
-scaleAbout point scale drawable =
-    transformBy (Placement.scaleAbout point scale) drawable
+scaleAbout point scale givenDrawable =
+    transformBy (Placement.scaleAbout point scale) givenDrawable

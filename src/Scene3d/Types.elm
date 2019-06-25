@@ -1,10 +1,20 @@
-module OpenSolid.Scene.Types exposing (..)
+module Scene3d.Types exposing
+    ( ColorType(..)
+    , Drawable(..)
+    , Light(..)
+    , Material(..)
+    , Mesh(..)
+    , PhysicalAttributes
+    , Placement(..)
+    , SimpleAttributes
+    )
 
+import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
+import Frame3d exposing (Frame3d)
 import Math.Vector3 exposing (Vec3)
-import OpenSolid.BoundingBox3d as BoundingBox3d exposing (BoundingBox3d)
-import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
-import WebGL exposing (Texture)
+import WebGL
+import WebGL.Texture exposing (Texture)
 
 
 type alias SimpleAttributes =
@@ -69,6 +79,6 @@ type Drawable
 
 
 type Light
-    = AmbientLight { color : Vec3, lookupTexture : WebGL.Texture }
+    = AmbientLight { color : Vec3, lookupTexture : Texture }
     | DirectionalLight { color : Vec3, direction : Vec3 }
     | PointLight { color : Vec3, position : Vec3 }

@@ -1,25 +1,24 @@
-module OpenSolid.Scene.Placement
-    exposing
-        ( Placement
-        , compose
-        , frame
-        , identity
-        , isRightHanded
-        , mirrorAcross
-        , placeIn
-        , relativeTo
-        , rotateAround
-        , scale
-        , scaleAbout
-        , translateBy
-        )
+module Scene3d.Placement exposing
+    ( Placement
+    , compose
+    , frame
+    , identity
+    , isRightHanded
+    , mirrorAcross
+    , placeIn
+    , relativeTo
+    , rotateAround
+    , scale
+    , scaleAbout
+    , translateBy
+    )
 
-import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
-import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
-import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
-import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene.Types as Types
-import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
+import Axis3d exposing (Axis3d)
+import Frame3d exposing (Frame3d)
+import Plane3d exposing (Plane3d)
+import Point3d exposing (Point3d)
+import Scene3d.Types as Types
+import Vector3d exposing (Vector3d)
 
 
 type alias Placement =
