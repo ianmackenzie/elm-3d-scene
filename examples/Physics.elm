@@ -1,8 +1,5 @@
-module Boxes exposing (main)
+module Physics exposing (main)
 
-{-| This demo is used to test performance. It drops 4×4×4 boxes.
-Try changing `boxesPerDimension` to drop even more!
--}
 
 import Array exposing (Array)
 import Browser
