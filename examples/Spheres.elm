@@ -1,16 +1,23 @@
-module Spheres exposing (..)
+module Spheres exposing (Model, Msg(..), aluminumSphere, blackPlasticSphere, camera, goldSphere, height, init, main, update, view, viewpoint, whitePlasticSphere, width)
 
+import Angle
+import Browser
+import Camera3d exposing (Camera3d)
+import Direction3d exposing (Direction3d)
 import Html exposing (Html)
+import Length exposing (Meters, meters)
 import Materials
-import OpenSolid.Camera as Camera exposing (Camera)
-import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
-import OpenSolid.Point3d as Point3d
-import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
-import OpenSolid.Scene.Light as Light
-import OpenSolid.Viewpoint as Viewpoint exposing (Viewpoint)
+import Pixels exposing (Pixels, pixels)
+import Point3d
+import Quantity exposing (Quantity, zero)
+import Rectangle2d
+import Scene3d
+import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Light as Light
 import Shapes
+import SketchPlane3d
 import Task
+import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
 
 
@@ -23,8 +30,16 @@ type Msg
     = LoadComplete (Result WebGL.Texture.Error Light.AmbientLookupTexture)
 
 
-init : ( Model, Cmd Msg )
-init =
+type WorldCoordinates
+    = WorldCoordinates
+
+
+type ScreenCoordinates
+    = ScreenCoordinates
+
+
+init : () -> ( Model, Cmd Msg )
+init () =
     ( { loadedTexture = Nothing }
     , Task.attempt LoadComplete (Light.loadAmbientLookupTextureFrom "lookup.png")
     )
@@ -35,62 +50,67 @@ update (LoadComplete loadedTexture) _ =
     ( { loadedTexture = Just loadedTexture }, Cmd.none )
 
 
-goldSphere : Drawable
+goldSphere : Drawable Meters WorldCoordinates
 goldSphere =
     Shapes.sphere Materials.gold
-        (Point3d.fromCoordinates ( 2, 2, 0 ))
-        1.0
+        (Point3d.meters 2 2 0)
+        (meters 1)
 
 
-aluminumSphere : Drawable
+aluminumSphere : Drawable Meters WorldCoordinates
 aluminumSphere =
     Shapes.sphere Materials.aluminum
-        (Point3d.fromCoordinates ( 2, -2, 0 ))
-        1.0
+        (Point3d.meters 2 -2 0)
+        (meters 1)
 
 
-blackPlasticSphere : Drawable
+blackPlasticSphere : Drawable Meters WorldCoordinates
 blackPlasticSphere =
     Shapes.sphere Materials.blackPlastic
-        (Point3d.fromCoordinates ( -2, -2, 0 ))
-        1.0
+        (Point3d.meters -2 -2 0)
+        (meters 1)
 
 
-whitePlasticSphere : Drawable
+whitePlasticSphere : Drawable Meters WorldCoordinates
 whitePlasticSphere =
     Shapes.sphere Materials.whitePlastic
-        (Point3d.fromCoordinates ( -2, 2, 0 ))
-        1.0
+        (Point3d.meters -2 2 0)
+        (meters 1)
 
 
-viewpoint : Viewpoint
+viewpoint : Viewpoint3d Meters WorldCoordinates
 viewpoint =
-    Viewpoint.lookAt
+    Viewpoint3d.lookAt
         { focalPoint = Point3d.origin
-        , eyePoint = Point3d.fromCoordinates ( 10, 10, 10 )
+        , eyePoint = Point3d.meters 10 10 10
         , upDirection = Direction3d.positiveZ
         }
 
 
-width : Float
+width : Quantity Float Pixels
 width =
-    1024
+    pixels 1024
 
 
-height : Float
+height : Quantity Float Pixels
 height =
-    768
+    pixels 768
 
 
-camera : Camera
+camera : Camera3d Meters WorldCoordinates Pixels ScreenCoordinates
 camera =
-    Camera.perspective
+    Camera3d.perspective
         { viewpoint = viewpoint
-        , screenWidth = width
-        , screenHeight = height
-        , verticalFieldOfView = degrees 30
-        , nearClipDistance = 0.1
-        , farClipDistance = 100
+        , screen =
+            Rectangle2d.fromExtrema
+                { minX = zero
+                , minY = zero
+                , maxX = width
+                , maxY = height
+                }
+        , verticalFieldOfView = Angle.degrees 30
+        , nearClipDistance = meters 0.1
+        , farClipDistance = meters 100
         }
 
 
@@ -106,15 +126,15 @@ view model =
         Just (Ok lookupTexture) ->
             let
                 lightDirection =
-                    Direction3d.with
-                        { elevation = degrees -30
-                        , azimuth = degrees -60
-                        }
+                    Direction3d.fromAzimuthInAndElevationFrom
+                        SketchPlane3d.xy
+                        (Angle.degrees -60)
+                        (Angle.degrees -30)
 
                 lights =
                     [ Light.directional lightDirection ( 0, 0.2, 0.2 )
                     , Light.directional Direction3d.negativeX ( 0.2, 0, 0 )
-                    , Light.point (Point3d.fromCoordinates ( 0, -2, 3 ))
+                    , Light.point (Point3d.meters 0 -2 3)
                         ( 0.75, 0.75, 0.75 )
                     , Light.ambient lookupTexture ( 0.03, 0.03, 0.03 )
                     ]
@@ -127,14 +147,14 @@ view model =
                         , whitePlasticSphere
                         ]
             in
-            Scene.renderWith [ Scene.devicePixelRatio 2 ] lights camera scene
+            Scene3d.renderWith [ Scene3d.devicePixelRatio 2 ] lights camera scene
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.document
         { init = init
         , update = update
-        , view = view
+        , view = \model -> { title = "Spheres", body = [ view model ] }
         , subscriptions = always Sub.none
         }

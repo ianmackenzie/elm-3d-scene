@@ -17,15 +17,15 @@ import Task exposing (Task)
 import WebGL.Texture exposing (Texture)
 
 
-type alias Light =
-    Types.Light
+type alias Light units coordinates =
+    Types.Light units coordinates
 
 
 type AmbientLookupTexture
     = AmbientLookupTexture Texture
 
 
-ambient : AmbientLookupTexture -> ( Float, Float, Float ) -> Light
+ambient : AmbientLookupTexture -> ( Float, Float, Float ) -> Light units coordinates
 ambient (AmbientLookupTexture lookupTexture) ( r, g, b ) =
     Types.AmbientLight
         { color = vec3 r g b
@@ -33,7 +33,7 @@ ambient (AmbientLookupTexture lookupTexture) ( r, g, b ) =
         }
 
 
-directional : Direction3d -> ( Float, Float, Float ) -> Light
+directional : Direction3d coordinates -> ( Float, Float, Float ) -> Light units coordinates
 directional direction ( r, g, b ) =
     Types.DirectionalLight
         { color = vec3 r g b
@@ -41,7 +41,7 @@ directional direction ( r, g, b ) =
         }
 
 
-point : Point3d -> ( Float, Float, Float ) -> Light
+point : Point3d units coordinates -> ( Float, Float, Float ) -> Light units coordinates
 point position ( r, g, b ) =
     Types.PointLight
         { color = vec3 r g b

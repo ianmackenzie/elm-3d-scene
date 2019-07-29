@@ -4,30 +4,37 @@ module Shapes exposing
     , sphere
     )
 
+import Angle
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
+import Parameter1d
 import Point3d exposing (Point3d)
+import Quantity exposing (Quantity, zero)
 import Scene3d.Drawable as Drawable exposing (Drawable)
 import Scene3d.Material as Material exposing (Material)
+import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
 import Vector3d exposing (Vector3d)
 
 
-sphere : Material -> Point3d -> Float -> Drawable
+sphere : Material -> Point3d units coordinates -> Quantity Float units -> Drawable units coordinates
 sphere material centerPoint radius =
     let
-        ( x0, y0, z0 ) =
-            Point3d.coordinates centerPoint
+        x0 =
+            Point3d.xCoordinate centerPoint
+
+        y0 =
+            Point3d.yCoordinate centerPoint
+
+        z0 =
+            Point3d.zCoordinate centerPoint
 
         subdivisions =
             72
 
-        angle =
-            2 * pi / subdivisions
-
         angleValues =
-            List.range 0 subdivisions
-                |> List.map (\i -> toFloat i * angle)
+            Parameter1d.steps subdivisions
+                (Quantity.interpolateFrom zero (Angle.turns 1))
 
         pointsAndNormals =
             angleValues
@@ -36,14 +43,14 @@ sphere material centerPoint radius =
                         angleValues
                             |> List.map
                                 (\phi ->
-                                    ( Point3d.fromCoordinates
-                                        ( x0 + radius * sin phi * cos theta
-                                        , y0 + radius * sin phi * sin theta
-                                        , z0 + radius * cos phi
-                                        )
-                                    , Direction3d.fromAzimuthAndElevation
+                                    ( Point3d.xyz
+                                        (x0 |> Quantity.plus (radius |> Quantity.multiplyBy (Angle.sin phi * Angle.cos theta)))
+                                        (y0 |> Quantity.plus (radius |> Quantity.multiplyBy (Angle.sin phi * Angle.sin theta)))
+                                        (z0 |> Quantity.plus (radius |> Quantity.multiplyBy (Angle.cos phi)))
+                                    , Direction3d.fromAzimuthInAndElevationFrom
+                                        SketchPlane3d.xy
                                         theta
-                                        (pi / 2 - phi)
+                                        (Angle.degrees 90 |> Quantity.minus phi)
                                         |> Direction3d.toVector
                                     )
                                 )
@@ -99,7 +106,7 @@ sphere material centerPoint radius =
     Drawable.indexedFaces material pointsAndNormals faces
 
 
-cylinder : Material -> Point3d -> Point3d -> Float -> Drawable
+cylinder : Material -> Point3d units coordinates -> Point3d units coordinates -> Quantity Float units -> Drawable units coordinates
 cylinder material startPoint endPoint radius =
     case Direction3d.from startPoint endPoint of
         Just zDirection ->
@@ -120,52 +127,52 @@ cylinder material startPoint endPoint radius =
                     72
 
                 wedgeAngle =
-                    2 * pi / subdivisions
+                    Angle.turns 1 |> Quantity.divideBy subdivisions
 
                 wedge index =
                     let
                         startAngle =
-                            wedgeAngle * toFloat index
+                            wedgeAngle |> Quantity.multiplyBy (toFloat index)
 
                         endAngle =
-                            startAngle + wedgeAngle
+                            startAngle |> Quantity.plus wedgeAngle
 
                         startX =
-                            radius * cos startAngle
+                            radius |> Quantity.multiplyBy (Angle.cos startAngle)
 
                         endX =
-                            radius * cos endAngle
+                            radius |> Quantity.multiplyBy (Angle.cos endAngle)
 
                         startY =
-                            radius * sin startAngle
+                            radius |> Quantity.multiplyBy (Angle.sin startAngle)
 
                         endY =
-                            radius * sin endAngle
+                            radius |> Quantity.multiplyBy (Angle.sin endAngle)
 
                         p0 =
-                            Point3d.fromCoordinatesIn localFrame
-                                ( startX, startY, 0.0 )
+                            Point3d.xyzIn localFrame startX startY zero
 
                         p1 =
-                            Point3d.fromCoordinatesIn localFrame
-                                ( endX, endY, 0.0 )
+                            Point3d.xyzIn localFrame endX endY zero
 
                         p2 =
-                            Point3d.fromCoordinatesIn localFrame
-                                ( startX, startY, length )
+                            Point3d.xyzIn localFrame startX startY length
 
                         p3 =
-                            Point3d.fromCoordinatesIn localFrame
-                                ( endX, endY, length )
+                            Point3d.xyzIn localFrame endX endY length
 
                         startNormal =
-                            Direction3d.fromAzimuthAndElevation startAngle 0
-                                |> Direction3d.placeIn localFrame
+                            Direction3d.fromAzimuthInAndElevationFrom
+                                (Frame3d.xySketchPlane localFrame)
+                                startAngle
+                                zero
                                 |> Direction3d.toVector
 
                         endNormal =
-                            Direction3d.fromAzimuthAndElevation endAngle 0
-                                |> Direction3d.placeIn localFrame
+                            Direction3d.fromAzimuthInAndElevationFrom
+                                (Frame3d.xySketchPlane localFrame)
+                                endAngle
+                                zero
                                 |> Direction3d.toVector
                     in
                     [ ( ( startPoint, negativeZVector )
@@ -195,44 +202,62 @@ cylinder material startPoint endPoint radius =
             Drawable.empty
 
 
-box : Material -> Float -> Float -> Float -> Drawable
+box : Material -> Quantity Float units -> Quantity Float units -> Quantity Float units -> Drawable units coordinates
 box material x y z =
     let
+        minX =
+            Quantity.multiplyBy -0.5 x
+
+        maxX =
+            Quantity.multiplyBy 0.5 x
+
+        minY =
+            Quantity.multiplyBy -0.5 y
+
+        maxY =
+            Quantity.multiplyBy 0.5 y
+
+        minZ =
+            Quantity.multiplyBy -0.5 z
+
+        maxZ =
+            Quantity.multiplyBy 0.5 z
+
         p0 =
-            Point3d.fromCoordinates ( -x / 2, -y / 2, -z / 2 )
+            Point3d.xyz minX minY minZ
 
         p1 =
-            Point3d.fromCoordinates ( x / 2, -y / 2, -z / 2 )
+            Point3d.xyz maxX minY minZ
 
         p2 =
-            Point3d.fromCoordinates ( x / 2, y / 2, -z / 2 )
+            Point3d.xyz maxX maxY minZ
 
         p3 =
-            Point3d.fromCoordinates ( -x / 2, y / 2, -z / 2 )
+            Point3d.xyz minX maxY minZ
 
         p4 =
-            Point3d.fromCoordinates ( -x / 2, -y / 2, z / 2 )
+            Point3d.xyz minX minY maxZ
 
         p5 =
-            Point3d.fromCoordinates ( x / 2, -y / 2, z / 2 )
+            Point3d.xyz maxX minY maxZ
 
         p6 =
-            Point3d.fromCoordinates ( x / 2, y / 2, z / 2 )
+            Point3d.xyz maxX maxY maxZ
 
         p7 =
-            Point3d.fromCoordinates ( -x / 2, y / 2, z / 2 )
+            Point3d.xyz minX maxY maxZ
     in
     Drawable.triangles material
-        [ Triangle3d.fromVertices ( p0, p2, p1 )
-        , Triangle3d.fromVertices ( p0, p3, p2 )
-        , Triangle3d.fromVertices ( p4, p5, p6 )
-        , Triangle3d.fromVertices ( p4, p6, p7 )
-        , Triangle3d.fromVertices ( p1, p2, p6 )
-        , Triangle3d.fromVertices ( p1, p6, p5 )
-        , Triangle3d.fromVertices ( p0, p7, p3 )
-        , Triangle3d.fromVertices ( p0, p4, p7 )
-        , Triangle3d.fromVertices ( p0, p1, p5 )
-        , Triangle3d.fromVertices ( p0, p5, p4 )
-        , Triangle3d.fromVertices ( p3, p6, p2 )
-        , Triangle3d.fromVertices ( p3, p7, p6 )
+        [ Triangle3d.fromVertices p0 p2 p1
+        , Triangle3d.fromVertices p0 p3 p2
+        , Triangle3d.fromVertices p4 p5 p6
+        , Triangle3d.fromVertices p4 p6 p7
+        , Triangle3d.fromVertices p1 p2 p6
+        , Triangle3d.fromVertices p1 p6 p5
+        , Triangle3d.fromVertices p0 p7 p3
+        , Triangle3d.fromVertices p0 p4 p7
+        , Triangle3d.fromVertices p0 p1 p5
+        , Triangle3d.fromVertices p0 p5 p4
+        , Triangle3d.fromVertices p3 p6 p2
+        , Triangle3d.fromVertices p3 p7 p6
         ]

@@ -19,10 +19,12 @@ import Html exposing (Html)
 import Html.Attributes
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
+import Pixels exposing (Pixels, inPixels)
+import Rectangle2d
 import Scene3d.Drawable exposing (Drawable)
 import Scene3d.Light exposing (Light)
-import Scene3d.Placement as Placement exposing (Placement)
 import Scene3d.Shader as Shader
+import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types
 import Viewpoint3d
 import WebGL
@@ -76,8 +78,8 @@ type PhysicallyBasedLighting
     | DummyLighting
 
 
-type alias RenderProperties =
-    { camera : Camera3d
+type alias RenderProperties worldUnits worldCoordinates screenUnits screenCoordinates =
+    { camera : Camera3d worldUnits worldCoordinates screenUnits screenCoordinates
     , eyePoint : Vec3
     , projectionMatrix : Mat4
     , physicallyBasedRenderer : PhysicallyBasedRenderer
@@ -85,7 +87,7 @@ type alias RenderProperties =
     }
 
 
-physicallyBasedLighting : List Light -> PhysicallyBasedLighting
+physicallyBasedLighting : List (Light units coordinates) -> PhysicallyBasedLighting
 physicallyBasedLighting lights =
     let
         updateLightingState light currentState =
@@ -205,7 +207,7 @@ physicallyBasedLighting lights =
                     DummyLighting
 
 
-physicallyBasedRendererFor : List Light -> PhysicallyBasedRenderer
+physicallyBasedRendererFor : List (Light units coordinates) -> PhysicallyBasedRenderer
 physicallyBasedRendererFor lights =
     case physicallyBasedLighting lights of
         AmbientLighting ambientProperties light1 light2 light3 light4 light5 light6 light7 light8 ->
@@ -313,14 +315,14 @@ physicallyBasedRendererFor lights =
                 WebGL.entityWith settings Shader.physicalVertex Shader.dummyFragment mesh uniforms
 
 
-toEntity : RenderProperties -> Placement -> Types.Mesh -> WebGL.Entity
-toEntity renderProperties placement mesh =
+toEntity : RenderProperties worldUnits worldCoordinates screenUnits screenCoordinates -> Transformation -> Types.Mesh -> WebGL.Entity
+toEntity renderProperties transformation mesh =
     let
         modelScale =
-            Placement.scale placement
+            transformation.scale
 
         placementFrame =
-            Placement.frame placement
+            Transformation.placementFrame transformation
 
         modelMatrix =
             Frame3d.toMat4 placementFrame
@@ -335,7 +337,7 @@ toEntity renderProperties placement mesh =
             Math.Matrix4.mul projectionMatrix modelViewMatrix
 
         cullSetting =
-            if Placement.isRightHanded placement then
+            if transformation.isRightHanded then
                 WebGL.Settings.back
 
             else
@@ -389,20 +391,20 @@ toEntity renderProperties placement mesh =
                 webGlMesh
 
 
-collectEntities : RenderProperties -> Placement -> Drawable -> List WebGL.Entity -> List WebGL.Entity
-collectEntities renderProperties currentPlacement node accumulated =
-    case node of
-        Types.TransformedDrawable placement childDrawable ->
+collectEntities : RenderProperties worldUnits worldCoordinates screenUnits screenCoordinates -> Transformation -> Types.Drawable_ -> List WebGL.Entity -> List WebGL.Entity
+collectEntities renderProperties currentTransformation drawable_ accumulated =
+    case drawable_ of
+        Types.TransformedDrawable transformation childDrawable ->
             collectEntities renderProperties
-                (Placement.compose placement currentPlacement)
+                (Transformation.compose transformation currentTransformation)
                 childDrawable
                 accumulated
 
         Types.MeshDrawable mesh ->
-            toEntity renderProperties currentPlacement mesh :: accumulated
+            toEntity renderProperties currentTransformation mesh :: accumulated
 
         Types.DrawableGroup childDrawables ->
-            List.foldl (collectEntities renderProperties currentPlacement)
+            List.foldl (collectEntities renderProperties currentTransformation)
                 accumulated
                 childDrawables
 
@@ -410,13 +412,13 @@ collectEntities renderProperties currentPlacement node accumulated =
             accumulated
 
 
-toEntities : List Light -> Camera3d -> Drawable -> List WebGL.Entity
+toEntities : List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates screenUnits screenCoordinates -> Drawable worldUnits worldCoordinates -> List WebGL.Entity
 toEntities =
     toEntitiesWith []
 
 
-toEntitiesWith : List RenderOption -> List Light -> Camera3d -> Drawable -> List WebGL.Entity
-toEntitiesWith options lights camera rootDrawable =
+toEntitiesWith : List RenderOption -> List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates screenUnits screenCoordinates -> Drawable worldUnits worldCoordinates -> List WebGL.Entity
+toEntitiesWith options lights camera (Types.Drawable rootDrawable_) =
     let
         renderProperties =
             { camera = camera
@@ -427,10 +429,10 @@ toEntitiesWith options lights camera rootDrawable =
             , gammaCorrection = getGammaCorrection options
             }
     in
-    collectEntities renderProperties Placement.identity rootDrawable []
+    collectEntities renderProperties Transformation.identity rootDrawable_ []
 
 
-render : List Light -> Camera3d -> Drawable -> Html msg
+render : List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates Pixels screenCoordinates -> Drawable worldUnits worldCoordinates -> Html msg
 render =
     renderWith []
 
@@ -553,14 +555,17 @@ getClearColor options =
     List.foldl update defaultValue options
 
 
-renderWith : List RenderOption -> List Light -> Camera3d -> Drawable -> Html msg
+renderWith : List RenderOption -> List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates Pixels screenCoordinates -> Drawable worldUnits worldCoordinates -> Html msg
 renderWith options lights camera rootNode =
     let
-        width =
-            Camera3d.screenWidth camera
+        ( width, height ) =
+            Rectangle2d.dimensions (Camera3d.screen camera)
 
-        height =
-            Camera3d.screenHeight camera
+        widthInPixels =
+            inPixels width
+
+        heightInPixels =
+            inPixels height
 
         givenDevicePixelRatio =
             getDevicePixelRatio options
@@ -592,9 +597,9 @@ renderWith options lights camera rootNode =
                 commonOptions
     in
     WebGL.toHtmlWith webGLOptions
-        [ Html.Attributes.width (round (givenDevicePixelRatio * width))
-        , Html.Attributes.height (round (givenDevicePixelRatio * height))
-        , Html.Attributes.style "width" (String.fromFloat width ++ "px")
-        , Html.Attributes.style "height" (String.fromFloat height ++ "px")
+        [ Html.Attributes.width (round (givenDevicePixelRatio * widthInPixels))
+        , Html.Attributes.height (round (givenDevicePixelRatio * heightInPixels))
+        , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
+        , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         ]
         (toEntitiesWith options lights camera rootNode)

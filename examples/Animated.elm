@@ -1,54 +1,65 @@
-module Animated exposing (..)
+module Animated exposing (Model, Msg(..), Styles(..), box, cylinder, init, main, sphere, translateBy, update, view)
 
-import AnimationFrame
+import Angle
+import Axis3d exposing (Axis3d)
+import Browser
+import Browser.Events
+import Camera3d exposing (Camera3d)
 import Color
+import Direction3d exposing (Direction3d)
+import Duration exposing (Duration, milliseconds)
 import Element
-import Element.Attributes as Attributes
+import Element.Background as Background
+import Element.Border as Border
 import Element.Events as Events
+import Element.Font as Font
+import Element.Input as Input
 import Html exposing (Html)
+import Length exposing (Meters, meters)
 import Materials
-import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
-import OpenSolid.Camera as Camera exposing (Camera)
-import OpenSolid.Direction3d as Direction3d exposing (Direction3d)
-import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene as Scene
-import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
-import OpenSolid.Scene.Light as Light exposing (Light)
-import OpenSolid.Scene.Material as Material exposing (Material)
-import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
-import OpenSolid.Viewpoint as Viewpoint
+import Pixels exposing (Pixels, pixels)
+import Point3d exposing (Point3d)
 import PointLight exposing (PointLight(..))
+import Quantity exposing (zero)
+import Rectangle2d
+import Scene3d
+import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Light as Light exposing (Light)
+import Scene3d.Material as Material exposing (Material)
 import Shapes
-import Style
-import Style.Border as Border
-import Style.Color as Color
-import Style.Font as Font
+import SketchPlane3d
 import Task
-import Time exposing (Time)
+import Time
+import Vector3d exposing (Vector3d)
+import Viewpoint3d
 import WebGL.Texture
 
 
-translateBy : ( Float, Float ) -> Drawable -> Drawable
+type WorldCoordinates
+    = WorldCoordinates
+
+
+translateBy : ( Float, Float ) -> Drawable Meters WorldCoordinates -> Drawable Meters WorldCoordinates
 translateBy ( x, y ) =
-    Drawable.translateBy (Vector3d.fromComponents ( x, y, 0 ))
+    Drawable.translateBy (Vector3d.meters x y 0)
 
 
-sphere : Material -> ( Float, Float ) -> Drawable
+sphere : Material -> ( Float, Float ) -> Drawable Meters WorldCoordinates
 sphere material offset =
-    Shapes.sphere material Point3d.origin 1 |> translateBy offset
+    Shapes.sphere material Point3d.origin (meters 1) |> translateBy offset
 
 
-box : Material -> ( Float, Float ) -> Drawable
+box : Material -> ( Float, Float ) -> Drawable Meters WorldCoordinates
 box material offset =
-    Shapes.box material 1.5 1.5 1.5 |> translateBy offset
+    Shapes.box material (meters 1.5) (meters 1.5) (meters 1.5) |> translateBy offset
 
 
-cylinder : Material -> ( Float, Float ) -> Drawable
+cylinder : Material -> ( Float, Float ) -> Drawable Meters WorldCoordinates
 cylinder material offset =
     Shapes.cylinder material
-        (Point3d.fromCoordinates ( 0, 0, -0.75 ))
-        (Point3d.fromCoordinates ( 0, 0, 0.75 ))
-        1
+        (Point3d.meters 0 0 -0.75)
+        (Point3d.meters 0 0 0.75)
+        (meters 1)
         |> translateBy offset
 
 
@@ -63,18 +74,23 @@ view : Model -> Html Msg
 view =
     let
         camera =
-            Camera.perspective
+            Camera3d.perspective
                 { viewpoint =
-                    Viewpoint.lookAt
-                        { eyePoint = Point3d.fromCoordinates ( 10, 10, 10 )
+                    Viewpoint3d.lookAt
+                        { eyePoint = Point3d.meters 10 10 10
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
                         }
-                , screenWidth = 1024
-                , screenHeight = 768
-                , verticalFieldOfView = degrees 30
-                , nearClipDistance = 0.1
-                , farClipDistance = 100
+                , screen =
+                    Rectangle2d.fromExtrema
+                        { minX = zero
+                        , maxX = pixels 1024
+                        , minY = zero
+                        , maxY = pixels 768
+                        }
+                , verticalFieldOfView = Angle.degrees 30
+                , nearClipDistance = meters 0.1
+                , farClipDistance = meters 100
                 }
 
         shapes =
@@ -91,10 +107,10 @@ view =
                 ]
 
         pointLightRadius =
-            0.05
+            meters 0.05
 
         pointLight1Start =
-            PointLight.at (Point3d.fromCoordinates ( 1.5, 1.5, 3 ))
+            PointLight.at (Point3d.meters 1.5 1.5 3)
                 { color = ( 0, 2, 10 )
                 , radius = pointLightRadius
                 }
@@ -103,37 +119,37 @@ view =
             Axis3d.z
 
         pointLight2Start =
-            PointLight.at (Point3d.fromCoordinates ( 1.5, -1.5, 0 ))
+            PointLight.at (Point3d.meters 1.5 -1.5 0)
                 { color = ( 3, 0, 0 )
                 , radius = pointLightRadius
                 }
 
         pointLight2RotationAxis =
-            Axis3d.x |> Axis3d.rotateAround Axis3d.z (degrees 45)
+            Axis3d.x |> Axis3d.rotateAround Axis3d.z (Angle.degrees 45)
 
         overheadLightColor =
             ( 5, 5, 5 )
 
         overheadLight1 =
-            PointLight.at (Point3d.fromCoordinates ( 8, 8, 5 ))
+            PointLight.at (Point3d.meters 8 8 5)
                 { color = overheadLightColor
                 , radius = pointLightRadius
                 }
 
         overheadLight2 =
-            PointLight.at (Point3d.fromCoordinates ( 8, -8, 5 ))
+            PointLight.at (Point3d.meters 8 -8 5)
                 { color = overheadLightColor
                 , radius = pointLightRadius
                 }
 
         overheadLight3 =
-            PointLight.at (Point3d.fromCoordinates ( -8, 8, 5 ))
+            PointLight.at (Point3d.meters -8 8 5)
                 { color = overheadLightColor
                 , radius = pointLightRadius
                 }
 
         overheadLight4 =
-            PointLight.at (Point3d.fromCoordinates ( -8, -8, 5 ))
+            PointLight.at (Point3d.meters -8 -8 5)
                 { color = overheadLightColor
                 , radius = pointLightRadius
                 }
@@ -146,19 +162,6 @@ view =
 
         ambientLightColor =
             ( 0.01, 0.01, 0.01 )
-
-        styleSheet =
-            Style.styleSheet
-                [ Style.style DefaultStyle []
-                , Style.style PanelStyle
-                    [ Color.background Color.lightGrey
-                    , Border.right 1
-                    , Border.solid
-                    , Color.border Color.darkGrey
-                    ]
-                , Style.style OuterStyle []
-                , Style.style HeadingStyle [ Font.size 18 ]
-                ]
     in
     \model ->
         case model.loadedTexture of
@@ -170,34 +173,54 @@ view =
 
             Just (Ok lookupTexture) ->
                 let
-                    seconds =
-                        Time.inSeconds model.time
+                    directionalSpeed1 =
+                        Angle.degrees 111 |> Quantity.per (Duration.seconds 1)
 
                     lightDirection1 =
-                        Direction3d.with
-                            { elevation = degrees -15
-                            , azimuth = degrees 180 + seconds * degrees 111
-                            }
+                        Direction3d.fromAzimuthInAndElevationFrom
+                            SketchPlane3d.xy
+                            (Angle.degrees 180
+                                |> Quantity.plus
+                                    (model.elapsed
+                                        |> Quantity.at directionalSpeed1
+                                    )
+                            )
+                            (Angle.degrees -15)
+
+                    directionalSpeed2 =
+                        Angle.degrees 47 |> Quantity.per (Duration.seconds 1)
 
                     lightDirection2 =
-                        Direction3d.with
-                            { elevation = degrees -45
-                            , azimuth = degrees 270 + seconds * degrees 47
-                            }
+                        Direction3d.fromAzimuthInAndElevationFrom
+                            SketchPlane3d.xy
+                            (Angle.degrees 270
+                                |> Quantity.plus
+                                    (model.elapsed
+                                        |> Quantity.at directionalSpeed2
+                                    )
+                            )
+                            (Angle.degrees -45)
+
+                    pointSpeed1 =
+                        Angle.degrees 67 |> Quantity.per (Duration.seconds 1)
 
                     pointLight1 =
                         pointLight1Start
                             |> PointLight.rotateAround pointLight1RotationAxis
-                                (seconds * degrees 67)
+                                (model.elapsed |> Quantity.at pointSpeed1)
+
+                    pointSpeed2 =
+                        Angle.degrees 71 |> Quantity.per (Duration.seconds 1)
 
                     pointLight2 =
                         pointLight2Start
                             |> PointLight.rotateAround pointLight2RotationAxis
-                                (seconds * degrees 71)
+                                (model.elapsed |> Quantity.at pointSpeed2)
 
                     addIf flag item list =
                         if flag model then
                             item :: list
+
                         else
                             list
 
@@ -236,19 +259,21 @@ view =
                             )
 
                     renderOptions =
-                        [ Scene.devicePixelRatio 2
-                        , Scene.gammaCorrection 0.45
+                        [ Scene3d.devicePixelRatio 2
+                        , Scene3d.gammaCorrection 0.45
                         ]
 
                     sceneElement =
                         Element.html
-                            (Scene.renderWith renderOptions lights camera scene)
+                            (Scene3d.renderWith renderOptions lights camera scene)
 
                     checkbox value message label =
-                        Element.checkbox value
-                            DefaultStyle
-                            [ Events.onCheck message ]
-                            (Element.text label)
+                        Input.checkbox []
+                            { onChange = message
+                            , icon = Input.defaultCheckbox
+                            , checked = value
+                            , label = Input.labelRight [] (Element.text label)
+                            }
 
                     ambientCheckbox =
                         checkbox model.ambientEnabled
@@ -281,10 +306,32 @@ view =
                             "White overhead"
 
                     checkboxes =
-                        Element.column PanelStyle
-                            [ Attributes.spacing 5, Attributes.padding 7.5 ]
-                            [ Element.el HeadingStyle [] (Element.text "Lights")
-                            , Element.spacer 1
+                        Element.column
+                            [ Element.spacing 5
+                            , Element.padding 8
+                            , Border.widthEach
+                                { bottom = 0
+                                , top = 0
+                                , left = 0
+                                , right = 1
+                                }
+                            , Border.solid
+                            , Border.color (Element.rgb 0.5 0.5 0.5)
+                            , Background.color (Element.rgb 0.9 0.9 0.9)
+                            , Element.height Element.fill
+                            , Font.size 16
+                            ]
+                            [ Element.el
+                                [ Font.size 20
+                                , Font.bold
+                                , Element.paddingEach
+                                    { top = 0
+                                    , left = 0
+                                    , right = 0
+                                    , bottom = 8
+                                    }
+                                ]
+                                (Element.text "Lights")
                             , ambientCheckbox
                             , directional1Checkbox
                             , directional2Checkbox
@@ -294,16 +341,16 @@ view =
                             ]
 
                     layout =
-                        Element.row OuterStyle
-                            [ Attributes.height (Attributes.percent 100) ]
+                        Element.row
+                            [ Element.height Element.fill ]
                             [ checkboxes, sceneElement ]
                 in
-                Element.viewport styleSheet layout
+                Element.layout [] layout
 
 
 type alias Model =
     { loadedTexture : Maybe (Result WebGL.Texture.Error Light.AmbientLookupTexture)
-    , time : Time
+    , elapsed : Duration
     , ambientEnabled : Bool
     , directional1Enabled : Bool
     , directional2Enabled : Bool
@@ -321,13 +368,13 @@ type Msg
     | SetPoint1Enabled Bool
     | SetPoint2Enabled Bool
     | SetOverheadEnabled Bool
-    | Tick Float
+    | Tick Duration
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init () =
     ( { loadedTexture = Nothing
-      , time = 0
+      , elapsed = zero
       , ambientEnabled = True
       , directional1Enabled = True
       , directional2Enabled = True
@@ -345,8 +392,8 @@ update message model =
         LoadComplete loadedTexture ->
             ( { model | loadedTexture = Just loadedTexture }, Cmd.none )
 
-        Tick time ->
-            ( { model | time = time }, Cmd.none )
+        Tick duration ->
+            ( { model | elapsed = model.elapsed |> Quantity.plus duration }, Cmd.none )
 
         SetAmbientEnabled value ->
             ( { model | ambientEnabled = value }, Cmd.none )
@@ -367,11 +414,11 @@ update message model =
             ( { model | overheadEnabled = value }, Cmd.none )
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.document
         { init = init
-        , subscriptions = always (AnimationFrame.times Tick)
+        , subscriptions = always (Browser.Events.onAnimationFrameDelta (milliseconds >> Tick))
         , update = update
-        , view = view
+        , view = \model -> { title = "Animated", body = [ view model ] }
         }

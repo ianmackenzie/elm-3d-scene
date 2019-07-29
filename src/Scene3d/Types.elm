@@ -1,17 +1,20 @@
 module Scene3d.Types exposing
-    ( ColorType(..)
+    ( Bounds
+    , ColorType(..)
     , Drawable(..)
+    , Drawable_(..)
     , Light(..)
     , Material(..)
     , Mesh(..)
     , PhysicalAttributes
-    , Placement(..)
     , SimpleAttributes
+    , Transformation
     )
 
 import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
 import Frame3d exposing (Frame3d)
+import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 exposing (Vec3)
 import WebGL
 import WebGL.Texture exposing (Texture)
@@ -58,27 +61,51 @@ type ColorType
     | EmissiveColor
 
 
-type Placement
-    = Placement
-        { frame : Frame3d
-        , scale : Float
-        , isRightHanded : Bool
-        }
+type alias Transformation =
+    { ix : Float
+    , iy : Float
+    , iz : Float
+    , jx : Float
+    , jy : Float
+    , jz : Float
+    , kx : Float
+    , ky : Float
+    , kz : Float
+    , px : Float
+    , py : Float
+    , pz : Float
+    , scale : Float
+    , isRightHanded : Bool
+    }
+
+
+type alias Bounds =
+    { minX : Float
+    , maxX : Float
+    , minY : Float
+    , maxY : Float
+    , minZ : Float
+    , maxZ : Float
+    }
 
 
 type Mesh
-    = SimpleMesh ColorType BoundingBox3d (WebGL.Mesh SimpleAttributes)
-    | PhysicalMesh BoundingBox3d (WebGL.Mesh PhysicalAttributes)
+    = SimpleMesh ColorType Bounds (WebGL.Mesh SimpleAttributes)
+    | PhysicalMesh Bounds (WebGL.Mesh PhysicalAttributes)
 
 
-type Drawable
+type Drawable_
     = MeshDrawable Mesh
     | EmptyDrawable
-    | DrawableGroup (List Drawable)
-    | TransformedDrawable Placement Drawable
+    | DrawableGroup (List Drawable_)
+    | TransformedDrawable Transformation Drawable_
 
 
-type Light
+type Drawable units coordinates
+    = Drawable Drawable_
+
+
+type Light units coordinates
     = AmbientLight { color : Vec3, lookupTexture : Texture }
     | DirectionalLight { color : Vec3, direction : Vec3 }
     | PointLight { color : Vec3, position : Vec3 }

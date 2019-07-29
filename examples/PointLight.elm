@@ -1,103 +1,125 @@
-module PointLight
-    exposing
-        ( PointLight
-        , at
-        , drawable
-        , light
-        , mirrorAcross
-        , placeIn
-        , relativeTo
-        , rotateAround
-        , translateBy
-        )
+module PointLight exposing
+    ( PointLight
+    , at
+    , drawable
+    , light
+    , mirrorAcross
+    , placeIn
+    , relativeTo
+    , rotateAround
+    , translateBy
+    )
 
+import Angle exposing (Angle)
+import Axis3d exposing (Axis3d)
 import Color
-import OpenSolid.Axis3d as Axis3d exposing (Axis3d)
-import OpenSolid.Frame3d as Frame3d exposing (Frame3d)
-import OpenSolid.Plane3d as Plane3d exposing (Plane3d)
-import OpenSolid.Point3d as Point3d exposing (Point3d)
-import OpenSolid.Scene.Drawable as Drawable exposing (Drawable)
-import OpenSolid.Scene.Light as Light exposing (Light)
-import OpenSolid.Scene.Material as Material
-import OpenSolid.Vector3d as Vector3d exposing (Vector3d)
+import Frame3d exposing (Frame3d)
+import Plane3d exposing (Plane3d)
+import Point3d exposing (Point3d)
+import Quantity exposing (Quantity(..), zero)
+import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Light as Light exposing (Light)
+import Scene3d.Material as Material
 import Shapes
+import Vector3d exposing (Vector3d)
 
 
-type PointLight
+type PointLight units coordinates
     = PointLight
-        { position : Point3d
+        { position : Point3d units coordinates
         , color : ( Float, Float, Float )
-        , radius : Float
-        , baseDrawable : Drawable
+        , radius : Quantity Float units
+        , drawable : Drawable units coordinates
         }
 
 
-at : Point3d -> { color : ( Float, Float, Float ), radius : Float } -> PointLight
+at : Point3d units coordinates -> { color : ( Float, Float, Float ), radius : Quantity Float units } -> PointLight units coordinates
 at position { color, radius } =
     let
-        ( r, g, b ) =
+        ( red, green, blue ) =
             color
 
+        (Quantity r) =
+            radius
+
         scale =
-            1.0 / (radius * radius)
+            1.0 / (r * r)
 
         scaled component =
-            round (255 * min (scale * component) 1)
+            min (scale * component) 1
 
         emissiveColor =
-            Color.rgb (scaled r) (scaled g) (scaled b)
+            Color.rgb (scaled red) (scaled green) (scaled blue)
 
         material =
             Material.emissive emissiveColor
 
-        baseDrawable =
+        sphereDrawable =
             Shapes.sphere material Point3d.origin radius
     in
     PointLight
         { position = position
         , color = color
         , radius = radius
-        , baseDrawable = baseDrawable
+        , drawable = sphereDrawable
         }
 
 
-light : PointLight -> Light
-light (PointLight { position, color }) =
-    Light.point position color
+light : PointLight units coordinates -> Light units coordinates
+light (PointLight pointLight) =
+    Light.point pointLight.position pointLight.color
 
 
-drawable : PointLight -> Drawable
-drawable (PointLight { baseDrawable, position }) =
-    baseDrawable
-        |> Drawable.translateBy
-            (Vector3d.fromComponents (Point3d.coordinates position))
+drawable : PointLight units coordinates -> Drawable units coordinates
+drawable (PointLight pointLight) =
+    pointLight.drawable
 
 
-transformBy : (Point3d -> Point3d) -> PointLight -> PointLight
-transformBy transform (PointLight properties) =
-    PointLight { properties | position = transform properties.position }
+translateBy : Vector3d units coordinates -> PointLight units coordinates -> PointLight units coordinates
+translateBy displacement (PointLight pointLight) =
+    PointLight
+        { position = Point3d.translateBy displacement pointLight.position
+        , color = pointLight.color
+        , radius = pointLight.radius
+        , drawable = Drawable.translateBy displacement pointLight.drawable
+        }
 
 
-translateBy : Vector3d -> PointLight -> PointLight
-translateBy displacement =
-    transformBy (Point3d.translateBy displacement)
+rotateAround : Axis3d units coordinates -> Angle -> PointLight units coordinates -> PointLight units coordinates
+rotateAround axis angle (PointLight pointLight) =
+    PointLight
+        { position = Point3d.rotateAround axis angle pointLight.position
+        , color = pointLight.color
+        , radius = pointLight.radius
+        , drawable = Drawable.rotateAround axis angle pointLight.drawable
+        }
 
 
-rotateAround : Axis3d -> Float -> PointLight -> PointLight
-rotateAround axis angle =
-    transformBy (Point3d.rotateAround axis angle)
+mirrorAcross : Plane3d units coordinates -> PointLight units coordinates -> PointLight units coordinates
+mirrorAcross plane (PointLight pointLight) =
+    PointLight
+        { position = Point3d.mirrorAcross plane pointLight.position
+        , color = pointLight.color
+        , radius = pointLight.radius
+        , drawable = Drawable.mirrorAcross plane pointLight.drawable
+        }
 
 
-mirrorAcross : Plane3d -> PointLight -> PointLight
-mirrorAcross plane =
-    transformBy (Point3d.mirrorAcross plane)
+placeIn : Frame3d units globalCoordinates { defines : localCoordinates } -> PointLight units localCoordinates -> PointLight units globalCoordinates
+placeIn frame (PointLight pointLight) =
+    PointLight
+        { position = Point3d.placeIn frame pointLight.position
+        , color = pointLight.color
+        , radius = pointLight.radius
+        , drawable = Drawable.placeIn frame pointLight.drawable
+        }
 
 
-placeIn : Frame3d -> PointLight -> PointLight
-placeIn frame =
-    transformBy (Point3d.placeIn frame)
-
-
-relativeTo : Frame3d -> PointLight -> PointLight
-relativeTo frame =
-    transformBy (Point3d.relativeTo frame)
+relativeTo : Frame3d units globalCoordinates { defines : localCoordinates } -> PointLight units globalCoordinates -> PointLight units localCoordinates
+relativeTo frame (PointLight pointLight) =
+    PointLight
+        { position = Point3d.relativeTo frame pointLight.position
+        , color = pointLight.color
+        , radius = pointLight.radius
+        , drawable = Drawable.relativeTo frame pointLight.drawable
+        }
