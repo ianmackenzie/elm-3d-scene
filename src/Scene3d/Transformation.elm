@@ -131,7 +131,7 @@ rotateAround axis (Quantity angle) =
             Point3d.unwrap (Axis3d.originPoint axis)
 
         a =
-            Direction3d.toRecord (Axis3d.direction axis)
+            Direction3d.unwrap (Axis3d.direction axis)
 
         halfAngle =
             0.5 * angle
@@ -226,7 +226,7 @@ mirrorAcross : Plane3d units coordinates -> Transformation
 mirrorAcross plane =
     let
         n =
-            Direction3d.toRecord (Plane3d.normalDirection plane)
+            Direction3d.unwrap (Plane3d.normalDirection plane)
 
         p0 =
             Point3d.unwrap (Plane3d.originPoint plane)
@@ -270,13 +270,13 @@ relativeTo : Frame3d units coordinates defines -> Transformation
 relativeTo frame =
     let
         i =
-            Direction3d.toRecord (Frame3d.xDirection frame)
+            Direction3d.unwrap (Frame3d.xDirection frame)
 
         j =
-            Direction3d.toRecord (Frame3d.yDirection frame)
+            Direction3d.unwrap (Frame3d.yDirection frame)
 
         k =
-            Direction3d.toRecord (Frame3d.zDirection frame)
+            Direction3d.unwrap (Frame3d.zDirection frame)
 
         p0 =
             Point3d.unwrap (Frame3d.originPoint frame)
@@ -302,13 +302,13 @@ placeIn : Frame3d units coordinates defines -> Transformation
 placeIn frame =
     let
         i =
-            Direction3d.toRecord (Frame3d.xDirection frame)
+            Direction3d.unwrap (Frame3d.xDirection frame)
 
         j =
-            Direction3d.toRecord (Frame3d.yDirection frame)
+            Direction3d.unwrap (Frame3d.yDirection frame)
 
         k =
-            Direction3d.toRecord (Frame3d.zDirection frame)
+            Direction3d.unwrap (Frame3d.zDirection frame)
 
         p0 =
             Point3d.unwrap (Frame3d.originPoint frame)
