@@ -45,6 +45,11 @@ type alias PhysicalAttributes =
     }
 
 
+type ColorType
+    = FlatColor
+    | EmissiveColor
+
+
 type Material
     = SimpleMaterial ColorType Color
     | PhysicalMaterial
@@ -54,11 +59,6 @@ type Material
         , rg : Float
         , mt : Float
         }
-
-
-type ColorType
-    = FlatColor
-    | EmissiveColor
 
 
 type alias Transformation =
