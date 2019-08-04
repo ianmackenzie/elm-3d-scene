@@ -97,20 +97,12 @@ height =
     pixels 768
 
 
-camera : Camera3d Meters WorldCoordinates Pixels ScreenCoordinates
+camera : Camera3d Meters WorldCoordinates
 camera =
     Camera3d.perspective
         { viewpoint = viewpoint
-        , screen =
-            Rectangle2d.fromExtrema
-                { minX = zero
-                , minY = zero
-                , maxX = width
-                , maxY = height
-                }
         , verticalFieldOfView = Angle.degrees 30
-        , nearClipDistance = meters 0.1
-        , farClipDistance = meters 100
+        , clipDepth = meters 0.1
         }
 
 
@@ -147,7 +139,7 @@ view model =
                         , whitePlasticSphere
                         ]
             in
-            Scene3d.renderWith [ Scene3d.devicePixelRatio 2 ] lights camera scene
+            Scene3d.renderWith [ Scene3d.devicePixelRatio 2 ] lights camera ( width, height ) scene
 
 
 main : Program () Model Msg

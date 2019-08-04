@@ -10,6 +10,7 @@ module Scene3d.Shader exposing
 
 import Math.Matrix4 as Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
+import Math.Vector4 as Vector4 exposing (Vec4)
 import Scene3d.Types as Types
 import WebGL
 import WebGL.Texture exposing (Texture)
@@ -30,7 +31,7 @@ type alias PhysicalVaryings =
     }
 
 
-simpleVertex : WebGL.Shader Types.SimpleAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } SimpleVaryings
+simpleVertex : WebGL.Shader Types.SimpleAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewMatrix : Mat4, projectionParameters : Vec4 } SimpleVaryings
 simpleVertex =
     [glsl|
         attribute float x;
@@ -42,21 +43,35 @@ simpleVertex =
 
         uniform float modelScale;
         uniform mat4 modelMatrix;
-        uniform mat4 modelViewProjectionMatrix;
+        uniform mat4 modelViewMatrix;
+        uniform vec4 projectionParameters;
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedColor;
 
+        vec4 project(vec4 position) {
+            float n = projectionParameters.x;
+            float a = projectionParameters.y;
+            float kc = projectionParameters.z;
+            float kz = projectionParameters.w;
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+
         void main () {
             vec4 scaledPosition = vec4(modelScale * x, modelScale * y, modelScale * z, 1.0);
-            gl_Position = modelViewProjectionMatrix * scaledPosition;
+            gl_Position = project(modelViewMatrix * scaledPosition);
             interpolatedPosition = (modelMatrix * scaledPosition).xyz;
             interpolatedColor = vec3(r, g, b);
         }
     |]
 
 
-physicalVertex : WebGL.Shader Types.PhysicalAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewProjectionMatrix : Mat4 } PhysicalVaryings
+physicalVertex : WebGL.Shader Types.PhysicalAttributes { a | modelScale : Float, modelMatrix : Mat4, modelViewMatrix : Mat4, projectionParameters : Vec4 } PhysicalVaryings
 physicalVertex =
     [glsl|
         attribute float x;
@@ -73,7 +88,8 @@ physicalVertex =
 
         uniform float modelScale;
         uniform mat4 modelMatrix;
-        uniform mat4 modelViewProjectionMatrix;
+        uniform mat4 modelViewMatrix;
+        uniform vec4 projectionParameters;
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
@@ -81,9 +97,22 @@ physicalVertex =
         varying float interpolatedRoughness;
         varying float interpolatedMetallic;
 
+        vec4 project(vec4 position) {
+            float n = projectionParameters.x;
+            float a = projectionParameters.y;
+            float kc = projectionParameters.z;
+            float kz = projectionParameters.w;
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+
         void main () {
             vec4 scaledPosition = vec4(modelScale * x, modelScale * y, modelScale * z, 1.0);
-            gl_Position = modelViewProjectionMatrix * scaledPosition;
+            gl_Position = project(modelViewMatrix * scaledPosition);
             interpolatedPosition = (modelMatrix * scaledPosition).xyz;
             interpolatedNormal = (modelMatrix * vec4(nx, ny, nz, 0.0)).xyz;
             interpolatedBaseColor = vec3(r, g, b);

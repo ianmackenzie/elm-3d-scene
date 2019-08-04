@@ -1,20 +1,22 @@
 module Physics exposing (main)
 
-
+import Angle
 import Array exposing (Array)
 import Browser
 import Camera3d exposing (Camera3d)
 import Color
 import Common.Events as Events
 import Common.Fps as Fps
-import Common.Scene as Scene
+import Common.Scene as Scene exposing (ModelCoordinates, WorldCoordinates)
 import Common.Settings as Settings exposing (Settings, SettingsMsg, settings)
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Html.Events exposing (onClick)
+import Length exposing (Meters, inMeters, meters)
 import Materials
 import Physics.Body as Body exposing (Body)
 import Physics.World as World exposing (World)
+import Pixels exposing (pixels)
 import Point3d exposing (Point3d)
 import Random
 import Scene3d.Drawable as Drawable exposing (Drawable)
@@ -24,7 +26,7 @@ import Viewpoint3d exposing (Viewpoint3d)
 
 
 type alias Model =
-    { world : World Drawable
+    { world : World (Drawable Meters ModelCoordinates)
     , fps : List Float
     , settings : Settings
     , screenWidth : Float
@@ -103,15 +105,12 @@ view { settings, fps, world, screenWidth, screenHeight } =
             Camera3d.perspective
                 { viewpoint =
                     Viewpoint3d.lookAt
-                        { eyePoint = Point3d.fromCoordinates ( 0, 30, 20 )
+                        { eyePoint = Point3d.meters 0 30 20
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
                         }
-                , screenWidth = screenWidth
-                , screenHeight = screenHeight
-                , nearClipDistance = 0.1
-                , farClipDistance = 100
-                , verticalFieldOfView = degrees 24
+                , clipDepth = meters 0.1
+                , verticalFieldOfView = Angle.degrees 24
                 }
     in
     Html.div []
@@ -119,6 +118,8 @@ view { settings, fps, world, screenWidth, screenHeight } =
             { world = world
             , camera = camera
             , floorOffset = Just floorOffset
+            , screenWidth = pixels screenWidth
+            , screenHeight = pixels screenHeight
             }
         , Settings.view ForSettings
             settings
@@ -133,7 +134,7 @@ view { settings, fps, world, screenWidth, screenHeight } =
         ]
 
 
-initialWorld : World Drawable
+initialWorld : World (Drawable Meters ModelCoordinates)
 initialWorld =
     World.empty
         |> World.setGravity { x = 0, y = 0, z = -10 }
@@ -179,7 +180,7 @@ randomOffsets index =
         |> Tuple.first
 
 
-addBoxes : World Drawable -> World Drawable
+addBoxes : World (Drawable Meters ModelCoordinates) -> World (Drawable Meters ModelCoordinates)
 addBoxes world =
     let
         xySize =
@@ -248,30 +249,30 @@ floorOffset =
 
 {-| Floor has an empty mesh, because it is not rendered
 -}
-floor : Body Drawable
+floor : Body (Drawable Meters ModelCoordinates)
 floor =
     Body.plane Drawable.empty
         |> Body.setMass 0
         |> Body.setPosition floorOffset
 
 
-box : Material -> Body Drawable
+box : Material -> Body (Drawable Meters ModelCoordinates)
 box material =
     let
         size =
-            0.9
+            meters 0.9
     in
     Shapes.box material size size size
-        |> Body.box { x = size, y = size, z = size }
+        |> Body.box { x = inMeters size, y = inMeters size, z = inMeters size }
         |> Body.setMass 5
 
 
-sphere : Material -> Body Drawable
+sphere : Material -> Body (Drawable Meters ModelCoordinates)
 sphere material =
     let
         radius =
-            0.45
+            meters 0.45
     in
     Shapes.sphere material Point3d.origin radius
-        |> Body.sphere radius
+        |> Body.sphere (inMeters radius)
         |> Body.setMass 2.5

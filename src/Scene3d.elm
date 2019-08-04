@@ -19,7 +19,9 @@ import Html exposing (Html)
 import Html.Attributes
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
+import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels, inPixels)
+import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d.Drawable exposing (Drawable)
 import Scene3d.Light exposing (Light)
@@ -67,6 +69,7 @@ type alias PhysicallyBasedRenderer =
     -> Float
     -> Mat4
     -> Mat4
+    -> Vec4
     -> Float
     -> WebGL.Mesh Types.PhysicalAttributes
     -> WebGL.Entity
@@ -78,10 +81,10 @@ type PhysicallyBasedLighting
     | DummyLighting
 
 
-type alias RenderProperties worldUnits worldCoordinates screenUnits screenCoordinates =
-    { camera : Camera3d worldUnits worldCoordinates screenUnits screenCoordinates
+type alias RenderProperties units coordinates =
+    { camera : Camera3d units coordinates
     , eyePoint : Vec3
-    , projectionMatrix : Mat4
+    , projectionParameters : Vec4
     , physicallyBasedRenderer : PhysicallyBasedRenderer
     , gammaCorrection : Float
     }
@@ -211,12 +214,13 @@ physicallyBasedRendererFor : List (Light units coordinates) -> PhysicallyBasedRe
 physicallyBasedRendererFor lights =
     case physicallyBasedLighting lights of
         AmbientLighting ambientProperties light1 light2 light3 light4 light5 light6 light7 light8 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gamma mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewMatrix projectionParameters gamma mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
-                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , modelViewMatrix = modelViewMatrix
+                        , projectionParameters = projectionParameters
                         , eyePoint = eyePoint
                         , gammaCorrection = gamma
                         , ambientLightColor = ambientProperties.color
@@ -258,12 +262,13 @@ physicallyBasedRendererFor lights =
                 WebGL.entityWith settings Shader.physicalVertex Shader.ambientFragment mesh uniforms
 
         NoAmbientLighting light1 light2 light3 light4 light5 light6 light7 light8 ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gamma mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewMatrix projectionParameters gamma mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
-                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , modelViewMatrix = modelViewMatrix
+                        , projectionParameters = projectionParameters
                         , eyePoint = eyePoint
                         , gammaCorrection = gamma
                         , lightType1 = light1.lightType
@@ -303,19 +308,20 @@ physicallyBasedRendererFor lights =
                 WebGL.entityWith settings Shader.physicalVertex Shader.noAmbientFragment mesh uniforms
 
         DummyLighting ->
-            \settings eyePoint modelScale modelMatrix modelViewProjectionMatrix gamma mesh ->
+            \settings eyePoint modelScale modelMatrix modelViewMatrix projectionParameters gamma mesh ->
                 let
                     uniforms =
                         { modelScale = modelScale
                         , modelMatrix = modelMatrix
-                        , modelViewProjectionMatrix = modelViewProjectionMatrix
+                        , modelViewMatrix = modelViewMatrix
+                        , projectionParameters = projectionParameters
                         , gammaCorrection = gamma
                         }
                 in
                 WebGL.entityWith settings Shader.physicalVertex Shader.dummyFragment mesh uniforms
 
 
-toEntity : RenderProperties worldUnits worldCoordinates screenUnits screenCoordinates -> Transformation -> Types.Mesh -> WebGL.Entity
+toEntity : RenderProperties units coordinates -> Transformation -> Types.Mesh -> WebGL.Entity
 toEntity renderProperties transformation mesh =
     let
         modelScale =
@@ -330,11 +336,8 @@ toEntity renderProperties transformation mesh =
         modelViewMatrix =
             Camera3d.modelViewMatrix placementFrame renderProperties.camera
 
-        projectionMatrix =
-            renderProperties.projectionMatrix
-
-        modelViewProjectionMatrix =
-            Math.Matrix4.mul projectionMatrix modelViewMatrix
+        projectionParameters =
+            renderProperties.projectionParameters
 
         cullSetting =
             if transformation.isRightHanded then
@@ -356,7 +359,8 @@ toEntity renderProperties transformation mesh =
                         uniforms =
                             { modelScale = modelScale
                             , modelMatrix = modelMatrix
-                            , modelViewProjectionMatrix = modelViewProjectionMatrix
+                            , modelViewMatrix = modelViewMatrix
+                            , projectionParameters = projectionParameters
                             }
                     in
                     WebGL.entityWith settings
@@ -370,7 +374,8 @@ toEntity renderProperties transformation mesh =
                         uniforms =
                             { modelScale = modelScale
                             , modelMatrix = modelMatrix
-                            , modelViewProjectionMatrix = modelViewProjectionMatrix
+                            , modelViewMatrix = modelViewMatrix
+                            , projectionParameters = projectionParameters
                             , gammaCorrection = renderProperties.gammaCorrection
                             }
                     in
@@ -386,12 +391,13 @@ toEntity renderProperties transformation mesh =
                 renderProperties.eyePoint
                 modelScale
                 modelMatrix
-                modelViewProjectionMatrix
+                modelViewMatrix
+                projectionParameters
                 renderProperties.gammaCorrection
                 webGlMesh
 
 
-collectEntities : RenderProperties worldUnits worldCoordinates screenUnits screenCoordinates -> Transformation -> Types.Drawable_ -> List WebGL.Entity -> List WebGL.Entity
+collectEntities : RenderProperties units coordinates -> Transformation -> Types.Drawable_ -> List WebGL.Entity -> List WebGL.Entity
 collectEntities renderProperties currentTransformation drawable_ accumulated =
     case drawable_ of
         Types.TransformedDrawable transformation childDrawable ->
@@ -412,19 +418,22 @@ collectEntities renderProperties currentTransformation drawable_ accumulated =
             accumulated
 
 
-toEntities : List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates screenUnits screenCoordinates -> Drawable worldUnits worldCoordinates -> List WebGL.Entity
+toEntities : List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> List WebGL.Entity
 toEntities =
     toEntitiesWith []
 
 
-toEntitiesWith : List RenderOption -> List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates screenUnits screenCoordinates -> Drawable worldUnits worldCoordinates -> List WebGL.Entity
-toEntitiesWith options lights camera (Types.Drawable rootDrawable_) =
+toEntitiesWith : List RenderOption -> List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> List WebGL.Entity
+toEntitiesWith options lights camera ( width, height ) (Types.Drawable rootDrawable_) =
     let
         renderProperties =
             { camera = camera
             , eyePoint =
                 Point3d.toVec3 (Viewpoint3d.eyePoint (Camera3d.viewpoint camera))
-            , projectionMatrix = Camera3d.projectionMatrix camera
+            , projectionParameters =
+                Camera3d.projectionParameters
+                    { screenAspectRatio = Quantity.ratio width height }
+                    camera
             , physicallyBasedRenderer = physicallyBasedRendererFor lights
             , gammaCorrection = getGammaCorrection options
             }
@@ -432,7 +441,7 @@ toEntitiesWith options lights camera (Types.Drawable rootDrawable_) =
     collectEntities renderProperties Transformation.identity rootDrawable_ []
 
 
-render : List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates Pixels screenCoordinates -> Drawable worldUnits worldCoordinates -> Html msg
+render : List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> Html msg
 render =
     renderWith []
 
@@ -555,11 +564,11 @@ getClearColor options =
     List.foldl update defaultValue options
 
 
-renderWith : List RenderOption -> List (Light worldUnits worldCoordinates) -> Camera3d worldUnits worldCoordinates Pixels screenCoordinates -> Drawable worldUnits worldCoordinates -> Html msg
-renderWith options lights camera rootNode =
+renderWith : List RenderOption -> List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> Html msg
+renderWith options lights camera screenDimensions rootNode =
     let
         ( width, height ) =
-            Rectangle2d.dimensions (Camera3d.screen camera)
+            screenDimensions
 
         widthInPixels =
             inPixels width
@@ -602,4 +611,4 @@ renderWith options lights camera rootNode =
         , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         ]
-        (toEntitiesWith options lights camera rootNode)
+        (toEntitiesWith options lights camera screenDimensions rootNode)

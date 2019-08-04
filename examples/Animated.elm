@@ -81,17 +81,15 @@ view =
                         , focalPoint = Point3d.origin
                         , upDirection = Direction3d.positiveZ
                         }
-                , screen =
-                    Rectangle2d.fromExtrema
-                        { minX = zero
-                        , maxX = pixels 1024
-                        , minY = zero
-                        , maxY = pixels 768
-                        }
                 , verticalFieldOfView = Angle.degrees 30
-                , nearClipDistance = meters 0.1
-                , farClipDistance = meters 100
+                , clipDepth = meters 0.1
                 }
+
+        screenWidth =
+            pixels 1024
+
+        screenHeight =
+            pixels 768
 
         shapes =
             Drawable.group
@@ -265,7 +263,7 @@ view =
 
                     sceneElement =
                         Element.html
-                            (Scene3d.renderWith renderOptions lights camera scene)
+                            (Scene3d.renderWith renderOptions lights camera ( screenWidth, screenHeight ) scene)
 
                     checkbox value message label =
                         Input.checkbox []
