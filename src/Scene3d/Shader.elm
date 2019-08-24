@@ -420,11 +420,12 @@ physicalFragment =
             return alphaSquared / (3.14159265359 * tmp * tmp);
         }
 
-        float specularG(float dotNL, float dotNV) {
-            float roughnessPlusOne = roughness + 1.0;
-            float k = roughnessPlusOne * roughnessPlusOne / 8.0;
-            float oneMinusK = 1.0 - k;
-            return (dotNL * dotNV) / ((dotNL * oneMinusK + k) * (dotNV * oneMinusK + k));
+        float g1(float dotNV, float alphaSquared) {
+            return (2.0 * dotNV) / (dotNV + sqrt(alphaSquared + (1.0 - alphaSquared) * dotNV * dotNV));
+        }
+
+        float specularG(float dotNL, float dotNV, float alphaSquared) {
+            return g1(dotNV, alphaSquared) * g1(dotNL, alphaSquared);
         }
 
         vec3 fresnelColor(vec3 specularBaseColor, float dotVH) {
@@ -450,7 +451,7 @@ physicalFragment =
             float dotNHSquared = dotNH * dotNH;
 
             float d = specularD(alphaSquared, dotNHSquared);
-            float g = specularG(dotNL, dotNV);
+            float g = specularG(dotNL, dotNV, alphaSquared);
             vec3 f = fresnelColor(specularBaseColor, dotVH);
             vec3 specularColor = ((d * g) / (4.0 * dotNL * dotNV)) * f;
 
