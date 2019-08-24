@@ -1,21 +1,19 @@
 module Scene3d.Drawable exposing
     ( Drawable
+    , Material
+    , emissive
     , empty
-    , faces
     , group
-    , indexedFaces
-    , lineSegments
-    , mesh
+    , lambertian
     , mirrorAcross
+    , physical
     , placeIn
-    , points
-    , polyline
     , relativeTo
     , rotateAround
     , scaleAbout
     , translateBy
-    , triangleFan
-    , triangles
+    , translateIn
+    , unlit
     )
 
 import Angle exposing (Angle)
@@ -26,403 +24,390 @@ import Color exposing (Color)
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
 import LineSegment3d exposing (LineSegment3d)
+import Luminance exposing (Luminance)
+import Math.Vector3 exposing (Vec3)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
-import Scene3d.Material as Material exposing (Material)
+import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
+import Scene3d.Mesh exposing (HasNormals, HasTangents, HasUV, Mesh)
+import Scene3d.Shader as Shader
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (Bounds, Drawable_)
+import Scene3d.Types as Types exposing (Bounds, Node(..), PlainVertex, SmoothVertex)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
+import WebGL.Settings
 
 
 type alias Drawable units coordinates =
     Types.Drawable units coordinates
 
 
+type alias Material =
+    { baseColor : Color
+    , roughness : Float
+    , metallic : Bool
+    }
+
+
 empty : Drawable units coordinates
 empty =
-    Types.Drawable Types.EmptyDrawable
+    Types.Drawable EmptyNode
 
 
-toBounds : BoundingBox3d units coordinates -> Bounds
-toBounds boundingBox =
+unlit : Color -> Mesh units coordinates normals uv tangents -> Drawable units coordinates
+unlit givenColor givenMesh =
     let
-        { minX, maxX, minY, maxY, minZ, maxZ } =
-            BoundingBox3d.extrema boundingBox
+        { red, green, blue } =
+            Color.toRgba givenColor
 
-        (Quantity fMinX) =
-            minX
-
-        (Quantity fMaxX) =
-            maxX
-
-        (Quantity fMinY) =
-            minY
-
-        (Quantity fMaxY) =
-            maxY
-
-        (Quantity fMinZ) =
-            minZ
-
-        (Quantity fMaxZ) =
-            maxZ
+        colorVec =
+            Math.Vector3.vec3 red green blue
     in
-    { minX = fMinX
-    , maxX = fMaxX
-    , minY = fMinY
-    , maxY = fMaxY
-    , minZ = fMinZ
-    , maxZ = fMaxZ
-    }
+    case givenMesh of
+        Types.EmptyMesh ->
+            empty
+
+        Types.Mesh meshData maybeShadow ->
+            case meshData of
+                Types.Triangles _ _ webGLMesh cullBackFaces ->
+                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+
+                Types.Facets _ _ webGLMesh cullBackFaces ->
+                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+
+                Types.Indexed _ _ webGLMesh cullBackFaces ->
+                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+
+                Types.Smooth _ _ webGLMesh cullBackFaces ->
+                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+
+                Types.LineSegments _ _ webGLMesh ->
+                    constantMesh colorVec webGLMesh False maybeShadow
+
+                Types.Polyline _ _ webGLMesh ->
+                    constantMesh colorVec webGLMesh False maybeShadow
+
+                Types.Points _ _ webGLMesh ->
+                    constantMesh colorVec webGLMesh False maybeShadow
 
 
-lineSegments : Color -> List (LineSegment3d units coordinates) -> Drawable units coordinates
-lineSegments color givenSegments =
-    Types.Drawable <|
-        let
-            segmentBoundingBoxes =
-                List.map LineSegment3d.boundingBox givenSegments
-        in
-        case BoundingBox3d.aggregate segmentBoundingBoxes of
-            Just overallBoundingBox ->
-                let
-                    vertexAttributes =
-                        simpleAttributes color
-
-                    toAttributes lineSegment =
-                        let
-                            ( p1, p2 ) =
-                                LineSegment3d.endpoints lineSegment
-                        in
-                        ( vertexAttributes p1, vertexAttributes p2 )
-
-                    lineMesh =
-                        WebGL.lines (List.map toAttributes givenSegments)
-                in
-                Types.MeshDrawable <|
-                    Types.SimpleMesh Types.FlatColor
-                        (toBounds overallBoundingBox)
-                        lineMesh
-
-            Nothing ->
-                Types.EmptyDrawable
-
-
-polyline : Color -> Polyline3d units coordinates -> Drawable units coordinates
-polyline color givenPolyline =
-    Types.Drawable <|
-        case Polyline3d.boundingBox givenPolyline of
-            Just boundingBox ->
-                let
-                    toAttributes =
-                        simpleAttributes color
-
-                    vertexAttributes =
-                        Polyline3d.vertices givenPolyline
-                            |> List.map toAttributes
-
-                    webGLMesh =
-                        WebGL.lineStrip vertexAttributes
-                in
-                Types.MeshDrawable <|
-                    Types.SimpleMesh Types.FlatColor
-                        (toBounds boundingBox)
-                        webGLMesh
-
-            Nothing ->
-                Types.EmptyDrawable
-
-
-points : Color -> List (Point3d units coordinates) -> Drawable units coordinates
-points color givenPoints =
-    Types.Drawable <|
-        case BoundingBox3d.containingPoints givenPoints of
-            Just boundingBox ->
-                let
-                    toAttributes =
-                        simpleAttributes color
-
-                    pointsMesh =
-                        WebGL.points <| List.map toAttributes givenPoints
-                in
-                Types.MeshDrawable <|
-                    Types.SimpleMesh Types.FlatColor
-                        (toBounds boundingBox)
-                        pointsMesh
-
-            Nothing ->
-                Types.EmptyDrawable
-
-
-physicalAttributes : { r : Float, g : Float, b : Float, rg : Float, mt : Float } -> Point3d units coordinates -> Vector3d Unitless coordinates -> Types.PhysicalAttributes
-physicalAttributes { r, g, b, rg, mt } point normal =
+emissive : Chromaticity -> Luminance -> Mesh units coordinates normals uv tangents -> Drawable units coordinates
+emissive givenChromaticity givenLuminance givenMesh =
     let
-        p =
-            Point3d.unwrap point
+        ( r, g, b ) =
+            Chromaticity.toLinearRgb givenChromaticity
 
-        n =
-            Vector3d.unwrap normal
+        nits =
+            Luminance.inNits givenLuminance
+
+        linearColor =
+            Math.Vector3.vec3 (r * nits) (g * nits) (b * nits)
     in
-    { x = p.x
-    , y = p.y
-    , z = p.z
-    , nx = n.x
-    , ny = n.y
-    , nz = n.z
-    , r = r
-    , g = g
-    , b = b
-    , rg = rg
-    , mt = mt
-    }
+    case givenMesh of
+        Types.EmptyMesh ->
+            empty
+
+        Types.Mesh meshData maybeShadow ->
+            case meshData of
+                Types.Triangles _ _ webGLMesh cullBackFaces ->
+                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+
+                Types.Facets _ _ webGLMesh cullBackFaces ->
+                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+
+                Types.Indexed _ _ webGLMesh cullBackFaces ->
+                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+
+                Types.Smooth _ _ webGLMesh cullBackFaces ->
+                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+
+                Types.LineSegments _ _ webGLMesh ->
+                    emissiveMesh linearColor webGLMesh False maybeShadow
+
+                Types.Polyline _ _ webGLMesh ->
+                    emissiveMesh linearColor webGLMesh False maybeShadow
+
+                Types.Points _ _ webGLMesh ->
+                    emissiveMesh linearColor webGLMesh False maybeShadow
 
 
-simpleAttributes : Color -> Point3d units coordinates -> Types.SimpleAttributes
-simpleAttributes color =
+toLinear : Color -> Vec3
+toLinear color =
+    -- TODO use actual sRGB formula
     let
         { red, green, blue } =
             Color.toRgba color
     in
-    \point ->
-        let
-            { x, y, z } =
-                Point3d.unwrap point
-        in
-        { x = x
-        , y = y
-        , z = z
-        , r = red
-        , g = green
-        , b = blue
-        }
+    Math.Vector3.vec3 (red ^ 2.2) (green ^ 2.2) (blue ^ 2.2)
 
 
-triangleFan : Color -> List (Point3d units coordinates) -> Drawable units coordinates
-triangleFan color givenPoints =
-    Types.Drawable <|
-        case BoundingBox3d.containingPoints givenPoints of
-            Just boundingBox ->
-                let
-                    fanMesh =
-                        WebGL.triangleFan <|
-                            List.map (simpleAttributes color) givenPoints
-                in
-                Types.MeshDrawable <|
-                    Types.SimpleMesh Types.FlatColor (toBounds boundingBox) fanMesh
+lambertian : Color -> Mesh units coordinates HasNormals uv tangents -> Drawable units coordinates
+lambertian givenColor givenMesh =
+    let
+        linearColor =
+            toLinear givenColor
+    in
+    case givenMesh of
+        Types.EmptyMesh ->
+            empty
 
-            Nothing ->
-                Types.EmptyDrawable
+        Types.Mesh meshData maybeShadow ->
+            case meshData of
+                Types.Triangles _ _ _ _ ->
+                    Debug.log "triangles/lambertian" empty
+
+                Types.Facets _ _ webGLMesh cullBackFaces ->
+                    lambertianMesh linearColor webGLMesh cullBackFaces maybeShadow
+
+                Types.Indexed _ _ _ _ ->
+                    Debug.log "indexed/lambertian" empty
+
+                Types.Smooth _ _ webGLMesh cullBackFaces ->
+                    lambertianMesh linearColor webGLMesh cullBackFaces maybeShadow
+
+                Types.LineSegments _ _ _ ->
+                    Debug.log "lineSegments/lambertian" empty
+
+                Types.Polyline _ _ _ ->
+                    Debug.log "polyline/lambertian" empty
+
+                Types.Points _ _ _ ->
+                    Debug.log "points/lambertian" empty
 
 
-triangles : Material -> List (Triangle3d units coordinates) -> Drawable units coordinates
-triangles material givenTriangles =
-    Types.Drawable <|
-        case BoundingBox3d.aggregate (List.map Triangle3d.boundingBox givenTriangles) of
-            Just overallBoundingBox ->
-                case material of
-                    Types.SimpleMaterial colorType color ->
-                        let
-                            vertexAttributes =
-                                simpleAttributes color
+physical : Material -> Mesh units coordinates HasNormals uv tangents -> Drawable units coordinates
+physical givenMaterial givenMesh =
+    let
+        linearColor =
+            toLinear givenMaterial.baseColor
 
-                            toAttributes triangle =
-                                let
-                                    ( p1, p2, p3 ) =
-                                        Triangle3d.vertices triangle
-                                in
-                                ( vertexAttributes p1
-                                , vertexAttributes p2
-                                , vertexAttributes p3
-                                )
+        roughness =
+            clamp 0 1 givenMaterial.roughness
 
-                            webGLMesh =
-                                WebGL.triangles (List.map toAttributes givenTriangles)
-                        in
-                        Types.MeshDrawable <|
-                            Types.SimpleMesh colorType
-                                (toBounds overallBoundingBox)
+        metallic =
+            if givenMaterial.metallic then
+                1
+
+            else
+                0
+    in
+    case givenMesh of
+        Types.EmptyMesh ->
+            empty
+
+        Types.Mesh meshData maybeShadow ->
+            case meshData of
+                Types.Triangles _ _ _ _ ->
+                    Debug.log "triangles/physical" empty
+
+                Types.Facets _ _ webGLMesh cullBackFaces ->
+                    physicalMesh
+                        linearColor
+                        roughness
+                        metallic
+                        webGLMesh
+                        cullBackFaces
+                        maybeShadow
+
+                Types.Indexed _ _ _ _ ->
+                    Debug.log "indexed/physical" empty
+
+                Types.Smooth _ _ webGLMesh cullBackFaces ->
+                    physicalMesh
+                        linearColor
+                        roughness
+                        metallic
+                        webGLMesh
+                        cullBackFaces
+                        maybeShadow
+
+                Types.LineSegments _ _ _ ->
+                    Debug.log "lineSegments/physical" empty
+
+                Types.Polyline _ _ _ ->
+                    Debug.log "polyline/physical" empty
+
+                Types.Points _ _ _ ->
+                    Debug.log "points/physical" empty
+
+
+shadowDrawFunction : Maybe (Types.Shadow units coordinates) -> Maybe Types.DrawFunction
+shadowDrawFunction maybeShadow =
+    case maybeShadow of
+        Nothing ->
+            Nothing
+
+        Just givenShadow ->
+            case givenShadow of
+                Types.EmptyShadow ->
+                    Nothing
+
+                Types.Shadow _ webGLMesh ->
+                    -- TODO take handedness into account?
+                    Just <|
+                        \sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+                            WebGL.entityWith settings
+                                Shader.shadowVertex
+                                Shader.shadowFragment
                                 webGLMesh
-
-                    Types.PhysicalMaterial properties ->
-                        let
-                            toAttributes triangle =
-                                let
-                                    ( p1, p2, p3 ) =
-                                        Triangle3d.vertices triangle
-
-                                    normal =
-                                        case Triangle3d.normalDirection triangle of
-                                            Just direction ->
-                                                Direction3d.toVector direction
-
-                                            Nothing ->
-                                                Vector3d.zero
-                                in
-                                ( physicalAttributes properties p1 normal
-                                , physicalAttributes properties p2 normal
-                                , physicalAttributes properties p3 normal
-                                )
-
-                            webGLMesh =
-                                WebGL.triangles (List.map toAttributes givenTriangles)
-                        in
-                        Types.MeshDrawable <|
-                            Types.PhysicalMesh (toBounds overallBoundingBox)
-                                webGLMesh
-
-            Nothing ->
-                Types.EmptyDrawable
+                                { sceneProperties = sceneProperties
+                                , modelScale = modelScale
+                                , modelMatrix = modelMatrix
+                                , viewMatrix = viewMatrix
+                                , lights = lights.lights12
+                                }
 
 
-type alias Vertex units coordinates =
-    ( Point3d units coordinates, Vector3d Unitless coordinates )
+cullBackFaceSetting : WebGL.Settings.Setting
+cullBackFaceSetting =
+    WebGL.Settings.cullFace WebGL.Settings.back
 
 
-type alias FaceVertices units coordinates =
-    ( Vertex units coordinates, Vertex units coordinates, Vertex units coordinates )
+cullFrontFaceSetting : WebGL.Settings.Setting
+cullFrontFaceSetting =
+    WebGL.Settings.cullFace WebGL.Settings.front
 
 
-faceBoundingBox : FaceVertices units coordinates -> BoundingBox3d units coordinates
-faceBoundingBox ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
-    Triangle3d.boundingBox (Triangle3d.fromVertices p1 p2 p3)
+meshSettings : Bool -> Bool -> List WebGL.Settings.Setting -> List WebGL.Settings.Setting
+meshSettings isRightHanded cullBackFaces settings =
+    if cullBackFaces then
+        if isRightHanded then
+            cullBackFaceSetting :: settings
+
+        else
+            cullFrontFaceSetting :: settings
+
+    else
+        settings
 
 
-faces : Material -> List ( ( Point3d units coordinates, Vector3d Unitless coordinates ), ( Point3d units coordinates, Vector3d Unitless coordinates ), ( Point3d units coordinates, Vector3d Unitless coordinates ) ) -> Drawable units coordinates
-faces material vertexTriples =
+constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+constantMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
-        case BoundingBox3d.aggregate (List.map faceBoundingBox vertexTriples) of
-            Just overallBoundingBox ->
-                case material of
-                    Types.SimpleMaterial colorType color ->
-                        let
-                            faceAttributes ( ( p1, _ ), ( p2, _ ), ( p3, _ ) ) =
-                                ( simpleAttributes color p1
-                                , simpleAttributes color p2
-                                , simpleAttributes color p3
-                                )
-
-                            facesMesh =
-                                WebGL.triangles <|
-                                    List.map faceAttributes vertexTriples
-                        in
-                        Types.MeshDrawable <|
-                            Types.SimpleMesh colorType
-                                (toBounds overallBoundingBox)
-                                facesMesh
-
-                    Types.PhysicalMaterial properties ->
-                        let
-                            faceAttributes ( ( p1, n1 ), ( p2, n2 ), ( p3, n3 ) ) =
-                                ( physicalAttributes properties p1 n1
-                                , physicalAttributes properties p2 n2
-                                , physicalAttributes properties p3 n3
-                                )
-
-                            facesMesh =
-                                WebGL.triangles <|
-                                    List.map faceAttributes vertexTriples
-                        in
-                        Types.MeshDrawable <|
-                            Types.PhysicalMesh (toBounds overallBoundingBox)
-                                facesMesh
-
-            Nothing ->
-                Types.EmptyDrawable
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded cullBackFaces settings)
+                    Shader.plainVertex
+                    Shader.constantFragment
+                    webGLMesh
+                    { color = color
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+            (shadowDrawFunction maybeShadow)
 
 
-indexedFaces : Material -> List ( Point3d units coordinates, Vector3d Unitless coordinates ) -> List ( Int, Int, Int ) -> Drawable units coordinates
-indexedFaces material vertices givenFaces =
+emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+emissiveMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
-        let
-            vertexPoints =
-                List.map Tuple.first vertices
-        in
-        case BoundingBox3d.containingPoints vertexPoints of
-            Just boundingBox ->
-                case material of
-                    Types.SimpleMaterial colorType color ->
-                        let
-                            webGLMesh =
-                                WebGL.indexedTriangles
-                                    (List.map (simpleAttributes color) vertexPoints)
-                                    givenFaces
-                        in
-                        Types.MeshDrawable <|
-                            Types.SimpleMesh colorType (toBounds boundingBox) webGLMesh
-
-                    Types.PhysicalMaterial properties ->
-                        let
-                            toAttributes ( point, normalDirection ) =
-                                physicalAttributes properties point normalDirection
-
-                            webGLMesh =
-                                WebGL.indexedTriangles
-                                    (List.map toAttributes vertices)
-                                    givenFaces
-                        in
-                        Types.MeshDrawable <|
-                            Types.PhysicalMesh (toBounds boundingBox) webGLMesh
-
-            Nothing ->
-                Types.EmptyDrawable
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded cullBackFaces settings)
+                    Shader.plainVertex
+                    Shader.emissiveFragment
+                    webGLMesh
+                    { color = color
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+            (shadowDrawFunction maybeShadow)
 
 
-mesh : Material -> TriangularMesh ( Point3d units coordinates, Vector3d Unitless coordinates ) -> Drawable units coordinates
-mesh material mesh_ =
-    indexedFaces material
-        (Array.toList (TriangularMesh.vertices mesh_))
-        (TriangularMesh.faceIndices mesh_)
+lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+lambertianMesh color webGLMesh cullBackFaces maybeShadow =
+    Types.Drawable <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded cullBackFaces settings)
+                    Shader.smoothVertex
+                    Shader.lambertianFragment
+                    webGLMesh
+                    { color = color
+                    , sceneProperties = sceneProperties
+                    , lights12 = lights.lights12
+                    , lights34 = lights.lights34
+                    , lights56 = lights.lights56
+                    , lights78 = lights.lights78
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+            (shadowDrawFunction maybeShadow)
 
 
-collectNonempty : List (Drawable units coordinates) -> List Drawable_ -> List Drawable_
-collectNonempty drawables accumulated =
+physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
+    Types.Drawable <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded cullBackFaces settings)
+                    Shader.smoothVertex
+                    Shader.physicalFragment
+                    webGLMesh
+                    { color = color
+                    , roughness = roughness
+                    , metallic = metallic
+                    , sceneProperties = sceneProperties
+                    , lights12 = lights.lights12
+                    , lights34 = lights.lights34
+                    , lights56 = lights.lights56
+                    , lights78 = lights.lights78
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+            (shadowDrawFunction maybeShadow)
+
+
+collectNodes : List (Drawable units coordinates) -> List Node -> List Node
+collectNodes drawables accumulated =
     case drawables of
         [] ->
             accumulated
 
-        (Types.Drawable Types.EmptyDrawable) :: rest ->
-            collectNonempty rest accumulated
-
-        (Types.Drawable drawable_) :: rest ->
-            collectNonempty rest (drawable_ :: accumulated)
+        (Types.Drawable node) :: rest ->
+            collectNodes rest (node :: accumulated)
 
 
 group : List (Drawable units coordinates) -> Drawable units coordinates
 group drawables =
-    Types.Drawable <|
-        case collectNonempty drawables [] of
-            [] ->
-                Types.EmptyDrawable
-
-            [ singleDrawable ] ->
-                singleDrawable
-
-            nonEmptyDrawables ->
-                Types.DrawableGroup nonEmptyDrawables
+    Types.Drawable (Group (collectNodes drawables []))
 
 
 transformBy : Transformation -> Drawable units1 coordinates1 -> Drawable units2 coordinates2
-transformBy transformation (Types.Drawable drawable_) =
-    Types.Drawable <|
-        case drawable_ of
-            Types.TransformedDrawable existingTransformation transformedDrawable ->
-                Types.TransformedDrawable
-                    (Transformation.compose existingTransformation transformation)
-                    transformedDrawable
+transformBy transformation (Types.Drawable node) =
+    case node of
+        EmptyNode ->
+            empty
 
-            Types.EmptyDrawable ->
-                Types.EmptyDrawable
+        Transformed existingTransformation underlyingNode ->
+            let
+                compositeTransformation =
+                    Transformation.compose existingTransformation transformation
+            in
+            Types.Drawable (Transformed compositeTransformation underlyingNode)
 
-            Types.MeshDrawable _ ->
-                Types.TransformedDrawable transformation drawable_
+        MeshNode _ _ ->
+            Types.Drawable (Transformed transformation node)
 
-            Types.DrawableGroup _ ->
-                Types.TransformedDrawable transformation drawable_
+        Group _ ->
+            Types.Drawable (Transformed transformation node)
 
 
 rotateAround : Axis3d units coordinates -> Angle -> Drawable units coordinates -> Drawable units coordinates
@@ -433,6 +418,11 @@ rotateAround axis angle givenDrawable =
 translateBy : Vector3d units coordinates -> Drawable units coordinates -> Drawable units coordinates
 translateBy displacement givenDrawable =
     transformBy (Transformation.translateBy displacement) givenDrawable
+
+
+translateIn : Direction3d coordinates -> Quantity Float units -> Drawable units coordinates -> Drawable units coordinates
+translateIn direction distance drawable =
+    translateBy (Vector3d.withLength distance direction) drawable
 
 
 mirrorAcross : Plane3d units coordinates -> Drawable units coordinates -> Drawable units coordinates

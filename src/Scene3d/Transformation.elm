@@ -3,6 +3,7 @@ module Scene3d.Transformation exposing
     , compose
     , identity
     , mirrorAcross
+    , modelMatrix
     , placeIn
     , placementFrame
     , relativeTo
@@ -15,6 +16,7 @@ import Angle exposing (Angle)
 import Axis3d exposing (Axis3d)
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
+import Math.Matrix4 exposing (Mat4)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity(..))
@@ -53,6 +55,28 @@ placementFrame transformation =
                 , y = transformation.ky
                 , z = transformation.kz
                 }
+        }
+
+
+modelMatrix : Transformation -> Mat4
+modelMatrix transformation =
+    Math.Matrix4.fromRecord
+        { m11 = transformation.ix
+        , m21 = transformation.iy
+        , m31 = transformation.iz
+        , m41 = 0
+        , m12 = transformation.jx
+        , m22 = transformation.jy
+        , m32 = transformation.jz
+        , m42 = 0
+        , m13 = transformation.kx
+        , m23 = transformation.ky
+        , m33 = transformation.kz
+        , m43 = 0
+        , m14 = transformation.px
+        , m24 = transformation.py
+        , m34 = transformation.pz
+        , m44 = 1
         }
 
 

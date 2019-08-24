@@ -7,35 +7,35 @@ module Materials exposing
     , whitePlastic
     )
 
-import Color
-import Scene3d.Material as Material exposing (Material)
+import Color exposing (Color)
+import Scene3d.Drawable exposing (Material)
 
 
 gold : Material
 gold =
-    Material.metal { color = Color.rgb255 255 195 86, roughness = 0.4 }
+    { baseColor = Color.rgb255 255 195 86, roughness = 0.4, metallic = True }
 
 
 aluminum : Material
 aluminum =
-    Material.metal { color = Color.rgb255 233 235 236, roughness = 0.6 }
+    { baseColor = Color.rgb255 233 235 236, roughness = 0.6, metallic = True }
 
 
 copper : Material
 copper =
-    Material.metal { color = Color.rgb255 244 162 137, roughness = 0.25 }
+    { baseColor = Color.rgb255 244 162 137, roughness = 0.25, metallic = True }
 
 
 chromium : Material
 chromium =
-    Material.metal { color = Color.rgb255 140 142 141, roughness = 0.5 }
+    { baseColor = Color.rgb255 140 142 141, roughness = 0.5, metallic = True }
 
 
 blackPlastic : Material
 blackPlastic =
-    Material.nonmetal { color = Color.black, roughness = 0.5 }
+    { baseColor = Color.black, roughness = 0.5, metallic = False }
 
 
 whitePlastic : Material
 whitePlastic =
-    Material.nonmetal { color = Color.white, roughness = 0.25 }
+    { baseColor = Color.white, roughness = 0.25, metallic = False }

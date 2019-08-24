@@ -23,10 +23,12 @@ import PointLight exposing (PointLight(..))
 import Quantity exposing (zero)
 import Rectangle2d
 import Scene3d
+import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Exposure as Exposure
 import Scene3d.Light as Light exposing (Light)
-import Scene3d.Material as Material exposing (Material)
-import Shapes
+import Scene3d.Mesh as Mesh exposing (HasNormals, NoTangents, NoUV)
+import Scene3d.Shape as Shape
 import SketchPlane3d
 import Task
 import Time
@@ -44,17 +46,17 @@ translateBy ( x, y ) =
     Drawable.translateBy (Vector3d.meters x y 0)
 
 
-sphere : Material -> ( Float, Float ) -> Drawable Meters WorldCoordinates
+sphere : Material HasNormals NoUV NoTangents -> ( Float, Float ) -> Drawable Meters WorldCoordinates
 sphere material offset =
     Shapes.sphere material Point3d.origin (meters 1) |> translateBy offset
 
 
-box : Material -> ( Float, Float ) -> Drawable Meters WorldCoordinates
+box : Material HasNormals NoUV NoTangents -> ( Float, Float ) -> Drawable Meters WorldCoordinates
 box material offset =
     Shapes.box material (meters 1.5) (meters 1.5) (meters 1.5) |> translateBy offset
 
 
-cylinder : Material -> ( Float, Float ) -> Drawable Meters WorldCoordinates
+cylinder : Material HasNormals NoUV NoTangents -> ( Float, Float ) -> Drawable Meters WorldCoordinates
 cylinder material offset =
     Shapes.cylinder material
         (Point3d.meters 0 0 -0.75)
@@ -224,8 +226,6 @@ view =
 
                     lights =
                         []
-                            |> addIf .ambientEnabled
-                                (Light.ambient lookupTexture ambientLightColor)
                             |> addIf .directional1Enabled
                                 (Light.directional lightDirection1
                                     directionalLight1Color
@@ -262,8 +262,17 @@ view =
                         ]
 
                     sceneElement =
-                        Element.html
-                            (Scene3d.renderWith renderOptions lights camera ( screenWidth, screenHeight ) scene)
+                        Element.html <|
+                            Scene3d.render
+                                { options = renderOptions
+                                , lights = lights
+                                , camera = camera
+                                , screenWidth = screenWidth
+                                , screenHeight = screenHeight
+                                , scene = scene
+                                , exposure = Exposure.sunny16
+                                , whiteBalance = Chromaticity.daylight
+                                }
 
                     checkbox value message label =
                         Input.checkbox []
@@ -272,11 +281,6 @@ view =
                             , checked = value
                             , label = Input.labelRight [] (Element.text label)
                             }
-
-                    ambientCheckbox =
-                        checkbox model.ambientEnabled
-                            SetAmbientEnabled
-                            "Ambient"
 
                     directional1Checkbox =
                         checkbox model.directional1Enabled
@@ -330,7 +334,6 @@ view =
                                     }
                                 ]
                                 (Element.text "Lights")
-                            , ambientCheckbox
                             , directional1Checkbox
                             , directional2Checkbox
                             , point1Checkbox
@@ -347,8 +350,7 @@ view =
 
 
 type alias Model =
-    { loadedTexture : Maybe (Result WebGL.Texture.Error Light.AmbientLookupTexture)
-    , elapsed : Duration
+    { elapsed : Duration
     , ambientEnabled : Bool
     , directional1Enabled : Bool
     , directional2Enabled : Bool
@@ -359,9 +361,7 @@ type alias Model =
 
 
 type Msg
-    = LoadComplete (Result WebGL.Texture.Error Light.AmbientLookupTexture)
-    | SetAmbientEnabled Bool
-    | SetDirectional1Enabled Bool
+    = SetDirectional1Enabled Bool
     | SetDirectional2Enabled Bool
     | SetPoint1Enabled Bool
     | SetPoint2Enabled Bool
@@ -380,21 +380,15 @@ init () =
       , point2Enabled = True
       , overheadEnabled = True
       }
-    , Task.attempt LoadComplete (Light.loadAmbientLookupTextureFrom "lookup.png")
+    , Cmd.none
     )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
-        LoadComplete loadedTexture ->
-            ( { model | loadedTexture = Just loadedTexture }, Cmd.none )
-
         Tick duration ->
             ( { model | elapsed = model.elapsed |> Quantity.plus duration }, Cmd.none )
-
-        SetAmbientEnabled value ->
-            ( { model | ambientEnabled = value }, Cmd.none )
 
         SetDirectional1Enabled value ->
             ( { model | directional1Enabled = value }, Cmd.none )

@@ -1,152 +1,125 @@
-module Spheres exposing (Model, Msg(..), aluminumSphere, blackPlasticSphere, camera, goldSphere, height, init, main, update, view, viewpoint, whitePlasticSphere, width)
+module Spheres exposing (main)
 
 import Angle
-import Browser
+import Axis3d
 import Camera3d exposing (Camera3d)
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
+import Illuminance exposing (lux)
 import Length exposing (Meters, meters)
+import LuminousFlux exposing (lumens)
 import Materials
-import Pixels exposing (Pixels, pixels)
+import Pixels exposing (pixels)
 import Point3d
-import Quantity exposing (Quantity, zero)
-import Rectangle2d
 import Scene3d
+import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable exposing (Drawable)
-import Scene3d.Light as Light
-import Shapes
-import SketchPlane3d
-import Task
-import Viewpoint3d exposing (Viewpoint3d)
-import WebGL.Texture
+import Scene3d.Exposure as Exposure
+import Scene3d.Light as Light exposing (Light)
+import Scene3d.Mesh as Mesh exposing (HasNormals, Mesh, NoTangents, NoUV)
+import Scene3d.Shape as Shape
+import Vector3d
+import Viewpoint3d
 
 
-type alias Model =
-    { loadedTexture : Maybe (Result WebGL.Texture.Error Light.AmbientLookupTexture)
-    }
+type World
+    = World
 
 
-type Msg
-    = LoadComplete (Result WebGL.Texture.Error Light.AmbientLookupTexture)
+sphereMesh : Mesh Meters World HasNormals NoUV NoTangents
+sphereMesh =
+    Shape.sphere { radius = meters 1, maxError = meters 0.001 }
+        |> Mesh.withShadow
 
 
-type WorldCoordinates
-    = WorldCoordinates
+floorMesh : Mesh Meters World HasNormals NoUV NoTangents
+floorMesh =
+    Shape.block (meters 8) (meters 8) (meters 0.2)
 
 
-type ScreenCoordinates
-    = ScreenCoordinates
+floor : Drawable Meters World
+floor =
+    Drawable.physical Materials.aluminum floorMesh
+        |> Drawable.translateBy (Vector3d.meters 0 0 -2)
 
 
-init : () -> ( Model, Cmd Msg )
-init () =
-    ( { loadedTexture = Nothing }
-    , Task.attempt LoadComplete (Light.loadAmbientLookupTextureFrom "lookup.png")
-    )
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update (LoadComplete loadedTexture) _ =
-    ( { loadedTexture = Just loadedTexture }, Cmd.none )
-
-
-goldSphere : Drawable Meters WorldCoordinates
+goldSphere : Drawable Meters World
 goldSphere =
-    Shapes.sphere Materials.gold
-        (Point3d.meters 2 2 0)
-        (meters 1)
+    Drawable.physical Materials.gold sphereMesh
+        |> Drawable.translateBy (Vector3d.meters 2 2 0)
 
 
-aluminumSphere : Drawable Meters WorldCoordinates
+aluminumSphere : Drawable Meters World
 aluminumSphere =
-    Shapes.sphere Materials.aluminum
-        (Point3d.meters 2 -2 0)
-        (meters 1)
+    Drawable.physical Materials.aluminum sphereMesh
+        |> Drawable.translateBy (Vector3d.meters 2 -2 0)
 
 
-blackPlasticSphere : Drawable Meters WorldCoordinates
+blackPlasticSphere : Drawable Meters World
 blackPlasticSphere =
-    Shapes.sphere Materials.blackPlastic
-        (Point3d.meters -2 -2 0)
-        (meters 1)
+    Drawable.physical Materials.blackPlastic sphereMesh
+        |> Drawable.translateBy (Vector3d.meters -2 -2 0)
 
 
-whitePlasticSphere : Drawable Meters WorldCoordinates
+whitePlasticSphere : Drawable Meters World
 whitePlasticSphere =
-    Shapes.sphere Materials.whitePlastic
-        (Point3d.meters -2 2 0)
-        (meters 1)
+    Drawable.physical Materials.whitePlastic sphereMesh
+        |> Drawable.translateBy (Vector3d.meters -2 2 0)
 
 
-viewpoint : Viewpoint3d Meters WorldCoordinates
-viewpoint =
-    Viewpoint3d.lookAt
-        { focalPoint = Point3d.origin
-        , eyePoint = Point3d.meters 10 10 10
-        , upDirection = Direction3d.positiveZ
-        }
-
-
-width : Quantity Float Pixels
-width =
-    pixels 1024
-
-
-height : Quantity Float Pixels
-height =
-    pixels 768
-
-
-camera : Camera3d Meters WorldCoordinates
+camera : Camera3d Meters World
 camera =
     Camera3d.perspective
-        { viewpoint = viewpoint
+        { viewpoint =
+            Viewpoint3d.lookAt
+                { focalPoint = Point3d.meters 0 0 -2
+                , eyePoint = Point3d.meters 10 10 10
+                , upDirection = Direction3d.positiveZ
+                }
         , verticalFieldOfView = Angle.degrees 30
         , clipDepth = meters 0.1
         }
 
 
-view : Model -> Html Msg
-view model =
-    case model.loadedTexture of
-        Nothing ->
-            Html.text "Loading ambient lookup texture..."
-
-        Just (Err _) ->
-            Html.text "Error loading ambient lookup texture"
-
-        Just (Ok lookupTexture) ->
-            let
-                lightDirection =
-                    Direction3d.fromAzimuthInAndElevationFrom
-                        SketchPlane3d.xy
-                        (Angle.degrees -60)
-                        (Angle.degrees -30)
-
-                lights =
-                    [ Light.directional lightDirection ( 0, 0.2, 0.2 )
-                    , Light.directional Direction3d.negativeX ( 0.2, 0, 0 )
-                    , Light.point (Point3d.meters 0 -2 3)
-                        ( 0.75, 0.75, 0.75 )
-                    , Light.ambient lookupTexture ( 0.03, 0.03, 0.03 )
-                    ]
-
-                scene =
-                    Drawable.group
-                        [ goldSphere
-                        , aluminumSphere
-                        , blackPlasticSphere
-                        , whitePlasticSphere
-                        ]
-            in
-            Scene3d.renderWith [ Scene3d.devicePixelRatio 2 ] lights camera ( width, height ) scene
+sunlight : Light Meters World
+sunlight =
+    Light.directional
+        Chromaticity.daylight
+        (lux 20000)
+        (Direction3d.negativeZ
+            |> Direction3d.rotateAround Axis3d.x (Angle.degrees -30)
+        )
 
 
-main : Program () Model Msg
+otherLight : Light Meters World
+otherLight =
+    Light.directional Chromaticity.daylight
+        (lux 50000)
+        (Direction3d.negativeX
+            |> Direction3d.rotateAround Axis3d.y (Angle.degrees -30)
+        )
+
+
+scene : Drawable Meters World
+scene =
+    Drawable.group
+        [ goldSphere
+        , aluminumSphere
+        , blackPlasticSphere
+        , whitePlasticSphere
+        , floor
+        ]
+
+
+main : Html msg
 main =
-    Browser.document
-        { init = init
-        , update = update
-        , view = \model -> { title = "Spheres", body = [ view model ] }
-        , subscriptions = always Sub.none
+    Scene3d.render
+        { options = [ Scene3d.devicePixelRatio 2 ]
+        , lights = Scene3d.twoLights ( sunlight, { castsShadows = True } ) otherLight
+        , camera = camera
+        , screenWidth = pixels 1024
+        , screenHeight = pixels 768
+        , scene = scene
+        , exposure = Exposure.sunny16
+        , whiteBalance = Chromaticity.daylight
         }

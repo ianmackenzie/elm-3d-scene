@@ -1,15 +1,18 @@
 module Scene3d exposing
-    ( RenderOption
-    , alpha
-    , antialias
-    , clearColor
-    , devicePixelRatio
-    , gammaCorrection
-    , render
-    , renderWith
-    , toEntities
-    , toEntitiesWith
+    ( render, toEntities
+    , Lights, oneLight, twoLights, threeLights, fourLights
+    , Option, antialias, clearColor, devicePixelRatio, gammaCorrection
     )
+
+{-|
+
+@docs render, toEntities
+
+@docs Lights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
+
+@docs Option, antialias, clearColor, devicePixelRatio, gammaCorrection
+
+-}
 
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
@@ -17,436 +20,577 @@ import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
+import Luminance
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels, inPixels)
+import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
 import Rectangle2d
+import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.Drawable exposing (Drawable)
+import Scene3d.Exposure as Exposure exposing (Exposure)
 import Scene3d.Light exposing (Light)
-import Scene3d.Shader as Shader
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types
+import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, Node(..))
 import Viewpoint3d
 import WebGL
 import WebGL.Settings
-import WebGL.Settings.DepthTest
+import WebGL.Settings.DepthTest as DepthTest
+import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture exposing (Texture)
 
 
-type alias AmbientProperties =
-    { color : Vec3
-    , lookupTexture : Texture
-    }
+
+----- LIGHTS -----
+--
+-- type:
+--   0 : disabled
+--   1 : directional (XYZ is direction to light, i.e. reversed light direction)
+--   2 : point (XYZ is light position)
+--
+-- radius is unused for now (will hopefully add sphere lights in the future)
+--
+-- [ x_i     r_i       x_j     r_j      ]
+-- [ y_i     g_i       y_j     g_j      ]
+-- [ z_i     b_i       z_j     b_j      ]
+-- [ type_i  radius_i  type_j  radius_j ]
 
 
-type alias LightProperties =
-    { lightType : Int
-    , lightColor : Vec3
-    , lightVector : Vec3
-    , lightRadius : Float
-    }
+type Lights units coordinates
+    = SingleUnshadowedPass LightMatrices
+    | SingleShadowedPass LightMatrices
+    | TwoPasses LightMatrices LightMatrices
 
 
-zeroVector : Vec3
-zeroVector =
-    Vector3.vec3 0 0 0
-
-
-disabledLight : LightProperties
+disabledLight : Light units coordinates
 disabledLight =
-    { lightType = -1
-    , lightColor = zeroVector
-    , lightVector = zeroVector
-    , lightRadius = 0
+    Types.Light
+        { type_ = 0
+        , x = 0
+        , y = 0
+        , z = 0
+        , r = 0
+        , g = 0
+        , b = 0
+        , radius = 0
+        }
+
+
+lightPair : Light units coordinates -> Light units coordinates -> Mat4
+lightPair (Types.Light first) (Types.Light second) =
+    Math.Matrix4.fromRecord
+        { m11 = first.x
+        , m21 = first.y
+        , m31 = first.z
+        , m41 = first.type_
+        , m12 = first.r
+        , m22 = first.g
+        , m32 = first.b
+        , m42 = first.radius
+        , m13 = second.x
+        , m23 = second.y
+        , m33 = second.z
+        , m43 = second.type_
+        , m14 = second.r
+        , m24 = second.g
+        , m34 = second.b
+        , m44 = second.radius
+        }
+
+
+lightingDisabled : LightMatrices
+lightingDisabled =
+    { lights12 = lightPair disabledLight disabledLight
+    , lights34 = lightPair disabledLight disabledLight
+    , lights56 = lightPair disabledLight disabledLight
+    , lights78 = lightPair disabledLight disabledLight
     }
 
 
-type alias PhysicallyBasedRenderer =
-    List WebGL.Settings.Setting
-    -> Vec3
-    -> Float
-    -> Mat4
-    -> Mat4
-    -> Vec4
-    -> Float
-    -> WebGL.Mesh Types.PhysicalAttributes
-    -> WebGL.Entity
+noLights : Lights units coordinates
+noLights =
+    SingleUnshadowedPass lightingDisabled
 
 
-type PhysicallyBasedLighting
-    = AmbientLighting AmbientProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
-    | NoAmbientLighting LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties LightProperties
-    | DummyLighting
-
-
-type alias RenderProperties units coordinates =
-    { camera : Camera3d units coordinates
-    , eyePoint : Vec3
-    , projectionParameters : Vec4
-    , physicallyBasedRenderer : PhysicallyBasedRenderer
-    , gammaCorrection : Float
-    }
-
-
-physicallyBasedLighting : List (Light units coordinates) -> PhysicallyBasedLighting
-physicallyBasedLighting lights =
+oneLight : Light units coordinates -> { castsShadows : Bool } -> Lights units coordinates
+oneLight light { castsShadows } =
     let
-        updateLightingState light currentState =
-            case light of
-                Types.AmbientLight ambientLight ->
-                    { currentState
-                        | ambientLightColor =
-                            Vector3.add ambientLight.color
-                                currentState.ambientLightColor
-                        , ambientLookupTexture = Just ambientLight.lookupTexture
-                    }
+        lightMatrices =
+            { lights12 = lightPair light disabledLight
+            , lights34 = lightPair disabledLight disabledLight
+            , lights56 = lightPair disabledLight disabledLight
+            , lights78 = lightPair disabledLight disabledLight
+            }
+    in
+    if castsShadows then
+        SingleShadowedPass lightMatrices
 
-                Types.DirectionalLight directionalLight ->
-                    let
-                        thisLight =
-                            { lightType = 1
-                            , lightColor = directionalLight.color
-                            , lightVector = directionalLight.direction
-                            , lightRadius = 0
-                            }
-                    in
-                    { currentState
-                        | lights = thisLight :: currentState.lights
-                    }
+    else
+        SingleUnshadowedPass lightMatrices
 
-                Types.PointLight pointLight ->
-                    let
-                        thisLight =
-                            { lightType = 2
-                            , lightColor = pointLight.color
-                            , lightVector = pointLight.position
-                            , lightRadius = 0
-                            }
-                    in
-                    { currentState
-                        | lights = thisLight :: currentState.lights
-                    }
 
-        initialLightingState =
-            { ambientLightColor = Vector3.vec3 0 0 0
-            , ambientLookupTexture = Nothing
-            , lights = []
+twoLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Lights units coordinates
+twoLights first second =
+    eightLights
+        first
+        second
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+
+
+threeLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Lights units coordinates
+threeLights first second third =
+    eightLights
+        first
+        second
+        third
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+
+
+fourLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Lights units coordinates
+fourLights first second third fourth =
+    eightLights
+        first
+        second
+        third
+        fourth
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+
+
+fiveLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Lights units coordinates
+fiveLights first second third fourth fifth =
+    eightLights
+        first
+        second
+        third
+        fourth
+        fifth
+        disabledLight
+        disabledLight
+        disabledLight
+
+
+sixLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Lights units coordinates
+sixLights first second third fourth fifth sixth =
+    eightLights
+        first
+        second
+        third
+        fourth
+        fifth
+        sixth
+        disabledLight
+        disabledLight
+
+
+sevenLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Lights units coordinates
+sevenLights first second third fourth fifth sixth seventh =
+    eightLights
+        first
+        second
+        third
+        fourth
+        fifth
+        sixth
+        seventh
+        disabledLight
+
+
+eightLights :
+    ( Light units coordinates, { castsShadows : Bool } )
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Light units coordinates
+    -> Lights units coordinates
+eightLights ( firstLight, { castsShadows } ) secondLight thirdLight fourthLight fifthLight sixthLight seventhLight eigthLight =
+    if castsShadows then
+        TwoPasses
+            { lights12 = lightPair firstLight secondLight
+            , lights34 = lightPair thirdLight fourthLight
+            , lights56 = lightPair fifthLight sixthLight
+            , lights78 = lightPair seventhLight eigthLight
+            }
+            { lights12 = lightPair secondLight thirdLight
+            , lights34 = lightPair fourthLight fifthLight
+            , lights56 = lightPair sixthLight seventhLight
+            , lights78 = lightPair eigthLight disabledLight
             }
 
-        lightingState =
-            List.foldl updateLightingState initialLightingState lights
-    in
-    case lightingState.ambientLookupTexture of
-        Just lookupTexture ->
-            let
-                ambientProperties =
-                    { color = lightingState.ambientLightColor
-                    , lookupTexture = lookupTexture
-                    }
-            in
-            case lightingState.lights of
-                [] ->
-                    AmbientLighting ambientProperties disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1 ] ->
-                    AmbientLighting ambientProperties light1 disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2 ] ->
-                    AmbientLighting ambientProperties light1 light2 disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3 ] ->
-                    AmbientLighting ambientProperties light1 light2 light3 disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3, light4 ] ->
-                    AmbientLighting ambientProperties light1 light2 light3 light4 disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3, light4, light5 ] ->
-                    AmbientLighting ambientProperties light1 light2 light3 light4 light5 disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3, light4, light5, light6 ] ->
-                    AmbientLighting ambientProperties light1 light2 light3 light4 light5 light6 disabledLight disabledLight
-
-                [ light1, light2, light3, light4, light5, light6, light7 ] ->
-                    AmbientLighting ambientProperties light1 light2 light3 light4 light5 light6 light7 disabledLight
-
-                [ light1, light2, light3, light4, light5, light6, light7, light8 ] ->
-                    AmbientLighting ambientProperties light1 light2 light3 light4 light5 light6 light7 light8
-
-                _ ->
-                    DummyLighting
-
-        Nothing ->
-            case lightingState.lights of
-                [] ->
-                    NoAmbientLighting disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1 ] ->
-                    NoAmbientLighting light1 disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2 ] ->
-                    NoAmbientLighting light1 light2 disabledLight disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3 ] ->
-                    NoAmbientLighting light1 light2 light3 disabledLight disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3, light4 ] ->
-                    NoAmbientLighting light1 light2 light3 light4 disabledLight disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3, light4, light5 ] ->
-                    NoAmbientLighting light1 light2 light3 light4 light5 disabledLight disabledLight disabledLight
-
-                [ light1, light2, light3, light4, light5, light6 ] ->
-                    NoAmbientLighting light1 light2 light3 light4 light5 light6 disabledLight disabledLight
-
-                [ light1, light2, light3, light4, light5, light6, light7 ] ->
-                    NoAmbientLighting light1 light2 light3 light4 light5 light6 light7 disabledLight
-
-                [ light1, light2, light3, light4, light5, light6, light7, light8 ] ->
-                    NoAmbientLighting light1 light2 light3 light4 light5 light6 light7 light8
-
-                _ ->
-                    DummyLighting
+    else
+        SingleUnshadowedPass
+            { lights12 = lightPair firstLight secondLight
+            , lights34 = lightPair thirdLight fourthLight
+            , lights56 = lightPair fifthLight sixthLight
+            , lights78 = lightPair seventhLight eigthLight
+            }
 
 
-physicallyBasedRendererFor : List (Light units coordinates) -> PhysicallyBasedRenderer
-physicallyBasedRendererFor lights =
-    case physicallyBasedLighting lights of
-        AmbientLighting ambientProperties light1 light2 light3 light4 light5 light6 light7 light8 ->
-            \settings eyePoint modelScale modelMatrix modelViewMatrix projectionParameters gamma mesh ->
-                let
-                    uniforms =
-                        { modelScale = modelScale
-                        , modelMatrix = modelMatrix
-                        , modelViewMatrix = modelViewMatrix
-                        , projectionParameters = projectionParameters
-                        , eyePoint = eyePoint
-                        , gammaCorrection = gamma
-                        , ambientLightColor = ambientProperties.color
-                        , ambientLookupTexture = ambientProperties.lookupTexture
-                        , lightType1 = light1.lightType
-                        , lightColor1 = light1.lightColor
-                        , lightVector1 = light1.lightVector
-                        , lightRadius1 = light1.lightRadius
-                        , lightType2 = light2.lightType
-                        , lightColor2 = light2.lightColor
-                        , lightVector2 = light2.lightVector
-                        , lightRadius2 = light2.lightRadius
-                        , lightType3 = light3.lightType
-                        , lightColor3 = light3.lightColor
-                        , lightVector3 = light3.lightVector
-                        , lightRadius3 = light3.lightRadius
-                        , lightType4 = light4.lightType
-                        , lightColor4 = light4.lightColor
-                        , lightVector4 = light4.lightVector
-                        , lightRadius4 = light4.lightRadius
-                        , lightType5 = light5.lightType
-                        , lightColor5 = light5.lightColor
-                        , lightVector5 = light5.lightVector
-                        , lightRadius5 = light5.lightRadius
-                        , lightType6 = light6.lightType
-                        , lightColor6 = light6.lightColor
-                        , lightVector6 = light6.lightVector
-                        , lightRadius6 = light6.lightRadius
-                        , lightType7 = light7.lightType
-                        , lightColor7 = light7.lightColor
-                        , lightVector7 = light7.lightVector
-                        , lightRadius7 = light7.lightRadius
-                        , lightType8 = light8.lightType
-                        , lightColor8 = light8.lightColor
-                        , lightVector8 = light8.lightVector
-                        , lightRadius8 = light8.lightRadius
-                        }
-                in
-                WebGL.entityWith settings Shader.physicalVertex Shader.ambientFragment mesh uniforms
 
-        NoAmbientLighting light1 light2 light3 light4 light5 light6 light7 light8 ->
-            \settings eyePoint modelScale modelMatrix modelViewMatrix projectionParameters gamma mesh ->
-                let
-                    uniforms =
-                        { modelScale = modelScale
-                        , modelMatrix = modelMatrix
-                        , modelViewMatrix = modelViewMatrix
-                        , projectionParameters = projectionParameters
-                        , eyePoint = eyePoint
-                        , gammaCorrection = gamma
-                        , lightType1 = light1.lightType
-                        , lightColor1 = light1.lightColor
-                        , lightVector1 = light1.lightVector
-                        , lightRadius1 = light1.lightRadius
-                        , lightType2 = light2.lightType
-                        , lightColor2 = light2.lightColor
-                        , lightVector2 = light2.lightVector
-                        , lightRadius2 = light2.lightRadius
-                        , lightType3 = light3.lightType
-                        , lightColor3 = light3.lightColor
-                        , lightVector3 = light3.lightVector
-                        , lightRadius3 = light3.lightRadius
-                        , lightType4 = light4.lightType
-                        , lightColor4 = light4.lightColor
-                        , lightVector4 = light4.lightVector
-                        , lightRadius4 = light4.lightRadius
-                        , lightType5 = light5.lightType
-                        , lightColor5 = light5.lightColor
-                        , lightVector5 = light5.lightVector
-                        , lightRadius5 = light5.lightRadius
-                        , lightType6 = light6.lightType
-                        , lightColor6 = light6.lightColor
-                        , lightVector6 = light6.lightVector
-                        , lightRadius6 = light6.lightRadius
-                        , lightType7 = light7.lightType
-                        , lightColor7 = light7.lightColor
-                        , lightVector7 = light7.lightVector
-                        , lightRadius7 = light7.lightRadius
-                        , lightType8 = light8.lightType
-                        , lightColor8 = light8.lightColor
-                        , lightVector8 = light8.lightVector
-                        , lightRadius8 = light8.lightRadius
-                        }
-                in
-                WebGL.entityWith settings Shader.physicalVertex Shader.noAmbientFragment mesh uniforms
-
-        DummyLighting ->
-            \settings eyePoint modelScale modelMatrix modelViewMatrix projectionParameters gamma mesh ->
-                let
-                    uniforms =
-                        { modelScale = modelScale
-                        , modelMatrix = modelMatrix
-                        , modelViewMatrix = modelViewMatrix
-                        , projectionParameters = projectionParameters
-                        , gammaCorrection = gamma
-                        }
-                in
-                WebGL.entityWith settings Shader.physicalVertex Shader.dummyFragment mesh uniforms
+----- RENDERING -----
 
 
-toEntity : RenderProperties units coordinates -> Transformation -> Types.Mesh -> WebGL.Entity
-toEntity renderProperties transformation mesh =
-    let
-        modelScale =
-            transformation.scale
-
-        placementFrame =
-            Transformation.placementFrame transformation
-
-        modelMatrix =
-            Frame3d.toMat4 placementFrame
-
-        modelViewMatrix =
-            Camera3d.modelViewMatrix placementFrame renderProperties.camera
-
-        projectionParameters =
-            renderProperties.projectionParameters
-
-        cullSetting =
-            if transformation.isRightHanded then
-                WebGL.Settings.back
-
-            else
-                WebGL.Settings.front
-
-        settings =
-            [ WebGL.Settings.DepthTest.default
-            , WebGL.Settings.cullFace cullSetting
-            ]
-    in
-    case mesh of
-        Types.SimpleMesh colorType boundingBox webGlMesh ->
-            case colorType of
-                Types.FlatColor ->
-                    let
-                        uniforms =
-                            { modelScale = modelScale
-                            , modelMatrix = modelMatrix
-                            , modelViewMatrix = modelViewMatrix
-                            , projectionParameters = projectionParameters
-                            }
-                    in
-                    WebGL.entityWith settings
-                        Shader.simpleVertex
-                        Shader.flatFragment
-                        webGlMesh
-                        uniforms
-
-                Types.EmissiveColor ->
-                    let
-                        uniforms =
-                            { modelScale = modelScale
-                            , modelMatrix = modelMatrix
-                            , modelViewMatrix = modelViewMatrix
-                            , projectionParameters = projectionParameters
-                            , gammaCorrection = renderProperties.gammaCorrection
-                            }
-                    in
-                    WebGL.entityWith settings
-                        Shader.simpleVertex
-                        Shader.emissiveFragment
-                        webGlMesh
-                        uniforms
-
-        Types.PhysicalMesh boundingBox webGlMesh ->
-            renderProperties.physicallyBasedRenderer
-                settings
-                renderProperties.eyePoint
-                modelScale
-                modelMatrix
-                modelViewMatrix
-                projectionParameters
-                renderProperties.gammaCorrection
-                webGlMesh
+type alias RenderPass =
+    LightMatrices -> List WebGL.Settings.Setting -> WebGL.Entity
 
 
-collectEntities : RenderProperties units coordinates -> Transformation -> Types.Drawable_ -> List WebGL.Entity -> List WebGL.Entity
-collectEntities renderProperties currentTransformation drawable_ accumulated =
-    case drawable_ of
-        Types.TransformedDrawable transformation childDrawable ->
-            collectEntities renderProperties
-                (Transformation.compose transformation currentTransformation)
-                childDrawable
-                accumulated
+type alias RenderPasses =
+    { meshes : List RenderPass
+    , shadows : List RenderPass
+    }
 
-        Types.MeshDrawable mesh ->
-            toEntity renderProperties currentTransformation mesh :: accumulated
 
-        Types.DrawableGroup childDrawables ->
-            List.foldl (collectEntities renderProperties currentTransformation)
-                accumulated
-                childDrawables
+createRenderPass : Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
+createRenderPass sceneProperties viewMatrix transformation drawFunction =
+    drawFunction
+        sceneProperties
+        transformation.scale
+        (Transformation.modelMatrix transformation)
+        transformation.isRightHanded
+        viewMatrix
 
-        Types.EmptyDrawable ->
+
+collectRenderPasses : Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
+collectRenderPasses sceneProperties viewMatrix currentTransformation node accumulated =
+    case node of
+        EmptyNode ->
             accumulated
 
+        Transformed transformation childNode ->
+            collectRenderPasses
+                sceneProperties
+                viewMatrix
+                (Transformation.compose transformation currentTransformation)
+                childNode
+                accumulated
 
-toEntities : List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> List WebGL.Entity
-toEntities =
-    toEntitiesWith []
+        MeshNode meshDrawFunction maybeShadowDrawFunction ->
+            let
+                updatedMeshes =
+                    createRenderPass
+                        sceneProperties
+                        viewMatrix
+                        currentTransformation
+                        meshDrawFunction
+                        :: accumulated.meshes
 
+                updatedShadows =
+                    case maybeShadowDrawFunction of
+                        Nothing ->
+                            accumulated.shadows
 
-toEntitiesWith : List RenderOption -> List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> List WebGL.Entity
-toEntitiesWith options lights camera ( width, height ) (Types.Drawable rootDrawable_) =
-    let
-        renderProperties =
-            { camera = camera
-            , eyePoint =
-                Point3d.toVec3 (Viewpoint3d.eyePoint (Camera3d.viewpoint camera))
-            , projectionParameters =
-                Camera3d.projectionParameters
-                    { screenAspectRatio = Quantity.ratio width height }
-                    camera
-            , physicallyBasedRenderer = physicallyBasedRendererFor lights
-            , gammaCorrection = getGammaCorrection options
+                        Just shadowDrawFunction ->
+                            createRenderPass
+                                sceneProperties
+                                viewMatrix
+                                currentTransformation
+                                shadowDrawFunction
+                                :: accumulated.shadows
+            in
+            { meshes = updatedMeshes
+            , shadows = updatedShadows
             }
+
+        Group childNodes ->
+            List.foldl
+                (collectRenderPasses
+                    sceneProperties
+                    viewMatrix
+                    currentTransformation
+                )
+                accumulated
+                childNodes
+
+
+
+-- ## Overall scene Properties
+--
+-- projectionType:
+--   0: perspective (camera XYZ is eye position)
+--   1: orthographic (camera XYZ is direction to screen)
+--
+-- [ clipDistance  cameraX         whiteR  * ]
+-- [ aspectRatio   cameraY         whiteG  * ]
+-- [ kc            cameraZ         whiteB  * ]
+-- [ kz            projectionType  gamma   * ]
+
+
+depthTestDefault : List WebGL.Settings.Setting
+depthTestDefault =
+    [ DepthTest.default ]
+
+
+outsideStencil : List WebGL.Settings.Setting
+outsideStencil =
+    [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
+    , StencilTest.test
+        { ref = 0
+        , mask = 0xFF
+        , test = StencilTest.equal
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.keep
+        , writeMask = 0x00
+        }
+    ]
+
+
+insideStencil : List WebGL.Settings.Setting
+insideStencil =
+    [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
+    , StencilTest.test
+        { ref = 0
+        , mask = 0xFF
+        , test = StencilTest.notEqual
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.keep
+        , writeMask = 0x00
+        }
+    ]
+
+
+createShadowStencil : List WebGL.Settings.Setting
+createShadowStencil =
+    [ DepthTest.less { write = False, near = 0, far = 1 }
+    , WebGL.Settings.colorMask False False False False
+    , StencilTest.testSeparate
+        { ref = 1
+        , mask = 0xFF
+        , writeMask = 0xFF
+        }
+        { test = StencilTest.always
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.incrementWrap
+        }
+        { test = StencilTest.always
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.decrementWrap
+        }
+    ]
+
+
+call : List RenderPass -> LightMatrices -> List WebGL.Settings.Setting -> List WebGL.Entity
+call renderPasses lightMatrices settings =
+    renderPasses
+        |> List.map (\renderPass -> renderPass lightMatrices settings)
+
+
+toEntities :
+    { options : List Option
+    , lights : Lights units coordinates
+    , scene : Drawable units coordinates
+    , camera : Camera3d units coordinates
+    , exposure : Exposure
+    , whiteBalance : Chromaticity
+    , screenWidth : Quantity Float Pixels
+    , screenHeight : Quantity Float Pixels
+    }
+    -> List WebGL.Entity
+toEntities { options, lights, scene, camera, exposure, whiteBalance, screenWidth, screenHeight } =
+    let
+        givenGammaCorrection =
+            getGammaCorrection options
+
+        aspectRatio =
+            Quantity.ratio screenWidth screenHeight
+
+        projectionParameters =
+            Camera3d.projectionParameters { screenAspectRatio = aspectRatio }
+                camera
+
+        clipDistance =
+            Math.Vector4.getX projectionParameters
+
+        kc =
+            Math.Vector4.getZ projectionParameters
+
+        kz =
+            Math.Vector4.getW projectionParameters
+
+        eyePoint =
+            Camera3d.viewpoint camera
+                |> Viewpoint3d.eyePoint
+                |> Point3d.unwrap
+
+        projectionType =
+            if kz == 0 then
+                0
+
+            else
+                1
+
+        ( r, g, b ) =
+            Chromaticity.toLinearRgb whiteBalance
+
+        maxLuminance =
+            Luminance.inNits (Exposure.maxLuminance exposure)
+
+        sceneProperties =
+            Math.Matrix4.fromRecord
+                { m11 = clipDistance
+                , m21 = aspectRatio
+                , m31 = kc
+                , m41 = kz
+                , m12 = eyePoint.x
+                , m22 = eyePoint.y
+                , m32 = eyePoint.z
+                , m42 = projectionType
+                , m13 = maxLuminance * r
+                , m23 = maxLuminance * g
+                , m33 = maxLuminance * b
+                , m43 = givenGammaCorrection
+                , m14 = 0
+                , m24 = 0
+                , m34 = 0
+                , m44 = 0
+                }
+
+        viewMatrix =
+            Camera3d.viewMatrix camera
+
+        (Types.Drawable rootNode) =
+            scene
+
+        renderPasses =
+            collectRenderPasses
+                sceneProperties
+                viewMatrix
+                Transformation.identity
+                rootNode
+                { meshes = []
+                , shadows = []
+                }
     in
-    collectEntities renderProperties Transformation.identity rootDrawable_ []
+    case lights of
+        SingleUnshadowedPass lightMatrices ->
+            call renderPasses.meshes lightMatrices depthTestDefault
+
+        SingleShadowedPass lightMatrices ->
+            List.concat
+                [ call renderPasses.meshes lightingDisabled depthTestDefault
+                , call renderPasses.shadows lightMatrices createShadowStencil
+                , call renderPasses.meshes lightMatrices outsideStencil
+                ]
+
+        TwoPasses allLightMatrices unshadowedLightMatrices ->
+            List.concat
+                [ call renderPasses.meshes allLightMatrices depthTestDefault
+                , call renderPasses.shadows allLightMatrices createShadowStencil
+                , call renderPasses.meshes unshadowedLightMatrices insideStencil
+                ]
 
 
-render : List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> Html msg
-render =
-    renderWith []
+render :
+    { options : List Option
+    , lights : Lights units coordinates
+    , scene : Drawable units coordinates
+    , camera : Camera3d units coordinates
+    , exposure : Exposure
+    , whiteBalance : Chromaticity
+    , screenWidth : Quantity Float Pixels
+    , screenHeight : Quantity Float Pixels
+    }
+    -> Html msg
+render arguments =
+    let
+        widthInPixels =
+            inPixels arguments.screenWidth
+
+        heightInPixels =
+            inPixels arguments.screenHeight
+
+        givenDevicePixelRatio =
+            getDevicePixelRatio arguments.options
+
+        givenAntialias =
+            getAntialias arguments.options
+
+        givenClearColor =
+            Color.toRgba (getClearColor arguments.options)
+
+        commonOptions =
+            [ WebGL.depth 1
+            , WebGL.stencil 0
+            , WebGL.clearColor
+                givenClearColor.red
+                givenClearColor.green
+                givenClearColor.blue
+                givenClearColor.alpha
+            ]
+
+        webGLOptions =
+            if givenAntialias then
+                WebGL.antialias :: commonOptions
+
+            else
+                commonOptions
+    in
+    WebGL.toHtmlWith webGLOptions
+        [ Html.Attributes.width (round (givenDevicePixelRatio * widthInPixels))
+        , Html.Attributes.height (round (givenDevicePixelRatio * heightInPixels))
+        , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
+        , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
+        ]
+        (toEntities arguments)
 
 
-type RenderOption
+
+----- OPTIONS -----
+
+
+type Option
     = DevicePixelRatio Float
     | GammaCorrection Float
     | Antialias Bool
@@ -454,32 +598,27 @@ type RenderOption
     | ClearColor Color
 
 
-devicePixelRatio : Float -> RenderOption
-devicePixelRatio =
-    DevicePixelRatio
+devicePixelRatio : Float -> Option
+devicePixelRatio value =
+    DevicePixelRatio value
 
 
-gammaCorrection : Float -> RenderOption
-gammaCorrection =
-    GammaCorrection
+gammaCorrection : Float -> Option
+gammaCorrection value =
+    GammaCorrection value
 
 
-antialias : Bool -> RenderOption
-antialias =
-    Antialias
+antialias : Bool -> Option
+antialias value =
+    Antialias value
 
 
-alpha : Bool -> RenderOption
-alpha =
-    Alpha
+clearColor : Color -> Option
+clearColor color =
+    ClearColor color
 
 
-clearColor : Color -> RenderOption
-clearColor =
-    ClearColor
-
-
-getDevicePixelRatio : List RenderOption -> Float
+getDevicePixelRatio : List Option -> Float
 getDevicePixelRatio options =
     let
         defaultValue =
@@ -496,11 +635,11 @@ getDevicePixelRatio options =
     List.foldl update defaultValue options
 
 
-getGammaCorrection : List RenderOption -> Float
+getGammaCorrection : List Option -> Float
 getGammaCorrection options =
     let
         defaultValue =
-            0.45
+            1 / 2.2
 
         update option oldValue =
             case option of
@@ -513,7 +652,7 @@ getGammaCorrection options =
     List.foldl update defaultValue options
 
 
-getAntialias : List RenderOption -> Bool
+getAntialias : List Option -> Bool
 getAntialias options =
     let
         defaultValue =
@@ -530,7 +669,7 @@ getAntialias options =
     List.foldl update defaultValue options
 
 
-getAlpha : List RenderOption -> Bool
+getAlpha : List Option -> Bool
 getAlpha options =
     let
         defaultValue =
@@ -547,11 +686,11 @@ getAlpha options =
     List.foldl update defaultValue options
 
 
-getClearColor : List RenderOption -> Color
+getClearColor : List Option -> Color
 getClearColor options =
     let
         defaultValue =
-            Color.rgba 0 0 0 0.0
+            Color.rgba 1.0 1.0 1.0 0.0
 
         update option oldValue =
             case option of
@@ -562,53 +701,3 @@ getClearColor options =
                     oldValue
     in
     List.foldl update defaultValue options
-
-
-renderWith : List RenderOption -> List (Light units coordinates) -> Camera3d units coordinates -> ( Quantity Float Pixels, Quantity Float Pixels ) -> Drawable units coordinates -> Html msg
-renderWith options lights camera screenDimensions rootNode =
-    let
-        ( width, height ) =
-            screenDimensions
-
-        widthInPixels =
-            inPixels width
-
-        heightInPixels =
-            inPixels height
-
-        givenDevicePixelRatio =
-            getDevicePixelRatio options
-
-        givenAntialias =
-            getAntialias options
-
-        givenAlpha =
-            getAlpha options
-
-        givenClearColor =
-            Color.toRgba (getClearColor options)
-
-        clearColorOption =
-            WebGL.clearColor
-                givenClearColor.red
-                givenClearColor.green
-                givenClearColor.blue
-                givenClearColor.alpha
-
-        commonOptions =
-            [ WebGL.depth 1, WebGL.alpha givenAlpha, clearColorOption ]
-
-        webGLOptions =
-            if givenAntialias then
-                WebGL.antialias :: commonOptions
-
-            else
-                commonOptions
-    in
-    WebGL.toHtmlWith webGLOptions
-        [ Html.Attributes.width (round (givenDevicePixelRatio * widthInPixels))
-        , Html.Attributes.height (round (givenDevicePixelRatio * heightInPixels))
-        , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
-        , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
-        ]
-        (toEntitiesWith options lights camera screenDimensions rootNode)
