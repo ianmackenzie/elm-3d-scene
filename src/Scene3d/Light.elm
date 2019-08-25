@@ -1,6 +1,8 @@
 module Scene3d.Light exposing
-    ( Light
+    ( AmbientLighting
+    , Light
     , directional
+    , overcast
     , point
     )
 
@@ -8,7 +10,9 @@ import Direction3d exposing (Direction3d)
 import Geometry.Interop.LinearAlgebra.Direction3d as Direction3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Illuminance exposing (Illuminance)
+import Luminance exposing (Luminance)
 import LuminousFlux exposing (LuminousFlux)
+import Math.Matrix4
 import Math.Vector3 exposing (vec3)
 import Point3d exposing (Point3d)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
@@ -19,6 +23,50 @@ import WebGL.Texture exposing (Texture)
 
 type alias Light units coordinates =
     Types.Light units coordinates
+
+
+type alias AmbientLighting coordinates =
+    Types.AmbientLighting coordinates
+
+
+{-| Good default value for zenith luminance: 5000 nits
+-}
+overcast :
+    { zenithDirection : Direction3d coordinates
+    , chromaticity : Chromaticity
+    , zenithLuminance : Luminance
+    }
+    -> AmbientLighting coordinates
+overcast { zenithDirection, chromaticity, zenithLuminance } =
+    let
+        { x, y, z } =
+            Direction3d.unwrap zenithDirection
+
+        ( r, g, b ) =
+            Chromaticity.toLinearRgb chromaticity
+
+        lz =
+            Luminance.inNits zenithLuminance
+    in
+    Types.AmbientLighting <|
+        Math.Matrix4.fromRecord
+            { m11 = x
+            , m21 = y
+            , m31 = z
+            , m41 = 1
+            , m12 = r * lz
+            , m22 = g * lz
+            , m32 = b * lz
+            , m42 = 0
+            , m13 = 0
+            , m23 = 0
+            , m33 = 0
+            , m43 = 0
+            , m14 = 0
+            , m24 = 0
+            , m34 = 0
+            , m44 = 0
+            }
 
 
 

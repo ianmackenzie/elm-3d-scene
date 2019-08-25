@@ -249,7 +249,7 @@ shadowDrawFunction maybeShadow =
                 Types.Shadow _ webGLMesh ->
                     -- TODO take handedness into account?
                     Just <|
-                        \sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+                        \sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
                             WebGL.entityWith settings
                                 Shader.shadowVertex
                                 Shader.shadowFragment
@@ -289,7 +289,7 @@ constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Type
 constantMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded cullBackFaces settings)
                     Shader.plainVertex
@@ -309,7 +309,7 @@ emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Type
 emissiveMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded cullBackFaces settings)
                     Shader.plainVertex
@@ -329,7 +329,7 @@ lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bo
 lambertianMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded cullBackFaces settings)
                     Shader.smoothVertex
@@ -353,7 +353,7 @@ physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, norma
 physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded cullBackFaces settings)
                     Shader.smoothVertex

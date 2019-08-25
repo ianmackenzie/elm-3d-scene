@@ -31,7 +31,7 @@ import Rectangle2d
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.Drawable exposing (Drawable)
 import Scene3d.Exposure as Exposure exposing (Exposure)
-import Scene3d.Light exposing (Light)
+import Scene3d.Light exposing (AmbientLighting, Light)
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, Node(..))
 import Viewpoint3d
@@ -40,6 +40,32 @@ import WebGL.Settings
 import WebGL.Settings.DepthTest as DepthTest
 import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture exposing (Texture)
+
+
+
+----- AMBIENT LIGHTING -----
+
+
+ambientLightingDisabled : Mat4
+ambientLightingDisabled =
+    Math.Matrix4.fromRecord
+        { m11 = 0
+        , m21 = 0
+        , m31 = 0
+        , m41 = 0
+        , m12 = 0
+        , m22 = 0
+        , m32 = 0
+        , m42 = 0
+        , m13 = 0
+        , m23 = 0
+        , m33 = 0
+        , m43 = 0
+        , m14 = 0
+        , m24 = 0
+        , m34 = 0
+        , m44 = 0
+        }
 
 
 
@@ -289,18 +315,19 @@ type alias RenderPasses =
     }
 
 
-createRenderPass : Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
-createRenderPass sceneProperties viewMatrix transformation drawFunction =
+createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
+createRenderPass sceneProperties viewMatrix ambientLighting transformation drawFunction =
     drawFunction
         sceneProperties
         transformation.scale
         (Transformation.modelMatrix transformation)
         transformation.isRightHanded
         viewMatrix
+        ambientLighting
 
 
-collectRenderPasses : Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
-collectRenderPasses sceneProperties viewMatrix currentTransformation node accumulated =
+collectRenderPasses : Mat4 -> Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
+collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransformation node accumulated =
     case node of
         EmptyNode ->
             accumulated
@@ -309,6 +336,7 @@ collectRenderPasses sceneProperties viewMatrix currentTransformation node accumu
             collectRenderPasses
                 sceneProperties
                 viewMatrix
+                ambientLighting
                 (Transformation.compose transformation currentTransformation)
                 childNode
                 accumulated
@@ -319,6 +347,7 @@ collectRenderPasses sceneProperties viewMatrix currentTransformation node accumu
                     createRenderPass
                         sceneProperties
                         viewMatrix
+                        ambientLighting
                         currentTransformation
                         meshDrawFunction
                         :: accumulated.meshes
@@ -332,6 +361,7 @@ collectRenderPasses sceneProperties viewMatrix currentTransformation node accumu
                             createRenderPass
                                 sceneProperties
                                 viewMatrix
+                                ambientLighting
                                 currentTransformation
                                 shadowDrawFunction
                                 :: accumulated.shadows
@@ -345,6 +375,7 @@ collectRenderPasses sceneProperties viewMatrix currentTransformation node accumu
                 (collectRenderPasses
                     sceneProperties
                     viewMatrix
+                    ambientLighting
                     currentTransformation
                 )
                 accumulated
@@ -429,6 +460,7 @@ call renderPasses lightMatrices settings =
 
 toEntities :
     { options : List Option
+    , ambientLighting : Maybe (AmbientLighting coordinates)
     , lights : Lights units coordinates
     , scene : Drawable units coordinates
     , camera : Camera3d units coordinates
@@ -438,7 +470,7 @@ toEntities :
     , screenHeight : Quantity Float Pixels
     }
     -> List WebGL.Entity
-toEntities { options, lights, scene, camera, exposure, whiteBalance, screenWidth, screenHeight } =
+toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBalance, screenWidth, screenHeight } =
     let
         givenGammaCorrection =
             getGammaCorrection options
@@ -500,6 +532,14 @@ toEntities { options, lights, scene, camera, exposure, whiteBalance, screenWidth
         viewMatrix =
             Camera3d.viewMatrix camera
 
+        ambientLightingMatrix =
+            case ambientLighting of
+                Just (Types.AmbientLighting matrix) ->
+                    matrix
+
+                Nothing ->
+                    ambientLightingDisabled
+
         (Types.Drawable rootNode) =
             scene
 
@@ -507,6 +547,7 @@ toEntities { options, lights, scene, camera, exposure, whiteBalance, screenWidth
             collectRenderPasses
                 sceneProperties
                 viewMatrix
+                ambientLightingMatrix
                 Transformation.identity
                 rootNode
                 { meshes = []
@@ -534,6 +575,7 @@ toEntities { options, lights, scene, camera, exposure, whiteBalance, screenWidth
 
 render :
     { options : List Option
+    , ambientLighting : Maybe (AmbientLighting coordinates)
     , lights : Lights units coordinates
     , scene : Drawable units coordinates
     , camera : Camera3d units coordinates

@@ -1,5 +1,6 @@
 module Scene3d.Types exposing
-    ( Bounds
+    ( AmbientLighting(..)
+    , Bounds
     , Chromaticity(..)
     , Color(..)
     , DeformableVertex
@@ -149,6 +150,7 @@ type alias DrawFunction =
     -> Mat4 -- model matrix
     -> Bool -- model matrix is right-handed
     -> Mat4 -- view matrix
+    -> Mat4 -- ambient lighting
     -> LightMatrices -- lights
     -> List WebGL.Settings.Setting -- stencil, depth, blend etc.
     -> WebGL.Entity
@@ -180,3 +182,7 @@ type Light units coordinates
         , g : Float
         , b : Float
         }
+
+
+type AmbientLighting coordinates
+    = AmbientLighting Mat4

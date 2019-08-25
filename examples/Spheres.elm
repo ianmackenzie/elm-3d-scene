@@ -115,6 +115,7 @@ main : Html msg
 main =
     Scene3d.render
         { options = [ Scene3d.devicePixelRatio 2 ]
+        , ambientLighting = Nothing
         , lights = Scene3d.twoLights ( sunlight, { castsShadows = True } ) otherLight
         , camera = camera
         , screenWidth = pixels 1024
