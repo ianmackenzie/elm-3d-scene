@@ -1,6 +1,6 @@
 module Scene3d exposing
     ( render, toEntities
-    , Lights, oneLight, twoLights, threeLights, fourLights
+    , Lights, noLights, oneLight, twoLights, threeLights, fourLights
     , Option, antialias, clearColor, devicePixelRatio, gammaCorrection
     )
 
@@ -8,7 +8,7 @@ module Scene3d exposing
 
 @docs render, toEntities
 
-@docs Lights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
+@docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
 @docs Option, antialias, clearColor, devicePixelRatio, gammaCorrection
 
