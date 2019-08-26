@@ -363,6 +363,7 @@ physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
                     , roughness = roughness
                     , metallic = metallic
                     , sceneProperties = sceneProperties
+                    , ambientLighting = ambientLighting
                     , lights12 = lights.lights12
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56

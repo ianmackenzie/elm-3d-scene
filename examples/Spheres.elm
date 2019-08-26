@@ -7,6 +7,7 @@ import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Illuminance exposing (lux)
 import Length exposing (Meters, meters)
+import Luminance
 import LuminousFlux exposing (lumens)
 import Materials
 import Pixels exposing (pixels)
@@ -15,7 +16,7 @@ import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable exposing (Drawable)
 import Scene3d.Exposure as Exposure
-import Scene3d.Light as Light exposing (Light)
+import Scene3d.Light as Light exposing (AmbientLighting, Light)
 import Scene3d.Mesh as Mesh exposing (HasNormals, Mesh, NoTangents, NoUV)
 import Scene3d.Shape as Shape
 import Vector3d
@@ -91,15 +92,6 @@ sunlight =
         )
 
 
-otherLight : Light Meters World
-otherLight =
-    Light.directional Chromaticity.daylight
-        (lux 50000)
-        (Direction3d.negativeX
-            |> Direction3d.rotateAround Axis3d.y (Angle.degrees -30)
-        )
-
-
 scene : Drawable Meters World
 scene =
     Drawable.group
@@ -111,16 +103,25 @@ scene =
         ]
 
 
+ambientLighting : AmbientLighting World
+ambientLighting =
+    Light.overcast
+        { zenithDirection = Direction3d.positiveZ
+        , zenithLuminance = Luminance.nits 2000
+        , chromaticity = Chromaticity.daylight
+        }
+
+
 main : Html msg
 main =
     Scene3d.render
         { options = [ Scene3d.devicePixelRatio 2 ]
-        , ambientLighting = Nothing
-        , lights = Scene3d.twoLights ( sunlight, { castsShadows = True } ) otherLight
+        , ambientLighting = Just ambientLighting
+        , lights = Scene3d.oneLight sunlight { castsShadows = True }
         , camera = camera
         , screenWidth = pixels 1024
         , screenHeight = pixels 768
         , scene = scene
-        , exposure = Exposure.sunny16
+        , exposure = Exposure.fromEv100 14
         , whiteBalance = Chromaticity.daylight
         }

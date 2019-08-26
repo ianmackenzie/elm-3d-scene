@@ -367,6 +367,7 @@ physicalFragment :
     WebGL.Shader {}
         { uniforms
             | sceneProperties : Mat4
+            , ambientLighting : Mat4
             , lights12 : Mat4
             , lights34 : Mat4
             , lights56 : Mat4
@@ -381,6 +382,7 @@ physicalFragment =
         precision mediump float;
 
         uniform mat4 sceneProperties;
+        uniform mat4 ambientLighting;
         uniform mat4 lights12;
         uniform mat4 lights34;
         uniform mat4 lights56;
@@ -434,6 +436,195 @@ physicalFragment =
             return specularBaseColor + (one - specularBaseColor) * scale;
         }
 
+        vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alphaSquared, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
+            vec3 halfDirection = normalize(directionToCamera + directionToLight);
+            float dotVH = clamp(dot(directionToCamera, halfDirection), 0.0, 1.0);
+            float dotNH = clamp(dot(normalDirection, halfDirection), 0.0, 1.0);
+            float dotNHSquared = dotNH * dotNH;
+
+            float d = specularD(alphaSquared, dotNHSquared);
+            float g = specularG(dotNL, dotNV, alphaSquared);
+            vec3 f = fresnelColor(specularBaseColor, dotVH);
+            return ((d * g) / (4.0 * dotNL * dotNV)) * f;
+        }
+
+        float vndf(float dotNV, float alphaSquared, float dotNH) {
+            return (g1(dotNV, alphaSquared) * dotNV * specularD(alphaSquared, dotNH * dotNH)) / dotNV;
+        }
+
+        float probabilityDensity(float dotNV, float alphaSquared, float dotNH, float dotVH) {
+            return vndf(dotNV, alphaSquared, dotNH) / (4.0 * dotVH);
+        }
+
+        vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
+            t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
+            vec3 vNh = t1 * vT1 + t2 * vT2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * vH;
+            return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
+        }
+
+        vec3 cloudyLuminance(vec3 zenithLuminance, vec3 localZenithDirection, vec3 localLightDirection) {
+            float sinElevation = dot(localLightDirection, localZenithDirection);
+            return zenithLuminance * ((1.0 + sinElevation) / 2.0);
+        }
+
+        vec3 overcastSpecularSample(
+            vec3 zenithLuminance,
+            vec3 localZenithDirection,
+            vec3 localViewDirection,
+            vec3 localLightDirection,
+            vec3 localHalfDirection,
+            float alphaSquared,
+            vec3 specularBaseColor
+        ) {
+            vec3 luminance = cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection);
+            float dotVH = dot(localViewDirection, localHalfDirection);
+            float dotNL = localLightDirection.z;
+            return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
+            return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
+        }
+
+        vec3 specularLightDirection(vec3 v, vec3 h) {
+            return (2.0 * dot(v, h)) * h - v;
+        }
+
+        vec3 ambientColor(
+            vec3 normalDirection,
+            vec3 directionToCamera,
+            float dotNV,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha,
+            float alphaSquared
+        ) {
+            float ambientType = ambientLighting[0][3];
+
+            if (ambientType == 0.0) {
+                return vec3(0.0, 0.0, 0.0);
+            }
+
+            if (ambientType == 1.0) {
+                vec3 zenithDirection = ambientLighting[0].xyz;
+                vec3 zenithLuminance = ambientLighting[1].rgb;
+                vec3 yDirection = normalize(cross(normalDirection, directionToCamera));
+                vec3 xDirection = cross(yDirection, normalDirection);
+                float localViewX = dot(directionToCamera, xDirection);
+                float localViewZ = dot(directionToCamera, normalDirection);
+                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
+                float localZenithX = dot(zenithDirection, xDirection);
+                float localZenithY = dot(zenithDirection, yDirection);
+                float localZenithZ = dot(zenithDirection, normalDirection);
+                vec3 localZenithDirection = vec3(localZenithX, localZenithY, localZenithZ);
+
+                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
+                vec3 vT1 = vec3(0.0, 1.0, 0.0);
+                vec3 vT2 = cross(vH, vT1);
+                float s = 0.5 * (1.0 + vH.z);
+                
+                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
+                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
+                float numSamples = 13.0;
+                
+                vec3 specularSum = vec3(0.0, 0.0, 0.0);
+
+                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.448762, 0.000000, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+
+                localHalfDirection = sampleFacetNormal(0.000000, 0.448762, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.448762, 0.000000, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.000000, -0.448762, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.748423, 0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.310007, 0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.310007, 0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.748423, 0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.748423, -0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.310007, -0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.310007, -0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.748423, -0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += overcastSpecularSample(zenithLuminance, localZenithDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
+
+                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+
+                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+
+                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
+                diffuseSum += cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection) * localLightDirection.z;
+                
+                return (specularSum + 2.0 * diffuseSum * diffuseBaseColor) / numSamples;
+            } else {
+                return vec3(0.0, 0.0, 0.0); 
+            }
+        }
+
         vec3 litColor(vec4 xyz_type, vec4 rgb_radius, vec3 normalDirection, vec3 directionToCamera, float dotNV, vec3 diffuseBaseColor, vec3 specularBaseColor, float alphaSquared) {
             float lightType = xyz_type.w;
             if (lightType == 0.0) {
@@ -444,17 +635,8 @@ physicalFragment =
             vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
             getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, directionToLight, normalIlluminance);
 
-            vec3 halfDirection = normalize(directionToCamera + directionToLight);
-            float dotVH = clamp(dot(directionToCamera, halfDirection), 0.0, 1.0);
-            float dotNH = clamp(dot(normalDirection, halfDirection), 0.0, 1.0);
             float dotNL = clamp(dot(normalDirection, directionToLight), 0.0, 1.0);
-            float dotNHSquared = dotNH * dotNH;
-
-            float d = specularD(alphaSquared, dotNHSquared);
-            float g = specularG(dotNL, dotNV, alphaSquared);
-            vec3 f = fresnelColor(specularBaseColor, dotVH);
-            vec3 specularColor = ((d * g) / (4.0 * dotNL * dotNV)) * f;
-
+            vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alphaSquared, dotNV, dotNL, specularBaseColor, normalIlluminance);
             return (normalIlluminance * dotNL) * ((diffuseBaseColor / 3.14159265359) + specularColor);
         }
 
@@ -480,6 +662,7 @@ physicalFragment =
             float alpha = roughness * roughness;
             float alphaSquared = alpha * alpha;
 
+            vec3 color0 = ambientColor(normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha, alphaSquared);
             vec3 color1 = litColor(lights12[0], lights12[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
             vec3 color2 = litColor(lights12[2], lights12[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
             vec3 color3 = litColor(lights34[0], lights34[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
@@ -489,6 +672,6 @@ physicalFragment =
             vec3 color7 = litColor(lights78[0], lights78[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
             vec3 color8 = litColor(lights78[2], lights78[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
 
-            gl_FragColor = toSrgb(color1 + color2 + color3 + color4 + color5 + color6 + color7 + color8);
+            gl_FragColor = toSrgb(color0 + color1 + color2 + color3 + color4 + color5 + color6 + color7 + color8);
         }
     |]
