@@ -16,6 +16,7 @@ import Angle exposing (Angle)
 import Axis3d exposing (Axis3d)
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
+import Length exposing (Meters)
 import Math.Matrix4 exposing (Mat4)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
@@ -28,7 +29,7 @@ type alias Transformation =
     Types.Transformation
 
 
-placementFrame : Transformation -> Frame3d units coordinates defines
+placementFrame : Transformation -> Frame3d Meters coordinates defines
 placementFrame transformation =
     Frame3d.unsafe
         { originPoint =
@@ -99,7 +100,7 @@ identity =
     }
 
 
-translateBy : Vector3d units coordinates -> Transformation
+translateBy : Vector3d Meters coordinates -> Transformation
 translateBy displacement =
     let
         v =
@@ -122,7 +123,7 @@ translateBy displacement =
     }
 
 
-scaleAbout : Point3d units coordinates -> Float -> Transformation
+scaleAbout : Point3d Meters coordinates -> Float -> Transformation
 scaleAbout point k =
     let
         p =
@@ -148,7 +149,7 @@ scaleAbout point k =
     }
 
 
-rotateAround : Axis3d units coordinates -> Angle -> Transformation
+rotateAround : Axis3d Meters coordinates -> Angle -> Transformation
 rotateAround axis (Quantity angle) =
     let
         p0 =
@@ -246,7 +247,7 @@ rotateAround axis (Quantity angle) =
     }
 
 
-mirrorAcross : Plane3d units coordinates -> Transformation
+mirrorAcross : Plane3d Meters coordinates -> Transformation
 mirrorAcross plane =
     let
         n =
@@ -290,7 +291,7 @@ mirrorAcross plane =
     }
 
 
-relativeTo : Frame3d units coordinates defines -> Transformation
+relativeTo : Frame3d Meters coordinates defines -> Transformation
 relativeTo frame =
     let
         i =
@@ -322,7 +323,7 @@ relativeTo frame =
     }
 
 
-placeIn : Frame3d units coordinates defines -> Transformation
+placeIn : Frame3d Meters coordinates defines -> Transformation
 placeIn frame =
     let
         i =

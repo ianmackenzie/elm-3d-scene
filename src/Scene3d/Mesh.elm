@@ -58,6 +58,7 @@ import BoundingBox3d exposing (BoundingBox3d)
 import Dict exposing (Dict)
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Geometry.Interop.LinearAlgebra.Vector3d as Vector3d
+import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Math.Vector3 exposing (Vec3)
 import Point3d exposing (Point3d)
@@ -70,8 +71,8 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
-type alias Mesh units coordinates normals uv tangents =
-    Types.Mesh units coordinates normals uv tangents
+type alias Mesh coordinates normals uv tangents =
+    Types.Mesh coordinates normals uv tangents
 
 
 type HasNormals
@@ -112,12 +113,12 @@ renderBackFaces =
     CullBackFaces False
 
 
-plainVertex : Point3d units coordinates -> PlainVertex
+plainVertex : Point3d Meters coordinates -> PlainVertex
 plainVertex point =
     { position = Point3d.toVec3 point }
 
 
-triangleAttributes : Triangle3d units coordinates -> ( PlainVertex, PlainVertex, PlainVertex )
+triangleAttributes : Triangle3d Meters coordinates -> ( PlainVertex, PlainVertex, PlainVertex )
 triangleAttributes triangle =
     let
         ( p1, p2, p3 ) =
@@ -126,7 +127,7 @@ triangleAttributes triangle =
     ( plainVertex p1, plainVertex p2, plainVertex p3 )
 
 
-facetAttributes : Triangle3d units coordinates -> ( SmoothVertex, SmoothVertex, SmoothVertex )
+facetAttributes : Triangle3d Meters coordinates -> ( SmoothVertex, SmoothVertex, SmoothVertex )
 facetAttributes triangle =
     let
         ( p1, p2, p3 ) =
@@ -147,17 +148,17 @@ facetAttributes triangle =
     )
 
 
-empty : Mesh units coordinates normals uv tangents
+empty : Mesh coordinates normals uv tangents
 empty =
     Types.EmptyMesh
 
 
-withoutShadow : MeshData units coordinates normals uv tangents -> Mesh units coordinates normals uv tangents
+withoutShadow : MeshData coordinates normals uv tangents -> Mesh coordinates normals uv tangents
 withoutShadow meshData =
     Types.Mesh meshData Nothing
 
 
-triangles : BackFaceSetting -> List (Triangle3d units coordinates) -> Mesh units coordinates NoNormals NoUV NoTangents
+triangles : BackFaceSetting -> List (Triangle3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
 triangles (CullBackFaces cullBack) givenTriangles =
     case givenTriangles of
         [] ->
@@ -175,7 +176,7 @@ triangles (CullBackFaces cullBack) givenTriangles =
                 Types.Triangles bounds givenTriangles webGLMesh cullBack
 
 
-facets : BackFaceSetting -> List (Triangle3d units coordinates) -> Mesh units coordinates HasNormals NoUV NoTangents
+facets : BackFaceSetting -> List (Triangle3d Meters coordinates) -> Mesh coordinates HasNormals NoUV NoTangents
 facets (CullBackFaces cullBack) givenTriangles =
     case givenTriangles of
         [] ->
@@ -193,12 +194,12 @@ facets (CullBackFaces cullBack) givenTriangles =
                 Types.Facets bounds givenTriangles webGLMesh cullBack
 
 
-collectPlain : Point3d units coordinates -> List PlainVertex -> List PlainVertex
+collectPlain : Point3d Meters coordinates -> List PlainVertex -> List PlainVertex
 collectPlain point accumulated =
     { position = Point3d.toVec3 point } :: accumulated
 
 
-plainBoundsHelp : Float -> Float -> Float -> Float -> Float -> Float -> List PlainVertex -> BoundingBox3d units coordinates
+plainBoundsHelp : Float -> Float -> Float -> Float -> Float -> Float -> List PlainVertex -> BoundingBox3d Meters coordinates
 plainBoundsHelp minX maxX minY maxY minZ maxZ remaining =
     case remaining of
         next :: rest ->
@@ -232,7 +233,7 @@ plainBoundsHelp minX maxX minY maxY minZ maxZ remaining =
                 }
 
 
-plainBounds : PlainVertex -> List PlainVertex -> BoundingBox3d units coordinates
+plainBounds : PlainVertex -> List PlainVertex -> BoundingBox3d Meters coordinates
 plainBounds first rest =
     let
         x =
@@ -247,7 +248,7 @@ plainBounds first rest =
     plainBoundsHelp x x y y z z rest
 
 
-indexed : BackFaceSetting -> TriangularMesh (Point3d units coordinates) -> Mesh units coordinates NoNormals NoUV NoTangents
+indexed : BackFaceSetting -> TriangularMesh (Point3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
 indexed (CullBackFaces cullBack) givenMesh =
     let
         collectedVertices =
@@ -271,13 +272,13 @@ indexed (CullBackFaces cullBack) givenMesh =
                 Types.Indexed bounds givenMesh webGLMesh cullBack
 
 
-collectSmooth : { position : Point3d units coordinates, normal : Vector3d Unitless coordinates } -> List SmoothVertex -> List SmoothVertex
+collectSmooth : { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates } -> List SmoothVertex -> List SmoothVertex
 collectSmooth { position, normal } accumulated =
     { position = Point3d.toVec3 position, normal = Vector3d.toVec3 normal }
         :: accumulated
 
 
-smoothBoundsHelp : Float -> Float -> Float -> Float -> Float -> Float -> List SmoothVertex -> BoundingBox3d units coordinates
+smoothBoundsHelp : Float -> Float -> Float -> Float -> Float -> Float -> List SmoothVertex -> BoundingBox3d Meters coordinates
 smoothBoundsHelp minX maxX minY maxY minZ maxZ remaining =
     case remaining of
         next :: rest ->
@@ -311,7 +312,7 @@ smoothBoundsHelp minX maxX minY maxY minZ maxZ remaining =
                 }
 
 
-smoothBounds : SmoothVertex -> List SmoothVertex -> BoundingBox3d units coordinates
+smoothBounds : SmoothVertex -> List SmoothVertex -> BoundingBox3d Meters coordinates
 smoothBounds first rest =
     let
         x =
@@ -326,7 +327,7 @@ smoothBounds first rest =
     smoothBoundsHelp x x y y z z rest
 
 
-smooth : BackFaceSetting -> TriangularMesh { position : Point3d units coordinates, normal : Vector3d Unitless coordinates } -> Mesh units coordinates HasNormals NoUV NoTangents
+smooth : BackFaceSetting -> TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates } -> Mesh coordinates HasNormals NoUV NoTangents
 smooth (CullBackFaces cullBack) givenMesh =
     let
         collectedVertices =
@@ -350,7 +351,7 @@ smooth (CullBackFaces cullBack) givenMesh =
                 Types.Smooth bounds givenMesh webGLMesh cullBack
 
 
-lineSegmentAttributes : LineSegment3d units coordinates -> ( PlainVertex, PlainVertex )
+lineSegmentAttributes : LineSegment3d Meters coordinates -> ( PlainVertex, PlainVertex )
 lineSegmentAttributes givenSegment =
     let
         ( p1, p2 ) =
@@ -359,7 +360,7 @@ lineSegmentAttributes givenSegment =
     ( plainVertex p1, plainVertex p2 )
 
 
-lineSegments : List (LineSegment3d units coordinates) -> Mesh units coordinates NoNormals NoUV NoTangents
+lineSegments : List (LineSegment3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
 lineSegments givenSegments =
     case givenSegments of
         [] ->
@@ -377,7 +378,7 @@ lineSegments givenSegments =
                 Types.LineSegments bounds givenSegments webGLMesh
 
 
-polyline : Polyline3d units coordinates -> Mesh units coordinates NoNormals NoUV NoTangents
+polyline : Polyline3d Meters coordinates -> Mesh coordinates NoNormals NoUV NoTangents
 polyline givenPolyline =
     let
         vertices =
@@ -399,7 +400,7 @@ polyline givenPolyline =
                 Types.Polyline bounds givenPolyline webGLMesh
 
 
-points : List (Point3d units coordinates) -> Mesh units coordinates NoNormals NoUV NoTangents
+points : List (Point3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
 points givenPoints =
     case givenPoints of
         [] ->
@@ -417,7 +418,7 @@ points givenPoints =
                 Types.Points bounds givenPoints webGLMesh
 
 
-withShadow : Mesh units coordinates normals uv tangents -> Mesh units coordinates normals uv tangents
+withShadow : Mesh coordinates normals uv tangents -> Mesh coordinates normals uv tangents
 withShadow mesh =
     case mesh of
         Types.Mesh meshData Nothing ->
@@ -430,7 +431,7 @@ withShadow mesh =
             mesh
 
 
-createShadow : MeshData units coordinates normals uv tangents -> Shadow units coordinates
+createShadow : MeshData coordinates normals uv tangents -> Shadow coordinates
 createShadow meshData =
     case meshData of
         Types.Triangles boundingBox meshTriangles _ _ ->
@@ -464,7 +465,7 @@ createShadow meshData =
             Types.EmptyShadow
 
 
-shadowImpl : BoundingBox3d units coordinates -> TriangularMesh (Point3d units coordinates) -> Shadow units coordinates
+shadowImpl : BoundingBox3d Meters coordinates -> TriangularMesh (Point3d Meters coordinates) -> Shadow coordinates
 shadowImpl boundingBox triangularMesh =
     let
         numVertices =
@@ -485,7 +486,7 @@ shadowImpl boundingBox triangularMesh =
     Types.Shadow shadowEdges (WebGL.triangles shadowVolumeFaces)
 
 
-buildShadowEdges : Int -> List ( Int, Int, Int ) -> List ( Point3d units coordinates, Point3d units coordinates, Point3d units coordinates ) -> Dict Int (ShadowEdge units coordinates) -> List (ShadowEdge units coordinates)
+buildShadowEdges : Int -> List ( Int, Int, Int ) -> List ( Point3d Meters coordinates, Point3d Meters coordinates, Point3d Meters coordinates ) -> Dict Int (ShadowEdge coordinates) -> List (ShadowEdge coordinates)
 buildShadowEdges numVertices faceIndices faceVertices edgeDictionary =
     case faceIndices of
         ( i, j, k ) :: remainingFaceIndices ->
@@ -525,7 +526,7 @@ buildShadowEdges numVertices faceIndices faceVertices edgeDictionary =
             Dict.values edgeDictionary
 
 
-collectShadowFaces : ShadowEdge units coordinates -> List ( SmoothVertex, SmoothVertex, SmoothVertex ) -> List ( SmoothVertex, SmoothVertex, SmoothVertex )
+collectShadowFaces : ShadowEdge coordinates -> List ( SmoothVertex, SmoothVertex, SmoothVertex ) -> List ( SmoothVertex, SmoothVertex, SmoothVertex )
 collectShadowFaces { startPoint, endPoint, leftNormal, rightNormal } accumulated =
     let
         firstFace =
@@ -552,7 +553,7 @@ edgeKey numVertices i j =
         j * numVertices + i
 
 
-updateShadowEdge : Int -> Int -> Point3d units coordinates -> Point3d units coordinates -> Vector3d Unitless coordinates -> Maybe (ShadowEdge units coordinates) -> Maybe (ShadowEdge units coordinates)
+updateShadowEdge : Int -> Int -> Point3d Meters coordinates -> Point3d Meters coordinates -> Vector3d Unitless coordinates -> Maybe (ShadowEdge coordinates) -> Maybe (ShadowEdge coordinates)
 updateShadowEdge i j pi pj normalVector currentEntry =
     case currentEntry of
         Nothing ->

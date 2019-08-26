@@ -23,6 +23,7 @@ import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
+import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
@@ -42,8 +43,8 @@ import WebGL
 import WebGL.Settings
 
 
-type alias Drawable units coordinates =
-    Types.Drawable units coordinates
+type alias Drawable coordinates =
+    Types.Drawable coordinates
 
 
 type alias Material =
@@ -53,12 +54,12 @@ type alias Material =
     }
 
 
-empty : Drawable units coordinates
+empty : Drawable coordinates
 empty =
     Types.Drawable EmptyNode
 
 
-unlit : Color -> Mesh units coordinates normals uv tangents -> Drawable units coordinates
+unlit : Color -> Mesh coordinates normals uv tangents -> Drawable coordinates
 unlit givenColor givenMesh =
     let
         { red, green, blue } =
@@ -95,7 +96,7 @@ unlit givenColor givenMesh =
                     constantMesh colorVec webGLMesh False maybeShadow
 
 
-emissive : Chromaticity -> Luminance -> Mesh units coordinates normals uv tangents -> Drawable units coordinates
+emissive : Chromaticity -> Luminance -> Mesh coordinates normals uv tangents -> Drawable coordinates
 emissive givenChromaticity givenLuminance givenMesh =
     let
         ( r, g, b ) =
@@ -145,7 +146,7 @@ toLinear color =
     Math.Vector3.vec3 (red ^ 2.2) (green ^ 2.2) (blue ^ 2.2)
 
 
-lambertian : Color -> Mesh units coordinates HasNormals uv tangents -> Drawable units coordinates
+lambertian : Color -> Mesh coordinates HasNormals uv tangents -> Drawable coordinates
 lambertian givenColor givenMesh =
     let
         linearColor =
@@ -179,7 +180,7 @@ lambertian givenColor givenMesh =
                     Debug.log "points/lambertian" empty
 
 
-physical : Material -> Mesh units coordinates HasNormals uv tangents -> Drawable units coordinates
+physical : Material -> Mesh coordinates HasNormals uv tangents -> Drawable coordinates
 physical givenMaterial givenMesh =
     let
         linearColor =
@@ -235,7 +236,7 @@ physical givenMaterial givenMesh =
                     Debug.log "points/physical" empty
 
 
-shadowDrawFunction : Maybe (Types.Shadow units coordinates) -> Maybe Types.DrawFunction
+shadowDrawFunction : Maybe (Types.Shadow coordinates) -> Maybe Types.DrawFunction
 shadowDrawFunction maybeShadow =
     case maybeShadow of
         Nothing ->
@@ -285,7 +286,7 @@ meshSettings isRightHanded cullBackFaces settings =
         settings
 
 
-constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
 constantMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
@@ -305,7 +306,7 @@ constantMesh color webGLMesh cullBackFaces maybeShadow =
             (shadowDrawFunction maybeShadow)
 
 
-emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
 emissiveMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
@@ -325,7 +326,7 @@ emissiveMesh color webGLMesh cullBackFaces maybeShadow =
             (shadowDrawFunction maybeShadow)
 
 
-lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
 lambertianMesh color webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
@@ -349,7 +350,7 @@ lambertianMesh color webGLMesh cullBackFaces maybeShadow =
             (shadowDrawFunction maybeShadow)
 
 
-physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow units coordinates) -> Drawable units coordinates
+physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
 physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
     Types.Drawable <|
         MeshNode
@@ -376,7 +377,7 @@ physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
             (shadowDrawFunction maybeShadow)
 
 
-collectNodes : List (Drawable units coordinates) -> List Node -> List Node
+collectNodes : List (Drawable coordinates) -> List Node -> List Node
 collectNodes drawables accumulated =
     case drawables of
         [] ->
@@ -386,12 +387,12 @@ collectNodes drawables accumulated =
             collectNodes rest (node :: accumulated)
 
 
-group : List (Drawable units coordinates) -> Drawable units coordinates
+group : List (Drawable coordinates) -> Drawable coordinates
 group drawables =
     Types.Drawable (Group (collectNodes drawables []))
 
 
-transformBy : Transformation -> Drawable units1 coordinates1 -> Drawable units2 coordinates2
+transformBy : Transformation -> Drawable coordinates1 -> Drawable coordinates2
 transformBy transformation (Types.Drawable node) =
     case node of
         EmptyNode ->
@@ -411,36 +412,36 @@ transformBy transformation (Types.Drawable node) =
             Types.Drawable (Transformed transformation node)
 
 
-rotateAround : Axis3d units coordinates -> Angle -> Drawable units coordinates -> Drawable units coordinates
+rotateAround : Axis3d Meters coordinates -> Angle -> Drawable coordinates -> Drawable coordinates
 rotateAround axis angle givenDrawable =
     transformBy (Transformation.rotateAround axis angle) givenDrawable
 
 
-translateBy : Vector3d units coordinates -> Drawable units coordinates -> Drawable units coordinates
+translateBy : Vector3d Meters coordinates -> Drawable coordinates -> Drawable coordinates
 translateBy displacement givenDrawable =
     transformBy (Transformation.translateBy displacement) givenDrawable
 
 
-translateIn : Direction3d coordinates -> Quantity Float units -> Drawable units coordinates -> Drawable units coordinates
+translateIn : Direction3d coordinates -> Length -> Drawable coordinates -> Drawable coordinates
 translateIn direction distance drawable =
     translateBy (Vector3d.withLength distance direction) drawable
 
 
-mirrorAcross : Plane3d units coordinates -> Drawable units coordinates -> Drawable units coordinates
+mirrorAcross : Plane3d Meters coordinates -> Drawable coordinates -> Drawable coordinates
 mirrorAcross plane givenDrawable =
     transformBy (Transformation.mirrorAcross plane) givenDrawable
 
 
-relativeTo : Frame3d units globalCoordinates { defines : localCoordinates } -> Drawable units globalCoordinates -> Drawable units localCoordinates
+relativeTo : Frame3d Meters globalCoordinates { defines : localCoordinates } -> Drawable globalCoordinates -> Drawable localCoordinates
 relativeTo frame givenDrawable =
     transformBy (Transformation.relativeTo frame) givenDrawable
 
 
-placeIn : Frame3d units globalCoordinates { defines : localCoordinates } -> Drawable units localCoordinates -> Drawable units globalCoordinates
+placeIn : Frame3d Meters globalCoordinates { defines : localCoordinates } -> Drawable localCoordinates -> Drawable globalCoordinates
 placeIn frame givenDrawable =
     transformBy (Transformation.placeIn frame) givenDrawable
 
 
-scaleAbout : Point3d units coordinates -> Float -> Drawable units coordinates -> Drawable units coordinates
+scaleAbout : Point3d Meters coordinates -> Float -> Drawable coordinates -> Drawable coordinates
 scaleAbout point scale givenDrawable =
     transformBy (Transformation.scaleAbout point scale) givenDrawable

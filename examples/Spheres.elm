@@ -27,42 +27,42 @@ type World
     = World
 
 
-sphereMesh : Mesh Meters World HasNormals NoUV NoTangents
+sphereMesh : Mesh World HasNormals NoUV NoTangents
 sphereMesh =
     Shape.sphere { radius = meters 1, maxError = meters 0.001 }
         |> Mesh.withShadow
 
 
-floorMesh : Mesh Meters World HasNormals NoUV NoTangents
+floorMesh : Mesh World HasNormals NoUV NoTangents
 floorMesh =
     Shape.block (meters 8) (meters 8) (meters 0.2)
 
 
-floor : Drawable Meters World
+floor : Drawable World
 floor =
     Drawable.physical Materials.aluminum floorMesh
         |> Drawable.translateBy (Vector3d.meters 0 0 -2)
 
 
-goldSphere : Drawable Meters World
+goldSphere : Drawable World
 goldSphere =
     Drawable.physical Materials.gold sphereMesh
         |> Drawable.translateBy (Vector3d.meters 2 2 0)
 
 
-aluminumSphere : Drawable Meters World
+aluminumSphere : Drawable World
 aluminumSphere =
     Drawable.physical Materials.aluminum sphereMesh
         |> Drawable.translateBy (Vector3d.meters 2 -2 0)
 
 
-blackPlasticSphere : Drawable Meters World
+blackPlasticSphere : Drawable World
 blackPlasticSphere =
     Drawable.physical Materials.blackPlastic sphereMesh
         |> Drawable.translateBy (Vector3d.meters -2 -2 0)
 
 
-whitePlasticSphere : Drawable Meters World
+whitePlasticSphere : Drawable World
 whitePlasticSphere =
     Drawable.physical Materials.whitePlastic sphereMesh
         |> Drawable.translateBy (Vector3d.meters -2 2 0)
@@ -82,7 +82,7 @@ camera =
         }
 
 
-sunlight : Light Meters World
+sunlight : Light World
 sunlight =
     Light.directional
         Chromaticity.daylight
@@ -92,7 +92,7 @@ sunlight =
         )
 
 
-scene : Drawable Meters World
+scene : Drawable World
 scene =
     Drawable.group
         [ goldSphere

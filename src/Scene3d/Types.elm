@@ -25,6 +25,7 @@ import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Frame3d exposing (Frame3d)
 import Illuminance exposing (Lux)
+import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import LuminousFlux exposing (Lumens)
 import Math.Matrix4 exposing (Mat4)
@@ -108,32 +109,32 @@ type Material normals uv tangents
     | PhysicalMaterial Vec3 Float Float
 
 
-type Mesh units coordinates normals uv tangents
+type Mesh coordinates normals uv tangents
     = EmptyMesh
-    | Mesh (MeshData units coordinates normals uv tangents) (Maybe (Shadow units coordinates))
+    | Mesh (MeshData coordinates normals uv tangents) (Maybe (Shadow coordinates))
 
 
-type MeshData units coordinates normals uv tangents
-    = Triangles (BoundingBox3d units coordinates) (List (Triangle3d units coordinates)) (WebGL.Mesh PlainVertex) Bool
-    | Facets (BoundingBox3d units coordinates) (List (Triangle3d units coordinates)) (WebGL.Mesh SmoothVertex) Bool
-    | Indexed (BoundingBox3d units coordinates) (TriangularMesh (Point3d units coordinates)) (WebGL.Mesh PlainVertex) Bool
-    | Smooth (BoundingBox3d units coordinates) (TriangularMesh { position : Point3d units coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh SmoothVertex) Bool
-    | LineSegments (BoundingBox3d units coordinates) (List (LineSegment3d units coordinates)) (WebGL.Mesh PlainVertex)
-    | Polyline (BoundingBox3d units coordinates) (Polyline3d units coordinates) (WebGL.Mesh PlainVertex)
-    | Points (BoundingBox3d units coordinates) (List (Point3d units coordinates)) (WebGL.Mesh PlainVertex)
+type MeshData coordinates normals uv tangents
+    = Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) Bool
+    | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh SmoothVertex) Bool
+    | Indexed (BoundingBox3d Meters coordinates) (TriangularMesh (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex) Bool
+    | Smooth (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh SmoothVertex) Bool
+    | LineSegments (BoundingBox3d Meters coordinates) (List (LineSegment3d Meters coordinates)) (WebGL.Mesh PlainVertex)
+    | Polyline (BoundingBox3d Meters coordinates) (Polyline3d Meters coordinates) (WebGL.Mesh PlainVertex)
+    | Points (BoundingBox3d Meters coordinates) (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)
 
 
-type alias ShadowEdge units coordinates =
-    { startPoint : Point3d units coordinates
-    , endPoint : Point3d units coordinates
+type alias ShadowEdge coordinates =
+    { startPoint : Point3d Meters coordinates
+    , endPoint : Point3d Meters coordinates
     , leftNormal : Vector3d Unitless coordinates
     , rightNormal : Vector3d Unitless coordinates
     }
 
 
-type Shadow units coordinates
+type Shadow coordinates
     = EmptyShadow
-    | Shadow (List (ShadowEdge units coordinates)) (WebGL.Mesh SmoothVertex)
+    | Shadow (List (ShadowEdge coordinates)) (WebGL.Mesh SmoothVertex)
 
 
 type alias LightMatrices =
@@ -163,7 +164,7 @@ type Node
     | Transformed Transformation Node
 
 
-type Drawable units coordinates
+type Drawable coordinates
     = Drawable Node
 
 
@@ -171,7 +172,7 @@ type Chromaticity
     = Chromaticity { x : Float, y : Float }
 
 
-type Light units coordinates
+type Light coordinates
     = Light
         { type_ : Float
         , radius : Float

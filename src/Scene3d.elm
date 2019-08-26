@@ -20,6 +20,7 @@ import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
+import Length exposing (Meters)
 import Luminance
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
@@ -84,13 +85,13 @@ ambientLightingDisabled =
 -- [ type_i  radius_i  type_j  radius_j ]
 
 
-type Lights units coordinates
+type Lights coordinates
     = SingleUnshadowedPass LightMatrices
     | SingleShadowedPass LightMatrices
     | TwoPasses LightMatrices LightMatrices
 
 
-disabledLight : Light units coordinates
+disabledLight : Light coordinates
 disabledLight =
     Types.Light
         { type_ = 0
@@ -104,7 +105,7 @@ disabledLight =
         }
 
 
-lightPair : Light units coordinates -> Light units coordinates -> Mat4
+lightPair : Light coordinates -> Light coordinates -> Mat4
 lightPair (Types.Light first) (Types.Light second) =
     Math.Matrix4.fromRecord
         { m11 = first.x
@@ -135,12 +136,12 @@ lightingDisabled =
     }
 
 
-noLights : Lights units coordinates
+noLights : Lights coordinates
 noLights =
     SingleUnshadowedPass lightingDisabled
 
 
-oneLight : Light units coordinates -> { castsShadows : Bool } -> Lights units coordinates
+oneLight : Light coordinates -> { castsShadows : Bool } -> Lights coordinates
 oneLight light { castsShadows } =
     let
         lightMatrices =
@@ -158,9 +159,9 @@ oneLight light { castsShadows } =
 
 
 twoLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Lights coordinates
 twoLights first second =
     eightLights
         first
@@ -174,10 +175,10 @@ twoLights first second =
 
 
 threeLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Light coordinates
+    -> Lights coordinates
 threeLights first second third =
     eightLights
         first
@@ -191,11 +192,11 @@ threeLights first second third =
 
 
 fourLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Lights coordinates
 fourLights first second third fourth =
     eightLights
         first
@@ -209,12 +210,12 @@ fourLights first second third fourth =
 
 
 fiveLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Lights coordinates
 fiveLights first second third fourth fifth =
     eightLights
         first
@@ -228,13 +229,13 @@ fiveLights first second third fourth fifth =
 
 
 sixLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Lights coordinates
 sixLights first second third fourth fifth sixth =
     eightLights
         first
@@ -248,14 +249,14 @@ sixLights first second third fourth fifth sixth =
 
 
 sevenLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Lights coordinates
 sevenLights first second third fourth fifth sixth seventh =
     eightLights
         first
@@ -269,15 +270,15 @@ sevenLights first second third fourth fifth sixth seventh =
 
 
 eightLights :
-    ( Light units coordinates, { castsShadows : Bool } )
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Light units coordinates
-    -> Lights units coordinates
+    ( Light coordinates, { castsShadows : Bool } )
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Light coordinates
+    -> Lights coordinates
 eightLights ( firstLight, { castsShadows } ) secondLight thirdLight fourthLight fifthLight sixthLight seventhLight eigthLight =
     if castsShadows then
         TwoPasses
@@ -461,9 +462,9 @@ call renderPasses lightMatrices settings =
 toEntities :
     { options : List Option
     , ambientLighting : Maybe (AmbientLighting coordinates)
-    , lights : Lights units coordinates
-    , scene : Drawable units coordinates
-    , camera : Camera3d units coordinates
+    , lights : Lights coordinates
+    , scene : Drawable coordinates
+    , camera : Camera3d Meters coordinates
     , exposure : Exposure
     , whiteBalance : Chromaticity
     , screenWidth : Quantity Float Pixels
@@ -576,9 +577,9 @@ toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBal
 render :
     { options : List Option
     , ambientLighting : Maybe (AmbientLighting coordinates)
-    , lights : Lights units coordinates
-    , scene : Drawable units coordinates
-    , camera : Camera3d units coordinates
+    , lights : Lights coordinates
+    , scene : Drawable coordinates
+    , camera : Camera3d Meters coordinates
     , exposure : Exposure
     , whiteBalance : Chromaticity
     , screenWidth : Quantity Float Pixels

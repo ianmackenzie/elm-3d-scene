@@ -9,6 +9,7 @@ import Array
 import Direction2d
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
+import Length exposing (Length, Meters)
 import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
@@ -20,7 +21,7 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-subdivisionsFor : { radius : Quantity Float units, maxError : Quantity Float units } -> Int
+subdivisionsFor : { radius : Length, maxError : Length } -> Int
 subdivisionsFor { radius, maxError } =
     if maxError |> Quantity.lessThanOrEqualTo Quantity.zero then
         0
@@ -42,7 +43,7 @@ subdivisionsFor { radius, maxError } =
         ceiling (Quantity.ratio (Angle.turns 1) maxSegmentAngle)
 
 
-sphere : { radius : Quantity Float units, maxError : Quantity Float units } -> Mesh units coordinates HasNormals NoUV NoTangents
+sphere : { radius : Length, maxError : Length } -> Mesh coordinates HasNormals NoUV NoTangents
 sphere { radius, maxError } =
     let
         n =
@@ -133,7 +134,7 @@ sphere { radius, maxError } =
         TriangularMesh.indexed pointsAndNormals faces
 
 
-cylinder : { radius : Quantity Float units, height : Quantity Float units, maxError : Quantity Float units } -> Mesh units coordinates HasNormals NoUV NoTangents
+cylinder : { radius : Length, height : Length, maxError : Length } -> Mesh coordinates HasNormals NoUV NoTangents
 cylinder { radius, height, maxError } =
     let
         subdivisions =
@@ -221,7 +222,7 @@ cylinder { radius, height, maxError } =
     Mesh.smooth Mesh.cullBackFaces triangularMesh
 
 
-block : Quantity Float units -> Quantity Float units -> Quantity Float units -> Mesh units coordinates HasNormals NoUV NoTangents
+block : Length -> Length -> Length -> Mesh coordinates HasNormals NoUV NoTangents
 block x y z =
     let
         minX =

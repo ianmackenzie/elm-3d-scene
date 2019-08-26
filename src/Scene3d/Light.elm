@@ -10,6 +10,7 @@ import Direction3d exposing (Direction3d)
 import Geometry.Interop.LinearAlgebra.Direction3d as Direction3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Illuminance exposing (Illuminance)
+import Length exposing (Meters)
 import Luminance exposing (Luminance)
 import LuminousFlux exposing (LuminousFlux)
 import Math.Matrix4
@@ -21,8 +22,8 @@ import Task exposing (Task)
 import WebGL.Texture exposing (Texture)
 
 
-type alias Light units coordinates =
-    Types.Light units coordinates
+type alias Light coordinates =
+    Types.Light coordinates
 
 
 type alias AmbientLighting coordinates =
@@ -85,7 +86,7 @@ overcast { zenithDirection, chromaticity, zenithLuminance } =
 -- [ type_i  radius_i  type_j  radius_j ]
 
 
-directional : Chromaticity -> Illuminance -> Direction3d coordinates -> Light units coordinates
+directional : Chromaticity -> Illuminance -> Direction3d coordinates -> Light coordinates
 directional chromaticity illuminance direction =
     let
         { x, y, z } =
@@ -109,7 +110,7 @@ directional chromaticity illuminance direction =
         }
 
 
-point : Chromaticity -> LuminousFlux -> Point3d units coordinates -> Light units coordinates
+point : Chromaticity -> LuminousFlux -> Point3d Meters coordinates -> Light coordinates
 point chromaticity luminousFlux position =
     let
         ( r, g, b ) =
