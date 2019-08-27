@@ -1,8 +1,8 @@
 module Scene3d.Chromaticity exposing
     ( Chromaticity
     , daylight, incandescent
-    , xy, fromTemperature
-    , toLinearRgb
+    , xy, srgb, fromTemperature, fromColor
+    , toXyz, toLinearRgb
     )
 
 {-|
@@ -17,18 +17,19 @@ module Scene3d.Chromaticity exposing
 
 ## Constructors
 
-@docs xy, fromTemperature
+@docs xy, srgb, fromTemperature, fromColor
 
 
 ## Conversions
 
-@docs toLinearRgb
+@docs toXyz, toLinearRgb
 
 -}
 
 import Color exposing (Color)
 import Point2d exposing (Point2d)
 import Quantity exposing (Unitless)
+import Scene3d.Color as Color exposing (LinearRgb, Xyz(..))
 import Temperature exposing (Temperature)
 
 
@@ -64,6 +65,11 @@ for several standard values
 xy : Float -> Float -> Chromaticity
 xy x y =
     Chromaticity { x = x, y = y }
+
+
+srgb : Float -> Float -> Float -> Chromaticity
+srgb r g b =
+    fromColor (Color.rgb r g b)
 
 
 fromTemperature : Temperature -> Chromaticity
@@ -107,18 +113,26 @@ fromTemperature temperature =
     Chromaticity { x = x, y = y }
 
 
-toXYZ : Chromaticity -> ( Float, Float, Float )
-toXYZ (Chromaticity { x, y }) =
-    ( x / y, 1, (1 - x - y) / y )
-
-
-toLinearRgb : Chromaticity -> ( Float, Float, Float )
-toLinearRgb chromaticity =
+fromColor : Color -> Chromaticity
+fromColor color =
     let
-        ( bigX, bigY, bigZ ) =
-            toXYZ chromaticity
+        (Xyz bigX bigY bigZ) =
+            Color.toXyz color
+
+        sum =
+            bigX + bigY + bigZ
     in
-    ( 3.2406 * bigX - 1.5372 * bigY - 0.4986 * bigZ
-    , -0.9689 * bigX + 1.8758 * bigY + 0.0415 * bigZ
-    , 0.0557 * bigX - 0.204 * bigY + 1.057 * bigZ
-    )
+    Chromaticity
+        { x = bigX / sum
+        , y = bigY / sum
+        }
+
+
+toXyz : Chromaticity -> Xyz
+toXyz (Chromaticity { x, y }) =
+    Xyz (x / y) 1 ((1 - x - y) / y)
+
+
+toLinearRgb : Chromaticity -> LinearRgb
+toLinearRgb chromaticity =
+    Color.xyzToLinearRgb (toXyz chromaticity)

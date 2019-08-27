@@ -17,6 +17,7 @@ import Math.Matrix4
 import Math.Vector3 exposing (vec3)
 import Point3d exposing (Point3d)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
+import Scene3d.Color exposing (LinearRgb(..))
 import Scene3d.Types as Types
 import Task exposing (Task)
 import WebGL.Texture exposing (Texture)
@@ -43,7 +44,7 @@ overcast { zenithDirection, chromaticity, zenithLuminance } =
         { x, y, z } =
             Direction3d.unwrap zenithDirection
 
-        ( r, g, b ) =
+        (LinearRgb r g b) =
             Chromaticity.toLinearRgb chromaticity
 
         lz =
@@ -92,7 +93,7 @@ directional chromaticity illuminance direction =
         { x, y, z } =
             Direction3d.unwrap (Direction3d.reverse direction)
 
-        ( r, g, b ) =
+        (LinearRgb r g b) =
             Chromaticity.toLinearRgb chromaticity
 
         lux =
@@ -113,7 +114,7 @@ directional chromaticity illuminance direction =
 point : Chromaticity -> LuminousFlux -> Point3d Meters coordinates -> Light coordinates
 point chromaticity luminousFlux position =
     let
-        ( r, g, b ) =
+        (LinearRgb r g b) =
             Chromaticity.toLinearRgb chromaticity
 
         lumens =

@@ -30,6 +30,7 @@ import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
+import Scene3d.Color exposing (LinearRgb(..))
 import Scene3d.Drawable exposing (Drawable)
 import Scene3d.Exposure as Exposure exposing (Exposure)
 import Scene3d.Light exposing (AmbientLighting, Light)
@@ -504,7 +505,7 @@ toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBal
             else
                 1
 
-        ( r, g, b ) =
+        (LinearRgb r g b) =
             Chromaticity.toLinearRgb whiteBalance
 
         maxLuminance =

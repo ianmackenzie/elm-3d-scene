@@ -29,7 +29,7 @@ import WebGL.Texture exposing (Texture)
 -- [ clipDistance  cameraX         whiteR  * ]
 -- [ aspectRatio   cameraY         whiteG  * ]
 -- [ kc            cameraZ         whiteB  * ]
--- [ kz            projectionType  gamma   * ]
+-- [ kz            projectionType  *       * ]
 --
 --
 -- ## Lights
@@ -268,12 +268,19 @@ emissiveFragment =
 
         varying vec3 interpolatedPosition;
 
+        float gammaCorrect(float u) {
+            if (u <= 0.0031308) {
+                return 12.92 * u;
+            } else {
+                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
+            }
+        }
+
         vec4 toSrgb(vec3 linearColor) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float gamma = sceneProperties[2].w;
-            float red = pow(linearColor.r / referenceWhite.r, gamma);
-            float green = pow(linearColor.g / referenceWhite.g, gamma);
-            float blue = pow(linearColor.b / referenceWhite.b, gamma);
+            float red = gammaCorrect(linearColor.r / referenceWhite.r);
+            float green = gammaCorrect(linearColor.g / referenceWhite.g);
+            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
             return vec4(red, green, blue, 1.0);
         }
 
@@ -310,12 +317,19 @@ lambertianFragment =
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
 
+        float gammaCorrect(float u) {
+            if (u <= 0.0031308) {
+                return 12.92 * u;
+            } else {
+                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
+            }
+        }
+
         vec4 toSrgb(vec3 linearColor) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float gamma = sceneProperties[2].w;
-            float red = pow(linearColor.r / referenceWhite.r, gamma);
-            float green = pow(linearColor.g / referenceWhite.g, gamma);
-            float blue = pow(linearColor.b / referenceWhite.b, gamma);
+            float red = gammaCorrect(linearColor.r / referenceWhite.r);
+            float green = gammaCorrect(linearColor.g / referenceWhite.g);
+            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
             return vec4(red, green, blue, 1.0);
         }
 
@@ -394,12 +408,19 @@ physicalFragment =
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
 
+        float gammaCorrect(float u) {
+            if (u <= 0.0031308) {
+                return 12.92 * u;
+            } else {
+                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
+            }
+        }
+
         vec4 toSrgb(vec3 linearColor) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float gamma = sceneProperties[2].w;
-            float red = pow(linearColor.r / referenceWhite.r, gamma);
-            float green = pow(linearColor.g / referenceWhite.g, gamma);
-            float blue = pow(linearColor.b / referenceWhite.b, gamma);
+            float red = gammaCorrect(linearColor.r / referenceWhite.r);
+            float green = gammaCorrect(linearColor.g / referenceWhite.g);
+            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
             return vec4(red, green, blue, 1.0);
         }
 

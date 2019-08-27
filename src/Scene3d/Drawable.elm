@@ -32,6 +32,7 @@ import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
+import Scene3d.Color exposing (LinearRgb(..))
 import Scene3d.Mesh exposing (HasNormals, HasTangents, HasUV, Mesh)
 import Scene3d.Shader as Shader
 import Scene3d.Transformation as Transformation exposing (Transformation)
@@ -99,7 +100,7 @@ unlit givenColor givenMesh =
 emissive : Chromaticity -> Luminance -> Mesh coordinates normals uv tangents -> Drawable coordinates
 emissive givenChromaticity givenLuminance givenMesh =
     let
-        ( r, g, b ) =
+        (LinearRgb r g b) =
             Chromaticity.toLinearRgb givenChromaticity
 
         nits =
