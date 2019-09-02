@@ -241,6 +241,8 @@ constantFragment :
         }
 constantFragment =
     [glsl|
+        precision lowp float;
+
         uniform vec3 color;
 
         varying vec3 interpolatedPosition;
