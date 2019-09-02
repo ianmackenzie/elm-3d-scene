@@ -96,7 +96,7 @@ withColor givenColor givenMesh =
                     constantMesh colorVec webGLMesh False
 
                 Types.Points _ _ webGLMesh ->
-                    constantMesh colorVec webGLMesh False
+                    constantPointMesh colorVec webGLMesh
 
 
 emissive : Chromaticity -> Luminance -> Mesh coordinates primitives -> Drawable coordinates
@@ -136,7 +136,7 @@ emissive givenChromaticity givenLuminance givenMesh =
                     emissiveMesh linearColor webGLMesh False
 
                 Types.Points _ _ webGLMesh ->
-                    emissiveMesh linearColor webGLMesh False
+                    emissivePointMesh linearColor webGLMesh
 
 
 toLinear : Color -> Vec3
@@ -326,6 +326,25 @@ constantMesh color webGLMesh cullBackFaces =
             )
 
 
+constantPointMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Drawable coordinates
+constantPointMesh color webGLMesh =
+    Types.Drawable <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+                WebGL.entityWith
+                    (WebGL.Settings.sampleAlphaToCoverage :: settings)
+                    Shader.pointVertex
+                    Shader.constantPointFragment
+                    webGLMesh
+                    { color = color
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+
+
 emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Drawable coordinates
 emissiveMesh color webGLMesh cullBackFaces =
     Types.Drawable <|
@@ -335,6 +354,25 @@ emissiveMesh color webGLMesh cullBackFaces =
                     (meshSettings isRightHanded cullBackFaces settings)
                     Shader.plainVertex
                     Shader.emissiveFragment
+                    webGLMesh
+                    { color = color
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+
+
+emissivePointMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Drawable coordinates
+emissivePointMesh color webGLMesh =
+    Types.Drawable <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+                WebGL.entityWith
+                    (WebGL.Settings.sampleAlphaToCoverage :: settings)
+                    Shader.pointVertex
+                    Shader.emissivePointFragment
                     webGLMesh
                     { color = color
                     , sceneProperties = sceneProperties

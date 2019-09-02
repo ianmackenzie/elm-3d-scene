@@ -1,9 +1,12 @@
 module Scene3d.Shader exposing
     ( constantFragment
+    , constantPointFragment
     , emissiveFragment
+    , emissivePointFragment
     , lambertianFragment
     , physicalFragment
     , plainVertex
+    , pointVertex
     , shadowFragment
     , shadowVertex
     , smoothVertex
@@ -26,10 +29,10 @@ import WebGL.Texture exposing (Texture)
 --   0: perspective (camera XYZ is eye position)
 --   1: orthographic (camera XYZ is direction to screen)
 --
--- [ clipDistance  cameraX         whiteR  * ]
--- [ aspectRatio   cameraY         whiteG  * ]
--- [ kc            cameraZ         whiteB  * ]
--- [ kz            projectionType  *       * ]
+-- [ clipDistance  cameraX         whiteR     * ]
+-- [ aspectRatio   cameraY         whiteG     * ]
+-- [ kc            cameraZ         whiteB     * ]
+-- [ kz            projectionType  pointSize  * ]
 --
 --
 -- ## Lights
@@ -97,6 +100,51 @@ plainVertex =
             vec4 transformedPosition = modelMatrix * scaledPosition;
             gl_Position = project(viewMatrix * transformedPosition);
             interpolatedPosition = transformedPosition.xyz;
+        }
+    |]
+
+
+pointVertex :
+    WebGL.Shader
+        { attributes
+            | position : Vec3
+        }
+        { uniforms
+            | modelScale : Float
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+        }
+        {}
+pointVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 position;
+
+        uniform float modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+
+        vec4 project(vec4 position) {
+            float n = sceneProperties[0][0];
+            float a = sceneProperties[0][1];
+            float kc = sceneProperties[0][2];
+            float kz = sceneProperties[0][3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+
+        void main () {
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition);
+            gl_PointSize = sceneProperties[2][3] + 2.0;
         }
     |]
 
@@ -241,7 +289,7 @@ constantFragment :
         }
 constantFragment =
     [glsl|
-        precision lowp float;
+        precision mediump float;
 
         uniform vec3 color;
 
@@ -249,6 +297,39 @@ constantFragment =
 
         void main () {
             gl_FragColor = vec4(color, 1.0);
+        }
+    |]
+
+
+constantPointFragment :
+    WebGL.Shader {}
+        { uniforms
+            | color : Vec3
+            , sceneProperties : Mat4
+        }
+        {}
+constantPointFragment =
+    [glsl|
+        precision mediump float;
+
+        uniform vec3 color;
+        uniform mat4 sceneProperties;
+
+        void main () {
+            float pointSize = sceneProperties[2][3];
+            float pointRadius = 0.5 * pointSize;
+            float x = (pointSize + 2.0) * (gl_PointCoord.s - 0.5);
+            float y = (pointSize + 2.0) * (gl_PointCoord.t - 0.5);
+            float r = sqrt(x * x + y * y);
+            float alpha = 1.0;
+            float innerRadius = pointRadius;
+            float outerRadius = pointRadius + 1.0;
+            if (r > outerRadius) {
+                alpha = 0.0;
+            } else if (r > innerRadius) {
+                alpha = outerRadius - r;
+            }
+            gl_FragColor = vec4(color, alpha);
         }
     |]
 
@@ -288,6 +369,55 @@ emissiveFragment =
 
         void main () {
             gl_FragColor = toSrgb(color);
+        }
+    |]
+
+
+emissivePointFragment :
+    WebGL.Shader {}
+        { uniforms
+            | color : Vec3
+            , sceneProperties : Mat4
+        }
+        {}
+emissivePointFragment =
+    [glsl|
+        precision mediump float;
+
+        uniform vec3 color;
+        uniform mat4 sceneProperties;
+
+        float gammaCorrect(float u) {
+            if (u <= 0.0031308) {
+                return 12.92 * u;
+            } else {
+                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
+            }
+        }
+
+        vec3 toSrgb(vec3 linearColor) {
+            vec3 referenceWhite = sceneProperties[2].rgb;
+            float red = gammaCorrect(linearColor.r / referenceWhite.r);
+            float green = gammaCorrect(linearColor.g / referenceWhite.g);
+            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
+            return vec3(red, green, blue);
+        }
+
+        void main () {
+            float pointSize = sceneProperties[2][3];
+            float pointRadius = 0.5 * pointSize;
+            float x = (pointSize + 2.0) * (gl_PointCoord.s - 0.5);
+            float y = (pointSize + 2.0) * (gl_PointCoord.t - 0.5);
+            float r = sqrt(x * x + y * y);
+            float alpha = 1.0;
+            float innerRadius = pointRadius;
+            float outerRadius = pointRadius + 1.0;
+            if (r > outerRadius) {
+                alpha = 0.0;
+            } else if (r > innerRadius) {
+                alpha = outerRadius - r;
+            }
+            gl_FragColor = vec4(toSrgb(color), alpha);
         }
     |]
 

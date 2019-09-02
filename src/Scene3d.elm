@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( render, unlit, toEntities
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights
-    , Option, antialias, clearColor, devicePixelRatio
+    , Option, clearColor, devicePixelRatio, pointSize
     )
 
 {-|
@@ -10,7 +10,7 @@ module Scene3d exposing
 
 @docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
-@docs Option, antialias, clearColor, devicePixelRatio
+@docs Option, clearColor, devicePixelRatio, pointSize
 
 -}
 
@@ -27,7 +27,7 @@ import Math.Vector3 as Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels, inPixels)
 import Point3d exposing (Point3d)
-import Quantity exposing (Quantity)
+import Quantity exposing (Quantity(..))
 import Rectangle2d
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.Color exposing (LinearRgb(..))
@@ -392,10 +392,10 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
 --   0: perspective (camera XYZ is eye position)
 --   1: orthographic (camera XYZ is direction to screen)
 --
--- [ clipDistance  cameraX         whiteR  * ]
--- [ aspectRatio   cameraY         whiteG  * ]
--- [ kc            cameraZ         whiteB  * ]
--- [ kz            projectionType  *       * ]
+-- [ clipDistance  cameraX         whiteR     * ]
+-- [ aspectRatio   cameraY         whiteG     * ]
+-- [ kc            cameraZ         whiteB     * ]
+-- [ kz            projectionType  pointSize  * ]
 
 
 depthTestDefault : List WebGL.Settings.Setting
@@ -476,6 +476,12 @@ toEntities :
     -> List WebGL.Entity
 toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
     let
+        givenDevicePixelRatio =
+            getDevicePixelRatio options
+
+        givenPointSize =
+            getPointSize options
+
         aspectRatio =
             Quantity.ratio width height
 
@@ -523,7 +529,7 @@ toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBala
                 , m13 = maxLuminance * r
                 , m23 = maxLuminance * g
                 , m33 = maxLuminance * b
-                , m43 = 0
+                , m43 = givenPointSize * givenDevicePixelRatio
                 , m14 = 0
                 , m24 = 0
                 , m34 = 0
@@ -598,28 +604,20 @@ render options arguments =
         givenDevicePixelRatio =
             getDevicePixelRatio options
 
-        givenAntialias =
-            getAntialias options
-
         givenClearColor =
             Color.toRgba (getClearColor options)
 
-        commonOptions =
+        webGLOptions =
             [ WebGL.depth 1
             , WebGL.stencil 0
+            , WebGL.alpha True
+            , WebGL.antialias
             , WebGL.clearColor
                 givenClearColor.red
                 givenClearColor.green
                 givenClearColor.blue
                 givenClearColor.alpha
             ]
-
-        webGLOptions =
-            if givenAntialias then
-                WebGL.antialias :: commonOptions
-
-            else
-                commonOptions
     in
     WebGL.toHtmlWith webGLOptions
         [ Html.Attributes.width (round (givenDevicePixelRatio * widthInPixels))
@@ -658,9 +656,9 @@ unlit options arguments =
 
 type Option
     = DevicePixelRatio Float
-    | Antialias Bool
     | Alpha Bool
     | ClearColor Color
+    | PointSize Float
 
 
 devicePixelRatio : Float -> Option
@@ -668,9 +666,9 @@ devicePixelRatio value =
     DevicePixelRatio value
 
 
-antialias : Bool -> Option
-antialias value =
-    Antialias value
+pointSize : Quantity Float Pixels -> Option
+pointSize (Quantity size) =
+    PointSize size
 
 
 clearColor : Color -> Option
@@ -695,15 +693,15 @@ getDevicePixelRatio options =
     List.foldl update defaultValue options
 
 
-getAntialias : List Option -> Bool
-getAntialias options =
+getPointSize : List Option -> Float
+getPointSize options =
     let
         defaultValue =
-            True
+            1.0
 
         update option oldValue =
             case option of
-                Antialias newValue ->
+                PointSize newValue ->
                     newValue
 
                 _ ->
