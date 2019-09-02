@@ -1,7 +1,7 @@
 module Scene3d.Mesh exposing
     ( Mesh
     , HasNormals, NoNormals, HasTangents, NoTangents, HasUV, NoUV
-    , BackFaceSetting, cullBackFaces, renderBackFaces
+    , BackFaceSetting, showBackFaces, hideBackFaces
     , empty
     , triangles, facets
     , indexed, smooth
@@ -19,7 +19,7 @@ module Scene3d.Mesh exposing
 
 ## Back face settings
 
-@docs BackFaceSetting, cullBackFaces, renderBackFaces
+@docs BackFaceSetting, showBackFaces, hideBackFaces
 
 
 ## Empty
@@ -103,13 +103,13 @@ type BackFaceSetting
     = CullBackFaces Bool
 
 
-cullBackFaces : BackFaceSetting
-cullBackFaces =
+hideBackFaces : BackFaceSetting
+hideBackFaces =
     CullBackFaces True
 
 
-renderBackFaces : BackFaceSetting
-renderBackFaces =
+showBackFaces : BackFaceSetting
+showBackFaces =
     CullBackFaces False
 
 
