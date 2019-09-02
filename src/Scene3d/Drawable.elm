@@ -13,7 +13,7 @@ module Scene3d.Drawable exposing
     , scaleAbout
     , translateBy
     , translateIn
-    , unlit
+    , withColor
     )
 
 import Angle exposing (Angle)
@@ -60,8 +60,8 @@ empty =
     Types.Drawable EmptyNode
 
 
-unlit : Color -> Mesh coordinates normals uv tangents -> Drawable coordinates
-unlit givenColor givenMesh =
+withColor : Color -> Mesh coordinates normals uv tangents -> Drawable coordinates
+withColor givenColor givenMesh =
     let
         { red, green, blue } =
             Color.toRgba givenColor
