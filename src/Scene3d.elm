@@ -1,12 +1,12 @@
 module Scene3d exposing
-    ( render, toEntities
+    ( render, unlit, toEntities
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights
     , Option, antialias, clearColor, devicePixelRatio, gammaCorrection
     )
 
 {-|
 
-@docs render, toEntities
+@docs render, unlit, toEntities
 
 @docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
@@ -628,6 +628,28 @@ render arguments =
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         ]
         (toEntities arguments)
+
+
+unlit :
+    { options : List Option
+    , scene : Drawable coordinates
+    , camera : Camera3d Meters coordinates
+    , width : Quantity Float Pixels
+    , height : Quantity Float Pixels
+    }
+    -> Html msg
+unlit arguments =
+    render
+        { options = arguments.options
+        , scene = arguments.scene
+        , camera = arguments.camera
+        , width = arguments.width
+        , height = arguments.height
+        , ambientLighting = Nothing
+        , lights = noLights
+        , exposure = Exposure.srgb
+        , whiteBalance = Chromaticity.daylight
+        }
 
 
 
