@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( render, unlit, toEntities
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights
-    , Option, antialias, clearColor, devicePixelRatio, gammaCorrection
+    , Option, antialias, clearColor, devicePixelRatio
     )
 
 {-|
@@ -10,7 +10,7 @@ module Scene3d exposing
 
 @docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
-@docs Option, antialias, clearColor, devicePixelRatio, gammaCorrection
+@docs Option, antialias, clearColor, devicePixelRatio
 
 -}
 
@@ -394,7 +394,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
 -- [ clipDistance  cameraX         whiteR  * ]
 -- [ aspectRatio   cameraY         whiteG  * ]
 -- [ kc            cameraZ         whiteB  * ]
--- [ kz            projectionType  gamma   * ]
+-- [ kz            projectionType  *       * ]
 
 
 depthTestDefault : List WebGL.Settings.Setting
@@ -475,9 +475,6 @@ toEntities :
     -> List WebGL.Entity
 toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
     let
-        givenGammaCorrection =
-            getGammaCorrection options
-
         aspectRatio =
             Quantity.ratio width height
 
@@ -525,7 +522,7 @@ toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBala
                 , m13 = maxLuminance * r
                 , m23 = maxLuminance * g
                 , m33 = maxLuminance * b
-                , m43 = givenGammaCorrection
+                , m43 = 0
                 , m14 = 0
                 , m24 = 0
                 , m34 = 0
@@ -660,7 +657,6 @@ unlit options arguments =
 
 type Option
     = DevicePixelRatio Float
-    | GammaCorrection Float
     | Antialias Bool
     | Alpha Bool
     | ClearColor Color
@@ -669,11 +665,6 @@ type Option
 devicePixelRatio : Float -> Option
 devicePixelRatio value =
     DevicePixelRatio value
-
-
-gammaCorrection : Float -> Option
-gammaCorrection value =
-    GammaCorrection value
 
 
 antialias : Bool -> Option
@@ -695,23 +686,6 @@ getDevicePixelRatio options =
         update option oldValue =
             case option of
                 DevicePixelRatio newValue ->
-                    newValue
-
-                _ ->
-                    oldValue
-    in
-    List.foldl update defaultValue options
-
-
-getGammaCorrection : List Option -> Float
-getGammaCorrection options =
-    let
-        defaultValue =
-            1 / 2.2
-
-        update option oldValue =
-            case option of
-                GammaCorrection newValue ->
                     newValue
 
                 _ ->
