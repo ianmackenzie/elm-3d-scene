@@ -2,6 +2,7 @@ module Scene3d.Exposure exposing
     ( Exposure
     , fromEv100, photographic, sunny16, fromMaxLuminance
     , maxLuminance
+    , srgb
     )
 
 {-|
@@ -51,6 +52,11 @@ sunny16 =
         , shutterSpeed = Duration.seconds 0.01
         , isoSpeed = 100
         }
+
+
+srgb : Exposure
+srgb =
+    fromMaxLuminance (Luminance.nits 80)
 
 
 maxLuminance : Exposure -> Luminance
