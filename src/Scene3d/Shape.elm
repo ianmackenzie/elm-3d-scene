@@ -14,7 +14,7 @@ import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
 import Scene3d.Drawable as Drawable exposing (Drawable, Material)
-import Scene3d.Mesh as Mesh exposing (HasNormals, Mesh, NoTangents, NoUV)
+import Scene3d.Mesh as Mesh exposing (Mesh, NoTangents, NoUV, ShadowsDisabled, Triangles, WithNormals)
 import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh
@@ -43,7 +43,7 @@ subdivisionsFor { radius, maxError } =
         ceiling (Quantity.ratio (Angle.turns 1) maxSegmentAngle)
 
 
-sphere : { radius : Length, maxError : Length } -> Mesh coordinates HasNormals NoUV NoTangents
+sphere : { radius : Length, maxError : Length } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
 sphere { radius, maxError } =
     let
         n =
@@ -130,11 +130,11 @@ sphere { radius, maxError } =
                     )
                 |> List.concat
     in
-    Mesh.smooth Mesh.cullBackFaces <|
+    Mesh.smooth [ Mesh.cullBackFaces ] <|
         TriangularMesh.indexed pointsAndNormals faces
 
 
-cylinder : { radius : Length, height : Length, maxError : Length } -> Mesh coordinates HasNormals NoUV NoTangents
+cylinder : { radius : Length, height : Length, maxError : Length } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
 cylinder { radius, height, maxError } =
     let
         subdivisions =
@@ -219,10 +219,10 @@ cylinder { radius, height, maxError } =
         triangularMesh =
             TriangularMesh.triangles (List.concat wedges)
     in
-    Mesh.smooth Mesh.cullBackFaces triangularMesh
+    Mesh.smooth [ Mesh.cullBackFaces ] triangularMesh
 
 
-block : Length -> Length -> Length -> Mesh coordinates HasNormals NoUV NoTangents
+block : Length -> Length -> Length -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
 block x y z =
     let
         minX =
@@ -267,7 +267,7 @@ block x y z =
         p7 =
             Point3d.xyz minX maxY maxZ
     in
-    Mesh.facets Mesh.cullBackFaces
+    Mesh.facets [ Mesh.cullBackFaces ]
         [ Triangle3d.fromVertices p0 p2 p1
         , Triangle3d.fromVertices p0 p3 p2
         , Triangle3d.fromVertices p4 p5 p6

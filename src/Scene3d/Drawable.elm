@@ -11,9 +11,11 @@ module Scene3d.Drawable exposing
     , relativeTo
     , rotateAround
     , scaleAbout
+    , shadow
     , translateBy
     , translateIn
     , withColor
+    , withShadow
     )
 
 import Angle exposing (Angle)
@@ -33,7 +35,7 @@ import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.Color exposing (LinearRgb(..))
-import Scene3d.Mesh exposing (HasNormals, HasTangents, HasUV, Mesh)
+import Scene3d.Mesh exposing (LineSegments, Mesh, Points, ShadowsEnabled, Triangles, WithNormals, WithTangents, WithUV)
 import Scene3d.Shader as Shader
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (Bounds, Node(..), PlainVertex, SmoothVertex)
@@ -60,7 +62,7 @@ empty =
     Types.Drawable EmptyNode
 
 
-withColor : Color -> Mesh coordinates normals uv tangents -> Drawable coordinates
+withColor : Color -> Mesh coordinates primitives -> Drawable coordinates
 withColor givenColor givenMesh =
     let
         { red, green, blue } =
@@ -76,28 +78,28 @@ withColor givenColor givenMesh =
         Types.Mesh meshData maybeShadow ->
             case meshData of
                 Types.Triangles _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+                    constantMesh colorVec webGLMesh cullBackFaces
 
                 Types.Facets _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+                    constantMesh colorVec webGLMesh cullBackFaces
 
                 Types.Indexed _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+                    constantMesh colorVec webGLMesh cullBackFaces
 
                 Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces maybeShadow
+                    constantMesh colorVec webGLMesh cullBackFaces
 
                 Types.LineSegments _ _ webGLMesh ->
-                    constantMesh colorVec webGLMesh False maybeShadow
+                    constantMesh colorVec webGLMesh False
 
                 Types.Polyline _ _ webGLMesh ->
-                    constantMesh colorVec webGLMesh False maybeShadow
+                    constantMesh colorVec webGLMesh False
 
                 Types.Points _ _ webGLMesh ->
-                    constantMesh colorVec webGLMesh False maybeShadow
+                    constantMesh colorVec webGLMesh False
 
 
-emissive : Chromaticity -> Luminance -> Mesh coordinates normals uv tangents -> Drawable coordinates
+emissive : Chromaticity -> Luminance -> Mesh coordinates primitives -> Drawable coordinates
 emissive givenChromaticity givenLuminance givenMesh =
     let
         (LinearRgb r g b) =
@@ -116,25 +118,25 @@ emissive givenChromaticity givenLuminance givenMesh =
         Types.Mesh meshData maybeShadow ->
             case meshData of
                 Types.Triangles _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+                    emissiveMesh linearColor webGLMesh cullBackFaces
 
                 Types.Facets _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+                    emissiveMesh linearColor webGLMesh cullBackFaces
 
                 Types.Indexed _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+                    emissiveMesh linearColor webGLMesh cullBackFaces
 
                 Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces maybeShadow
+                    emissiveMesh linearColor webGLMesh cullBackFaces
 
                 Types.LineSegments _ _ webGLMesh ->
-                    emissiveMesh linearColor webGLMesh False maybeShadow
+                    emissiveMesh linearColor webGLMesh False
 
                 Types.Polyline _ _ webGLMesh ->
-                    emissiveMesh linearColor webGLMesh False maybeShadow
+                    emissiveMesh linearColor webGLMesh False
 
                 Types.Points _ _ webGLMesh ->
-                    emissiveMesh linearColor webGLMesh False maybeShadow
+                    emissiveMesh linearColor webGLMesh False
 
 
 toLinear : Color -> Vec3
@@ -147,7 +149,7 @@ toLinear color =
     Math.Vector3.vec3 (red ^ 2.2) (green ^ 2.2) (blue ^ 2.2)
 
 
-lambertian : Color -> Mesh coordinates HasNormals uv tangents -> Drawable coordinates
+lambertian : Color -> Mesh coordinates (Triangles WithNormals uv tangents shadows) -> Drawable coordinates
 lambertian givenColor givenMesh =
     let
         linearColor =
@@ -163,13 +165,13 @@ lambertian givenColor givenMesh =
                     Debug.log "triangles/lambertian" empty
 
                 Types.Facets _ _ webGLMesh cullBackFaces ->
-                    lambertianMesh linearColor webGLMesh cullBackFaces maybeShadow
+                    lambertianMesh linearColor webGLMesh cullBackFaces
 
                 Types.Indexed _ _ _ _ ->
                     Debug.log "indexed/lambertian" empty
 
                 Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    lambertianMesh linearColor webGLMesh cullBackFaces maybeShadow
+                    lambertianMesh linearColor webGLMesh cullBackFaces
 
                 Types.LineSegments _ _ _ ->
                     Debug.log "lineSegments/lambertian" empty
@@ -181,7 +183,7 @@ lambertian givenColor givenMesh =
                     Debug.log "points/lambertian" empty
 
 
-physical : Material -> Mesh coordinates HasNormals uv tangents -> Drawable coordinates
+physical : Material -> Mesh coordinates (Triangles WithNormals uv tangents shadows) -> Drawable coordinates
 physical givenMaterial givenMesh =
     let
         linearColor =
@@ -213,7 +215,6 @@ physical givenMaterial givenMesh =
                         metallic
                         webGLMesh
                         cullBackFaces
-                        maybeShadow
 
                 Types.Indexed _ _ _ _ ->
                     Debug.log "indexed/physical" empty
@@ -225,7 +226,6 @@ physical givenMaterial givenMesh =
                         metallic
                         webGLMesh
                         cullBackFaces
-                        maybeShadow
 
                 Types.LineSegments _ _ _ ->
                     Debug.log "lineSegments/physical" empty
@@ -235,6 +235,26 @@ physical givenMaterial givenMesh =
 
                 Types.Points _ _ _ ->
                     Debug.log "points/physical" empty
+
+
+shadow : Mesh coordinates (Triangles normals uv tangents ShadowsEnabled) -> Drawable coordinates
+shadow givenMesh =
+    case givenMesh of
+        Types.EmptyMesh ->
+            empty
+
+        Types.Mesh meshData maybeShadow ->
+            case shadowDrawFunction maybeShadow of
+                Just drawFunction ->
+                    Types.Drawable (ShadowNode drawFunction)
+
+                Nothing ->
+                    empty
+
+
+withShadow : Mesh coordinates (Triangles normals uv tangents ShadowsEnabled) -> Drawable coordinates -> Drawable coordinates
+withShadow shadowMesh drawable =
+    group [ drawable, shadow shadowMesh ]
 
 
 shadowDrawFunction : Maybe (Types.Shadow coordinates) -> Maybe Types.DrawFunction
@@ -287,8 +307,8 @@ meshSettings isRightHanded cullBackFaces settings =
         settings
 
 
-constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
-constantMesh color webGLMesh cullBackFaces maybeShadow =
+constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Drawable coordinates
+constantMesh color webGLMesh cullBackFaces =
     Types.Drawable <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
@@ -304,11 +324,10 @@ constantMesh color webGLMesh cullBackFaces maybeShadow =
                     , viewMatrix = viewMatrix
                     }
             )
-            (shadowDrawFunction maybeShadow)
 
 
-emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
-emissiveMesh color webGLMesh cullBackFaces maybeShadow =
+emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Drawable coordinates
+emissiveMesh color webGLMesh cullBackFaces =
     Types.Drawable <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
@@ -324,11 +343,10 @@ emissiveMesh color webGLMesh cullBackFaces maybeShadow =
                     , viewMatrix = viewMatrix
                     }
             )
-            (shadowDrawFunction maybeShadow)
 
 
-lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
-lambertianMesh color webGLMesh cullBackFaces maybeShadow =
+lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Drawable coordinates
+lambertianMesh color webGLMesh cullBackFaces =
     Types.Drawable <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
@@ -348,11 +366,10 @@ lambertianMesh color webGLMesh cullBackFaces maybeShadow =
                     , viewMatrix = viewMatrix
                     }
             )
-            (shadowDrawFunction maybeShadow)
 
 
-physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Maybe (Types.Shadow coordinates) -> Drawable coordinates
-physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
+physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Drawable coordinates
+physicalMesh color roughness metallic webGLMesh cullBackFaces =
     Types.Drawable <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
@@ -375,7 +392,6 @@ physicalMesh color roughness metallic webGLMesh cullBackFaces maybeShadow =
                     , viewMatrix = viewMatrix
                     }
             )
-            (shadowDrawFunction maybeShadow)
 
 
 collectNodes : List (Drawable coordinates) -> List Node -> List Node
@@ -406,7 +422,10 @@ transformBy transformation (Types.Drawable node) =
             in
             Types.Drawable (Transformed compositeTransformation underlyingNode)
 
-        MeshNode _ _ ->
+        MeshNode _ ->
+            Types.Drawable (Transformed transformation node)
+
+        ShadowNode _ ->
             Types.Drawable (Transformed transformation node)
 
         Group _ ->

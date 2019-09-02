@@ -1,25 +1,28 @@
 module Scene3d.Mesh exposing
     ( Mesh
-    , HasNormals, NoNormals, HasTangents, NoTangents, HasUV, NoUV
-    , BackFaceSetting, showBackFaces, hideBackFaces
+    , Points, LineSegments, Triangles
+    , WithNormals, NoNormals, WithTangents, NoTangents, WithUV, NoUV, ShadowsEnabled, ShadowsDisabled
+    , Option, cullBackFaces
     , empty
     , triangles, facets
     , indexed, smooth
     , lineSegments, polyline
     , points
-    , withShadow
+    , enableShadows
     )
 
 {-|
 
-@docs Mesh, Shadow
+@docs Mesh
 
-@docs HasNormals, NoNormals, HasTangents, NoTangents, HasUV, NoUV
+@docs Points, LineSegments, Triangles
+
+@docs WithNormals, NoNormals, WithTangents, NoTangents, WithUV, NoUV, ShadowsEnabled, ShadowsDisabled
 
 
-## Back face settings
+## Options
 
-@docs BackFaceSetting, showBackFaces, hideBackFaces
+@docs Option, cullBackFaces
 
 
 ## Empty
@@ -71,46 +74,61 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
-type alias Mesh coordinates normals uv tangents =
-    Types.Mesh coordinates normals uv tangents
+type alias Mesh coordinates primitives =
+    Types.Mesh coordinates primitives
 
 
-type HasNormals
-    = HasNormals
+type Points
+    = Points
+
+
+type LineSegments
+    = LineSegments
+
+
+type Triangles normals uv tangents shadows
+    = Triangles normals uv tangents shadows
+
+
+type WithNormals
+    = WithNormals
 
 
 type NoNormals
     = NoNormals
 
 
-type HasUV
-    = HasUV
+type WithUV
+    = WithUV
 
 
 type NoUV
     = NoUV
 
 
-type HasTangents
-    = HasTangents
+type WithTangents
+    = WithTangents
 
 
 type NoTangents
     = NoTangents
 
 
-type BackFaceSetting
-    = CullBackFaces Bool
+type ShadowsEnabled
+    = ShadowsEnabled
 
 
-hideBackFaces : BackFaceSetting
-hideBackFaces =
-    CullBackFaces True
+type ShadowsDisabled
+    = ShadowsDisabled
 
 
-showBackFaces : BackFaceSetting
-showBackFaces =
-    CullBackFaces False
+type Option
+    = CullBackFaces
+
+
+cullBackFaces : Option
+cullBackFaces =
+    CullBackFaces
 
 
 plainVertex : Point3d Meters coordinates -> PlainVertex
@@ -148,18 +166,28 @@ facetAttributes triangle =
     )
 
 
-empty : Mesh coordinates normals uv tangents
+empty : Mesh coordinates primitives
 empty =
     Types.EmptyMesh
 
 
-withoutShadow : MeshData coordinates normals uv tangents -> Mesh coordinates normals uv tangents
+withoutShadow : MeshData coordinates -> Mesh coordinates primitives
 withoutShadow meshData =
     Types.Mesh meshData Nothing
 
 
-triangles : BackFaceSetting -> List (Triangle3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
-triangles (CullBackFaces cullBack) givenTriangles =
+isCullBackFaces : Option -> Bool
+isCullBackFaces option =
+    option == CullBackFaces
+
+
+getCullBackFaces : List Option -> Bool
+getCullBackFaces options =
+    List.any isCullBackFaces options
+
+
+triangles : List Option -> List (Triangle3d Meters coordinates) -> Mesh coordinates (Triangles NoNormals NoUV NoTangents ShadowsDisabled)
+triangles options givenTriangles =
     case givenTriangles of
         [] ->
             Types.EmptyMesh
@@ -171,13 +199,16 @@ triangles (CullBackFaces cullBack) givenTriangles =
 
                 webGLMesh =
                     WebGL.triangles (List.map triangleAttributes givenTriangles)
+
+                cullBack =
+                    getCullBackFaces options
             in
             withoutShadow <|
                 Types.Triangles bounds givenTriangles webGLMesh cullBack
 
 
-facets : BackFaceSetting -> List (Triangle3d Meters coordinates) -> Mesh coordinates HasNormals NoUV NoTangents
-facets (CullBackFaces cullBack) givenTriangles =
+facets : List Option -> List (Triangle3d Meters coordinates) -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+facets options givenTriangles =
     case givenTriangles of
         [] ->
             Types.EmptyMesh
@@ -189,6 +220,9 @@ facets (CullBackFaces cullBack) givenTriangles =
 
                 webGLMesh =
                     WebGL.triangles (List.map facetAttributes givenTriangles)
+
+                cullBack =
+                    getCullBackFaces options
             in
             withoutShadow <|
                 Types.Facets bounds givenTriangles webGLMesh cullBack
@@ -248,8 +282,8 @@ plainBounds first rest =
     plainBoundsHelp x x y y z z rest
 
 
-indexed : BackFaceSetting -> TriangularMesh (Point3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
-indexed (CullBackFaces cullBack) givenMesh =
+indexed : List Option -> TriangularMesh (Point3d Meters coordinates) -> Mesh coordinates (Triangles NoNormals NoUV NoTangents ShadowsDisabled)
+indexed options givenMesh =
     let
         collectedVertices =
             Array.foldr collectPlain [] (TriangularMesh.vertices givenMesh)
@@ -267,6 +301,9 @@ indexed (CullBackFaces cullBack) givenMesh =
                     WebGL.indexedTriangles
                         collectedVertices
                         (TriangularMesh.faceIndices givenMesh)
+
+                cullBack =
+                    getCullBackFaces options
             in
             withoutShadow <|
                 Types.Indexed bounds givenMesh webGLMesh cullBack
@@ -327,8 +364,8 @@ smoothBounds first rest =
     smoothBoundsHelp x x y y z z rest
 
 
-smooth : BackFaceSetting -> TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates } -> Mesh coordinates HasNormals NoUV NoTangents
-smooth (CullBackFaces cullBack) givenMesh =
+smooth : List Option -> TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+smooth options givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmooth [] (TriangularMesh.vertices givenMesh)
@@ -346,6 +383,9 @@ smooth (CullBackFaces cullBack) givenMesh =
                     WebGL.indexedTriangles
                         collectedVertices
                         (TriangularMesh.faceIndices givenMesh)
+
+                cullBack =
+                    getCullBackFaces options
             in
             withoutShadow <|
                 Types.Smooth bounds givenMesh webGLMesh cullBack
@@ -360,8 +400,8 @@ lineSegmentAttributes givenSegment =
     ( plainVertex p1, plainVertex p2 )
 
 
-lineSegments : List (LineSegment3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
-lineSegments givenSegments =
+lineSegments : List Option -> List (LineSegment3d Meters coordinates) -> Mesh coordinates LineSegments
+lineSegments options givenSegments =
     case givenSegments of
         [] ->
             Types.EmptyMesh
@@ -378,8 +418,8 @@ lineSegments givenSegments =
                 Types.LineSegments bounds givenSegments webGLMesh
 
 
-polyline : Polyline3d Meters coordinates -> Mesh coordinates NoNormals NoUV NoTangents
-polyline givenPolyline =
+polyline : List Option -> Polyline3d Meters coordinates -> Mesh coordinates LineSegments
+polyline options givenPolyline =
     let
         vertices =
             Polyline3d.vertices givenPolyline
@@ -400,8 +440,8 @@ polyline givenPolyline =
                 Types.Polyline bounds givenPolyline webGLMesh
 
 
-points : List (Point3d Meters coordinates) -> Mesh coordinates NoNormals NoUV NoTangents
-points givenPoints =
+points : List Option -> List (Point3d Meters coordinates) -> Mesh coordinates Points
+points options givenPoints =
     case givenPoints of
         [] ->
             Types.EmptyMesh
@@ -418,20 +458,20 @@ points givenPoints =
                 Types.Points bounds givenPoints webGLMesh
 
 
-withShadow : Mesh coordinates normals uv tangents -> Mesh coordinates normals uv tangents
-withShadow mesh =
+enableShadows : Mesh coordinates (Triangles normals uv tangents ShadowsDisabled) -> Mesh coordinates (Triangles normals uv tangents ShadowsEnabled)
+enableShadows mesh =
     case mesh of
         Types.Mesh meshData Nothing ->
             Types.Mesh meshData (Just (createShadow meshData))
 
         Types.Mesh meshData (Just shadow) ->
-            mesh
+            Types.Mesh meshData (Just shadow)
 
         Types.EmptyMesh ->
-            mesh
+            Types.EmptyMesh
 
 
-createShadow : MeshData coordinates normals uv tangents -> Shadow coordinates
+createShadow : MeshData coordinates -> Shadow coordinates
 createShadow meshData =
     case meshData of
         Types.Triangles boundingBox meshTriangles _ _ ->

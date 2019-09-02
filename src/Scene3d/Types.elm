@@ -102,19 +102,19 @@ type Color
     | EmissiveColor Vec3
 
 
-type Material normals uv tangents
+type Material primitives
     = ConstantMaterial Vec3
     | EmissiveMaterial Vec3
     | LambertianMaterial Vec3
     | PhysicalMaterial Vec3 Float Float
 
 
-type Mesh coordinates normals uv tangents
+type Mesh coordinates primitives
     = EmptyMesh
-    | Mesh (MeshData coordinates normals uv tangents) (Maybe (Shadow coordinates))
+    | Mesh (MeshData coordinates) (Maybe (Shadow coordinates))
 
 
-type MeshData coordinates normals uv tangents
+type MeshData coordinates
     = Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) Bool
     | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh SmoothVertex) Bool
     | Indexed (BoundingBox3d Meters coordinates) (TriangularMesh (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex) Bool
@@ -159,7 +159,8 @@ type alias DrawFunction =
 
 type Node
     = EmptyNode
-    | MeshNode DrawFunction (Maybe DrawFunction)
+    | MeshNode DrawFunction
+    | ShadowNode DrawFunction
     | Group (List Node)
     | Transformed Transformation Node
 

@@ -343,7 +343,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
                 childNode
                 accumulated
 
-        MeshNode meshDrawFunction maybeShadowDrawFunction ->
+        MeshNode meshDrawFunction ->
             let
                 updatedMeshes =
                     createRenderPass
@@ -353,22 +353,23 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
                         currentTransformation
                         meshDrawFunction
                         :: accumulated.meshes
-
-                updatedShadows =
-                    case maybeShadowDrawFunction of
-                        Nothing ->
-                            accumulated.shadows
-
-                        Just shadowDrawFunction ->
-                            createRenderPass
-                                sceneProperties
-                                viewMatrix
-                                ambientLighting
-                                currentTransformation
-                                shadowDrawFunction
-                                :: accumulated.shadows
             in
             { meshes = updatedMeshes
+            , shadows = accumulated.shadows
+            }
+
+        ShadowNode shadowDrawFunction ->
+            let
+                updatedShadows =
+                    createRenderPass
+                        sceneProperties
+                        viewMatrix
+                        ambientLighting
+                        currentTransformation
+                        shadowDrawFunction
+                        :: accumulated.shadows
+            in
+            { meshes = accumulated.meshes
             , shadows = updatedShadows
             }
 
