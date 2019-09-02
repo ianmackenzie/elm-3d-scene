@@ -461,18 +461,19 @@ call renderPasses lightMatrices settings =
 
 
 toEntities :
-    { options : List Option
-    , ambientLighting : Maybe (AmbientLighting coordinates)
-    , lights : Lights coordinates
-    , scene : Drawable coordinates
-    , camera : Camera3d Meters coordinates
-    , exposure : Exposure
-    , whiteBalance : Chromaticity
-    , width : Quantity Float Pixels
-    , height : Quantity Float Pixels
-    }
+    List Option
+    ->
+        { ambientLighting : Maybe (AmbientLighting coordinates)
+        , lights : Lights coordinates
+        , scene : Drawable coordinates
+        , camera : Camera3d Meters coordinates
+        , exposure : Exposure
+        , whiteBalance : Chromaticity
+        , width : Quantity Float Pixels
+        , height : Quantity Float Pixels
+        }
     -> List WebGL.Entity
-toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
+toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
     let
         givenGammaCorrection =
             getGammaCorrection options
@@ -576,18 +577,19 @@ toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBal
 
 
 render :
-    { options : List Option
-    , ambientLighting : Maybe (AmbientLighting coordinates)
-    , lights : Lights coordinates
-    , scene : Drawable coordinates
-    , camera : Camera3d Meters coordinates
-    , exposure : Exposure
-    , whiteBalance : Chromaticity
-    , width : Quantity Float Pixels
-    , height : Quantity Float Pixels
-    }
+    List Option
+    ->
+        { ambientLighting : Maybe (AmbientLighting coordinates)
+        , lights : Lights coordinates
+        , scene : Drawable coordinates
+        , camera : Camera3d Meters coordinates
+        , exposure : Exposure
+        , whiteBalance : Chromaticity
+        , width : Quantity Float Pixels
+        , height : Quantity Float Pixels
+        }
     -> Html msg
-render arguments =
+render options arguments =
     let
         widthInPixels =
             inPixels arguments.width
@@ -596,13 +598,13 @@ render arguments =
             inPixels arguments.height
 
         givenDevicePixelRatio =
-            getDevicePixelRatio arguments.options
+            getDevicePixelRatio options
 
         givenAntialias =
-            getAntialias arguments.options
+            getAntialias options
 
         givenClearColor =
-            Color.toRgba (getClearColor arguments.options)
+            Color.toRgba (getClearColor options)
 
         commonOptions =
             [ WebGL.depth 1
@@ -627,21 +629,21 @@ render arguments =
         , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         ]
-        (toEntities arguments)
+        (toEntities options arguments)
 
 
 unlit :
-    { options : List Option
-    , scene : Drawable coordinates
-    , camera : Camera3d Meters coordinates
-    , width : Quantity Float Pixels
-    , height : Quantity Float Pixels
-    }
+    List Option
+    ->
+        { scene : Drawable coordinates
+        , camera : Camera3d Meters coordinates
+        , width : Quantity Float Pixels
+        , height : Quantity Float Pixels
+        }
     -> Html msg
-unlit arguments =
-    render
-        { options = arguments.options
-        , scene = arguments.scene
+unlit options arguments =
+    render options
+        { scene = arguments.scene
         , camera = arguments.camera
         , width = arguments.width
         , height = arguments.height
