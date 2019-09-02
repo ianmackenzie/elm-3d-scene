@@ -107,7 +107,7 @@ ambientLighting : AmbientLighting World
 ambientLighting =
     Light.overcast
         { zenithDirection = Direction3d.positiveZ
-        , zenithLuminance = Luminance.nits 2000
+        , zenithLuminance = Luminance.nits 3000
         , chromaticity = Chromaticity.daylight
         }
 
