@@ -17,7 +17,7 @@ import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable exposing (Drawable)
 import Scene3d.Exposure as Exposure
 import Scene3d.Light as Light exposing (AmbientLighting, Light)
-import Scene3d.Mesh as Mesh exposing (HasNormals, Mesh, NoTangents, NoUV)
+import Scene3d.Mesh as Mesh exposing (Mesh, NoTangents, NoUV, ShadowsDisabled, ShadowsEnabled, Triangles, WithNormals)
 import Scene3d.Shape as Shape
 import Vector3d
 import Viewpoint3d
@@ -27,13 +27,13 @@ type World
     = World
 
 
-sphereMesh : Mesh World HasNormals NoUV NoTangents
+sphereMesh : Mesh World (Triangles WithNormals NoUV NoTangents ShadowsEnabled)
 sphereMesh =
     Shape.sphere { radius = meters 1, maxError = meters 0.001 }
-        |> Mesh.withShadow
+        |> Mesh.enableShadows
 
 
-floorMesh : Mesh World HasNormals NoUV NoTangents
+floorMesh : Mesh World (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
 floorMesh =
     Shape.block (meters 8) (meters 8) (meters 0.2)
 
@@ -47,24 +47,28 @@ floor =
 goldSphere : Drawable World
 goldSphere =
     Drawable.physical Materials.gold sphereMesh
+        |> Drawable.withShadow sphereMesh
         |> Drawable.translateBy (Vector3d.meters 2 2 0)
 
 
 aluminumSphere : Drawable World
 aluminumSphere =
     Drawable.physical Materials.aluminum sphereMesh
+        |> Drawable.withShadow sphereMesh
         |> Drawable.translateBy (Vector3d.meters 2 -2 0)
 
 
 blackPlasticSphere : Drawable World
 blackPlasticSphere =
     Drawable.physical Materials.blackPlastic sphereMesh
+        |> Drawable.withShadow sphereMesh
         |> Drawable.translateBy (Vector3d.meters -2 -2 0)
 
 
 whitePlasticSphere : Drawable World
 whitePlasticSphere =
     Drawable.physical Materials.whitePlastic sphereMesh
+        |> Drawable.withShadow sphereMesh
         |> Drawable.translateBy (Vector3d.meters -2 2 0)
 
 
@@ -114,13 +118,12 @@ ambientLighting =
 
 main : Html msg
 main =
-    Scene3d.render
-        { options = [ Scene3d.devicePixelRatio 2 ]
-        , ambientLighting = Just ambientLighting
+    Scene3d.render [ Scene3d.devicePixelRatio 2 ]
+        { ambientLighting = Just ambientLighting
         , lights = Scene3d.oneLight sunlight { castsShadows = True }
         , camera = camera
-        , screenWidth = pixels 1024
-        , screenHeight = pixels 768
+        , width = pixels 1024
+        , height = pixels 768
         , scene = scene
         , exposure = Exposure.fromEv100 14
         , whiteBalance = Chromaticity.daylight
