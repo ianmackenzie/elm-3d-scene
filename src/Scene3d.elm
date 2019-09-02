@@ -468,17 +468,17 @@ toEntities :
     , camera : Camera3d Meters coordinates
     , exposure : Exposure
     , whiteBalance : Chromaticity
-    , screenWidth : Quantity Float Pixels
-    , screenHeight : Quantity Float Pixels
+    , width : Quantity Float Pixels
+    , height : Quantity Float Pixels
     }
     -> List WebGL.Entity
-toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBalance, screenWidth, screenHeight } =
+toEntities { options, ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
     let
         givenGammaCorrection =
             getGammaCorrection options
 
         aspectRatio =
-            Quantity.ratio screenWidth screenHeight
+            Quantity.ratio width height
 
         projectionParameters =
             Camera3d.projectionParameters { screenAspectRatio = aspectRatio }
@@ -583,17 +583,17 @@ render :
     , camera : Camera3d Meters coordinates
     , exposure : Exposure
     , whiteBalance : Chromaticity
-    , screenWidth : Quantity Float Pixels
-    , screenHeight : Quantity Float Pixels
+    , width : Quantity Float Pixels
+    , height : Quantity Float Pixels
     }
     -> Html msg
 render arguments =
     let
         widthInPixels =
-            inPixels arguments.screenWidth
+            inPixels arguments.width
 
         heightInPixels =
-            inPixels arguments.screenHeight
+            inPixels arguments.height
 
         givenDevicePixelRatio =
             getDevicePixelRatio arguments.options
