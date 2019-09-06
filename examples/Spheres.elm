@@ -96,17 +96,6 @@ sunlight =
         )
 
 
-scene : Drawable World
-scene =
-    Drawable.group
-        [ goldSphere
-        , aluminumSphere
-        , blackPlasticSphere
-        , whitePlasticSphere
-        , floor
-        ]
-
-
 ambientLighting : AmbientLighting World
 ambientLighting =
     Light.overcast
@@ -124,7 +113,12 @@ main =
         , camera = camera
         , width = pixels 1024
         , height = pixels 768
-        , scene = scene
         , exposure = Exposure.fromEv100 14
         , whiteBalance = Chromaticity.daylight
         }
+        [ goldSphere
+        , aluminumSphere
+        , blackPlasticSphere
+        , whitePlasticSphere
+        , floor
+        ]

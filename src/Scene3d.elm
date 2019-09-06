@@ -31,7 +31,7 @@ import Quantity exposing (Quantity(..))
 import Rectangle2d
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.Color exposing (LinearRgb(..))
-import Scene3d.Drawable exposing (Drawable)
+import Scene3d.Drawable as Drawable exposing (Drawable)
 import Scene3d.Exposure as Exposure exposing (Exposure)
 import Scene3d.Light exposing (AmbientLighting, Light)
 import Scene3d.Transformation as Transformation exposing (Transformation)
@@ -466,15 +466,15 @@ toEntities :
     ->
         { ambientLighting : Maybe (AmbientLighting coordinates)
         , lights : Lights coordinates
-        , scene : Drawable coordinates
         , camera : Camera3d Meters coordinates
         , exposure : Exposure
         , whiteBalance : Chromaticity
         , width : Quantity Float Pixels
         , height : Quantity Float Pixels
         }
+    -> List (Drawable coordinates)
     -> List WebGL.Entity
-toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
+toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, width, height } drawables =
     let
         givenPointSize =
             getPointSize options
@@ -545,7 +545,7 @@ toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBala
                     ambientLightingDisabled
 
         (Types.Drawable rootNode) =
-            scene
+            Drawable.group drawables
 
         renderPasses =
             collectRenderPasses
@@ -582,15 +582,15 @@ render :
     ->
         { ambientLighting : Maybe (AmbientLighting coordinates)
         , lights : Lights coordinates
-        , scene : Drawable coordinates
         , camera : Camera3d Meters coordinates
         , exposure : Exposure
         , whiteBalance : Chromaticity
         , width : Quantity Float Pixels
         , height : Quantity Float Pixels
         }
+    -> List (Drawable coordinates)
     -> Html msg
-render options arguments =
+render options arguments drawables =
     let
         widthInPixels =
             inPixels arguments.width
@@ -619,22 +619,21 @@ render options arguments =
         , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         ]
-        (toEntities options arguments)
+        (toEntities options arguments drawables)
 
 
 unlit :
     List Option
     ->
-        { scene : Drawable coordinates
-        , camera : Camera3d Meters coordinates
+        { camera : Camera3d Meters coordinates
         , width : Quantity Float Pixels
         , height : Quantity Float Pixels
         }
+    -> List (Drawable coordinates)
     -> Html msg
-unlit options arguments =
+unlit options arguments drawables =
     render options
-        { scene = arguments.scene
-        , camera = arguments.camera
+        { camera = arguments.camera
         , width = arguments.width
         , height = arguments.height
         , ambientLighting = Nothing
@@ -642,6 +641,7 @@ unlit options arguments =
         , exposure = Exposure.srgb
         , whiteBalance = Chromaticity.daylight
         }
+        drawables
 
 
 
