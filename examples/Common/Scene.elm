@@ -1,5 +1,6 @@
-module Common.Scene exposing (ModelCoordinates, WorldCoordinates, view)
+module Common.Scene exposing (BodyCoordinates, WorldCoordinates, view)
 
+import Angle
 import Axis3d exposing (Axis3d)
 import Camera3d exposing (Camera3d)
 import Color
@@ -7,7 +8,9 @@ import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
 import Html exposing (Html)
 import Html.Attributes as Attributes
+import Illuminance
 import Length exposing (Meters, meters)
+import Luminance
 import Materials
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3)
@@ -18,13 +21,15 @@ import Pixels exposing (Pixels, inPixels)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
 import Scene3d
+import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Exposure as Exposure
 import Scene3d.Light as Light
 import WebGL exposing (Entity)
 
 
-type ModelCoordinates
-    = ModelCoordinates
+type BodyCoordinates
+    = BodyCoordinates
 
 
 type WorldCoordinates
@@ -32,7 +37,7 @@ type WorldCoordinates
 
 
 type alias Params =
-    { world : World (Drawable Meters ModelCoordinates)
+    { world : World (Drawable BodyCoordinates)
     , camera : Camera3d Meters WorldCoordinates
     , screenWidth : Quantity Float Pixels
     , screenHeight : Quantity Float Pixels
@@ -49,33 +54,31 @@ view { world, floorOffset, camera, screenWidth, screenHeight } =
         drawables =
             List.map getTransformedDrawable (World.getBodies world)
 
-        intensity =
-            25
+        sunlight =
+            Light.directional Chromaticity.daylight
+                (Illuminance.lux 10000)
+                (Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60))
 
-        distance =
-            5
-
-        lights =
-            [ Light.point (Point3d.fromTuple meters ( distance, distance, 1.5 * distance )) ( intensity, intensity, intensity )
-            , Light.point (Point3d.fromTuple meters ( -distance, distance, 1.5 * distance )) ( intensity, intensity, intensity )
-            , Light.point (Point3d.fromTuple meters ( -distance, -distance, 1.5 * distance )) ( intensity, intensity, intensity )
-            , Light.point (Point3d.fromTuple meters ( distance, -distance, 1.5 * distance )) ( intensity, intensity, intensity )
-            , Light.point (Point3d.fromTuple meters ( 0, 0, 5 * distance )) ( 6 * intensity, 6 * intensity, 6 * intensity )
-            ]
+        ambientLighting =
+            Light.overcast
+                { zenithDirection = Direction3d.z
+                , chromaticity = Chromaticity.daylight
+                , zenithLuminance = Luminance.nits 5000
+                }
     in
-    WebGL.toHtmlWith
-        [ WebGL.depth 1
-        , WebGL.alpha True
-        , WebGL.antialias
-        , WebGL.clearColor 0.7 0.7 0.7 1
-        ]
-        [ Attributes.width (round (inPixels screenWidth))
-        , Attributes.height (round (inPixels screenHeight))
-        , Attributes.style "position" "absolute"
-        , Attributes.style "top" "0"
-        , Attributes.style "left" "0"
-        ]
-        (Scene3d.toEntities lights camera ( screenWidth, screenHeight ) (Drawable.group drawables))
+    Scene3d.render []
+        { width = screenWidth
+        , height = screenHeight
+        , camera = camera
+        , lights =
+            Scene3d.oneLight sunlight { castsShadows = True }
+        , ambientLighting =
+            Just ambientLighting
+        , exposure =
+            Exposure.fromMaxLuminance (Luminance.nits 10000)
+        , whiteBalance = Chromaticity.daylight
+        }
+        drawables
 
 
 toFrame :
@@ -96,7 +99,7 @@ toFrame :
     , m34 : Float
     , m44 : Float
     }
-    -> Frame3d Meters WorldCoordinates { defines : ModelCoordinates }
+    -> Frame3d Meters WorldCoordinates { defines : BodyCoordinates }
 toFrame t =
     Frame3d.unsafe
         { originPoint =
@@ -110,7 +113,7 @@ toFrame t =
         }
 
 
-getTransformedDrawable : Body (Drawable Meters ModelCoordinates) -> Drawable Meters WorldCoordinates
+getTransformedDrawable : Body (Drawable BodyCoordinates) -> Drawable WorldCoordinates
 getTransformedDrawable body =
     Body.getData body
         |> Drawable.placeIn

@@ -7,26 +7,26 @@ import Camera3d exposing (Camera3d)
 import Color
 import Common.Events as Events
 import Common.Fps as Fps
-import Common.Scene as Scene exposing (ModelCoordinates, WorldCoordinates)
+import Common.Scene as Scene exposing (BodyCoordinates, WorldCoordinates)
 import Common.Settings as Settings exposing (Settings, SettingsMsg, settings)
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Html.Events exposing (onClick)
-import Length exposing (Meters, inMeters, meters)
+import Length exposing (Length, Meters, inMeters, meters)
 import Materials
 import Physics.Body as Body exposing (Body)
 import Physics.World as World exposing (World)
 import Pixels exposing (pixels)
 import Point3d exposing (Point3d)
 import Random
-import Scene3d.Drawable as Drawable exposing (Drawable)
-import Scene3d.Material as Material exposing (Material)
-import Shapes
+import Scene3d.Drawable as Drawable exposing (Drawable, Material)
+import Scene3d.Mesh as Mesh exposing (Mesh, NoTangents, NoUV, ShadowsDisabled, ShadowsEnabled, Triangles, WithNormals)
+import Scene3d.Shape as Shape
 import Viewpoint3d exposing (Viewpoint3d)
 
 
 type alias Model =
-    { world : World (Drawable Meters ModelCoordinates)
+    { world : World (Drawable BodyCoordinates)
     , fps : List Float
     , settings : Settings
     , screenWidth : Float
@@ -105,8 +105,8 @@ view { settings, fps, world, screenWidth, screenHeight } =
             Camera3d.perspective
                 { viewpoint =
                     Viewpoint3d.lookAt
-                        { eyePoint = Point3d.meters 0 30 20
-                        , focalPoint = Point3d.origin
+                        { eyePoint = Point3d.meters 0 20 20
+                        , focalPoint = Point3d.meters 0 0 0
                         , upDirection = Direction3d.positiveZ
                         }
                 , clipDepth = meters 0.1
@@ -134,10 +134,25 @@ view { settings, fps, world, screenWidth, screenHeight } =
         ]
 
 
-initialWorld : World (Drawable Meters ModelCoordinates)
+earthGravity : { x : Float, y : Float, z : Float }
+earthGravity =
+    { x = 0, y = 0, z = -9.81 }
+
+
+moonGravity : { x : Float, y : Float, z : Float }
+moonGravity =
+    { x = 0, y = 0, z = -1.62 }
+
+
+marsGravity : { x : Float, y : Float, z : Float }
+marsGravity =
+    { x = 0, y = 0, z = -3.7 }
+
+
+initialWorld : World (Drawable BodyCoordinates)
 initialWorld =
     World.empty
-        |> World.setGravity { x = 0, y = 0, z = -10 }
+        |> World.setGravity moonGravity
         |> World.add floor
         |> addBoxes
 
@@ -148,10 +163,10 @@ materials =
         [ Materials.aluminum
         , Materials.whitePlastic
         , Materials.copper
-        , Material.nonmetal { color = Color.lightBlue, roughness = 0.25 }
+        , { baseColor = Color.lightBlue, roughness = 0.25, metallic = False }
         , Materials.gold
         , Materials.whitePlastic
-        , Material.nonmetal { color = Color.blue, roughness = 0.25 }
+        , { baseColor = Color.blue, roughness = 0.25, metallic = False }
         ]
 
 
@@ -180,7 +195,7 @@ randomOffsets index =
         |> Tuple.first
 
 
-addBoxes : World (Drawable Meters ModelCoordinates) -> World (Drawable Meters ModelCoordinates)
+addBoxes : World (Drawable BodyCoordinates) -> World (Drawable BodyCoordinates)
 addBoxes world =
     let
         xySize =
@@ -247,32 +262,75 @@ floorOffset =
     { x = 0, y = 0, z = -1 }
 
 
+floorDimensions : ( Length, Length, Length )
+floorDimensions =
+    ( Length.meters 10
+    , Length.meters 10
+    , Length.meters 0.1
+    )
+
+
+floorRadius : Length
+floorRadius =
+    Length.meters 30
+
+
+floorMesh : Mesh BodyCoordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+floorMesh =
+    Shape.sphere { radius = floorRadius, subdivisions = 144 }
+
+
 {-| Floor has an empty mesh, because it is not rendered
 -}
-floor : Body (Drawable Meters ModelCoordinates)
+floor : Body (Drawable BodyCoordinates)
 floor =
-    Body.plane Drawable.empty
+    let
+        ( x, y, z ) =
+            floorDimensions
+    in
+    Drawable.physical Materials.aluminum floorMesh
+        |> Body.sphere (Length.inMeters floorRadius)
         |> Body.setMass 0
-        |> Body.setPosition floorOffset
+        |> Body.moveBy { x = 0, y = 0, z = -(Length.inMeters floorRadius) }
 
 
-box : Material -> Body (Drawable Meters ModelCoordinates)
+boxSize : Length
+boxSize =
+    Length.meters 0.9
+
+
+boxMesh : Mesh BodyCoordinates (Triangles WithNormals NoUV NoTangents ShadowsEnabled)
+boxMesh =
+    Shape.block boxSize boxSize boxSize
+        |> Mesh.enableShadows
+
+
+box : Material -> Body (Drawable BodyCoordinates)
 box material =
     let
-        size =
-            meters 0.9
+        bodySize =
+            Length.inMeters boxSize
     in
-    Shapes.box material size size size
-        |> Body.box { x = inMeters size, y = inMeters size, z = inMeters size }
+    Drawable.physical material boxMesh
+        |> Drawable.withShadow boxMesh
+        |> Body.box { x = bodySize, y = bodySize, z = bodySize }
         |> Body.setMass 5
 
 
-sphere : Material -> Body (Drawable Meters ModelCoordinates)
+sphereRadius : Length
+sphereRadius =
+    Length.meters 0.45
+
+
+sphereMesh : Mesh BodyCoordinates (Triangles WithNormals NoUV NoTangents ShadowsEnabled)
+sphereMesh =
+    Shape.sphere { radius = sphereRadius, subdivisions = 36 }
+        |> Mesh.enableShadows
+
+
+sphere : Material -> Body (Drawable BodyCoordinates)
 sphere material =
-    let
-        radius =
-            meters 0.45
-    in
-    Shapes.sphere material Point3d.origin radius
-        |> Body.sphere (inMeters radius)
+    Drawable.physical material sphereMesh
+        |> Drawable.withShadow sphereMesh
+        |> Body.sphere (inMeters sphereRadius)
         |> Body.setMass 2.5
