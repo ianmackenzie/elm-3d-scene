@@ -1,6 +1,7 @@
 module Scene3d.Drawable exposing
     ( Drawable
     , Material
+    , colored
     , emissive
     , empty
     , group
@@ -14,7 +15,6 @@ module Scene3d.Drawable exposing
     , shadow
     , translateBy
     , translateIn
-    , withColor
     , withShadow
     )
 
@@ -62,8 +62,8 @@ empty =
     Types.Drawable EmptyNode
 
 
-withColor : Color -> Mesh coordinates primitives -> Drawable coordinates
-withColor givenColor givenMesh =
+colored : Color -> Mesh coordinates primitives -> Drawable coordinates
+colored givenColor givenMesh =
     let
         { red, green, blue } =
             Color.toRgba givenColor
