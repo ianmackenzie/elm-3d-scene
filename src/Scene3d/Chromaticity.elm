@@ -17,7 +17,7 @@ module Scene3d.Chromaticity exposing
 
 ## Constructors
 
-@docs xy, srgb, fromTemperature, fromColor
+@docs xy, srgb, kelvins, fromTemperature, fromColor
 
 
 ## Conversions
@@ -70,6 +70,11 @@ xy x y =
 srgb : Float -> Float -> Float -> Chromaticity
 srgb r g b =
     fromColor (Color.rgb r g b)
+
+
+kelvins : Float -> Chromaticity
+kelvins numKelvins =
+    fromTemperature (Temperature.kelvins numKelvins)
 
 
 fromTemperature : Temperature -> Chromaticity
