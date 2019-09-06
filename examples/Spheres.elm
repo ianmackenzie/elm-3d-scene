@@ -118,7 +118,7 @@ ambientLighting =
 
 main : Html msg
 main =
-    Scene3d.render [ Scene3d.devicePixelRatio 2 ]
+    Scene3d.render []
         { ambientLighting = Just ambientLighting
         , lights = Scene3d.oneLight sunlight { castsShadows = True }
         , camera = camera

@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( render, unlit, toEntities
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights
-    , Option, clearColor, devicePixelRatio, pointSize
+    , Option, clearColor, pointSize
     )
 
 {-|
@@ -10,7 +10,7 @@ module Scene3d exposing
 
 @docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
-@docs Option, clearColor, devicePixelRatio, pointSize
+@docs Option, clearColor, pointSize
 
 -}
 
@@ -476,9 +476,6 @@ toEntities :
     -> List WebGL.Entity
 toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBalance, width, height } =
     let
-        givenDevicePixelRatio =
-            getDevicePixelRatio options
-
         givenPointSize =
             getPointSize options
 
@@ -529,7 +526,7 @@ toEntities options { ambientLighting, lights, scene, camera, exposure, whiteBala
                 , m13 = maxLuminance * r
                 , m23 = maxLuminance * g
                 , m33 = maxLuminance * b
-                , m43 = givenPointSize * givenDevicePixelRatio
+                , m43 = givenPointSize
                 , m14 = 0
                 , m24 = 0
                 , m34 = 0
@@ -601,9 +598,6 @@ render options arguments =
         heightInPixels =
             inPixels arguments.height
 
-        givenDevicePixelRatio =
-            getDevicePixelRatio options
-
         givenClearColor =
             Color.toRgba (getClearColor options)
 
@@ -620,8 +614,8 @@ render options arguments =
             ]
     in
     WebGL.toHtmlWith webGLOptions
-        [ Html.Attributes.width (round (givenDevicePixelRatio * widthInPixels))
-        , Html.Attributes.height (round (givenDevicePixelRatio * heightInPixels))
+        [ Html.Attributes.width (round widthInPixels)
+        , Html.Attributes.height (round heightInPixels)
         , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         ]
@@ -655,15 +649,8 @@ unlit options arguments =
 
 
 type Option
-    = DevicePixelRatio Float
-    | Alpha Bool
-    | ClearColor Color
+    = ClearColor Color
     | PointSize Float
-
-
-devicePixelRatio : Float -> Option
-devicePixelRatio value =
-    DevicePixelRatio value
 
 
 pointSize : Quantity Float Pixels -> Option
@@ -676,23 +663,6 @@ clearColor color =
     ClearColor color
 
 
-getDevicePixelRatio : List Option -> Float
-getDevicePixelRatio options =
-    let
-        defaultValue =
-            1.0
-
-        update option oldValue =
-            case option of
-                DevicePixelRatio newValue ->
-                    newValue
-
-                _ ->
-                    oldValue
-    in
-    List.foldl update defaultValue options
-
-
 getPointSize : List Option -> Float
 getPointSize options =
     let
@@ -702,23 +672,6 @@ getPointSize options =
         update option oldValue =
             case option of
                 PointSize newValue ->
-                    newValue
-
-                _ ->
-                    oldValue
-    in
-    List.foldl update defaultValue options
-
-
-getAlpha : List Option -> Bool
-getAlpha options =
-    let
-        defaultValue =
-            True
-
-        update option oldValue =
-            case option of
-                Alpha newValue ->
                     newValue
 
                 _ ->
