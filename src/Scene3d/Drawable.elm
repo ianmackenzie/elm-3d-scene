@@ -162,25 +162,25 @@ lambertian givenColor givenMesh =
         Types.Mesh meshData maybeShadow ->
             case meshData of
                 Types.Triangles _ _ _ _ ->
-                    Debug.log "triangles/lambertian" empty
+                    empty
 
                 Types.Facets _ _ webGLMesh cullBackFaces ->
                     lambertianMesh linearColor webGLMesh cullBackFaces
 
                 Types.Indexed _ _ _ _ ->
-                    Debug.log "indexed/lambertian" empty
+                    empty
 
                 Types.Smooth _ _ webGLMesh cullBackFaces ->
                     lambertianMesh linearColor webGLMesh cullBackFaces
 
                 Types.LineSegments _ _ _ ->
-                    Debug.log "lineSegments/lambertian" empty
+                    empty
 
                 Types.Polyline _ _ _ ->
-                    Debug.log "polyline/lambertian" empty
+                    empty
 
                 Types.Points _ _ _ ->
-                    Debug.log "points/lambertian" empty
+                    empty
 
 
 physical : Material -> Mesh coordinates (Triangles WithNormals uv tangents shadows) -> Drawable coordinates
@@ -206,7 +206,7 @@ physical givenMaterial givenMesh =
         Types.Mesh meshData maybeShadow ->
             case meshData of
                 Types.Triangles _ _ _ _ ->
-                    Debug.log "triangles/physical" empty
+                    empty
 
                 Types.Facets _ _ webGLMesh cullBackFaces ->
                     physicalMesh
@@ -217,7 +217,7 @@ physical givenMaterial givenMesh =
                         cullBackFaces
 
                 Types.Indexed _ _ _ _ ->
-                    Debug.log "indexed/physical" empty
+                    empty
 
                 Types.Smooth _ _ webGLMesh cullBackFaces ->
                     physicalMesh
@@ -228,13 +228,13 @@ physical givenMaterial givenMesh =
                         cullBackFaces
 
                 Types.LineSegments _ _ _ ->
-                    Debug.log "lineSegments/physical" empty
+                    empty
 
                 Types.Polyline _ _ _ ->
-                    Debug.log "polyline/physical" empty
+                    empty
 
                 Types.Points _ _ _ ->
-                    Debug.log "points/physical" empty
+                    empty
 
 
 shadow : Mesh coordinates (Triangles normals uv tangents ShadowsEnabled) -> Drawable coordinates
