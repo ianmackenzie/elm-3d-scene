@@ -21,33 +21,11 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-subdivisionsFor : { radius : Length, maxError : Length } -> Int
-subdivisionsFor { radius, maxError } =
-    if maxError |> Quantity.lessThanOrEqualTo Quantity.zero then
-        0
-
-    else if
-        maxError
-            |> Quantity.greaterThanOrEqualTo
-                (Quantity.twice (Quantity.abs radius))
-    then
-        0
-
-    else
-        let
-            maxSegmentAngle =
-                Quantity.twice <|
-                    Angle.acos <|
-                        (1 - Quantity.ratio maxError (Quantity.abs radius))
-        in
-        ceiling (Quantity.ratio (Angle.turns 1) maxSegmentAngle)
-
-
-sphere : { radius : Length, maxError : Length } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
-sphere { radius, maxError } =
+sphere : { radius : Length, subdivisions : Int } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+sphere { radius, subdivisions } =
     let
         n =
-            subdivisionsFor { radius = radius, maxError = maxError }
+            subdivisions
 
         m =
             ceiling (toFloat n / 2)
@@ -134,12 +112,9 @@ sphere { radius, maxError } =
         TriangularMesh.indexed pointsAndNormals faces
 
 
-cylinder : { radius : Length, height : Length, maxError : Length } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
-cylinder { radius, height, maxError } =
+cylinder : { radius : Length, height : Length, subdivisions : Int } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+cylinder { radius, height, subdivisions } =
     let
-        subdivisions =
-            subdivisionsFor { radius = radius, maxError = maxError }
-
         wedgeAngle =
             Angle.turns 1 |> Quantity.divideBy (toFloat subdivisions)
 

@@ -29,7 +29,7 @@ type World
 
 sphereMesh : Mesh World (Triangles WithNormals NoUV NoTangents ShadowsEnabled)
 sphereMesh =
-    Shape.sphere { radius = meters 1, maxError = meters 0.001 }
+    Shape.sphere { radius = meters 1, subdivisions = 72 }
         |> Mesh.enableShadows
 
 
