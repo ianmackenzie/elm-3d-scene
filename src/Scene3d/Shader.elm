@@ -449,6 +449,10 @@ lambertianFragment =
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
 
+        float positiveDotProduct(vec3 v1, vec3 v2) {
+            return clamp(dot(v1, v2), 0.0, 1.0);
+        }
+
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -489,7 +493,7 @@ lambertianFragment =
             vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
             getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, directionToLight, normalIlluminance);
 
-            float dotNL = dot(directionToLight, interpolatedNormal);
+            float dotNL = positiveDotProduct(directionToLight, interpolatedNormal);
             return (normalIlluminance * dotNL) * (color / 3.14159265359);
         }
 
@@ -542,6 +546,10 @@ physicalFragment =
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
 
+        float positiveDotProduct(vec3 v1, vec3 v2) {
+            return clamp(dot(v1, v2), 0.0, 1.0);
+        }
+
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -572,13 +580,21 @@ physicalFragment =
             }
         }
 
+        float safeQuotient(float numerator, float denominator) {
+            if (denominator == 0.0) {
+                return 0.0;
+            } else {
+                return numerator / denominator;
+            }
+        }
+
         float specularD(float alphaSquared, float dotNHSquared) {
             float tmp = dotNHSquared * (alphaSquared - 1.0) + 1.0;
             return alphaSquared / (3.14159265359 * tmp * tmp);
         }
 
         float g1(float dotNV, float alphaSquared) {
-            return (2.0 * dotNV) / (dotNV + sqrt(alphaSquared + (1.0 - alphaSquared) * dotNV * dotNV));
+            return safeQuotient(2.0 * dotNV, dotNV + sqrt(alphaSquared + (1.0 - alphaSquared) * dotNV * dotNV));
         }
 
         float specularG(float dotNL, float dotNV, float alphaSquared) {
@@ -593,22 +609,22 @@ physicalFragment =
 
         vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alphaSquared, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
             vec3 halfDirection = normalize(directionToCamera + directionToLight);
-            float dotVH = clamp(dot(directionToCamera, halfDirection), 0.0, 1.0);
-            float dotNH = clamp(dot(normalDirection, halfDirection), 0.0, 1.0);
+            float dotVH = positiveDotProduct(directionToCamera, halfDirection);
+            float dotNH = positiveDotProduct(normalDirection, halfDirection);
             float dotNHSquared = dotNH * dotNH;
 
             float d = specularD(alphaSquared, dotNHSquared);
             float g = specularG(dotNL, dotNV, alphaSquared);
             vec3 f = fresnelColor(specularBaseColor, dotVH);
-            return ((d * g) / (4.0 * dotNL * dotNV)) * f;
+            return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
         }
 
         float vndf(float dotNV, float alphaSquared, float dotNH) {
-            return (g1(dotNV, alphaSquared) * dotNV * specularD(alphaSquared, dotNH * dotNH)) / dotNV;
+            return safeQuotient(g1(dotNV, alphaSquared) * dotNV * specularD(alphaSquared, dotNH * dotNH), dotNV);
         }
 
         float probabilityDensity(float dotNV, float alphaSquared, float dotNH, float dotVH) {
-            return vndf(dotNV, alphaSquared, dotNH) / (4.0 * dotVH);
+            return safeQuotient(vndf(dotNV, alphaSquared, dotNH), 4.0 * dotVH);
         }
 
         vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
@@ -632,7 +648,7 @@ physicalFragment =
             vec3 specularBaseColor
         ) {
             vec3 luminance = cloudyLuminance(zenithLuminance, localZenithDirection, localLightDirection);
-            float dotVH = dot(localViewDirection, localHalfDirection);
+            float dotVH = positiveDotProduct(localViewDirection, localHalfDirection);
             float dotNL = localLightDirection.z;
             return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
             return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
@@ -799,7 +815,7 @@ physicalFragment =
             vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
             getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, directionToLight, normalIlluminance);
 
-            float dotNL = clamp(dot(normalDirection, directionToLight), 0.0, 1.0);
+            float dotNL = positiveDotProduct(normalDirection, directionToLight);
             vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alphaSquared, dotNV, dotNL, specularBaseColor, normalIlluminance);
             return (normalIlluminance * dotNL) * ((diffuseBaseColor / 3.14159265359) + specularColor);
         }
@@ -815,7 +831,7 @@ physicalFragment =
                 directionToCamera = sceneProperties[1].xyz;
             }
 
-            float dotNV = clamp(dot(normalDirection, directionToCamera), 0.0, 1.0);
+            float dotNV = positiveDotProduct(normalDirection, directionToCamera);
 
             float nonmetallic = 1.0 - metallic;
             vec3 diffuseBaseColor = nonmetallic * 0.96 * color;
