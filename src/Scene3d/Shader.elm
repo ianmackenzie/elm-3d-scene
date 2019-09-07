@@ -514,6 +514,7 @@ physicalFragment :
         { uniforms
             | sceneProperties : Mat4
             , ambientLighting : Mat4
+            , viewMatrix : Mat4
             , lights12 : Mat4
             , lights34 : Mat4
             , lights56 : Mat4
@@ -529,6 +530,7 @@ physicalFragment =
 
         uniform mat4 sceneProperties;
         uniform mat4 ambientLighting;
+        uniform mat4 viewMatrix;
         uniform mat4 lights12;
         uniform mat4 lights34;
         uniform mat4 lights56;
@@ -658,8 +660,17 @@ physicalFragment =
             if (ambientType == 1.0) {
                 vec3 zenithDirection = ambientLighting[0].xyz;
                 vec3 zenithLuminance = ambientLighting[1].rgb;
-                vec3 yDirection = normalize(cross(normalDirection, directionToCamera));
-                vec3 xDirection = cross(yDirection, normalDirection);
+                vec3 crossProduct = cross(normalDirection, directionToCamera);
+                float crossMagnitude = length(crossProduct);
+                vec3 xDirection = vec3(0.0, 0.0, 0.0);
+                vec3 yDirection = vec3(0.0, 0.0, 0.0);
+                if (crossMagnitude > 1.0e-6) {
+                    yDirection = (1.0 / crossMagnitude) * crossProduct;
+                    xDirection = cross(yDirection, normalDirection);
+                } else {
+                    xDirection = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
+                    yDirection = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                }
                 float localViewX = dot(directionToCamera, xDirection);
                 float localViewZ = dot(directionToCamera, normalDirection);
                 vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
