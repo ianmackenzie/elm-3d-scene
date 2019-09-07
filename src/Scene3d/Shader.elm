@@ -684,8 +684,9 @@ physicalFragment =
                     yDirection = (1.0 / crossMagnitude) * crossProduct;
                     xDirection = cross(yDirection, normalDirection);
                 } else {
-                    xDirection = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
-                    yDirection = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                    xDirection = normalize(cross(viewY, normalDirection));
+                    yDirection = cross(normalDirection, xDirection);
                 }
                 float localViewX = dot(directionToCamera, xDirection);
                 float localViewZ = dot(directionToCamera, normalDirection);
