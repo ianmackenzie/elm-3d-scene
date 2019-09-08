@@ -395,6 +395,7 @@ lambertianMesh color webGLMesh cullBackFaces =
                     webGLMesh
                     { color = color
                     , sceneProperties = sceneProperties
+                    , ambientLighting = ambientLighting
                     , lights12 = lights.lights12
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
