@@ -5,16 +5,16 @@ import Array exposing (Array)
 import Browser
 import Camera3d exposing (Camera3d)
 import Color
-import Common.Events as Events
-import Common.Fps as Fps
-import Common.Scene as Scene exposing (BodyCoordinates, WorldCoordinates)
-import Common.Settings as Settings exposing (Settings, SettingsMsg, settings)
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Html.Events exposing (onClick)
 import Length exposing (Length, Meters, inMeters, meters)
 import Materials
 import Physics.Body as Body exposing (Body)
+import Physics.Events as Events
+import Physics.Fps as Fps
+import Physics.Scene as Scene exposing (BodyCoordinates, WorldCoordinates)
+import Physics.Settings as Settings exposing (Settings, SettingsMsg, settings)
 import Physics.World as World exposing (World)
 import Pixels exposing (pixels)
 import Point3d exposing (Point3d)
