@@ -71,7 +71,7 @@ camera =
 
 material =
     { baseColor = Color.blue
-    , roughness = 0.2
+    , roughness = 0.4
     , metallic = False
     }
 
