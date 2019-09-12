@@ -90,4 +90,4 @@ main =
                 (Luminance.nits 5000)
         , whiteBalance = Chromaticity.daylight
         }
-        [ Drawable.lambertian material.baseColor mesh ]
+        [ Drawable.physical material mesh ]
