@@ -243,16 +243,16 @@ block x y z =
             Point3d.xyz minX maxY maxZ
     in
     Mesh.facets [ Mesh.cullBackFaces ]
-        [ Triangle3d.fromVertices p0 p2 p1
-        , Triangle3d.fromVertices p0 p3 p2
-        , Triangle3d.fromVertices p4 p5 p6
-        , Triangle3d.fromVertices p4 p6 p7
-        , Triangle3d.fromVertices p1 p2 p6
-        , Triangle3d.fromVertices p1 p6 p5
-        , Triangle3d.fromVertices p0 p7 p3
-        , Triangle3d.fromVertices p0 p4 p7
-        , Triangle3d.fromVertices p0 p1 p5
-        , Triangle3d.fromVertices p0 p5 p4
-        , Triangle3d.fromVertices p3 p6 p2
-        , Triangle3d.fromVertices p3 p7 p6
+        [ Triangle3d.from p0 p2 p1
+        , Triangle3d.from p0 p3 p2
+        , Triangle3d.from p4 p5 p6
+        , Triangle3d.from p4 p6 p7
+        , Triangle3d.from p1 p2 p6
+        , Triangle3d.from p1 p6 p5
+        , Triangle3d.from p0 p7 p3
+        , Triangle3d.from p0 p4 p7
+        , Triangle3d.from p0 p1 p5
+        , Triangle3d.from p0 p5 p4
+        , Triangle3d.from p3 p6 p2
+        , Triangle3d.from p3 p7 p6
         ]
