@@ -4,6 +4,9 @@ elm-stuff/
 # elm-repl generated files
 repl-temp-*
 
+# Temporary Elm executables
+elm.exe
+
 *.sublime-workspace
 elm.js
 documentation.json
