@@ -18,3 +18,5 @@ folder](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
 
 Any questions/feedback, please open an issue or reach out to **@ianmackenzie**
 on the [Elm Slack](https://elmlang.herokuapp.com)!
+
+![Physics simulation](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/physics-background.png)
