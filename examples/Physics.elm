@@ -5,11 +5,11 @@ import Array exposing (Array)
 import Browser
 import Camera3d exposing (Camera3d)
 import Color
+import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Html.Events exposing (onClick)
 import Length exposing (Length, Meters, inMeters, meters)
-import Materials
 import Physics.Body as Body exposing (Body)
 import Physics.Events as Events
 import Physics.Fps as Fps

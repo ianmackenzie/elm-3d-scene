@@ -3,13 +3,13 @@ module Spheres exposing (main)
 import Angle
 import Axis3d
 import Camera3d exposing (Camera3d)
+import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Illuminance exposing (lux)
 import Length exposing (Meters, meters)
 import Luminance
 import LuminousFlux exposing (lumens)
-import Materials
 import Pixels exposing (pixels)
 import Point3d
 import Scene3d

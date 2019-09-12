@@ -13,7 +13,9 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
+import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable
+import Scene3d.Exposure as Exposure
 import Scene3d.Mesh as Mesh exposing (Mesh, NoNormals, NoTangents, NoUV, ShadowsDisabled, Triangles)
 import SketchPlane3d
 import Triangle3d
@@ -53,12 +55,18 @@ init () =
                 (Point3d.meters 0 0 0)
                 (Point3d.meters 1 1 0)
                 (Point3d.meters 0 1 0)
+
+        mesh1 =
+            Mesh.triangles [] [ triangle1 ]
+
+        mesh2 =
+            Mesh.triangles [] [ triangle2 ]
     in
     ( { azimuth = Angle.degrees 45
       , elevation = Angle.degrees 30
       , orbiting = False
-      , mesh1 = Mesh.triangles [] [ triangle1 ]
-      , mesh2 = Mesh.triangles [] [ triangle2 ]
+      , mesh1 = mesh1
+      , mesh2 = mesh2
       }
     , Cmd.none
     )
@@ -132,7 +140,7 @@ view model =
                 , clipDepth = Length.meters 0.1
                 }
     in
-    { title = "Orbiting"
+    { title = "Triangles"
     , body =
         [ Scene3d.unlit []
             { camera = camera

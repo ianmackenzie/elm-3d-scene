@@ -1,4 +1,4 @@
-module Materials exposing
+module Common.Materials exposing
     ( aluminum
     , blackPlastic
     , chromium

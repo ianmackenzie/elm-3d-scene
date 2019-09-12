@@ -4,6 +4,7 @@ import Angle
 import Axis3d exposing (Axis3d)
 import Camera3d exposing (Camera3d)
 import Color
+import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
 import Html exposing (Html)
@@ -11,7 +12,6 @@ import Html.Attributes as Attributes
 import Illuminance
 import Length exposing (Meters, meters)
 import Luminance
-import Materials
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (Vec3)
 import Physics.Body as Body exposing (Body)
