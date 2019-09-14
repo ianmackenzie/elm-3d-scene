@@ -11,6 +11,7 @@ import Common.Materials as Materials
 import Direction3d
 import Frame3d exposing (Frame3d)
 import Html exposing (Html)
+import Html.Attributes
 import Illuminance
 import Length exposing (Length, Meters, inMeters, meters)
 import Luminance
@@ -116,16 +117,22 @@ view { world, screenWidth, screenHeight } =
                 , zenithLuminance = Luminance.nits 5000
                 }
     in
-    Scene3d.render []
-        { width = pixels screenWidth
-        , height = pixels screenHeight
-        , camera = camera
-        , lights = Scene3d.oneLight sunlight { castsShadows = True }
-        , ambientLighting = Just ambientLighting
-        , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
-        , whiteBalance = Chromaticity.daylight
-        }
-        drawables
+    Html.div
+        [ Html.Attributes.style "position" "absolute"
+        , Html.Attributes.style "left" "0"
+        , Html.Attributes.style "top" "0"
+        ]
+        [ Scene3d.render []
+            { width = pixels screenWidth
+            , height = pixels screenHeight
+            , camera = camera
+            , lights = Scene3d.oneLight sunlight { castsShadows = True }
+            , ambientLighting = Just ambientLighting
+            , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
+            , whiteBalance = Chromaticity.daylight
+            }
+            drawables
+        ]
 
 
 initialWorld : World (Drawable BodyCoordinates)
