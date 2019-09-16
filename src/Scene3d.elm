@@ -618,6 +618,7 @@ render options arguments drawables =
         , Html.Attributes.height (round heightInPixels)
         , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
+        , Html.Attributes.style "display" "block"
         ]
         (toEntities options arguments drawables)
 
