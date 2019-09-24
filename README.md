@@ -19,4 +19,20 @@ folder](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
 Any questions/feedback, please open an issue or reach out to **@ianmackenzie**
 on the [Elm Slack](https://elmlang.herokuapp.com)!
 
+## Climate action
+
+I would like for the projects I work on to be as helpful as possible in
+addressing the climate crisis. If
+
+- you are working on a project that helps address the climate crisis (clean
+  energy, public transit, reforestation, sustainable agriculture etc.) either as
+  an individual, as part of an non-profit organization or even as part of a
+  for-profit company, and
+- there is a new feature you would find helpful for that work (or a bug you need
+  fixed) in any of my open-source projects, then
+
+please [open a new issue](https://github.com/ianmackenzie/elm-geometry/issues),
+describe briefly what you're working on and I will treat that issue as high
+priority.
+
 ![Physics simulation](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/physics-background.png)
