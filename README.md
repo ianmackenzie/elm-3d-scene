@@ -31,7 +31,7 @@ addressing the climate crisis. If
 - there is a new feature you would find helpful for that work (or a bug you need
   fixed) in any of my open-source projects, then
 
-please [open a new issue](https://github.com/ianmackenzie/elm-geometry/issues),
+please [open a new issue](https://github.com/ianmackenzie/elm-3d-scene/issues),
 describe briefly what you're working on and I will treat that issue as high
 priority.
 
