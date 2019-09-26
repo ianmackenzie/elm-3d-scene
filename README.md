@@ -12,9 +12,9 @@ but still including powerful features such as:
 
 The documentation for `elm-3d-scene` (including this README!) is still being
 worked on, but once that is done (soon!) it will be published as a normal Elm
-package. In the meantime, you can try out the package by checking out this
-repository and then firing up `elm reactor` in [the examples
-folder](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
+package. In the meantime, you can [watch my elm-conf talk](https://www.youtube.com/watch?v=Htqc64s5qYU)
+and try out the package by checking out this repository and then firing up `elm
+reactor` in [the examples folder](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
 
 Any questions/feedback, please open an issue or reach out to **@ianmackenzie**
 on the [Elm Slack](https://elmlang.herokuapp.com)!
