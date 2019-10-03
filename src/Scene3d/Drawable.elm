@@ -44,6 +44,7 @@ import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
+import WebGL.Texture exposing (Texture)
 
 
 type alias Drawable coordinates =
@@ -51,9 +52,9 @@ type alias Drawable coordinates =
 
 
 type alias Material =
-    { baseColor : Color
-    , roughness : Float
-    , metallic : Bool
+    { baseColor : Texture
+    , roughness : Texture
+    , metallic : Texture
     }
 
 
@@ -186,18 +187,11 @@ lambertian givenColor givenMesh =
 physical : Material -> Mesh coordinates (Triangles WithNormals uv tangents shadows) -> Drawable coordinates
 physical givenMaterial givenMesh =
     let
-        linearColor =
-            toLinear givenMaterial.baseColor
-
-        roughness =
-            clamp 0 1 givenMaterial.roughness
-
-        metallic =
-            if givenMaterial.metallic then
-                1
-
-            else
-                0
+        physicalRenderer =
+            physicalMesh
+                givenMaterial.baseColor
+                givenMaterial.roughness
+                givenMaterial.metallic
     in
     case givenMesh of
         Types.EmptyMesh ->
@@ -209,10 +203,7 @@ physical givenMaterial givenMesh =
                     empty
 
                 Types.Facets _ _ webGLMesh cullBackFaces ->
-                    physicalMesh
-                        linearColor
-                        roughness
-                        metallic
+                    physicalRenderer
                         webGLMesh
                         cullBackFaces
 
@@ -220,10 +211,7 @@ physical givenMaterial givenMesh =
                     empty
 
                 Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    physicalMesh
-                        linearColor
-                        roughness
-                        metallic
+                    physicalRenderer
                         webGLMesh
                         cullBackFaces
 
@@ -407,7 +395,7 @@ lambertianMesh color webGLMesh cullBackFaces =
             )
 
 
-physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Drawable coordinates
+physicalMesh : Texture -> Texture -> Texture -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Drawable coordinates
 physicalMesh color roughness metallic webGLMesh cullBackFaces =
     Types.Drawable <|
         MeshNode

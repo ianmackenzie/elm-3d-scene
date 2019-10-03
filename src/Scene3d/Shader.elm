@@ -53,6 +53,10 @@ import WebGL.Texture exposing (Texture)
 type alias SmoothVaryings =
     { interpolatedPosition : Vec3
     , interpolatedNormal : Vec3
+
+    -- TODO: this should actually be Vec2, but since the meshes don't store UV maps yet,
+    -- we use a trick which only works with spheres
+    , interpolatedUV : Vec3
     }
 
 
@@ -163,6 +167,7 @@ smoothVertex :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
+        , interpolatedUV : Vec3
         }
 smoothVertex =
     [glsl|
@@ -178,6 +183,7 @@ smoothVertex =
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
+        varying vec3 interpolatedUV;
 
         vec4 project(vec4 position) {
             float n = sceneProperties[0][0];
@@ -198,6 +204,8 @@ smoothVertex =
             gl_Position = project(viewMatrix * transformedPosition);
             interpolatedPosition = transformedPosition.xyz;
             interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            // TODO: use uv
+            interpolatedUV = position;
         }
     |]
 
@@ -436,6 +444,7 @@ lambertianFragment :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
+        , interpolatedUV : Vec3
         }
 lambertianFragment =
     [glsl|
@@ -452,6 +461,7 @@ lambertianFragment =
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
+        varying vec3 interpolatedUV;
 
         float positiveDotProduct(vec3 v1, vec3 v2) {
             return clamp(dot(v1, v2), 0.0, 1.0);
@@ -613,9 +623,9 @@ physicalFragment :
             , lights34 : Mat4
             , lights56 : Mat4
             , lights78 : Mat4
-            , color : Vec3
-            , roughness : Float
-            , metallic : Float
+            , color : Texture
+            , roughness : Texture
+            , metallic : Texture
         }
         SmoothVaryings
 physicalFragment =
@@ -629,12 +639,13 @@ physicalFragment =
         uniform mat4 lights34;
         uniform mat4 lights56;
         uniform mat4 lights78;
-        uniform vec3 color;
-        uniform float roughness;
-        uniform float metallic;
+        uniform sampler2D color;
+        uniform sampler2D roughness;
+        uniform sampler2D metallic;
 
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
+        varying vec3 interpolatedUV;
 
         float positiveDotProduct(vec3 v1, vec3 v2) {
             return clamp(dot(v1, v2), 0.0, 1.0);
@@ -924,13 +935,24 @@ physicalFragment =
 
             float dotNV = positiveDotProduct(normalDirection, directionToCamera);
 
-            float nonmetallic = 1.0 - metallic;
-            vec3 diffuseBaseColor = nonmetallic * 0.96 * color;
-            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * color;
+            // TODO: if we had the uv map in the mesh, this would be all it takes
+            // vec2 uv = interpolatedUV;
+            //
+            // but for now, lets calculate uv maps via this formula for a sphere:
+            // https://en.wikipedia.org/wiki/UV_mapping#Finding_UV_on_a_sphere 
+            vec3 iUV = normalize(interpolatedUV);
+            vec2 uv = vec2((atan(iUV.z, iUV.x) / 3.1415926 + 1.0) * 0.5,
+                            0.5 - (asin(iUV.y) / 3.1415926));
+            float m = texture2D(metallic, uv).r;
+            float nonmetallic = 1.0 - m;
+            vec3 diffColor = texture2D(color, uv.yx).rgb;
+            vec3 diffuseBaseColor = nonmetallic * 0.96 * diffColor;
+            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + m * diffColor;
 
             vec3 linearColor = vec3(0.0, 0.0, 0.0);
 
-            float alpha = roughness * roughness;
+            float r = texture2D(roughness, uv).r;
+            float alpha = r * r;
             float alphaSquared = alpha * alpha;
 
             vec3 color0 = ambientColor(normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha, alphaSquared);
