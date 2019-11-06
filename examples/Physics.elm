@@ -11,7 +11,6 @@ import Color
 import Common.Materials as Materials
 import Direction3d
 import Duration
-import Frame3d
 import Html exposing (Html)
 import Html.Attributes
 import Illuminance
@@ -232,13 +231,11 @@ addBoxes world =
                                     randomOffsets index
                             in
                             body
-                                |> Body.setFrame3d
-                                    (Frame3d.atPoint
-                                        (Point3d.meters
-                                            ((x - (xySize - 1) / 2) * distance + offsets.x)
-                                            ((y - (xySize - 1) / 2) * distance + offsets.y)
-                                            ((z + (2 * zSize + 1) / 2) * distance + offsets.z)
-                                        )
+                                |> Body.moveTo
+                                    (Point3d.meters
+                                        ((x - (xySize - 1) / 2) * distance + offsets.x)
+                                        ((y - (xySize - 1) / 2) * distance + offsets.y)
+                                        ((z + (2 * zSize + 1) / 2) * distance + offsets.z)
                                     )
                                 |> World.add
                         )
@@ -266,10 +263,7 @@ floor : Body (Drawable BodyCoordinates)
 floor =
     Drawable.physical Materials.aluminum floorMesh
         |> Body.sphere floorRadius
-        |> Body.setFrame3d
-            (Frame3d.atPoint
-                (Point3d.meters 0 0 -(Length.inMeters floorRadius))
-            )
+        |> Body.moveTo (Point3d.meters 0 0 -(Length.inMeters floorRadius))
 
 
 boxSize : Length
