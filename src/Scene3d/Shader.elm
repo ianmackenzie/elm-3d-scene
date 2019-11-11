@@ -678,9 +678,13 @@ physicalFragment =
             }
         }
 
-        float specularD(float alphaSquared, float dotNHSquared) {
-            float tmp = dotNHSquared * (alphaSquared - 1.0) + 1.0;
-            return alphaSquared / (3.14159265359 * tmp * tmp);
+        // Adapted from https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/normaldistributionfunction(speculard)
+        float specularD(float alpha, float dotNH, vec3 normalDirection, vec3 halfDirection) {
+            vec3 crossNH = cross(normalDirection, halfDirection);
+            float a = dotNH * alpha;
+            float k = alpha / (dot(crossNH, crossNH) + a * a);
+            float d = k * k * (1.0 / 3.14159265359);
+            return min(d, 65504.0);
         }
 
         float g1(float dotNV, float alphaSquared) {
@@ -697,24 +701,16 @@ physicalFragment =
             return specularBaseColor + (one - specularBaseColor) * scale;
         }
 
-        vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alphaSquared, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
+        vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alpha, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
             vec3 halfDirection = normalize(directionToCamera + directionToLight);
             float dotVH = positiveDotProduct(directionToCamera, halfDirection);
             float dotNH = positiveDotProduct(normalDirection, halfDirection);
             float dotNHSquared = dotNH * dotNH;
 
-            float d = specularD(alphaSquared, dotNHSquared);
-            float g = specularG(dotNL, dotNV, alphaSquared);
+            float d = specularD(alpha, dotNH, normalDirection, halfDirection);
+            float g = specularG(dotNL, dotNV, alpha * alpha);
             vec3 f = fresnelColor(specularBaseColor, dotVH);
             return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
-        }
-
-        float vndf(float dotNV, float alphaSquared, float dotNH) {
-            return safeQuotient(g1(dotNV, alphaSquared) * dotNV * specularD(alphaSquared, dotNH * dotNH), dotNV);
-        }
-
-        float probabilityDensity(float dotNV, float alphaSquared, float dotNH, float dotVH) {
-            return safeQuotient(vndf(dotNV, alphaSquared, dotNH), 4.0 * dotVH);
         }
 
         vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
@@ -754,10 +750,10 @@ physicalFragment =
             float dotNV,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
-            float alpha,
-            float alphaSquared
+            float alpha
         ) {
             float ambientType = ambientLighting[0][3];
+            float alphaSquared = alpha * alpha;
 
             if (ambientType == 0.0) {
                 return vec3(0.0, 0.0, 0.0);
@@ -896,7 +892,7 @@ physicalFragment =
             }
         }
 
-        vec3 litColor(vec4 xyz_type, vec4 rgb_radius, vec3 normalDirection, vec3 directionToCamera, float dotNV, vec3 diffuseBaseColor, vec3 specularBaseColor, float alphaSquared) {
+        vec3 litColor(vec4 xyz_type, vec4 rgb_radius, vec3 normalDirection, vec3 directionToCamera, float dotNV, vec3 diffuseBaseColor, vec3 specularBaseColor, float alpha) {
             float lightType = xyz_type.w;
             if (lightType == 0.0) {
                 return vec3(0.0, 0.0, 0.0);
@@ -907,7 +903,7 @@ physicalFragment =
             getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, directionToLight, normalIlluminance);
 
             float dotNL = positiveDotProduct(normalDirection, directionToLight);
-            vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alphaSquared, dotNV, dotNL, specularBaseColor, normalIlluminance);
+            vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alpha, dotNV, dotNL, specularBaseColor, normalIlluminance);
             return (normalIlluminance * dotNL) * ((diffuseBaseColor / 3.14159265359) + specularColor);
         }
 
@@ -931,17 +927,16 @@ physicalFragment =
             vec3 linearColor = vec3(0.0, 0.0, 0.0);
 
             float alpha = roughness * roughness;
-            float alphaSquared = alpha * alpha;
 
-            vec3 color0 = ambientColor(normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha, alphaSquared);
-            vec3 color1 = litColor(lights12[0], lights12[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color2 = litColor(lights12[2], lights12[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color3 = litColor(lights34[0], lights34[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color4 = litColor(lights34[2], lights34[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color5 = litColor(lights56[0], lights56[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color6 = litColor(lights56[2], lights56[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color7 = litColor(lights78[0], lights78[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
-            vec3 color8 = litColor(lights78[2], lights78[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alphaSquared);
+            vec3 color0 = ambientColor(normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color1 = litColor(lights12[0], lights12[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color2 = litColor(lights12[2], lights12[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color3 = litColor(lights34[0], lights34[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color4 = litColor(lights34[2], lights34[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color5 = litColor(lights56[0], lights56[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color6 = litColor(lights56[2], lights56[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color7 = litColor(lights78[0], lights78[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 color8 = litColor(lights78[2], lights78[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
 
             gl_FragColor = toSrgb(color0 + color1 + color2 + color3 + color4 + color5 + color6 + color7 + color8);
         }
