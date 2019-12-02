@@ -1,7 +1,9 @@
-module Physics exposing (main)
+module BallsAndBlocks exposing (main)
 
+import Acceleration
 import Angle
 import Array exposing (Array)
+import Block3d
 import Browser
 import Browser.Dom as Dom
 import Browser.Events as Events
@@ -9,13 +11,16 @@ import Camera3d
 import Color
 import Common.Materials as Materials
 import Direction3d
-import Frame3d exposing (Frame3d)
+import Duration
+import Frame3d
 import Html exposing (Html)
 import Html.Attributes
 import Illuminance
-import Length exposing (Length, Meters, inMeters, meters)
+import Length exposing (Length, inMeters, meters)
 import Luminance
+import Mass
 import Physics.Body as Body exposing (Body)
+import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
 import Physics.World as World exposing (World)
 import Pixels exposing (pixels)
 import Point3d
@@ -27,6 +32,7 @@ import Scene3d.Exposure as Exposure
 import Scene3d.Light as Light
 import Scene3d.Mesh as Mesh exposing (Mesh, NoTangents, NoUV, ShadowsDisabled, ShadowsEnabled, Triangles, WithNormals)
 import Scene3d.Shape as Shape
+import Sphere3d
 import Task
 import Viewpoint3d
 
@@ -69,7 +75,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick _ ->
-            ( { model | world = World.simulate (1000 / 60) model.world }
+            ( { model | world = World.simulate (Duration.seconds (1 / 60)) model.world }
             , Cmd.none
             )
 
@@ -139,10 +145,10 @@ initialWorld : World (Drawable BodyCoordinates)
 initialWorld =
     let
         moonGravity =
-            { x = 0, y = 0, z = -1.62 }
+            Acceleration.metersPerSecondSquared 1.62
     in
     World.empty
-        |> World.setGravity moonGravity
+        |> World.setGravity moonGravity Direction3d.negativeZ
         |> World.add floor
         |> addBoxes
 
@@ -228,11 +234,12 @@ addBoxes world =
                                     randomOffsets index
                             in
                             body
-                                |> Body.moveBy
-                                    { x = (x - (xySize - 1) / 2) * distance + offsets.x
-                                    , y = (y - (xySize - 1) / 2) * distance + offsets.y
-                                    , z = (z + (2 * zSize + 1) / 2) * distance + offsets.z
-                                    }
+                                |> Body.moveTo
+                                    (Point3d.meters
+                                        ((x - (xySize - 1) / 2) * distance + offsets.x)
+                                        ((y - (xySize - 1) / 2) * distance + offsets.y)
+                                        ((z + (2 * zSize + 1) / 2) * distance + offsets.z)
+                                    )
                                 |> World.add
                         )
                         world2
@@ -258,9 +265,13 @@ floorMesh =
 floor : Body (Drawable BodyCoordinates)
 floor =
     Drawable.physical Materials.aluminum floorMesh
-        |> Body.sphere (Length.inMeters floorRadius)
-        |> Body.setMass 0
-        |> Body.moveBy { x = 0, y = 0, z = -(Length.inMeters floorRadius) }
+        |> Body.sphere (Sphere3d.atOrigin floorRadius)
+        |> Body.moveTo
+            (Point3d.meters
+                0
+                0
+                -(Length.inMeters floorRadius)
+            )
 
 
 boxSize : Length
@@ -276,14 +287,16 @@ boxMesh =
 
 box : Material -> Body (Drawable BodyCoordinates)
 box material =
-    let
-        bodySize =
-            Length.inMeters boxSize
-    in
     Drawable.physical material boxMesh
         |> Drawable.withShadow boxMesh
-        |> Body.box { x = bodySize, y = bodySize, z = bodySize }
-        |> Body.setMass 5
+        |> Body.block
+            (Block3d.centeredOn Frame3d.atOrigin
+                ( boxSize
+                , boxSize
+                , boxSize
+                )
+            )
+        |> Body.setBehavior (Body.dynamic (Mass.kilograms 5))
 
 
 sphereRadius : Length
@@ -301,48 +314,10 @@ sphere : Material -> Body (Drawable BodyCoordinates)
 sphere material =
     Drawable.physical material sphereMesh
         |> Drawable.withShadow sphereMesh
-        |> Body.sphere (inMeters sphereRadius)
-        |> Body.setMass 2.5
-
-
-type BodyCoordinates
-    = BodyCoordinates
-
-
-type WorldCoordinates
-    = WorldCoordinates
-
-
-toFrame :
-    { m11 : Float
-    , m21 : Float
-    , m31 : Float
-    , m41 : Float
-    , m12 : Float
-    , m22 : Float
-    , m32 : Float
-    , m42 : Float
-    , m13 : Float
-    , m23 : Float
-    , m33 : Float
-    , m43 : Float
-    , m14 : Float
-    , m24 : Float
-    , m34 : Float
-    , m44 : Float
-    }
-    -> Frame3d Meters WorldCoordinates { defines : BodyCoordinates }
-toFrame t =
-    Frame3d.unsafe
-        { originPoint = Point3d.unsafe { x = t.m14, y = t.m24, z = t.m34 }
-        , xDirection = Direction3d.unsafe { x = t.m11, y = t.m21, z = t.m31 }
-        , yDirection = Direction3d.unsafe { x = t.m12, y = t.m22, z = t.m32 }
-        , zDirection = Direction3d.unsafe { x = t.m13, y = t.m23, z = t.m33 }
-        }
+        |> Body.sphere (Sphere3d.atOrigin sphereRadius)
+        |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
 
 
 getTransformedDrawable : Body (Drawable BodyCoordinates) -> Drawable WorldCoordinates
 getTransformedDrawable body =
-    Body.getData body
-        |> Drawable.placeIn
-            (toFrame (Body.getTransformation body))
+    Drawable.placeIn (Body.getFrame3d body) (Body.getData body)
