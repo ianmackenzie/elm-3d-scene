@@ -195,7 +195,7 @@ triangles options givenTriangles =
         first :: rest ->
             let
                 bounds =
-                    BoundingBox3d.hullOf Triangle3d.boundingBox first rest
+                    BoundingBox3d.aggregateOf Triangle3d.boundingBox first rest
 
                 webGLMesh =
                     WebGL.triangles (List.map triangleAttributes givenTriangles)
@@ -216,7 +216,7 @@ facets options givenTriangles =
         first :: rest ->
             let
                 bounds =
-                    BoundingBox3d.hullOf Triangle3d.boundingBox first rest
+                    BoundingBox3d.aggregateOf Triangle3d.boundingBox first rest
 
                 webGLMesh =
                     WebGL.triangles (List.map facetAttributes givenTriangles)
@@ -409,7 +409,7 @@ lineSegments options givenSegments =
         first :: rest ->
             let
                 bounds =
-                    BoundingBox3d.hullOf LineSegment3d.boundingBox first rest
+                    BoundingBox3d.aggregateOf LineSegment3d.boundingBox first rest
 
                 webGLMesh =
                     WebGL.lines (List.map lineSegmentAttributes givenSegments)
@@ -431,7 +431,7 @@ polyline options givenPolyline =
         first :: rest ->
             let
                 bounds =
-                    Point3d.hull first rest
+                    BoundingBox3d.hull first rest
 
                 webGLMesh =
                     WebGL.lineStrip (List.map plainVertex vertices)
@@ -449,7 +449,7 @@ points options givenPoints =
         first :: rest ->
             let
                 bounds =
-                    Point3d.hull first rest
+                    BoundingBox3d.hull first rest
 
                 webGLMesh =
                     WebGL.points (List.map plainVertex givenPoints)

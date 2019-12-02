@@ -22,7 +22,7 @@
         "elm-explorations/webgl": "1.1.1 <= v < 2.0.0",
         "ianmackenzie/elm-1d-parameter": "1.0.1 <= v < 2.0.0",
         "ianmackenzie/elm-3d-camera": "2.0.0 <= v < 3.0.0",
-        "ianmackenzie/elm-geometry": "2.0.0 <= v < 3.0.0",
+        "ianmackenzie/elm-geometry": "3.0.0 <= v < 4.0.0",
         "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.0 <= v < 3.0.0",
         "ianmackenzie/elm-triangular-mesh": "1.0.2 <= v < 2.0.0",
         "ianmackenzie/elm-units": "2.2.0 <= v < 3.0.0"

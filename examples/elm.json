@@ -17,16 +17,16 @@
             "elm-explorations/linear-algebra": "1.0.3",
             "elm-explorations/webgl": "1.1.0",
             "ianmackenzie/elm-1d-parameter": "1.0.1",
-            "ianmackenzie/elm-3d-camera": "2.0.0",
+            "ianmackenzie/elm-3d-camera": "2.0.1",
             "ianmackenzie/elm-float-extra": "1.1.0",
-            "ianmackenzie/elm-geometry": "2.0.0",
-            "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.0",
+            "ianmackenzie/elm-geometry": "3.0.0",
+            "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.1",
             "ianmackenzie/elm-interval": "2.0.0",
             "ianmackenzie/elm-triangular-mesh": "1.0.2",
             "ianmackenzie/elm-units": "2.2.0",
             "ianmackenzie/elm-units-interval": "1.0.0",
             "mdgriffith/elm-ui": "1.1.2",
-            "w0rm/elm-physics": "3.2.2"
+            "w0rm/elm-physics": "4.0.0"
         },
         "indirect": {
             "elm/url": "1.0.0",
