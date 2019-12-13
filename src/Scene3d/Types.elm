@@ -1,24 +1,4 @@
-module Scene3d.Types exposing
-    ( AmbientLighting(..)
-    , Bounds
-    , Chromaticity(..)
-    , Color(..)
-    , DeformableVertex
-    , DrawFunction
-    , Drawable(..)
-    , Light(..)
-    , LightMatrices
-    , Material(..)
-    , Mesh(..)
-    , MeshData(..)
-    , Node(..)
-    , PlainVertex
-    , Shadow(..)
-    , ShadowEdge
-    , SmoothVertex
-    , TexturableVertex
-    , Transformation
-    )
+module Scene3d.Types exposing (..)
 
 import BoundingBox3d exposing (BoundingBox3d)
 import Camera3d exposing (Camera3d)
@@ -34,7 +14,7 @@ import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
-import Quantity exposing (Unitless)
+import Quantity exposing (Quantity, Unitless)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
@@ -102,26 +82,31 @@ type Color
     | EmissiveColor Vec3
 
 
-type Material primitives
+type Material properties
     = ConstantMaterial Vec3
     | EmissiveMaterial Vec3
     | LambertianMaterial Vec3
-    | PhysicalMaterial Vec3 Float Float
+    | PbrMaterial Vec3 Float Float
 
 
-type Mesh coordinates primitives
+type BackFaceSetting
+    = KeepBackFaces
+    | CullBackFaces
+
+
+type Mesh coordinates properties
     = EmptyMesh
-    | Mesh (MeshData coordinates) (Maybe (Shadow coordinates))
-
-
-type MeshData coordinates
-    = Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) Bool
-    | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh SmoothVertex) Bool
-    | Indexed (BoundingBox3d Meters coordinates) (TriangularMesh (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex) Bool
-    | Smooth (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh SmoothVertex) Bool
+    | Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
+    | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh SmoothVertex) BackFaceSetting
+    | Indexed (BoundingBox3d Meters coordinates) (TriangularMesh (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
+    | Smooth (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh SmoothVertex) BackFaceSetting
     | LineSegments (BoundingBox3d Meters coordinates) (List (LineSegment3d Meters coordinates)) (WebGL.Mesh PlainVertex)
     | Polyline (BoundingBox3d Meters coordinates) (Polyline3d Meters coordinates) (WebGL.Mesh PlainVertex)
-    | Points (BoundingBox3d Meters coordinates) (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)
+    | Points (BoundingBox3d Meters coordinates) Float (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)
+
+
+type Yes
+    = Yes
 
 
 type alias ShadowEdge coordinates =
@@ -138,10 +123,10 @@ type Shadow coordinates
 
 
 type alias LightMatrices =
-    { lights12 : Mat4
-    , lights34 : Mat4
-    , lights56 : Mat4
-    , lights78 : Mat4
+    { lightSources12 : Mat4
+    , lightSources34 : Mat4
+    , lightSources56 : Mat4
+    , lightSources78 : Mat4
     }
 
 
@@ -165,16 +150,24 @@ type Node
     | Transformed Transformation Node
 
 
-type Drawable coordinates
-    = Drawable Node
+type Entity coordinates
+    = Entity Node
 
 
 type Chromaticity
     = Chromaticity { x : Float, y : Float }
 
 
-type Light coordinates
-    = Light
+type CieXyz
+    = CieXyz Float Float Float
+
+
+type LinearRgb
+    = LinearRgb Vec3
+
+
+type LightSource coordinates
+    = LightSource
         { type_ : Float
         , radius : Float
         , x : Float
@@ -186,5 +179,6 @@ type Light coordinates
         }
 
 
-type AmbientLighting coordinates
-    = AmbientLighting Mat4
+type EnvironmentalLighting coordinates
+    = NoEnvironmentalLighting
+    | SoftLighting Mat4

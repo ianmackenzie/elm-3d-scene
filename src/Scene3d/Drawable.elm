@@ -1,5 +1,5 @@
 module Scene3d.Drawable exposing
-    ( Drawable
+    ( Entity
     , Material
     , colored
     , emissive
@@ -34,11 +34,11 @@ import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
-import Scene3d.Color exposing (LinearRgb(..))
-import Scene3d.Mesh exposing (LineSegments, Mesh, Points, ShadowsEnabled, Triangles, WithNormals, WithTangents, WithUV)
+import Scene3d.ColorConversions as ColorConversions
+import Scene3d.Mesh exposing (Mesh, Shadow, Yes)
 import Scene3d.Shader as Shader
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (Bounds, Node(..), PlainVertex, SmoothVertex)
+import Scene3d.Types as Types exposing (BackFaceSetting(..), Bounds, LinearRgb(..), Node(..), PlainVertex, SmoothVertex)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
@@ -46,8 +46,8 @@ import WebGL
 import WebGL.Settings
 
 
-type alias Drawable coordinates =
-    Types.Drawable coordinates
+type alias Entity coordinates =
+    Types.Entity coordinates
 
 
 type alias Material =
@@ -57,99 +57,94 @@ type alias Material =
     }
 
 
-empty : Drawable coordinates
+empty : Entity coordinates
 empty =
-    Types.Drawable EmptyNode
+    Types.Entity EmptyNode
 
 
-colored : Color -> Mesh coordinates primitives -> Drawable coordinates
+colored : Color -> Mesh coordinates primitives -> Entity coordinates
 colored givenColor givenMesh =
     let
-        { red, green, blue } =
-            Color.toRgba givenColor
+        ( red, green, blue ) =
+            Color.toRGB givenColor
 
         colorVec =
-            Math.Vector3.vec3 red green blue
+            Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
     in
     case givenMesh of
         Types.EmptyMesh ->
             empty
 
-        Types.Mesh meshData maybeShadow ->
-            case meshData of
-                Types.Triangles _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces
+        Types.Triangles _ _ webGLMesh backFaceSetting ->
+            constantMesh colorVec webGLMesh backFaceSetting
 
-                Types.Facets _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces
+        Types.Facets _ _ webGLMesh backFaceSetting ->
+            constantMesh colorVec webGLMesh backFaceSetting
 
-                Types.Indexed _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces
+        Types.Indexed _ _ webGLMesh backFaceSetting ->
+            constantMesh colorVec webGLMesh backFaceSetting
 
-                Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    constantMesh colorVec webGLMesh cullBackFaces
+        Types.Smooth _ _ webGLMesh backFaceSetting ->
+            constantMesh colorVec webGLMesh backFaceSetting
 
-                Types.LineSegments _ _ webGLMesh ->
-                    constantMesh colorVec webGLMesh False
+        Types.LineSegments _ _ webGLMesh ->
+            constantMesh colorVec webGLMesh KeepBackFaces
 
-                Types.Polyline _ _ webGLMesh ->
-                    constantMesh colorVec webGLMesh False
+        Types.Polyline _ _ webGLMesh ->
+            constantMesh colorVec webGLMesh KeepBackFaces
 
-                Types.Points _ _ webGLMesh ->
-                    constantPointMesh colorVec webGLMesh
+        Types.Points _ radius _ webGLMesh ->
+            constantPointMesh colorVec radius webGLMesh
 
 
-emissive : Chromaticity -> Luminance -> Mesh coordinates primitives -> Drawable coordinates
+emissive : Chromaticity -> Luminance -> Mesh coordinates primitives -> Entity coordinates
 emissive givenChromaticity givenLuminance givenMesh =
     let
-        (LinearRgb r g b) =
-            Chromaticity.toLinearRgb givenChromaticity
+        (LinearRgb chromaticityInLinearRgb) =
+            ColorConversions.chromaticityToLinearRgb givenChromaticity
 
         nits =
             Luminance.inNits givenLuminance
 
         linearColor =
-            Math.Vector3.vec3 (r * nits) (g * nits) (b * nits)
+            Math.Vector3.scale nits chromaticityInLinearRgb
     in
     case givenMesh of
         Types.EmptyMesh ->
             empty
 
-        Types.Mesh meshData maybeShadow ->
-            case meshData of
-                Types.Triangles _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces
+        Types.Triangles _ _ webGLMesh backFaceSetting ->
+            emissiveMesh linearColor webGLMesh backFaceSetting
 
-                Types.Facets _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces
+        Types.Facets _ _ webGLMesh backFaceSetting ->
+            emissiveMesh linearColor webGLMesh backFaceSetting
 
-                Types.Indexed _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces
+        Types.Indexed _ _ webGLMesh backFaceSetting ->
+            emissiveMesh linearColor webGLMesh backFaceSetting
 
-                Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    emissiveMesh linearColor webGLMesh cullBackFaces
+        Types.Smooth _ _ webGLMesh backFaceSetting ->
+            emissiveMesh linearColor webGLMesh backFaceSetting
 
-                Types.LineSegments _ _ webGLMesh ->
-                    emissiveMesh linearColor webGLMesh False
+        Types.LineSegments _ _ webGLMesh ->
+            emissiveMesh linearColor webGLMesh KeepBackFaces
 
-                Types.Polyline _ _ webGLMesh ->
-                    emissiveMesh linearColor webGLMesh False
+        Types.Polyline _ _ webGLMesh ->
+            emissiveMesh linearColor webGLMesh KeepBackFaces
 
-                Types.Points _ _ webGLMesh ->
-                    emissivePointMesh linearColor webGLMesh
+        Types.Points _ radius _ webGLMesh ->
+            emissivePointMesh linearColor radius webGLMesh
 
 
 toLinear : Color -> Vec3
 toLinear color =
-    -- TODO use actual sRGB formula
     let
-        { red, green, blue } =
-            Color.toRgba color
+        (LinearRgb rgb) =
+            ColorConversions.colorToLinearRgb color
     in
-    Math.Vector3.vec3 (red ^ 2.2) (green ^ 2.2) (blue ^ 2.2)
+    rgb
 
 
-lambertian : Color -> Mesh coordinates (Triangles WithNormals uv tangents shadows) -> Drawable coordinates
+lambertian : Color -> Mesh coordinates { a | hasNormals : Yes } -> Entity coordinates
 lambertian givenColor givenMesh =
     let
         linearColor =
@@ -159,31 +154,29 @@ lambertian givenColor givenMesh =
         Types.EmptyMesh ->
             empty
 
-        Types.Mesh meshData maybeShadow ->
-            case meshData of
-                Types.Triangles _ _ _ _ ->
-                    empty
+        Types.Triangles _ _ _ _ ->
+            empty
 
-                Types.Facets _ _ webGLMesh cullBackFaces ->
-                    lambertianMesh linearColor webGLMesh cullBackFaces
+        Types.Facets _ _ webGLMesh cullBackFaces ->
+            lambertianMesh linearColor webGLMesh cullBackFaces
 
-                Types.Indexed _ _ _ _ ->
-                    empty
+        Types.Indexed _ _ _ _ ->
+            empty
 
-                Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    lambertianMesh linearColor webGLMesh cullBackFaces
+        Types.Smooth _ _ webGLMesh cullBackFaces ->
+            lambertianMesh linearColor webGLMesh cullBackFaces
 
-                Types.LineSegments _ _ _ ->
-                    empty
+        Types.LineSegments _ _ _ ->
+            empty
 
-                Types.Polyline _ _ _ ->
-                    empty
+        Types.Polyline _ _ _ ->
+            empty
 
-                Types.Points _ _ _ ->
-                    empty
+        Types.Points _ _ _ _ ->
+            empty
 
 
-physical : Material -> Mesh coordinates (Triangles WithNormals uv tangents shadows) -> Drawable coordinates
+physical : Material -> Mesh coordinates { a | hasNormals : Yes } -> Entity coordinates
 physical givenMaterial givenMesh =
     let
         linearColor =
@@ -203,85 +196,73 @@ physical givenMaterial givenMesh =
         Types.EmptyMesh ->
             empty
 
-        Types.Mesh meshData maybeShadow ->
-            case meshData of
-                Types.Triangles _ _ _ _ ->
-                    empty
-
-                Types.Facets _ _ webGLMesh cullBackFaces ->
-                    physicalMesh
-                        linearColor
-                        roughness
-                        metallic
-                        webGLMesh
-                        cullBackFaces
-
-                Types.Indexed _ _ _ _ ->
-                    empty
-
-                Types.Smooth _ _ webGLMesh cullBackFaces ->
-                    physicalMesh
-                        linearColor
-                        roughness
-                        metallic
-                        webGLMesh
-                        cullBackFaces
-
-                Types.LineSegments _ _ _ ->
-                    empty
-
-                Types.Polyline _ _ _ ->
-                    empty
-
-                Types.Points _ _ _ ->
-                    empty
-
-
-shadow : Mesh coordinates (Triangles normals uv tangents ShadowsEnabled) -> Drawable coordinates
-shadow givenMesh =
-    case givenMesh of
-        Types.EmptyMesh ->
+        Types.Triangles _ _ _ _ ->
             empty
 
-        Types.Mesh meshData maybeShadow ->
-            case shadowDrawFunction maybeShadow of
-                Just drawFunction ->
-                    Types.Drawable (ShadowNode drawFunction)
+        Types.Facets _ _ webGLMesh backFaceSetting ->
+            physicalMesh
+                linearColor
+                roughness
+                metallic
+                webGLMesh
+                backFaceSetting
 
-                Nothing ->
-                    empty
+        Types.Indexed _ _ _ _ ->
+            empty
+
+        Types.Smooth _ _ webGLMesh backFaceSetting ->
+            physicalMesh
+                linearColor
+                roughness
+                metallic
+                webGLMesh
+                backFaceSetting
+
+        Types.LineSegments _ _ _ ->
+            empty
+
+        Types.Polyline _ _ _ ->
+            empty
+
+        Types.Points _ _ _ _ ->
+            empty
 
 
-withShadow : Mesh coordinates (Triangles normals uv tangents ShadowsEnabled) -> Drawable coordinates -> Drawable coordinates
-withShadow shadowMesh drawable =
-    group [ drawable, shadow shadowMesh ]
+shadow : Shadow coordinates -> Entity coordinates
+shadow givenShadow =
+    case shadowDrawFunction givenShadow of
+        Just drawFunction ->
+            Types.Entity (ShadowNode drawFunction)
 
-
-shadowDrawFunction : Maybe (Types.Shadow coordinates) -> Maybe Types.DrawFunction
-shadowDrawFunction maybeShadow =
-    case maybeShadow of
         Nothing ->
+            empty
+
+
+withShadow : Shadow coordinates -> Entity coordinates -> Entity coordinates
+withShadow givenShadow drawable =
+    group [ drawable, shadow givenShadow ]
+
+
+shadowDrawFunction : Types.Shadow coordinates -> Maybe Types.DrawFunction
+shadowDrawFunction givenShadow =
+    case givenShadow of
+        Types.EmptyShadow ->
             Nothing
 
-        Just givenShadow ->
-            case givenShadow of
-                Types.EmptyShadow ->
-                    Nothing
-
-                Types.Shadow _ webGLMesh ->
-                    -- TODO take handedness into account?
-                    Just <|
-                        \sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
-                            WebGL.entityWith settings
-                                Shader.shadowVertex
-                                Shader.shadowFragment
-                                webGLMesh
-                                { sceneProperties = sceneProperties
-                                , modelScale = modelScale
-                                , modelMatrix = modelMatrix
-                                , viewMatrix = viewMatrix
-                                , lights = lights.lights12
-                                }
+        Types.Shadow _ webGLMesh ->
+            -- TODO take handedness into account?
+            Just <|
+                \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                    WebGL.entityWith settings
+                        Shader.shadowVertex
+                        Shader.shadowFragment
+                        webGLMesh
+                        { sceneProperties = sceneProperties
+                        , modelScale = modelScale
+                        , modelMatrix = modelMatrix
+                        , viewMatrix = viewMatrix
+                        , lightSource = lightSources.lightSources12
+                        }
 
 
 cullBackFaceSetting : WebGL.Settings.Setting
@@ -294,26 +275,27 @@ cullFrontFaceSetting =
     WebGL.Settings.cullFace WebGL.Settings.front
 
 
-meshSettings : Bool -> Bool -> List WebGL.Settings.Setting -> List WebGL.Settings.Setting
-meshSettings isRightHanded cullBackFaces settings =
-    if cullBackFaces then
-        if isRightHanded then
-            cullBackFaceSetting :: settings
+meshSettings : Bool -> BackFaceSetting -> List WebGL.Settings.Setting -> List WebGL.Settings.Setting
+meshSettings isRightHanded backFaceSetting settings =
+    case backFaceSetting of
+        CullBackFaces ->
+            if isRightHanded then
+                cullBackFaceSetting :: settings
 
-        else
-            cullFrontFaceSetting :: settings
+            else
+                cullFrontFaceSetting :: settings
 
-    else
-        settings
+        KeepBackFaces ->
+            settings
 
 
-constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Drawable coordinates
-constantMesh color webGLMesh cullBackFaces =
-    Types.Drawable <|
+constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
+constantMesh color webGLMesh backFaceSetting =
+    Types.Entity <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
-                    (meshSettings isRightHanded cullBackFaces settings)
+                    (meshSettings isRightHanded backFaceSetting settings)
                     Shader.plainVertex
                     Shader.constantFragment
                     webGLMesh
@@ -326,17 +308,18 @@ constantMesh color webGLMesh cullBackFaces =
             )
 
 
-constantPointMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Drawable coordinates
-constantPointMesh color webGLMesh =
-    Types.Drawable <|
+constantPointMesh : Vec3 -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
+constantPointMesh color radius webGLMesh =
+    Types.Entity <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (WebGL.Settings.sampleAlphaToCoverage :: settings)
                     Shader.pointVertex
                     Shader.constantPointFragment
                     webGLMesh
                     { color = color
+                    , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -345,17 +328,17 @@ constantPointMesh color webGLMesh =
             )
 
 
-emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Bool -> Drawable coordinates
-emissiveMesh color webGLMesh cullBackFaces =
-    Types.Drawable <|
+emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
+emissiveMesh color webGLMesh backFaceSetting =
+    Types.Entity <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
-                    (meshSettings isRightHanded cullBackFaces settings)
+                    (meshSettings isRightHanded backFaceSetting settings)
                     Shader.plainVertex
                     Shader.emissiveFragment
                     webGLMesh
-                    { color = color
+                    { emissiveColor = color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -364,17 +347,18 @@ emissiveMesh color webGLMesh cullBackFaces =
             )
 
 
-emissivePointMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> Drawable coordinates
-emissivePointMesh color webGLMesh =
-    Types.Drawable <|
+emissivePointMesh : Vec3 -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
+emissivePointMesh color radius webGLMesh =
+    Types.Entity <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (WebGL.Settings.sampleAlphaToCoverage :: settings)
                     Shader.pointVertex
                     Shader.emissivePointFragment
                     webGLMesh
-                    { color = color
+                    { emissiveColor = color
+                    , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -383,23 +367,23 @@ emissivePointMesh color webGLMesh =
             )
 
 
-lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Drawable coordinates
-lambertianMesh color webGLMesh cullBackFaces =
-    Types.Drawable <|
+lambertianMesh : Vec3 -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
+lambertianMesh color webGLMesh backFaceSetting =
+    Types.Entity <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
-                    (meshSettings isRightHanded cullBackFaces settings)
+                    (meshSettings isRightHanded backFaceSetting settings)
                     Shader.smoothVertex
                     Shader.lambertianFragment
                     webGLMesh
-                    { color = color
+                    { materialColor = color
                     , sceneProperties = sceneProperties
-                    , ambientLighting = ambientLighting
-                    , lights12 = lights.lights12
-                    , lights34 = lights.lights34
-                    , lights56 = lights.lights56
-                    , lights78 = lights.lights78
+                    , environmentalLighting = environmentalLighting
+                    , lightSources12 = lightSources.lightSources12
+                    , lightSources34 = lightSources.lightSources34
+                    , lightSources56 = lightSources.lightSources56
+                    , lightSources78 = lightSources.lightSources78
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -407,25 +391,25 @@ lambertianMesh color webGLMesh cullBackFaces =
             )
 
 
-physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> Bool -> Drawable coordinates
-physicalMesh color roughness metallic webGLMesh cullBackFaces =
-    Types.Drawable <|
+physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
+physicalMesh color roughness metallic webGLMesh backFaceSetting =
+    Types.Entity <|
         MeshNode
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix ambientLighting lights settings ->
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
-                    (meshSettings isRightHanded cullBackFaces settings)
+                    (meshSettings isRightHanded backFaceSetting settings)
                     Shader.smoothVertex
                     Shader.physicalFragment
                     webGLMesh
-                    { color = color
+                    { baseColor = color
                     , roughness = roughness
                     , metallic = metallic
                     , sceneProperties = sceneProperties
-                    , ambientLighting = ambientLighting
-                    , lights12 = lights.lights12
-                    , lights34 = lights.lights34
-                    , lights56 = lights.lights56
-                    , lights78 = lights.lights78
+                    , environmentalLighting = environmentalLighting
+                    , lightSources12 = lightSources.lightSources12
+                    , lightSources34 = lightSources.lightSources34
+                    , lightSources56 = lightSources.lightSources56
+                    , lightSources78 = lightSources.lightSources78
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -433,23 +417,23 @@ physicalMesh color roughness metallic webGLMesh cullBackFaces =
             )
 
 
-collectNodes : List (Drawable coordinates) -> List Node -> List Node
+collectNodes : List (Entity coordinates) -> List Node -> List Node
 collectNodes drawables accumulated =
     case drawables of
         [] ->
             accumulated
 
-        (Types.Drawable node) :: rest ->
+        (Types.Entity node) :: rest ->
             collectNodes rest (node :: accumulated)
 
 
-group : List (Drawable coordinates) -> Drawable coordinates
+group : List (Entity coordinates) -> Entity coordinates
 group drawables =
-    Types.Drawable (Group (collectNodes drawables []))
+    Types.Entity (Group (collectNodes drawables []))
 
 
-transformBy : Transformation -> Drawable coordinates1 -> Drawable coordinates2
-transformBy transformation (Types.Drawable node) =
+transformBy : Transformation -> Entity coordinates1 -> Entity coordinates2
+transformBy transformation (Types.Entity node) =
     case node of
         EmptyNode ->
             empty
@@ -459,48 +443,48 @@ transformBy transformation (Types.Drawable node) =
                 compositeTransformation =
                     Transformation.compose existingTransformation transformation
             in
-            Types.Drawable (Transformed compositeTransformation underlyingNode)
+            Types.Entity (Transformed compositeTransformation underlyingNode)
 
         MeshNode _ ->
-            Types.Drawable (Transformed transformation node)
+            Types.Entity (Transformed transformation node)
 
         ShadowNode _ ->
-            Types.Drawable (Transformed transformation node)
+            Types.Entity (Transformed transformation node)
 
         Group _ ->
-            Types.Drawable (Transformed transformation node)
+            Types.Entity (Transformed transformation node)
 
 
-rotateAround : Axis3d Meters coordinates -> Angle -> Drawable coordinates -> Drawable coordinates
+rotateAround : Axis3d Meters coordinates -> Angle -> Entity coordinates -> Entity coordinates
 rotateAround axis angle givenDrawable =
     transformBy (Transformation.rotateAround axis angle) givenDrawable
 
 
-translateBy : Vector3d Meters coordinates -> Drawable coordinates -> Drawable coordinates
+translateBy : Vector3d Meters coordinates -> Entity coordinates -> Entity coordinates
 translateBy displacement givenDrawable =
     transformBy (Transformation.translateBy displacement) givenDrawable
 
 
-translateIn : Direction3d coordinates -> Length -> Drawable coordinates -> Drawable coordinates
+translateIn : Direction3d coordinates -> Length -> Entity coordinates -> Entity coordinates
 translateIn direction distance drawable =
     translateBy (Vector3d.withLength distance direction) drawable
 
 
-mirrorAcross : Plane3d Meters coordinates -> Drawable coordinates -> Drawable coordinates
+mirrorAcross : Plane3d Meters coordinates -> Entity coordinates -> Entity coordinates
 mirrorAcross plane givenDrawable =
     transformBy (Transformation.mirrorAcross plane) givenDrawable
 
 
-relativeTo : Frame3d Meters globalCoordinates { defines : localCoordinates } -> Drawable globalCoordinates -> Drawable localCoordinates
+relativeTo : Frame3d Meters globalCoordinates { defines : localCoordinates } -> Entity globalCoordinates -> Entity localCoordinates
 relativeTo frame givenDrawable =
     transformBy (Transformation.relativeTo frame) givenDrawable
 
 
-placeIn : Frame3d Meters globalCoordinates { defines : localCoordinates } -> Drawable localCoordinates -> Drawable globalCoordinates
+placeIn : Frame3d Meters globalCoordinates { defines : localCoordinates } -> Entity localCoordinates -> Entity globalCoordinates
 placeIn frame givenDrawable =
     transformBy (Transformation.placeIn frame) givenDrawable
 
 
-scaleAbout : Point3d Meters coordinates -> Float -> Drawable coordinates -> Drawable coordinates
+scaleAbout : Point3d Meters coordinates -> Float -> Entity coordinates -> Entity coordinates
 scaleAbout point scale givenDrawable =
     transformBy (Transformation.scaleAbout point scale) givenDrawable

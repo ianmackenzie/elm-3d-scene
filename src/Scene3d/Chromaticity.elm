@@ -1,8 +1,7 @@
 module Scene3d.Chromaticity exposing
     ( Chromaticity
-    , daylight, incandescent
-    , xy, srgb, fromTemperature, fromColor
-    , toXyz, toLinearRgb
+    , sunlight, incandescent, fluorescent, d65
+    , xy, fromTemperature, fromColor
     )
 
 {-|
@@ -12,50 +11,55 @@ module Scene3d.Chromaticity exposing
 
 ## Constants
 
-@docs daylight, incandescent, fluorescent
+@docs sunlight, incandescent, fluorescent, d65
 
 
 ## Constructors
 
-@docs xy, srgb, kelvins, fromTemperature, fromColor
-
-
-## Conversions
-
-@docs toXyz, toLinearRgb
+@docs xy, kelvins, fromTemperature, fromColor
 
 -}
 
 import Color exposing (Color)
 import Point2d exposing (Point2d)
 import Quantity exposing (Unitless)
-import Scene3d.Color as Color exposing (LinearRgb, Xyz(..))
+import Scene3d.ColorConversions as ColorConversions
+import Scene3d.Types as Types exposing (CieXyz(..), LinearRgb(..))
 import Temperature exposing (Temperature)
 
 
-type Chromaticity
-    = Chromaticity { x : Float, y : Float }
+type alias Chromaticity =
+    Types.Chromaticity
 
 
 {-| Illuminant A, "Incandescent/Tungsten"
 -}
 incandescent : Chromaticity
 incandescent =
-    Chromaticity { x = 0.44757, y = 0.40745 }
+    xy 0.44757 0.40745
 
 
 {-| Illuminant D65, "Noon Daylight"
 -}
-daylight : Chromaticity
-daylight =
-    Chromaticity { x = 0.31271, y = 0.32902 }
+d65 : Chromaticity
+d65 =
+    xy 0.31271 0.32902
+
+
+{-| 'Sunlight' film apparently calibrated to 5600 K; falls at low end of
+'vertical daylight' at <https://en.wikipedia.org/wiki/Color_temperature>, above
+'horizon daylight' (so probably a decent representative value)
+-}
+sunlight : Chromaticity
+sunlight =
+    kelvins 5600
 
 
 {-| Illuminant F4, "Warm White Fluorescent"
 -}
 fluorescent : Chromaticity
 fluorescent =
-    Chromaticity { x = 0.44018, y = 0.40329 }
+    xy 0.44018 0.40329
 
 
 {-| See
@@ -64,12 +68,7 @@ for several standard values
 -}
 xy : Float -> Float -> Chromaticity
 xy x y =
-    Chromaticity { x = x, y = y }
-
-
-srgb : Float -> Float -> Float -> Chromaticity
-srgb r g b =
-    fromColor (Color.rgb r g b)
+    Types.Chromaticity { x = x, y = y }
 
 
 kelvins : Float -> Chromaticity
@@ -115,29 +114,16 @@ fromTemperature temperature =
                     + (3.75112997 * x)
                     - 0.37001483
     in
-    Chromaticity { x = x, y = y }
+    xy x y
 
 
 fromColor : Color -> Chromaticity
 fromColor color =
     let
-        (Xyz bigX bigY bigZ) =
-            Color.toXyz color
+        (CieXyz bigX bigY bigZ) =
+            ColorConversions.colorToCieXyz color
 
         sum =
             bigX + bigY + bigZ
     in
-    Chromaticity
-        { x = bigX / sum
-        , y = bigY / sum
-        }
-
-
-toXyz : Chromaticity -> Xyz
-toXyz (Chromaticity { x, y }) =
-    Xyz (x / y) 1 ((1 - x - y) / y)
-
-
-toLinearRgb : Chromaticity -> LinearRgb
-toLinearRgb chromaticity =
-    Color.xyzToLinearRgb (toXyz chromaticity)
+    xy (bigX / sum) (bigY / sum)

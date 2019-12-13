@@ -1,27 +1,29 @@
 module Scene3d exposing
-    ( render, unlit, toEntities
-    , Lights, noLights, oneLight, twoLights, threeLights, fourLights
-    , Option, clearColor, pointSize
+    ( toHtml, toEntities
+    , DirectLighting, LightSource, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+    , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     )
 
 {-|
 
-@docs render, unlit, toEntities
+@docs toHtml, toEntities
 
-@docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
+@docs DirectLighting, LightSource, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
 
-@docs Option, clearColor, pointSize
+@docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
 
 -}
 
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
+import Color.Transparent
+import Direction3d exposing (Direction3d)
 import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
 import Length exposing (Meters)
-import Luminance
+import Luminance exposing (Luminance)
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 as Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
@@ -30,12 +32,11 @@ import Point3d exposing (Point3d)
 import Quantity exposing (Quantity(..))
 import Rectangle2d
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
-import Scene3d.Color exposing (LinearRgb(..))
-import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.ColorConversions as ColorConversions
+import Scene3d.Drawable as Drawable exposing (Entity)
 import Scene3d.Exposure as Exposure exposing (Exposure)
-import Scene3d.Light exposing (AmbientLighting, Light)
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, Node(..))
+import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, LinearRgb(..), Node(..))
 import Viewpoint3d
 import WebGL
 import WebGL.Settings
@@ -45,33 +46,7 @@ import WebGL.Texture exposing (Texture)
 
 
 
------ AMBIENT LIGHTING -----
-
-
-ambientLightingDisabled : Mat4
-ambientLightingDisabled =
-    Math.Matrix4.fromRecord
-        { m11 = 0
-        , m21 = 0
-        , m31 = 0
-        , m41 = 0
-        , m12 = 0
-        , m22 = 0
-        , m32 = 0
-        , m42 = 0
-        , m13 = 0
-        , m23 = 0
-        , m33 = 0
-        , m43 = 0
-        , m14 = 0
-        , m24 = 0
-        , m34 = 0
-        , m44 = 0
-        }
-
-
-
------ LIGHTS -----
+----- LIGHT SOURCES -----
 --
 -- type:
 --   0 : disabled
@@ -86,15 +61,19 @@ ambientLightingDisabled =
 -- [ type_i  radius_i  type_j  radius_j ]
 
 
-type Lights coordinates
+type alias LightSource coordinates =
+    Types.LightSource coordinates
+
+
+type DirectLighting coordinates
     = SingleUnshadowedPass LightMatrices
     | SingleShadowedPass LightMatrices
     | TwoPasses LightMatrices LightMatrices
 
 
-disabledLight : Light coordinates
-disabledLight =
-    Types.Light
+disabledLightSource : LightSource coordinates
+disabledLightSource =
+    Types.LightSource
         { type_ = 0
         , x = 0
         , y = 0
@@ -106,8 +85,8 @@ disabledLight =
         }
 
 
-lightPair : Light coordinates -> Light coordinates -> Mat4
-lightPair (Types.Light first) (Types.Light second) =
+lightSourcePair : LightSource coordinates -> LightSource coordinates -> Mat4
+lightSourcePair (Types.LightSource first) (Types.LightSource second) =
     Math.Matrix4.fromRecord
         { m11 = first.x
         , m21 = first.y
@@ -130,26 +109,26 @@ lightPair (Types.Light first) (Types.Light second) =
 
 lightingDisabled : LightMatrices
 lightingDisabled =
-    { lights12 = lightPair disabledLight disabledLight
-    , lights34 = lightPair disabledLight disabledLight
-    , lights56 = lightPair disabledLight disabledLight
-    , lights78 = lightPair disabledLight disabledLight
+    { lightSources12 = lightSourcePair disabledLightSource disabledLightSource
+    , lightSources34 = lightSourcePair disabledLightSource disabledLightSource
+    , lightSources56 = lightSourcePair disabledLightSource disabledLightSource
+    , lightSources78 = lightSourcePair disabledLightSource disabledLightSource
     }
 
 
-noLights : Lights coordinates
-noLights =
+noDirectLighting : DirectLighting coordinates
+noDirectLighting =
     SingleUnshadowedPass lightingDisabled
 
 
-oneLight : Light coordinates -> { castsShadows : Bool } -> Lights coordinates
-oneLight light { castsShadows } =
+oneLightSource : LightSource coordinates -> { castsShadows : Bool } -> DirectLighting coordinates
+oneLightSource lightSource { castsShadows } =
     let
         lightMatrices =
-            { lights12 = lightPair light disabledLight
-            , lights34 = lightPair disabledLight disabledLight
-            , lights56 = lightPair disabledLight disabledLight
-            , lights78 = lightPair disabledLight disabledLight
+            { lightSources12 = lightSourcePair lightSource disabledLightSource
+            , lightSources34 = lightSourcePair disabledLightSource disabledLightSource
+            , lightSources56 = lightSourcePair disabledLightSource disabledLightSource
+            , lightSources78 = lightSourcePair disabledLightSource disabledLightSource
             }
     in
     if castsShadows then
@@ -159,107 +138,107 @@ oneLight light { castsShadows } =
         SingleUnshadowedPass lightMatrices
 
 
-twoLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Lights coordinates
-twoLights first second =
-    eightLights
+twoLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+twoLightSources first second =
+    eightLightSources
         first
         second
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
 
 
-threeLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Light coordinates
-    -> Lights coordinates
-threeLights first second third =
-    eightLights
+threeLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+threeLightSources first second third =
+    eightLightSources
         first
         second
         third
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
 
 
-fourLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Lights coordinates
-fourLights first second third fourth =
-    eightLights
+fourLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+fourLightSources first second third fourth =
+    eightLightSources
         first
         second
         third
         fourth
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
 
 
-fiveLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Lights coordinates
-fiveLights first second third fourth fifth =
-    eightLights
+fiveLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+fiveLightSources first second third fourth fifth =
+    eightLightSources
         first
         second
         third
         fourth
         fifth
-        disabledLight
-        disabledLight
-        disabledLight
+        disabledLightSource
+        disabledLightSource
+        disabledLightSource
 
 
-sixLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Lights coordinates
-sixLights first second third fourth fifth sixth =
-    eightLights
+sixLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+sixLightSources first second third fourth fifth sixth =
+    eightLightSources
         first
         second
         third
         fourth
         fifth
         sixth
-        disabledLight
-        disabledLight
+        disabledLightSource
+        disabledLightSource
 
 
-sevenLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Lights coordinates
-sevenLights first second third fourth fifth sixth seventh =
-    eightLights
+sevenLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+sevenLightSources first second third fourth fifth sixth seventh =
+    eightLightSources
         first
         second
         third
@@ -267,39 +246,126 @@ sevenLights first second third fourth fifth sixth seventh =
         fifth
         sixth
         seventh
-        disabledLight
+        disabledLightSource
 
 
-eightLights :
-    ( Light coordinates, { castsShadows : Bool } )
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Light coordinates
-    -> Lights coordinates
-eightLights ( firstLight, { castsShadows } ) secondLight thirdLight fourthLight fifthLight sixthLight seventhLight eigthLight =
+eightLightSources :
+    ( LightSource coordinates, { castsShadows : Bool } )
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> LightSource coordinates
+    -> DirectLighting coordinates
+eightLightSources ( first, { castsShadows } ) second third fourth fifth sixth seventh eigth =
     if castsShadows then
         TwoPasses
-            { lights12 = lightPair firstLight secondLight
-            , lights34 = lightPair thirdLight fourthLight
-            , lights56 = lightPair fifthLight sixthLight
-            , lights78 = lightPair seventhLight eigthLight
+            { lightSources12 = lightSourcePair first second
+            , lightSources34 = lightSourcePair third fourth
+            , lightSources56 = lightSourcePair fifth sixth
+            , lightSources78 = lightSourcePair seventh eigth
             }
-            { lights12 = lightPair secondLight thirdLight
-            , lights34 = lightPair fourthLight fifthLight
-            , lights56 = lightPair sixthLight seventhLight
-            , lights78 = lightPair eigthLight disabledLight
+            { lightSources12 = lightSourcePair second third
+            , lightSources34 = lightSourcePair fourth fifth
+            , lightSources56 = lightSourcePair sixth seventh
+            , lightSources78 = lightSourcePair eigth disabledLightSource
             }
 
     else
         SingleUnshadowedPass
-            { lights12 = lightPair firstLight secondLight
-            , lights34 = lightPair thirdLight fourthLight
-            , lights56 = lightPair fifthLight sixthLight
-            , lights78 = lightPair seventhLight eigthLight
+            { lightSources12 = lightSourcePair first second
+            , lightSources34 = lightSourcePair third fourth
+            , lightSources56 = lightSourcePair fifth sixth
+            , lightSources78 = lightSourcePair seventh eigth
+            }
+
+
+
+----- ENVIRONMENTAL LIGHTING ------
+
+
+type alias EnvironmentalLighting coordinates =
+    Types.EnvironmentalLighting coordinates
+
+
+environmentalLightingDisabled : Mat4
+environmentalLightingDisabled =
+    Math.Matrix4.fromRecord
+        { m11 = 0
+        , m21 = 0
+        , m31 = 0
+        , m41 = 0
+        , m12 = 0
+        , m22 = 0
+        , m32 = 0
+        , m42 = 0
+        , m13 = 0
+        , m23 = 0
+        , m33 = 0
+        , m43 = 0
+        , m14 = 0
+        , m24 = 0
+        , m34 = 0
+        , m44 = 0
+        }
+
+
+noEnvironmentalLighting : EnvironmentalLighting coordinates
+noEnvironmentalLighting =
+    Types.NoEnvironmentalLighting
+
+
+{-| Good default value for max luminance: 5000 nits
+-}
+softLighting :
+    { upDirection : Direction3d coordinates
+    , above : ( Luminance, Chromaticity )
+    , below : ( Luminance, Chromaticity )
+    }
+    -> EnvironmentalLighting coordinates
+softLighting { upDirection, above, below } =
+    let
+        { x, y, z } =
+            Direction3d.unwrap upDirection
+
+        ( aboveLuminance, aboveChromaticity ) =
+            above
+
+        ( belowLuminance, belowChromaticity ) =
+            below
+
+        aboveNits =
+            Luminance.inNits aboveLuminance
+
+        belowNits =
+            Luminance.inNits belowLuminance
+
+        (LinearRgb aboveRgb) =
+            ColorConversions.chromaticityToLinearRgb aboveChromaticity
+
+        (LinearRgb belowRgb) =
+            ColorConversions.chromaticityToLinearRgb belowChromaticity
+    in
+    Types.SoftLighting <|
+        Math.Matrix4.fromRecord
+            { m11 = x
+            , m21 = y
+            , m31 = z
+            , m41 = 1
+            , m12 = aboveNits * Vector3.getX aboveRgb
+            , m22 = aboveNits * Vector3.getY aboveRgb
+            , m32 = aboveNits * Vector3.getZ aboveRgb
+            , m42 = 0
+            , m13 = belowNits * Vector3.getX belowRgb
+            , m23 = belowNits * Vector3.getY belowRgb
+            , m33 = belowNits * Vector3.getZ belowRgb
+            , m43 = 0
+            , m14 = 0
+            , m24 = 0
+            , m34 = 0
+            , m44 = 0
             }
 
 
@@ -318,18 +384,18 @@ type alias RenderPasses =
 
 
 createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
-createRenderPass sceneProperties viewMatrix ambientLighting transformation drawFunction =
+createRenderPass sceneProperties viewMatrix ambientLightingMatrix transformation drawFunction =
     drawFunction
         sceneProperties
         transformation.scale
         (Transformation.modelMatrix transformation)
         transformation.isRightHanded
         viewMatrix
-        ambientLighting
+        ambientLightingMatrix
 
 
 collectRenderPasses : Mat4 -> Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
-collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransformation node accumulated =
+collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTransformation node accumulated =
     case node of
         EmptyNode ->
             accumulated
@@ -338,7 +404,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
             collectRenderPasses
                 sceneProperties
                 viewMatrix
-                ambientLighting
+                ambientLightingMatrix
                 (Transformation.compose transformation currentTransformation)
                 childNode
                 accumulated
@@ -349,7 +415,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
                     createRenderPass
                         sceneProperties
                         viewMatrix
-                        ambientLighting
+                        ambientLightingMatrix
                         currentTransformation
                         meshDrawFunction
                         :: accumulated.meshes
@@ -364,7 +430,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
                     createRenderPass
                         sceneProperties
                         viewMatrix
-                        ambientLighting
+                        ambientLightingMatrix
                         currentTransformation
                         shadowDrawFunction
                         :: accumulated.shadows
@@ -378,7 +444,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
                 (collectRenderPasses
                     sceneProperties
                     viewMatrix
-                    ambientLighting
+                    ambientLightingMatrix
                     currentTransformation
                 )
                 accumulated
@@ -392,10 +458,10 @@ collectRenderPasses sceneProperties viewMatrix ambientLighting currentTransforma
 --   0: perspective (camera XYZ is eye position)
 --   1: orthographic (camera XYZ is direction to screen)
 --
--- [ clipDistance  cameraX         whiteR     * ]
--- [ aspectRatio   cameraY         whiteG     * ]
--- [ kc            cameraZ         whiteB     * ]
--- [ kz            projectionType  pointSize  * ]
+-- [ clipDistance  cameraX         whiteR  * ]
+-- [ aspectRatio   cameraY         whiteG  * ]
+-- [ kc            cameraZ         whiteB  * ]
+-- [ kz            projectionType  *       * ]
 
 
 depthTestDefault : List WebGL.Settings.Setting
@@ -462,29 +528,25 @@ call renderPasses lightMatrices settings =
 
 
 toEntities :
-    List Option
-    ->
-        { ambientLighting : Maybe (AmbientLighting coordinates)
-        , lights : Lights coordinates
-        , camera : Camera3d Meters coordinates
-        , exposure : Exposure
-        , whiteBalance : Chromaticity
-        , width : Quantity Float Pixels
-        , height : Quantity Float Pixels
-        }
-    -> List (Drawable coordinates)
+    { directLighting : DirectLighting coordinates
+    , environmentalLighting : EnvironmentalLighting coordinates
+    , camera : Camera3d Meters coordinates
+    , exposure : Exposure
+    , whiteBalance : Chromaticity
+    , width : Quantity Float Pixels
+    , height : Quantity Float Pixels
+    , backgroundColor : Color.Transparent.Color
+    }
+    -> List (Entity coordinates)
     -> List WebGL.Entity
-toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, width, height } drawables =
+toEntities arguments drawables =
     let
-        givenPointSize =
-            getPointSize options
-
         aspectRatio =
-            Quantity.ratio width height
+            Quantity.ratio arguments.width arguments.height
 
         projectionParameters =
             Camera3d.projectionParameters { screenAspectRatio = aspectRatio }
-                camera
+                arguments.camera
 
         clipDistance =
             Math.Vector4.getX projectionParameters
@@ -496,7 +558,7 @@ toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, wi
             Math.Vector4.getW projectionParameters
 
         eyePoint =
-            Camera3d.viewpoint camera
+            Camera3d.viewpoint arguments.camera
                 |> Viewpoint3d.eyePoint
                 |> Point3d.unwrap
 
@@ -507,11 +569,11 @@ toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, wi
             else
                 1
 
-        (LinearRgb r g b) =
-            Chromaticity.toLinearRgb whiteBalance
+        (LinearRgb linearRgb) =
+            ColorConversions.chromaticityToLinearRgb arguments.whiteBalance
 
         maxLuminance =
-            Luminance.inNits (Exposure.maxLuminance exposure)
+            Luminance.inNits (Exposure.maxLuminance arguments.exposure)
 
         sceneProperties =
             Math.Matrix4.fromRecord
@@ -523,10 +585,10 @@ toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, wi
                 , m22 = eyePoint.y
                 , m32 = eyePoint.z
                 , m42 = projectionType
-                , m13 = maxLuminance * r
-                , m23 = maxLuminance * g
-                , m33 = maxLuminance * b
-                , m43 = givenPointSize
+                , m13 = maxLuminance * Vector3.getX linearRgb
+                , m23 = maxLuminance * Vector3.getY linearRgb
+                , m33 = maxLuminance * Vector3.getZ linearRgb
+                , m43 = 0
                 , m14 = 0
                 , m24 = 0
                 , m34 = 0
@@ -534,31 +596,31 @@ toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, wi
                 }
 
         viewMatrix =
-            Camera3d.viewMatrix camera
+            Camera3d.viewMatrix arguments.camera
 
-        ambientLightingMatrix =
-            case ambientLighting of
-                Just (Types.AmbientLighting matrix) ->
+        environmentalLightingMatrix =
+            case arguments.environmentalLighting of
+                Types.SoftLighting matrix ->
                     matrix
 
-                Nothing ->
-                    ambientLightingDisabled
+                Types.NoEnvironmentalLighting ->
+                    environmentalLightingDisabled
 
-        (Types.Drawable rootNode) =
+        (Types.Entity rootNode) =
             Drawable.group drawables
 
         renderPasses =
             collectRenderPasses
                 sceneProperties
                 viewMatrix
-                ambientLightingMatrix
+                environmentalLightingMatrix
                 Transformation.identity
                 rootNode
                 { meshes = []
                 , shadows = []
                 }
     in
-    case lights of
+    case arguments.directLighting of
         SingleUnshadowedPass lightMatrices ->
             call renderPasses.meshes lightMatrices depthTestDefault
 
@@ -577,20 +639,19 @@ toEntities options { ambientLighting, lights, camera, exposure, whiteBalance, wi
                 ]
 
 
-render :
-    List Option
-    ->
-        { ambientLighting : Maybe (AmbientLighting coordinates)
-        , lights : Lights coordinates
-        , camera : Camera3d Meters coordinates
-        , exposure : Exposure
-        , whiteBalance : Chromaticity
-        , width : Quantity Float Pixels
-        , height : Quantity Float Pixels
-        }
-    -> List (Drawable coordinates)
+toHtml :
+    { directLighting : DirectLighting coordinates
+    , environmentalLighting : EnvironmentalLighting coordinates
+    , camera : Camera3d Meters coordinates
+    , exposure : Exposure
+    , whiteBalance : Chromaticity
+    , width : Quantity Float Pixels
+    , height : Quantity Float Pixels
+    , backgroundColor : Color.Transparent.Color
+    }
+    -> List (Entity coordinates)
     -> Html msg
-render options arguments drawables =
+toHtml arguments drawables =
     let
         widthInPixels =
             inPixels arguments.width
@@ -598,8 +659,8 @@ render options arguments drawables =
         heightInPixels =
             inPixels arguments.height
 
-        givenClearColor =
-            Color.toRgba (getClearColor options)
+        { red, green, blue, alpha } =
+            Color.Transparent.toRGBA arguments.backgroundColor
 
         webGLOptions =
             [ WebGL.depth 1
@@ -607,10 +668,10 @@ render options arguments drawables =
             , WebGL.alpha True
             , WebGL.antialias
             , WebGL.clearColor
-                givenClearColor.red
-                givenClearColor.green
-                givenClearColor.blue
-                givenClearColor.alpha
+                (red / 255)
+                (green / 255)
+                (blue / 255)
+                (Color.Transparent.opacityToFloat alpha)
             ]
     in
     WebGL.toHtmlWith webGLOptions
@@ -620,79 +681,4 @@ render options arguments drawables =
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         , Html.Attributes.style "display" "block"
         ]
-        (toEntities options arguments drawables)
-
-
-unlit :
-    List Option
-    ->
-        { camera : Camera3d Meters coordinates
-        , width : Quantity Float Pixels
-        , height : Quantity Float Pixels
-        }
-    -> List (Drawable coordinates)
-    -> Html msg
-unlit options arguments drawables =
-    render options
-        { camera = arguments.camera
-        , width = arguments.width
-        , height = arguments.height
-        , ambientLighting = Nothing
-        , lights = noLights
-        , exposure = Exposure.srgb
-        , whiteBalance = Chromaticity.daylight
-        }
-        drawables
-
-
-
------ OPTIONS -----
-
-
-type Option
-    = ClearColor Color
-    | PointSize Float
-
-
-pointSize : Quantity Float Pixels -> Option
-pointSize (Quantity size) =
-    PointSize size
-
-
-clearColor : Color -> Option
-clearColor color =
-    ClearColor color
-
-
-getPointSize : List Option -> Float
-getPointSize options =
-    let
-        defaultValue =
-            1.0
-
-        update option oldValue =
-            case option of
-                PointSize newValue ->
-                    newValue
-
-                _ ->
-                    oldValue
-    in
-    List.foldl update defaultValue options
-
-
-getClearColor : List Option -> Color
-getClearColor options =
-    let
-        defaultValue =
-            Color.rgba 1.0 1.0 1.0 0.0
-
-        update option oldValue =
-            case option of
-                ClearColor newValue ->
-                    newValue
-
-                _ ->
-                    oldValue
-    in
-    List.foldl update defaultValue options
+        (toEntities arguments drawables)

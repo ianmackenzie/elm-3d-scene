@@ -7,25 +7,23 @@
     "exposed-modules": [
         "Scene3d",
         "Scene3d.Chromaticity",
-        "Scene3d.Drawable",
         "Scene3d.Exposure",
-        "Scene3d.Light",
-        "Scene3d.Mesh",
-        "Scene3d.Shape"
+        "Scene3d.Material",
+        "Scene3d.Mesh"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
-        "avh4/elm-color": "1.0.0 <= v < 2.0.0",
         "elm/core": "1.0.0 <= v < 2.0.0",
         "elm/html": "1.0.0 <= v < 2.0.0",
         "elm-explorations/linear-algebra": "1.0.3 <= v < 2.0.0",
         "elm-explorations/webgl": "1.1.1 <= v < 2.0.0",
         "ianmackenzie/elm-1d-parameter": "1.0.1 <= v < 2.0.0",
         "ianmackenzie/elm-3d-camera": "2.0.0 <= v < 3.0.0",
-        "ianmackenzie/elm-geometry": "3.0.0 <= v < 4.0.0",
+        "ianmackenzie/elm-geometry": "3.1.0 <= v < 4.0.0",
         "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.0 <= v < 3.0.0",
         "ianmackenzie/elm-triangular-mesh": "1.0.2 <= v < 2.0.0",
-        "ianmackenzie/elm-units": "2.2.0 <= v < 3.0.0"
+        "ianmackenzie/elm-units": "2.2.0 <= v < 3.0.0",
+        "tesk9/palette": "2.0.0 <= v < 3.0.0"
     },
     "test-dependencies": {
         "elm/random": "1.0.0 <= v < 2.0.0",
