@@ -93,7 +93,7 @@ project =
 
 plainVertexShader : String
 plainVertexShader =
-    Glsl.program
+    Glsl.program "plainVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
         , varyings = [ interpolatedPosition ]
@@ -112,7 +112,7 @@ plainVertexShader =
 
 pointVertexShader : String
 pointVertexShader =
-    Glsl.program
+    Glsl.program "pointVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, pointRadius, viewMatrix, sceneProperties ]
         , varyings = []
@@ -131,7 +131,7 @@ pointVertexShader =
 
 smoothVertexShader : String
 smoothVertexShader =
-    Glsl.program
+    Glsl.program "smoothVertex"
         { attributes = [ position, normal ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
         , varyings = [ interpolatedPosition, interpolatedNormal ]
@@ -170,7 +170,7 @@ getDirectionToLight =
 
 shadowVertexShader : String
 shadowVertexShader =
-    Glsl.program
+    Glsl.program "shadowVertex"
         { attributes = [ position, normal ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, lightSource ]
         , varyings = []

@@ -149,15 +149,17 @@ collectFunctionConstants functions accumulated =
 
 
 program :
-    { attributes : List Attribute
-    , uniforms : List Uniform
-    , varyings : List Varying
-    , constants : List Constant
-    , functions : List Function
-    }
+    String
+    ->
+        { attributes : List Attribute
+        , uniforms : List Uniform
+        , varyings : List Varying
+        , constants : List Constant
+        , functions : List Function
+        }
     -> String
     -> String
-program { attributes, uniforms, varyings, constants, functions } source =
+program name { attributes, uniforms, varyings, constants, functions } source =
     let
         allFunctions =
             String.join "\n\n" (collectFunctionSources functions [])
