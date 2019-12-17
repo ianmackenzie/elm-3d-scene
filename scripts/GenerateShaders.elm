@@ -195,6 +195,22 @@ shadowVertexShader =
         """
 
 
+shadowFragmentShader : String
+shadowFragmentShader =
+    Glsl.program "shadowFragment"
+        { attributes = []
+        , uniforms = []
+        , varyings = []
+        , constants = []
+        , functions = []
+        }
+        """
+        void main () {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+        """
+
+
 script : Script.Init -> Script Int ()
 script { workingDirectory } =
     let
@@ -206,6 +222,7 @@ script { workingDirectory } =
         , dump pointVertexShader "pointVertexShader.glsl"
         , dump smoothVertexShader "smoothVertexShader.glsl"
         , dump shadowVertexShader "shadowVertexShader.glsl"
+        , dump shadowFragmentShader "shadowFragmentShader.glsl"
         ]
         |> Script.onError (handleError .message)
 
