@@ -1,23 +1,21 @@
 module Glsl exposing
-    ( Attribute
-    , Constant
-    , Function
-    , Type(..)
-    , Uniform
-    , Varying
-    , attribute
-    , constant
-    , float
-    , function
-    , mat3
-    , mat4
-    , program
-    , uniform
-    , varying
-    , vec2
-    , vec3
-    , vec4
+    ( program, function
+    , Attribute, Uniform, Varying, Constant, Function, Type
+    , float, vec2, vec3, vec4, mat3, mat4
+    , attribute, uniform, varying, constant
     )
+
+{-|
+
+@docs program, function
+
+@docs Attribute, Uniform, Varying, Constant, Function, Type
+
+@docs float, vec2, vec3, vec4, mat3, mat4
+
+@docs attribute, uniform, varying, constant
+
+-}
 
 
 type Function
