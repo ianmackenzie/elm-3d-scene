@@ -198,8 +198,8 @@ shadowVertexShader =
 script : Script.Init -> Script Int ()
 script { workingDirectory } =
     let
-            File.write shader (workingDirectory |> Directory.file fileName)
         dump shader fileName =
+            File.write shader (File.in_ workingDirectory fileName)
     in
     Script.do
         [ dump plainVertexShader "plainVertexShader.glsl"
