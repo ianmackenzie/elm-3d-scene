@@ -1,17 +1,17 @@
 module Glsl exposing
-    ( program, function
-    , Attribute, Uniform, Varying, Constant, Function, Type
-    , float, vec2, vec3, vec4, mat3, mat4
+    ( function, vertexShader, fragmentShader, generateModule
+    , Attribute, Uniform, Varying, Constant, Function, Type, Shader
+    , float, vec2, vec3, vec4, mat4
     , attribute, uniform, varying, constant
     )
 
 {-|
 
-@docs program, function
+@docs function, vertexShader, fragmentShader, generateModule
 
-@docs Attribute, Uniform, Varying, Constant, Function, Type
+@docs Attribute, Uniform, Varying, Constant, Function, Type, Shader
 
-@docs float, vec2, vec3, vec4, mat3, mat4
+@docs float, vec2, vec3, vec4, mat4
 
 @docs attribute, uniform, varying, constant
 
@@ -46,11 +46,6 @@ vec4 =
     Type "vec4"
 
 
-mat3 : Type
-mat3 =
-    Type "mat3"
-
-
 mat4 : Type
 mat4 =
     Type "mat4"
@@ -70,6 +65,15 @@ type Varying
 
 type Constant
     = Constant Type String String
+
+
+type ShaderType
+    = Vertex (List Attribute)
+    | Fragment
+
+
+type Shader
+    = Shader String String
 
 
 attribute : Type -> String -> Attribute
@@ -148,7 +152,7 @@ collectFunctionConstants functions accumulated =
             accumulated
 
 
-program :
+vertexShader :
     String
     ->
         { attributes : List Attribute
@@ -158,8 +162,44 @@ program :
         , functions : List Function
         }
     -> String
+    -> Shader
+vertexShader name { attributes, uniforms, varyings, constants, functions } source =
+    shader name
+        (Vertex attributes)
+        { uniforms = uniforms
+        , varyings = varyings
+        , constants = constants
+        , functions = functions
+        }
+        source
+
+
+fragmentShader :
+    String
+    ->
+        { uniforms : List Uniform
+        , varyings : List Varying
+        , constants : List Constant
+        , functions : List Function
+        }
     -> String
-program name { attributes, uniforms, varyings, constants, functions } source =
+    -> Shader
+fragmentShader name properties source =
+    shader name Fragment properties source
+
+
+shader :
+    String
+    -> ShaderType
+    ->
+        { uniforms : List Uniform
+        , varyings : List Varying
+        , constants : List Constant
+        , functions : List Function
+        }
+    -> String
+    -> Shader
+shader name shaderType { uniforms, varyings, constants, functions } source =
     let
         allFunctions =
             String.join "\n\n" (collectFunctionSources functions [])
@@ -167,22 +207,129 @@ program name { attributes, uniforms, varyings, constants, functions } source =
         allConstants =
             String.join "\n" <|
                 List.foldl addConstant (collectFunctionConstants functions []) constants
+
+        glslSource =
+            String.join "\n\n" <|
+                List.filter (not << String.isEmpty) <|
+                    [ "precision mediump float;"
+                    , attributesBlock shaderType
+                    , uniformsBlock uniforms
+                    , varyingsBlock varyings
+                    , allConstants
+                    , allFunctions
+                    , stripExtraWhitespace source
+                    ]
+
+        elmSource =
+            String.join "\n"
+                [ name ++ " :"
+                , indent 1 "WebGL.Shader"
+                , indent 2 (attributesSignature shaderType)
+                , indent 2 (uniformsSignature uniforms)
+                , indent 2 (varyingsSignature varyings)
+                , name ++ " ="
+                , indent 1 "[glsl|"
+                , indent 2 glslSource
+                , indent 1 "|]"
+                ]
     in
-    String.join "\n\n" <|
-        List.filter (not << String.isEmpty) <|
-            [ "precision mediump float;"
-            , attributesBlock attributes
-            , uniformsBlock uniforms
-            , varyingsBlock varyings
-            , allConstants
-            , allFunctions
-            , stripExtraWhitespace source
-            ]
+    Shader name elmSource
 
 
-attributesBlock : List Attribute -> String
-attributesBlock attributes =
-    String.join "\n" (List.map attributeLine attributes)
+capitalize : String -> String
+capitalize string =
+    String.toUpper (String.left 1 string)
+        ++ String.dropLeft 1 string
+
+
+elmField : Type -> String -> String
+elmField (Type glslType) name =
+    name ++ " : " ++ capitalize glslType
+
+
+varyingsSignature : List Varying -> String
+varyingsSignature varyings =
+    case varyings of
+        [] ->
+            "{}"
+
+        (Varying firstType firstName) :: rest ->
+            String.join "\n"
+                [ "{ " ++ elmField firstType firstName
+                , String.join "\n" (List.map varyingField rest)
+                , "}"
+                ]
+
+
+varyingField : Varying -> String
+varyingField (Varying fieldType fieldName) =
+    ", " ++ elmField fieldType fieldName
+
+
+uniformsSignature : List Uniform -> String
+uniformsSignature uniforms =
+    case uniforms of
+        [] ->
+            "uniforms"
+
+        (Uniform firstType firstName) :: rest ->
+            String.join "\n"
+                [ "{ uniforms"
+                , "    | " ++ elmField firstType firstName
+                , String.join "\n" (List.map uniformField rest)
+                , "}"
+                ]
+
+
+uniformField : Uniform -> String
+uniformField (Uniform fieldType fieldName) =
+    "    , " ++ elmField fieldType fieldName
+
+
+attributesSignature : ShaderType -> String
+attributesSignature shaderType =
+    case shaderType of
+        Vertex attributes ->
+            case attributes of
+                [] ->
+                    "attributes"
+
+                (Attribute firstType firstName) :: rest ->
+                    String.join "\n"
+                        [ "{ attributes"
+                        , "    | " ++ elmField firstType firstName
+                        , String.join "\n" (List.map attributeField rest)
+                        , "}"
+                        ]
+
+        Fragment ->
+            "{}"
+
+
+attributeField : Attribute -> String
+attributeField (Attribute fieldType fieldName) =
+    "    , " ++ elmField fieldType fieldName
+
+
+indent : Int -> String -> String
+indent count text =
+    let
+        spaces =
+            String.repeat count "    "
+    in
+    String.lines text
+        |> List.map ((++) spaces)
+        |> String.join "\n"
+
+
+attributesBlock : ShaderType -> String
+attributesBlock shaderType =
+    case shaderType of
+        Vertex attributes ->
+            String.join "\n" (List.map attributeLine attributes)
+
+        Fragment ->
+            ""
 
 
 uniformsBlock : List Uniform -> String
@@ -230,3 +377,41 @@ stripExtraWhitespace code =
                 |> Maybe.withDefault 0
     in
     String.trim (String.join "\n" (List.map (String.dropLeft minIndentation) lines))
+
+
+generateModule : String -> List Shader -> String
+generateModule moduleName shaders =
+    case List.sortBy shaderName shaders of
+        [] ->
+            ""
+
+        (Shader firstName firstSource) :: rest ->
+            String.join "\n"
+                [ "module " ++ moduleName ++ " exposing"
+                , "    ( " ++ firstName
+                , String.join "\n" (List.map exposeLine rest)
+                , "    )"
+                , ""
+                , "import Math.Matrix4 as Matrix4 exposing (Mat4)"
+                , "import Math.Vector2 as Vector2 exposing (Vec2)"
+                , "import Math.Vector3 as Vector3 exposing (Vec3)"
+                , "import Math.Vector4 as Vector4 exposing (Vec4)"
+                , "import WebGL"
+                , "import WebGL.Texture exposing (Texture)"
+                , ""
+                , String.join "\n" (List.map shaderSource shaders)
+                ]
+
+
+exposeLine : Shader -> String
+exposeLine givenShader =
+    "    , " ++ shaderName givenShader
+
+
+shaderName : Shader -> String
+shaderName (Shader name _) =
+    name
+
+
+shaderSource (Shader _ source) =
+    source

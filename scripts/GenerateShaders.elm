@@ -91,9 +91,9 @@ project =
         """
 
 
-plainVertexShader : String
+plainVertexShader : Glsl.Shader
 plainVertexShader =
-    Glsl.program "plainVertex"
+    Glsl.vertexShader "plainVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
         , varyings = [ interpolatedPosition ]
@@ -110,9 +110,9 @@ plainVertexShader =
         """
 
 
-pointVertexShader : String
+pointVertexShader : Glsl.Shader
 pointVertexShader =
-    Glsl.program "pointVertex"
+    Glsl.vertexShader "pointVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, pointRadius, viewMatrix, sceneProperties ]
         , varyings = []
@@ -129,9 +129,9 @@ pointVertexShader =
         """
 
 
-smoothVertexShader : String
+smoothVertexShader : Glsl.Shader
 smoothVertexShader =
-    Glsl.program "smoothVertex"
+    Glsl.vertexShader "smoothVertex"
         { attributes = [ position, normal ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
         , varyings = [ interpolatedPosition, interpolatedNormal ]
@@ -168,9 +168,9 @@ getDirectionToLight =
         """
 
 
-shadowVertexShader : String
+shadowVertexShader : Glsl.Shader
 shadowVertexShader =
-    Glsl.program "shadowVertex"
+    Glsl.vertexShader "shadowVertex"
         { attributes = [ position, normal ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, lightSource ]
         , varyings = []
@@ -195,11 +195,10 @@ shadowVertexShader =
         """
 
 
-shadowFragmentShader : String
+shadowFragmentShader : Glsl.Shader
 shadowFragmentShader =
-    Glsl.program "shadowFragment"
-        { attributes = []
-        , uniforms = []
+    Glsl.fragmentShader "shadowFragment"
+        { uniforms = []
         , varyings = []
         , constants = []
         , functions = []
@@ -212,19 +211,31 @@ shadowFragmentShader =
 
 
 script : Script.Init -> Script Int ()
-script { workingDirectory } =
+script { workingDirectory, userPrivileges } =
     let
-        dump shader fileName =
-            File.write shader (File.in_ workingDirectory fileName)
+        outputFile =
+            File.in_ workingDirectory "Shaders.elm"
+
+        contents =
+            Glsl.generateModule "Shaders"
+                [ plainVertexShader
+                , pointVertexShader
+                , smoothVertexShader
+                , shadowVertexShader
+                , shadowFragmentShader
+                ]
     in
-    Script.do
-        [ dump plainVertexShader "plainVertexShader.glsl"
-        , dump pointVertexShader "pointVertexShader.glsl"
-        , dump smoothVertexShader "smoothVertexShader.glsl"
-        , dump shadowVertexShader "shadowVertexShader.glsl"
-        , dump shadowFragmentShader "shadowFragmentShader.glsl"
-        ]
+    File.write contents outputFile
         |> Script.onError (handleError .message)
+        |> Script.andThen
+            (Script.executeWith userPrivileges
+                { command = "elm-format"
+                , arguments = [ "--yes", File.path outputFile ]
+                , workingDirectory = workingDirectory
+                }
+                |> Script.ignoreResult
+                |> Script.ignoreError
+            )
 
 
 main : Script.Program
