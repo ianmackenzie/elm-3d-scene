@@ -57,6 +57,36 @@ emissiveColor =
     Glsl.uniform Glsl.vec3 "emissiveColor"
 
 
+environmentalLighting : Glsl.Uniform
+environmentalLighting =
+    Glsl.uniform Glsl.mat4 "environmentalLighting"
+
+
+lightSources12 : Glsl.Uniform
+lightSources12 =
+    Glsl.uniform Glsl.mat4 "lightSources12"
+
+
+lightSources34 : Glsl.Uniform
+lightSources34 =
+    Glsl.uniform Glsl.mat4 "lightSources12"
+
+
+lightSources56 : Glsl.Uniform
+lightSources56 =
+    Glsl.uniform Glsl.mat4 "lightSources12"
+
+
+lightSources78 : Glsl.Uniform
+lightSources78 =
+    Glsl.uniform Glsl.mat4 "lightSources12"
+
+
+materialColor : Glsl.Uniform
+materialColor =
+    Glsl.uniform Glsl.vec3 "materialColor"
+
+
 interpolatedPosition : Glsl.Varying
 interpolatedPosition =
     Glsl.varying Glsl.vec3 "interpolatedPosition"
