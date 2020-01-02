@@ -67,19 +67,39 @@ interpolatedNormal =
     Glsl.varying Glsl.vec3 "interpolatedNormal"
 
 
-disabledLightSource : Glsl.Constant
-disabledLightSource =
-    Glsl.constant Glsl.float "DISABLED_LIGHT_SOURCE" "0.0"
+kPerspectiveProjection : Glsl.Constant
+kPerspectiveProjection =
+    Glsl.constant Glsl.float "kPerspectiveProjection" "0.0"
 
 
-directionalLightSource : Glsl.Constant
-directionalLightSource =
-    Glsl.constant Glsl.float "DIRECTIONAL_LIGHT_SOURCE" "1.0"
+kOrthographicProjection : Glsl.Constant
+kOrthographicProjection =
+    Glsl.constant Glsl.float "kOrthographicProjection" "1.0"
 
 
-pointLightSource : Glsl.Constant
-pointLightSource =
-    Glsl.constant Glsl.float "POINT_LIGHT_SOURCE" "2.0"
+kDisabledLightSource : Glsl.Constant
+kDisabledLightSource =
+    Glsl.constant Glsl.float "kDisabledLightSource" "0.0"
+
+
+kDirectionalLightSource : Glsl.Constant
+kDirectionalLightSource =
+    Glsl.constant Glsl.float "kDirectionalLightSource" "1.0"
+
+
+kPointLightSource : Glsl.Constant
+kPointLightSource =
+    Glsl.constant Glsl.float "kPointLightSource" "2.0"
+
+
+kNoEnvironmentalLighting : Glsl.Constant
+kNoEnvironmentalLighting =
+    Glsl.constant Glsl.float "kNoEnvironmentalLighting" "0.0"
+
+
+kSoftLighting : Glsl.Constant
+kSoftLighting =
+    Glsl.constant Glsl.float "kSoftLighting" "1.0"
 
 
 project : Glsl.Function
@@ -213,14 +233,14 @@ getDirectionToLight : Glsl.Function
 getDirectionToLight =
     Glsl.function
         { dependencies = []
-        , constants = [ directionalLightSource, pointLightSource ]
+        , constants = [ kDirectionalLightSource, kPointLightSource ]
         }
         """
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
             float lightSourceType = xyz_type.w;
-            if (lightSourceType == DIRECTIONAL_LIGHT_SOURCE) {
+            if (lightSourceType == kDirectionalLightSource) {
                 return xyz_type.xyz;
-            } else if (lightSourceType == POINT_LIGHT_SOURCE) {
+            } else if (lightSourceType == kPointLightSource) {
                 vec3 lightPosition = xyz_type.xyz;
                 return normalize(lightPosition - surfacePosition);
             }
