@@ -132,6 +132,11 @@ kSoftLighting =
     Glsl.constant Glsl.float "kSoftLighting" "1.0"
 
 
+kPi : Glsl.Constant
+kPi =
+    Glsl.constant Glsl.float "kPi" "3.14159265359"
+
+
 project : Glsl.Function
 project =
     Glsl.function { dependencies = [], constants = [] }
@@ -196,6 +201,62 @@ pointAlpha =
                 return outerRadius - r;
             } else {
                 return 1.0;
+            }
+        }
+        """
+
+
+positiveDotProduct : Glsl.Function
+positiveDotProduct =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float positiveDotProduct(vec3 v1, vec3 v2) {
+            return clamp(dot(v1, v2), 0.0, 1.0);
+        }
+        """
+
+
+softLightingLuminance : Glsl.Function
+softLightingLuminance =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 softLightingLuminance(
+            vec3 aboveLuminance,
+            vec3 belowLuminance,
+            vec3 localUpDirection,
+            vec3 localLightDirection
+        ) {
+            float sinElevation = dot(localLightDirection, localUpDirection);
+            float t = (sinElevation + 1.0) / 2.0;
+            return aboveLuminance * t + belowLuminance * (1.0 - t);
+        }
+        """
+
+
+getDirectionToLightAndNormalIlluminance : Glsl.Function
+getDirectionToLightAndNormalIlluminance =
+    Glsl.function
+        { dependencies = []
+        , constants = [ kDirectionalLightSource, kPointLightSource, kPi ]
+        }
+        """
+        void getDirectionToLightAndNormalIlluminance(
+            vec4 xyz_type,
+            vec4 rgb_radius,
+            vec3 surfacePosition,
+            out vec3 directionToLight,
+            out vec3 normalIlluminance
+        ) {
+            float lightSourceType = xyz_type.w;
+            if (lightSourceType == kDirectionalLightSource) {
+                directionToLight = xyz_type.xyz;
+                normalIlluminance = rgb_radius.rgb;
+            } else if (lightSourceType == kPointLightSource) {
+                vec3 lightSourcePosition = xyz_type.xyz;
+                vec3 displacement = lightSourcePosition - surfacePosition;
+                float distance = length(displacement);
+                directionToLight = displacement / distance;
+                normalIlluminance = rgb_radius.rgb / (4.0 * kPi * distance * distance);
             }
         }
         """
@@ -383,6 +444,153 @@ emissivePointFragmentShader =
         """
 
 
+lambertianFragmentShader : Glsl.Shader
+lambertianFragmentShader =
+    Glsl.fragmentShader "lambertianFragment"
+        { uniforms =
+            [ sceneProperties
+            , environmentalLighting
+            , lightSources12
+            , lightSources34
+            , lightSources56
+            , lightSources78
+            , materialColor
+            , viewMatrix
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
+        , constants =
+            [ kPerspectiveProjection
+            , kNoEnvironmentalLighting
+            , kSoftLighting
+            , kDisabledLightSource
+            , kPi
+            ]
+        , functions =
+            [ toSrgb
+            , positiveDotProduct
+            , getDirectionToLightAndNormalIlluminance
+            , softLightingLuminance
+            ]
+        }
+        """
+        vec3 environmentalLightingColor(vec3 normalDirection, vec3 directionToCamera) {
+            float enviromentalLightingType = environmentalLighting[0][3];
+            if (enviromentalLightingType == kNoEnvironmentalLighting) {
+                return vec3(0.0, 0.0, 0.0);
+            } else if (enviromentalLightingType == kSoftLighting) {
+                vec3 upDirection = environmentalLighting[0].xyz;
+                vec3 aboveLuminance = environmentalLighting[1].rgb;
+                vec3 belowLuminance = environmentalLighting[2].rgb;
+                vec3 crossProduct = cross(normalDirection, directionToCamera);
+                float crossMagnitude = length(crossProduct);
+                vec3 xDirection = vec3(0.0, 0.0, 0.0);
+                vec3 yDirection = vec3(0.0, 0.0, 0.0);
+                if (crossMagnitude > 1.0e-6) {
+                    yDirection = (1.0 / crossMagnitude) * crossProduct;
+                    xDirection = cross(yDirection, normalDirection);
+                } else {
+                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                    xDirection = normalize(cross(viewY, normalDirection));
+                    yDirection = cross(normalDirection, xDirection);
+                }
+                float localUpX = dot(upDirection, xDirection);
+                float localUpY = dot(upDirection, yDirection);
+                float localUpZ = dot(upDirection, normalDirection);
+                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
+                
+                float numSamples = 13.0;
+                vec3 sum = vec3(0.0, 0.0, 0.0);
+
+                vec3 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+
+                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+
+                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
+                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                return (2.0 * sum * materialColor) / numSamples;
+            } else {
+                return vec3(0.0, 0.0, 0.0); 
+            }
+        }
+
+        vec3 litColor(vec4 xyz_type, vec4 rgb_radius, vec3 normalDirection) {
+            float lightSourceType = xyz_type.w;
+            if (lightSourceType == kDisabledLightSource) {
+                return vec3(0.0, 0.0, 0.0);
+            } 
+
+            vec3 directionToLight = vec3(0.0, 0.0, 0.0);
+            vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
+            getDirectionToLightAndNormalIlluminance(
+                xyz_type,
+                rgb_radius,
+                interpolatedPosition,
+                directionToLight,
+                normalIlluminance
+            );
+
+            float dotNL = positiveDotProduct(directionToLight, interpolatedNormal);
+            return (normalIlluminance * dotNL) * (materialColor / kPi);
+        }
+
+        void main() {
+            float projectionType = sceneProperties[1][3];
+            vec3 directionToCamera = vec3(0.0, 0.0, 0.0);
+            if (projectionType == kPerspectiveProjection) {
+                vec3 cameraPoint = sceneProperties[1].xyz;
+                directionToCamera = normalize(cameraPoint - interpolatedPosition);
+            } else {
+                directionToCamera = sceneProperties[1].xyz;
+            }
+            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 litColor0 = environmentalLightingColor(normalDirection, directionToCamera);
+            vec3 litColor1 = litColor(lightSources12[0], lightSources12[1], normalDirection);
+            vec3 litColor2 = litColor(lightSources12[2], lightSources12[3], normalDirection);
+            vec3 litColor3 = litColor(lightSources34[0], lightSources34[1], normalDirection);
+            vec3 litColor4 = litColor(lightSources34[2], lightSources34[3], normalDirection);
+            vec3 litColor5 = litColor(lightSources56[0], lightSources56[1], normalDirection);
+            vec3 litColor6 = litColor(lightSources56[2], lightSources56[3], normalDirection);
+            vec3 litColor7 = litColor(lightSources78[0], lightSources78[1], normalDirection);
+            vec3 litColor8 = litColor(lightSources78[2], lightSources78[3], normalDirection);
+            vec3 litColorSum = litColor0 + litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
+            gl_FragColor = toSrgb(litColorSum, sceneProperties);
+        }
+        """
+
+
 script : Script.Init -> Script Int ()
 script { workingDirectory, userPrivileges } =
     let
@@ -400,6 +608,7 @@ script { workingDirectory, userPrivileges } =
                 , constantPointFragmentShader
                 , emissiveFragmentShader
                 , emissivePointFragmentShader
+                , lambertianFragmentShader
                 ]
     in
     File.write contents outputFile
