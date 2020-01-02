@@ -47,6 +47,16 @@ pointRadius =
     Glsl.uniform Glsl.float "pointRadius"
 
 
+color : Glsl.Uniform
+color =
+    Glsl.uniform Glsl.vec3 "color"
+
+
+emissiveColor : Glsl.Uniform
+emissiveColor =
+    Glsl.uniform Glsl.vec3 "emissiveColor"
+
+
 interpolatedPosition : Glsl.Varying
 interpolatedPosition =
     Glsl.varying Glsl.vec3 "interpolatedPosition"
@@ -87,6 +97,56 @@ project =
                 (-position.z - 2.0 * n),
                 -position.z
             );
+        }
+        """
+
+
+gammaCorrect : Glsl.Function
+gammaCorrect =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float gammaCorrect(float u) {
+            if (u <= 0.0031308) {
+                return 12.92 * u;
+            } else {
+                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
+            }
+        }
+        """
+
+
+toSrgb : Glsl.Function
+toSrgb =
+    Glsl.function { dependencies = [ gammaCorrect ], constants = [] }
+        """
+        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
+            vec3 referenceWhite = sceneProperties[2].rgb;
+            float red = gammaCorrect(linearColor.r / referenceWhite.r);
+            float green = gammaCorrect(linearColor.g / referenceWhite.g);
+            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
+            return vec4(red, green, blue, 1.0);
+        }
+        """
+
+
+pointAlpha : Glsl.Function
+pointAlpha =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float pointAlpha(float pointRadius, vec2 pointCoord) {
+            float pointSize = 2.0 * pointRadius;
+            float x = (pointSize + 2.0) * (pointCoord.s - 0.5);
+            float y = (pointSize + 2.0) * (pointCoord.t - 0.5);
+            float r = sqrt(x * x + y * y);
+            float innerRadius = pointRadius;
+            float outerRadius = pointRadius + 1.0;
+            if (r > outerRadius) {
+                return 0.0;
+            } else if (r > innerRadius) {
+                return outerRadius - r;
+            } else {
+                return 1.0;
+            }
         }
         """
 
@@ -210,6 +270,69 @@ shadowFragmentShader =
         """
 
 
+constantFragmentShader : Glsl.Shader
+constantFragmentShader =
+    Glsl.fragmentShader "constantFragment"
+        { uniforms = [ color ]
+        , varyings = [ interpolatedPosition ]
+        , constants = []
+        , functions = []
+        }
+        """
+        void main () {
+            gl_FragColor = vec4(color, 1.0);
+        }
+        """
+
+
+constantPointFragmentShader : Glsl.Shader
+constantPointFragmentShader =
+    Glsl.fragmentShader "constantPointFragment"
+        { uniforms = [ color, pointRadius, sceneProperties ]
+        , varyings = []
+        , constants = []
+        , functions = [ pointAlpha ]
+        }
+        """
+        void main () {
+            float alpha = pointAlpha(pointRadius, gl_PointCoord);
+            gl_FragColor = vec4(color, alpha);
+        }
+        """
+
+
+emissiveFragmentShader : Glsl.Shader
+emissiveFragmentShader =
+    Glsl.fragmentShader "emissiveFragment"
+        { uniforms = [ emissiveColor, sceneProperties ]
+        , varyings = [ interpolatedPosition ]
+        , constants = []
+        , functions = [ toSrgb ]
+        }
+        """
+        void main () {
+            gl_FragColor = toSrgb(emissiveColor, sceneProperties);
+        }
+        """
+
+
+emissivePointFragmentShader : Glsl.Shader
+emissivePointFragmentShader =
+    Glsl.fragmentShader "emissivePointFragment"
+        { uniforms = [ emissiveColor, pointRadius, sceneProperties ]
+        , varyings = []
+        , functions = [ toSrgb ]
+        , constants = []
+        }
+        """
+        void main () {
+            vec3 color = toSrgb(emissiveColor, sceneProperties);
+            float alpha = pointAlpha(pointRadius, gl_PointCoord);
+            gl_FragColor = vec4(color, alpha);
+        }
+        """
+
+
 script : Script.Init -> Script Int ()
 script { workingDirectory, userPrivileges } =
     let
@@ -223,6 +346,10 @@ script { workingDirectory, userPrivileges } =
                 , smoothVertexShader
                 , shadowVertexShader
                 , shadowFragmentShader
+                , constantFragmentShader
+                , constantPointFragmentShader
+                , emissiveFragmentShader
+                , emissivePointFragmentShader
                 ]
     in
     File.write contents outputFile
