@@ -69,17 +69,17 @@ lightSources12 =
 
 lightSources34 : Glsl.Uniform
 lightSources34 =
-    Glsl.uniform Glsl.mat4 "lightSources12"
+    Glsl.uniform Glsl.mat4 "lightSources34"
 
 
 lightSources56 : Glsl.Uniform
 lightSources56 =
-    Glsl.uniform Glsl.mat4 "lightSources12"
+    Glsl.uniform Glsl.mat4 "lightSources56"
 
 
 lightSources78 : Glsl.Uniform
 lightSources78 =
-    Glsl.uniform Glsl.mat4 "lightSources12"
+    Glsl.uniform Glsl.mat4 "lightSources78"
 
 
 materialColor : Glsl.Uniform
