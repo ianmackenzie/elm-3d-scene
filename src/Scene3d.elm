@@ -1,5 +1,6 @@
 module Scene3d exposing
     ( toHtml, toEntities
+    , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
     , DirectLighting, LightSource, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     )
@@ -7,6 +8,8 @@ module Scene3d exposing
 {-|
 
 @docs toHtml, toEntities
+
+@docs transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
 
 @docs DirectLighting, LightSource, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
 
@@ -367,6 +370,50 @@ softLighting { upDirection, above, below } =
             , m34 = 0
             , m44 = 0
             }
+
+
+
+----- DEFAULTS -----
+
+
+transparentBackground : Color.Transparent.Color
+transparentBackground =
+    Color.Transparent.fromRGBA
+        { red = 0
+        , green = 0
+        , blue = 0
+        , alpha = Color.Transparent.transparent
+        }
+
+
+blackBackground : Color.Transparent.Color
+blackBackground =
+    Color.Transparent.fromRGBA
+        { red = 0
+        , green = 0
+        , blue = 0
+        , alpha = Color.Transparent.opaque
+        }
+
+
+whiteBackground : Color.Transparent.Color
+whiteBackground =
+    Color.Transparent.fromRGBA
+        { red = 255
+        , green = 255
+        , blue = 255
+        , alpha = Color.Transparent.opaque
+        }
+
+
+defaultExposure : Exposure
+defaultExposure =
+    Exposure.srgb
+
+
+defaultWhiteBalance : Chromaticity
+defaultWhiteBalance =
+    Chromaticity.d65
 
 
 
