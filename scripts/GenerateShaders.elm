@@ -612,8 +612,10 @@ script { workingDirectory, userPrivileges } =
                     , lambertianFragmentShader
                     ]
     in
-    File.write contents outputFile
+    Script.printLine "Writing output file..."
+        |> Script.andThen (File.write contents outputFile)
         |> Script.onError (handleError .message)
+        |> Script.andThen (Script.printLine "Formatting output file with elm-format...")
         |> Script.andThen
             (Script.executeWith userPrivileges
                 { command = "elm-format"
@@ -623,6 +625,7 @@ script { workingDirectory, userPrivileges } =
                 |> Script.ignoreResult
                 |> Script.ignoreError
             )
+        |> Script.andThen (Script.printLine "Success!")
 
 
 main : Script.Program
