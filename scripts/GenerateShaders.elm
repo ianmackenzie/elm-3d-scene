@@ -623,7 +623,17 @@ script { workingDirectory, userPrivileges } =
                 , workingDirectory = workingDirectory
                 }
                 |> Script.ignoreResult
-                |> Script.ignoreError
+                |> Script.onError (\_ -> Script.fail 1)
+            )
+        |> Script.andThen (Script.printLine "Test compiling output file...")
+        |> Script.andThen
+            (Script.executeWith userPrivileges
+                { command = "elm"
+                , arguments = [ "make", "--output=/dev/null", File.path outputFile ]
+                , workingDirectory = workingDirectory
+                }
+                |> Script.ignoreResult
+                |> Script.onError (\_ -> Script.fail 1)
             )
         |> Script.andThen (Script.printLine "Success!")
 
