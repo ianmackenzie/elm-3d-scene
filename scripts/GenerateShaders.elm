@@ -206,6 +206,25 @@ pointAlpha =
         """
 
 
+getDirectionToLight : Glsl.Function
+getDirectionToLight =
+    Glsl.function
+        { dependencies = []
+        , constants = [ kDirectionalLightSource, kPointLightSource ]
+        }
+        """
+        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
+            float lightSourceType = xyz_type.w;
+            if (lightSourceType == kDirectionalLightSource) {
+                return xyz_type.xyz;
+            } else if (lightSourceType == kPointLightSource) {
+                vec3 lightPosition = xyz_type.xyz;
+                return normalize(lightPosition - surfacePosition);
+            }
+        }
+        """
+
+
 positiveDotProduct : Glsl.Function
 positiveDotProduct =
     Glsl.function { dependencies = [], constants = [] }
@@ -449,25 +468,6 @@ smoothVertexShader =
             gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
             interpolatedPosition = transformedPosition.xyz;
             interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
-        }
-        """
-
-
-getDirectionToLight : Glsl.Function
-getDirectionToLight =
-    Glsl.function
-        { dependencies = []
-        , constants = [ kDirectionalLightSource, kPointLightSource ]
-        }
-        """
-        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                return xyz_type.xyz;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightPosition = xyz_type.xyz;
-                return normalize(lightPosition - surfacePosition);
-            }
         }
         """
 
