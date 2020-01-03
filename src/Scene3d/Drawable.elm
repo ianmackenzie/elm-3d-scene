@@ -36,7 +36,7 @@ import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Mesh exposing (Mesh, Shadow, Yes)
-import Scene3d.Shader as Shader
+import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (BackFaceSetting(..), Bounds, LinearRgb(..), Node(..), PlainVertex, SmoothVertex)
 import Triangle3d exposing (Triangle3d)
@@ -254,14 +254,14 @@ shadowDrawFunction givenShadow =
             Just <|
                 \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                     WebGL.entityWith settings
-                        Shader.shadowVertex
-                        Shader.shadowFragment
+                        Shaders.shadowVertex
+                        Shaders.shadowFragment
                         webGLMesh
                         { sceneProperties = sceneProperties
                         , modelScale = modelScale
                         , modelMatrix = modelMatrix
                         , viewMatrix = viewMatrix
-                        , lightSource = lightSources.lightSources12
+                        , shadowLightSource = lightSources.lightSources12
                         }
 
 
@@ -296,10 +296,10 @@ constantMesh color webGLMesh backFaceSetting =
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
-                    Shader.plainVertex
-                    Shader.constantFragment
+                    Shaders.plainVertex
+                    Shaders.constantFragment
                     webGLMesh
-                    { color = color
+                    { constantColor = color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -315,10 +315,10 @@ constantPointMesh color radius webGLMesh =
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (WebGL.Settings.sampleAlphaToCoverage :: settings)
-                    Shader.pointVertex
-                    Shader.constantPointFragment
+                    Shaders.pointVertex
+                    Shaders.constantPointFragment
                     webGLMesh
-                    { color = color
+                    { constantColor = color
                     , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
@@ -335,8 +335,8 @@ emissiveMesh color webGLMesh backFaceSetting =
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
-                    Shader.plainVertex
-                    Shader.emissiveFragment
+                    Shaders.plainVertex
+                    Shaders.emissiveFragment
                     webGLMesh
                     { emissiveColor = color
                     , sceneProperties = sceneProperties
@@ -354,8 +354,8 @@ emissivePointMesh color radius webGLMesh =
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (WebGL.Settings.sampleAlphaToCoverage :: settings)
-                    Shader.pointVertex
-                    Shader.emissivePointFragment
+                    Shaders.pointVertex
+                    Shaders.emissivePointFragment
                     webGLMesh
                     { emissiveColor = color
                     , pointRadius = radius
@@ -374,8 +374,8 @@ lambertianMesh color webGLMesh backFaceSetting =
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
-                    Shader.smoothVertex
-                    Shader.lambertianFragment
+                    Shaders.smoothVertex
+                    Shaders.lambertianFragment
                     webGLMesh
                     { materialColor = color
                     , sceneProperties = sceneProperties
@@ -398,8 +398,8 @@ physicalMesh color roughness metallic webGLMesh backFaceSetting =
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
-                    Shader.smoothVertex
-                    Shader.physicalFragment
+                    Shaders.smoothVertex
+                    Shaders.physicalFragment
                     webGLMesh
                     { baseColor = color
                     , roughness = roughness
