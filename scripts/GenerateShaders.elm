@@ -65,6 +65,21 @@ emissiveColor =
     Glsl.uniform Glsl.vec3 "emissiveColor"
 
 
+baseColor : Glsl.Uniform
+baseColor =
+    Glsl.uniform Glsl.vec3 "baseColor"
+
+
+roughness : Glsl.Uniform
+roughness =
+    Glsl.uniform Glsl.float "roughness"
+
+
+metallic : Glsl.Uniform
+metallic =
+    Glsl.uniform Glsl.float "metallic"
+
+
 environmentalLighting : Glsl.Uniform
 environmentalLighting =
     Glsl.uniform Glsl.mat4 "environmentalLighting"
@@ -151,6 +166,11 @@ kSoftLighting =
 kPi : Glsl.Constant
 kPi =
     Glsl.constant Glsl.float "kPi" "3.14159265359"
+
+
+kMediumpFloatMax : Glsl.Constant
+kMediumpFloatMax =
+    Glsl.constant Glsl.float "kMediumpFloatMax" "65504.0"
 
 
 
@@ -440,6 +460,337 @@ lambertianLighting =
         """
 
 
+safeQuotient : Glsl.Function
+safeQuotient =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float safeQuotient(float numerator, float denominator) {
+            if (denominator == 0.0) {
+                return 0.0;
+            } else {
+                return numerator / denominator;
+            }
+        }
+        """
+
+
+specularD : Glsl.Function
+specularD =
+    Glsl.function { dependencies = [], constants = [ kPi, kMediumpFloatMax ] }
+        """
+        // Adapted from https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/normaldistributionfunction(speculard)
+        float specularD(float alpha, float dotNH, vec3 normalDirection, vec3 halfDirection) {
+            vec3 crossNH = cross(normalDirection, halfDirection);
+            float a = dotNH * alpha;
+            float k = alpha / (dot(crossNH, crossNH) + a * a);
+            float d = k * k * (1.0 / kPi);
+            return min(d, kMediumpFloatMax);
+        }
+        """
+
+
+g1 : Glsl.Function
+g1 =
+    Glsl.function { dependencies = [ safeQuotient ], constants = [] }
+        """
+        float g1(float dotNV, float alphaSquared) {
+            return safeQuotient(2.0 * dotNV, dotNV + sqrt(alphaSquared + (1.0 - alphaSquared) * dotNV * dotNV));
+        }
+        """
+
+
+specularG : Glsl.Function
+specularG =
+    Glsl.function { dependencies = [ g1 ], constants = [] }
+        """
+        float specularG(float dotNL, float dotNV, float alphaSquared) {
+            return g1(dotNV, alphaSquared) * g1(dotNL, alphaSquared);
+        }
+        """
+
+
+fresnelColor : Glsl.Function
+fresnelColor =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 fresnelColor(vec3 specularBaseColor, float dotVH) {
+            vec3 one = vec3(1.0, 1.0, 1.0);
+            float scale = exp2((-5.55473 * dotVH - 6.98316) * dotVH);
+            return specularBaseColor + (one - specularBaseColor) * scale;
+        }
+        """
+
+
+brdf : Glsl.Function
+brdf =
+    Glsl.function
+        { dependencies = [ specularD, specularG, fresnelColor, safeQuotient ]
+        , constants = []
+        }
+        """
+        vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alpha, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
+            vec3 halfDirection = normalize(directionToCamera + directionToLight);
+            float dotVH = positiveDotProduct(directionToCamera, halfDirection);
+            float dotNH = positiveDotProduct(normalDirection, halfDirection);
+            float dotNHSquared = dotNH * dotNH;
+
+            float d = specularD(alpha, dotNH, normalDirection, halfDirection);
+            float g = specularG(dotNL, dotNV, alpha * alpha);
+            vec3 f = fresnelColor(specularBaseColor, dotVH);
+            return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
+        }
+        """
+
+
+sampleFacetNormal : Glsl.Function
+sampleFacetNormal =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
+            t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
+            vec3 vNh = t1 * vT1 + t2 * vT2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * vH;
+            return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
+        }
+        """
+
+
+softLightingSpecularSample : Glsl.Function
+softLightingSpecularSample =
+    Glsl.function
+        { dependencies = [ softLightingLuminance, positiveDotProduct, fresnelColor, g1 ]
+        , constants = []
+        }
+        """
+        vec3 softLightingSpecularSample(
+            vec3 aboveLuminance,
+            vec3 belowLuminance,
+            vec3 localUpDirection,
+            vec3 localViewDirection,
+            vec3 localLightDirection,
+            vec3 localHalfDirection,
+            float alphaSquared,
+            vec3 specularBaseColor
+        ) {
+            vec3 luminance = softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection);
+            float dotVH = positiveDotProduct(localViewDirection, localHalfDirection);
+            float dotNL = localLightDirection.z;
+            return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
+        }
+        """
+
+
+specularLightDirection : Glsl.Function
+specularLightDirection =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 specularLightDirection(vec3 v, vec3 h) {
+            return (2.0 * dot(v, h)) * h - v;
+        }
+        """
+
+
+physicalEnvironmentalLighting : Glsl.Function
+physicalEnvironmentalLighting =
+    Glsl.function
+        { dependencies =
+            [ sampleFacetNormal
+            , specularLightDirection
+            , softLightingSpecularSample
+            , softLightingLuminance
+            ]
+        , constants = [ kNoEnvironmentalLighting, kSoftLighting ]
+        }
+        """
+        vec3 physicalEnvironmentalLighting(
+            vec3 normalDirection,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha,
+            vec3 directionToCamera,
+            mat4 viewMatrix,
+            float dotNV,
+            mat4 enviromentalLighting
+        ) {
+            float enviromentalLightingType = environmentalLighting[0].w;
+            float alphaSquared = alpha * alpha;
+
+            if (enviromentalLightingType == kNoEnvironmentalLighting) {
+                return vec3(0.0, 0.0, 0.0);
+            }
+
+            if (enviromentalLightingType == kSoftLighting) {
+                vec3 upDirection = environmentalLighting[0].xyz;
+                vec3 aboveLuminance = environmentalLighting[1].rgb;
+                vec3 belowLuminance = environmentalLighting[2].rgb;
+                vec3 crossProduct = cross(normalDirection, directionToCamera);
+                float crossMagnitude = length(crossProduct);
+                vec3 xDirection = vec3(0.0, 0.0, 0.0);
+                vec3 yDirection = vec3(0.0, 0.0, 0.0);
+                if (crossMagnitude > 1.0e-6) {
+                    yDirection = (1.0 / crossMagnitude) * crossProduct;
+                    xDirection = cross(yDirection, normalDirection);
+                } else {
+                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                    xDirection = normalize(cross(viewY, normalDirection));
+                    yDirection = cross(normalDirection, xDirection);
+                }
+                float localViewX = dot(directionToCamera, xDirection);
+                float localViewZ = dot(directionToCamera, normalDirection);
+                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
+                float localUpX = dot(upDirection, xDirection);
+                float localUpY = dot(upDirection, yDirection);
+                float localUpZ = dot(upDirection, normalDirection);
+                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
+
+                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
+                vec3 vT1 = vec3(0.0, 1.0, 0.0);
+                vec3 vT2 = cross(vH, vT1);
+                float s = 0.5 * (1.0 + vH.z);
+                
+                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
+                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
+                float numSamples = 13.0;
+                
+                vec3 specularSum = vec3(0.0, 0.0, 0.0);
+
+                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.448762, 0.000000, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+
+                localHalfDirection = sampleFacetNormal(0.000000, 0.448762, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.448762, 0.000000, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.000000, -0.448762, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.748423, 0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.310007, 0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.310007, 0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.748423, 0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.748423, -0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(-0.310007, -0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.310007, -0.748423, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                localHalfDirection = sampleFacetNormal(0.748423, -0.310007, vH, vT1, vT2, s, alpha);
+                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+                
+                vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
+
+                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+
+                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+
+                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
+                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
+                
+                return (specularSum + 2.0 * diffuseSum * diffuseBaseColor) / numSamples;
+            } else {
+                return vec3(0.0, 0.0, 0.0); 
+            }
+        }
+        """
+
+
+physicalDirectLighting : Glsl.Function
+physicalDirectLighting =
+    Glsl.function
+        { dependencies =
+            [ getDirectionToLightAndNormalIlluminance
+            , positiveDotProduct
+            , brdf
+            ]
+        , constants = [ kDisabledLightSource, kPi ]
+        }
+        """
+        vec3 physicalDirectLighting(
+            vec4 xyz_type,
+            vec4 rgb_radius,
+            vec3 normalDirection,
+            vec3 directionToCamera,
+            float dotNV,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha
+        ) {
+            float lightSourceType = xyz_type.w;
+            if (lightSourceType == kDisabledLightSource) {
+                return vec3(0.0, 0.0, 0.0);
+            }
+
+            vec3 directionToLight = vec3(0.0, 0.0, 0.0);
+            vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
+            getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, directionToLight, normalIlluminance);
+
+            float dotNL = positiveDotProduct(normalDirection, directionToLight);
+            vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alpha, dotNV, dotNL, specularBaseColor, normalIlluminance);
+            return (normalIlluminance * dotNL) * ((diffuseBaseColor / kPi) + specularColor);
+        }
+        """
+
+
 
 ---------- SHADERS ----------
 
@@ -651,6 +1002,56 @@ lambertianFragmentShader =
         """
 
 
+physicalFragmentShader : Glsl.Shader
+physicalFragmentShader =
+    Glsl.fragmentShader "physicalFragment"
+        { uniforms =
+            [ sceneProperties
+            , environmentalLighting
+            , viewMatrix
+            , lightSources12
+            , lightSources34
+            , lightSources56
+            , lightSources78
+            , baseColor
+            , roughness
+            , metallic
+            ]
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            ]
+        , functions = [ physicalEnvironmentalLighting, physicalDirectLighting, toSrgb ]
+        , constants = []
+        }
+        """
+        void main() {
+            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
+            float dotNV = positiveDotProduct(normalDirection, directionToCamera);
+
+            float alpha = roughness * roughness;
+            float nonmetallic = 1.0 - metallic;
+            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
+            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
+
+            vec3 litColor0 = physicalEnvironmentalLighting(normalDirection, diffuseBaseColor, specularBaseColor, alpha, directionToCamera, viewMatrix, dotNV, environmentalLighting);
+
+            vec3 litColor1 = physicalDirectLighting(lightSources12[0], lightSources12[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor2 = physicalDirectLighting(lightSources12[2], lightSources12[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor3 = physicalDirectLighting(lightSources34[0], lightSources34[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor4 = physicalDirectLighting(lightSources34[2], lightSources34[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor5 = physicalDirectLighting(lightSources56[0], lightSources56[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor6 = physicalDirectLighting(lightSources56[2], lightSources56[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor7 = physicalDirectLighting(lightSources78[0], lightSources78[1], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor8 = physicalDirectLighting(lightSources78[2], lightSources78[3], normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+
+            vec3 linearColor = litColor0 + litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
+            gl_FragColor = toSrgb(linearColor, sceneProperties);
+        }
+        """
+
+
 
 ---------- SCRIPT ----------
 
@@ -674,6 +1075,7 @@ script { workingDirectory, userPrivileges } =
                     , emissiveFragmentShader
                     , emissivePointFragmentShader
                     , lambertianFragmentShader
+                    , physicalFragmentShader
                     ]
     in
     Script.printLine "Writing output file..."
