@@ -13,15 +13,15 @@ import Length exposing (Length, Meters)
 import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
-import Scene3d.Drawable as Drawable exposing (Drawable, Material)
-import Scene3d.Mesh as Mesh exposing (Mesh, NoTangents, NoUV, ShadowsDisabled, Triangles, WithNormals)
+import Scene3d.Drawable as Drawable exposing (Entity, Material)
+import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
 import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : { radius : Length, subdivisions : Int } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+sphere : { radius : Length, subdivisions : Int } -> Mesh coordinates { hasNormals : Yes }
 sphere { radius, subdivisions } =
     let
         n =
@@ -108,11 +108,11 @@ sphere { radius, subdivisions } =
                     )
                 |> List.concat
     in
-    Mesh.smooth [ Mesh.cullBackFaces ] <|
-        TriangularMesh.indexed pointsAndNormals faces
+    Mesh.smooth (TriangularMesh.indexed pointsAndNormals faces)
+        |> Mesh.cullBackFaces
 
 
-cylinder : { radius : Length, height : Length, subdivisions : Int } -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+cylinder : { radius : Length, height : Length, subdivisions : Int } -> Mesh coordinates { hasNormals : Yes }
 cylinder { radius, height, subdivisions } =
     let
         wedgeAngle =
@@ -194,10 +194,10 @@ cylinder { radius, height, subdivisions } =
         triangularMesh =
             TriangularMesh.triangles (List.concat wedges)
     in
-    Mesh.smooth [ Mesh.cullBackFaces ] triangularMesh
+    Mesh.smooth triangularMesh |> Mesh.cullBackFaces
 
 
-block : Length -> Length -> Length -> Mesh coordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+block : Length -> Length -> Length -> Mesh coordinates { hasNormals : Yes }
 block x y z =
     let
         minX =
@@ -242,7 +242,7 @@ block x y z =
         p7 =
             Point3d.xyz minX maxY maxZ
     in
-    Mesh.facets [ Mesh.cullBackFaces ]
+    Mesh.facets
         [ Triangle3d.from p0 p2 p1
         , Triangle3d.from p0 p3 p2
         , Triangle3d.from p4 p5 p6
@@ -256,3 +256,4 @@ block x y z =
         , Triangle3d.from p3 p6 p2
         , Triangle3d.from p3 p7 p6
         ]
+        |> Mesh.cullBackFaces
