@@ -19,6 +19,7 @@ import Json.Decode exposing (Decoder)
 import Length exposing (Meters, meters, millimeters)
 import Luminance
 import Mass exposing (kilograms)
+import Palette.Tango as Tango
 import Physics.Body as Body exposing (Body)
 import Physics.Constraint
 import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
@@ -32,9 +33,9 @@ import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d
 import Scene3d.Chromaticity
-import Scene3d.Drawable as Drawable exposing (Drawable)
+import Scene3d.Drawable as Drawable exposing (Entity)
 import Scene3d.Exposure
-import Scene3d.Light
+import Scene3d.LightSource
 import Scene3d.Mesh
 import Scene3d.Shape
 import Task
@@ -49,7 +50,7 @@ type Id
 
 
 type alias Data =
-    { entity : Drawable BodyCoordinates
+    { entity : Entity BodyCoordinates
     , id : Id
     }
 
@@ -111,7 +112,7 @@ floor =
         { id = Floor
         , entity =
             Scene3d.Shape.block (meters 25) (meters 25) (millimeters 10)
-                |> Drawable.lambertian Color.charcoal
+                |> Drawable.lambertian Tango.aluminum6
                 |> Drawable.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -154,11 +155,11 @@ table =
                         in
                         mesh
                             |> Drawable.physical
-                                { baseColor = Color.white
+                                { baseColor = Color.fromRGB ( 255, 255, 255 )
                                 , roughness = 0.25
                                 , metallic = False
                                 }
-                            |> Drawable.withShadow (Scene3d.Mesh.enableShadows mesh)
+                            |> Drawable.withShadow (Scene3d.Mesh.shadow mesh)
                             |> Drawable.placeIn (Block3d.axes block)
                     )
     in
@@ -187,15 +188,15 @@ view : Model -> Html Msg
 view { world, width, height } =
     let
         sunlight =
-            Scene3d.Light.directional Scene3d.Chromaticity.daylight
+            Scene3d.LightSource.directionalLight Scene3d.Chromaticity.d65
                 (Illuminance.lux 10000)
                 (Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60))
 
-        ambientLighting =
-            Scene3d.Light.overcast
-                { zenithDirection = Direction3d.z
-                , chromaticity = Scene3d.Chromaticity.daylight
-                , zenithLuminance = Luminance.nits 5000
+        environmentalLighting =
+            Scene3d.softLighting
+                { upDirection = Direction3d.z
+                , above = ( Luminance.nits 5000, Scene3d.Chromaticity.d65 )
+                , below = ( Luminance.nits 0, Scene3d.Chromaticity.d65 )
                 }
 
         drawables =
@@ -215,14 +216,15 @@ view { world, width, height } =
         , Html.Events.on "mousemove" (decodeMouseRay camera width height MouseMove)
         , Html.Events.onMouseUp MouseUp
         ]
-        [ Scene3d.render []
+        [ Scene3d.toHtml
             { width = width
             , height = height
             , camera = camera
-            , lights = Scene3d.oneLight sunlight { castsShadows = True }
-            , ambientLighting = Just ambientLighting
+            , directLighting = Scene3d.oneLightSource sunlight { castsShadows = True }
+            , environmentalLighting = environmentalLighting
             , exposure = Scene3d.Exposure.fromMaxLuminance (Luminance.nits 10000)
-            , whiteBalance = Scene3d.Chromaticity.daylight
+            , whiteBalance = Scene3d.defaultWhiteBalance
+            , backgroundColor = Scene3d.transparentBackground
             }
             drawables
         ]
@@ -345,7 +347,7 @@ mouse =
                 { radius = millimeters 20
                 , subdivisions = 20
                 }
-                |> Drawable.lambertian Color.white
+                |> Drawable.lambertian (Color.fromRGB ( 255, 255, 255 ))
         }
 
 
