@@ -554,7 +554,7 @@ lambertianFragment =
             return clamp(dot(v1, v2), 0.0, 1.0);
         }
         
-        vec3 lambertianLighting(
+        vec3 lambertianDirectLighting(
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 materialColor,

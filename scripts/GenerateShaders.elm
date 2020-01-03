@@ -425,14 +425,14 @@ lambertianEnvironmentalLighting =
         """
 
 
-lambertianLighting : Glsl.Function
-lambertianLighting =
+lambertianDirectLighting : Glsl.Function
+lambertianDirectLighting =
     Glsl.function
         { dependencies = [ getDirectionToLightAndNormalIlluminance, positiveDotProduct ]
         , constants = [ kDisabledLightSource, kPi ]
         }
         """
-        vec3 lambertianLighting(
+        vec3 lambertianDirectLighting(
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 materialColor,
@@ -980,7 +980,7 @@ lambertianFragmentShader =
         , functions =
             [ getDirectionToCamera
             , lambertianEnvironmentalLighting
-            , lambertianLighting
+            , lambertianDirectLighting
             , toSrgb
             ]
         }
