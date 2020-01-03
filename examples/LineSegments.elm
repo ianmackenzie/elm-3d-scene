@@ -6,12 +6,13 @@ import Color
 import Direction3d
 import Html exposing (Html)
 import Length
+import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Polyline3d
 import Scene3d
 import Scene3d.Drawable as Drawable
-import Scene3d.Mesh as Mesh exposing (LineSegments, Mesh)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Viewpoint3d
 
 
@@ -27,7 +28,7 @@ main =
                 ]
 
         mesh =
-            Mesh.polyline [] polyline
+            Mesh.polyline polyline
 
         viewpoint =
             Viewpoint3d.lookAt
@@ -43,9 +44,14 @@ main =
                 , clipDepth = Length.meters 0.1
                 }
     in
-    Scene3d.unlit []
+    Scene3d.toHtml
         { camera = camera
         , width = Pixels.pixels 800
         , height = Pixels.pixels 600
+        , directLighting = Scene3d.noDirectLighting
+        , environmentalLighting = Scene3d.noEnvironmentalLighting
+        , backgroundColor = Scene3d.transparentBackground
+        , exposure = Scene3d.defaultExposure
+        , whiteBalance = Scene3d.defaultWhiteBalance
         }
-        [ Drawable.colored Color.blue mesh ]
+        [ Drawable.colored Tango.skyBlue2 mesh ]

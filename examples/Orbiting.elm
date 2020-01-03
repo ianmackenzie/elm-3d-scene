@@ -9,6 +9,7 @@ import Html exposing (Html)
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Length
+import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Quantity
@@ -16,7 +17,7 @@ import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Drawable as Drawable
 import Scene3d.Exposure as Exposure
-import Scene3d.Mesh as Mesh exposing (Mesh, NoNormals, NoTangents, NoUV, ShadowsDisabled, Triangles)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import SketchPlane3d
 import Triangle3d
 import Viewpoint3d
@@ -30,8 +31,8 @@ type alias Model =
     { azimuth : Angle
     , elevation : Angle
     , orbiting : Bool
-    , mesh1 : Mesh World (Triangles NoNormals NoUV NoTangents ShadowsDisabled)
-    , mesh2 : Mesh World (Triangles NoNormals NoUV NoTangents ShadowsDisabled)
+    , mesh1 : Mesh World {}
+    , mesh2 : Mesh World {}
     }
 
 
@@ -57,10 +58,10 @@ init () =
                 (Point3d.meters 0 1 0)
 
         mesh1 =
-            Mesh.triangles [] [ triangle1 ]
+            Mesh.triangles [ triangle1 ]
 
         mesh2 =
-            Mesh.triangles [] [ triangle2 ]
+            Mesh.triangles [ triangle2 ]
     in
     ( { azimuth = Angle.degrees 45
       , elevation = Angle.degrees 30
@@ -142,13 +143,18 @@ view model =
     in
     { title = "Triangles"
     , body =
-        [ Scene3d.unlit []
+        [ Scene3d.toHtml
             { camera = camera
             , width = Pixels.pixels 800
             , height = Pixels.pixels 600
+            , directLighting = Scene3d.noDirectLighting
+            , environmentalLighting = Scene3d.noEnvironmentalLighting
+            , backgroundColor = Scene3d.transparentBackground
+            , exposure = Scene3d.defaultExposure
+            , whiteBalance = Scene3d.defaultWhiteBalance
             }
-            [ Drawable.colored Color.orange model.mesh1
-            , Drawable.colored Color.blue model.mesh2
+            [ Drawable.colored Tango.orange2 model.mesh1
+            , Drawable.colored Tango.skyBlue2 model.mesh2
             ]
         ]
     }

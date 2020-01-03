@@ -6,6 +6,7 @@ import Color
 import Direction3d
 import Html exposing (Html)
 import Length
+import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Scene3d
@@ -32,10 +33,10 @@ main =
                 (Point3d.meters 0 1 0)
 
         mesh1 =
-            Mesh.triangles [] [ triangle1 ]
+            Mesh.triangles [ triangle1 ]
 
         mesh2 =
-            Mesh.triangles [] [ triangle2 ]
+            Mesh.triangles [ triangle2 ]
 
         viewpoint =
             Viewpoint3d.lookAt
@@ -51,11 +52,16 @@ main =
                 , clipDepth = Length.meters 0.1
                 }
     in
-    Scene3d.unlit []
+    Scene3d.toHtml
         { camera = camera
         , width = Pixels.pixels 800
         , height = Pixels.pixels 600
+        , directLighting = Scene3d.noDirectLighting
+        , environmentalLighting = Scene3d.noEnvironmentalLighting
+        , backgroundColor = Scene3d.transparentBackground
+        , exposure = Scene3d.defaultExposure
+        , whiteBalance = Scene3d.defaultWhiteBalance
         }
-        [ Drawable.colored Color.orange mesh1
-        , Drawable.colored Color.blue mesh2
+        [ Drawable.colored Tango.orange2 mesh1
+        , Drawable.colored Tango.skyBlue2 mesh2
         ]

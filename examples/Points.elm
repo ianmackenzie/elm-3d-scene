@@ -3,15 +3,17 @@ module Points exposing (main)
 import Angle exposing (Angle)
 import Camera3d exposing (Camera3d)
 import Color
+import Color.Transparent
 import Direction3d
 import Html exposing (Html)
 import Length exposing (Meters)
+import Palette.Tango as Tango
 import Parameter1d
 import Pixels
 import Point3d
 import Scene3d
 import Scene3d.Drawable as Drawable
-import Scene3d.Mesh as Mesh exposing (Mesh, Points)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Viewpoint3d exposing (Viewpoint3d)
 
 
@@ -25,7 +27,7 @@ main =
                     (Point3d.meters -1 0 1)
 
         mesh =
-            Mesh.points [] points
+            Mesh.points { radius = Pixels.pixels 5 } points
 
         viewpoint =
             Viewpoint3d.lookAt
@@ -41,10 +43,14 @@ main =
                 , clipDepth = Length.meters 0.1
                 }
     in
-    Scene3d.unlit
-        [ Scene3d.pointSize (Pixels.pixels 10) ]
+    Scene3d.toHtml
         { camera = camera
         , width = Pixels.pixels 800
         , height = Pixels.pixels 600
+        , directLighting = Scene3d.noDirectLighting
+        , environmentalLighting = Scene3d.noEnvironmentalLighting
+        , backgroundColor = Scene3d.transparentBackground
+        , exposure = Scene3d.defaultExposure
+        , whiteBalance = Scene3d.defaultWhiteBalance
         }
-        [ Drawable.colored Color.blue mesh ]
+        [ Drawable.colored Tango.skyBlue2 mesh ]
