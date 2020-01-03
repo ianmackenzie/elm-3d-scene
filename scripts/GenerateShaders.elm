@@ -7,6 +7,10 @@ import Script.Directory as Directory
 import Script.File as File
 
 
+
+---------- ATTRIBUTES ----------
+
+
 position : Glsl.Attribute
 position =
     Glsl.attribute Glsl.vec3 "position"
@@ -15,6 +19,10 @@ position =
 normal : Glsl.Attribute
 normal =
     Glsl.attribute Glsl.vec3 "normal"
+
+
+
+---------- UNIFORMS ----------
 
 
 modelScale : Glsl.Uniform
@@ -87,6 +95,10 @@ materialColor =
     Glsl.uniform Glsl.vec3 "materialColor"
 
 
+
+---------- VARYINGS ----------
+
+
 interpolatedPosition : Glsl.Varying
 interpolatedPosition =
     Glsl.varying Glsl.vec3 "interpolatedPosition"
@@ -95,6 +107,10 @@ interpolatedPosition =
 interpolatedNormal : Glsl.Varying
 interpolatedNormal =
     Glsl.varying Glsl.vec3 "interpolatedNormal"
+
+
+
+---------- CONSTANTS ----------
 
 
 kPerspectiveProjection : Glsl.Constant
@@ -135,6 +151,10 @@ kSoftLighting =
 kPi : Glsl.Constant
 kPi =
     Glsl.constant Glsl.float "kPi" "3.14159265359"
+
+
+
+---------- FUNCTIONS ----------
 
 
 project : Glsl.Function
@@ -414,6 +434,10 @@ lambertianLighting =
         """
 
 
+
+---------- SHADERS ----------
+
+
 plainVertexShader : Glsl.Shader
 plainVertexShader =
     Glsl.vertexShader "plainVertex"
@@ -610,6 +634,10 @@ lambertianFragmentShader =
             gl_FragColor = toSrgb(litColorSum, sceneProperties);
         }
         """
+
+
+
+---------- SCRIPT ----------
 
 
 script : Script.Init -> Script Int ()
