@@ -301,6 +301,22 @@ getDirectionToLightAndNormalIlluminance =
         """
 
 
+getDirectionToCamera : Glsl.Function
+getDirectionToCamera =
+    Glsl.function { dependencies = [], constants = [ kPerspectiveProjection ] }
+        """
+        vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
+            float projectionType = sceneProperties[1].w;
+            if (projectionType == kPerspectiveProjection) {
+                vec3 cameraPoint = sceneProperties[1].xyz;
+                return normalize(cameraPoint - surfacePosition);
+            } else {
+                return sceneProperties[1].xyz;
+            }
+        }
+        """
+
+
 lambertianEnvironmentalLighting : Glsl.Function
 lambertianEnvironmentalLighting =
     Glsl.function
@@ -309,22 +325,12 @@ lambertianEnvironmentalLighting =
         }
         """
         vec3 lambertianEnvironmentalLighting(
-            vec3 surfacePosition,
             vec3 normalDirection,
             vec3 materialColor,
-            mat4 sceneProperties,
+            vec3 directionToCamera,
             mat4 viewMatrix,
             mat4 environmentalLighting
         ) {
-            vec3 directionToCamera = vec3(0.0, 0.0, 0.0);
-            float projectionType = sceneProperties[1].w;
-            if (projectionType == kPerspectiveProjection) {
-                vec3 cameraPoint = sceneProperties[1].xyz;
-                directionToCamera = normalize(cameraPoint - surfacePosition);
-            } else {
-                directionToCamera = sceneProperties[1].xyz;
-            }
-
             float enviromentalLightingType = environmentalLighting[0][3];
             if (enviromentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
@@ -616,12 +622,18 @@ lambertianFragmentShader =
             ]
         , varyings = [ interpolatedPosition, interpolatedNormal ]
         , constants = []
-        , functions = [ lambertianEnvironmentalLighting, lambertianLighting, toSrgb ]
+        , functions =
+            [ getDirectionToCamera
+            , lambertianEnvironmentalLighting
+            , lambertianLighting
+            , toSrgb
+            ]
         }
         """
         void main() {
             vec3 normalDirection = normalize(interpolatedNormal);
-            vec3 litColor0 = lambertianEnvironmentalLighting(interpolatedPosition, normalDirection, materialColor, sceneProperties, viewMatrix, environmentalLighting);
+            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
+            vec3 litColor0 = lambertianEnvironmentalLighting(normalDirection, materialColor, directionToCamera, viewMatrix, environmentalLighting);
             vec3 litColor1 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources12[0], lightSources12[1]);
             vec3 litColor2 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources12[2], lightSources12[3]);
             vec3 litColor3 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources34[0], lightSources34[1]);
