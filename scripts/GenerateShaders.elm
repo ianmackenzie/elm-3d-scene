@@ -37,9 +37,9 @@ sceneProperties =
     Glsl.uniform Glsl.mat4 "sceneProperties"
 
 
-lightSource : Glsl.Uniform
-lightSource =
-    Glsl.uniform Glsl.mat4 "lightSource"
+shadowLightSource : Glsl.Uniform
+shadowLightSource =
+    Glsl.uniform Glsl.mat4 "shadowLightSource"
 
 
 pointRadius : Glsl.Uniform
@@ -47,9 +47,9 @@ pointRadius =
     Glsl.uniform Glsl.float "pointRadius"
 
 
-color : Glsl.Uniform
-color =
-    Glsl.uniform Glsl.vec3 "color"
+constantColor : Glsl.Uniform
+constantColor =
+    Glsl.uniform Glsl.vec3 "constantColor"
 
 
 emissiveColor : Glsl.Uniform
@@ -476,7 +476,7 @@ shadowVertexShader : Glsl.Shader
 shadowVertexShader =
     Glsl.vertexShader "shadowVertex"
         { attributes = [ position, normal ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, lightSource ]
+        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, shadowLightSource ]
         , varyings = []
         , constants = []
         , functions = [ project, getDirectionToLight ]
@@ -486,8 +486,8 @@ shadowVertexShader =
             vec4 scaledPosition = vec4(modelScale * position, 1.0);
             vec4 transformedPosition = modelMatrix * scaledPosition;
             vec3 transformedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
-            vec4 xyz_type = lightSource[0];
-            vec4 rgb_radius = lightSource[1];
+            vec4 xyz_type = shadowLightSource[0];
+            vec4 rgb_radius = shadowLightSource[1];
             vec3 directionToLight = getDirectionToLight(position, xyz_type, rgb_radius);
             vec3 offset = vec3(0.0, 0.0, 0.0);
             if (dot(directionToLight, transformedNormal) <= 0.0) {
@@ -517,14 +517,14 @@ shadowFragmentShader =
 constantFragmentShader : Glsl.Shader
 constantFragmentShader =
     Glsl.fragmentShader "constantFragment"
-        { uniforms = [ color ]
+        { uniforms = [ constantColor ]
         , varyings = [ interpolatedPosition ]
         , constants = []
         , functions = []
         }
         """
         void main () {
-            gl_FragColor = vec4(color, 1.0);
+            gl_FragColor = vec4(constantColor, 1.0);
         }
         """
 
@@ -532,7 +532,7 @@ constantFragmentShader =
 constantPointFragmentShader : Glsl.Shader
 constantPointFragmentShader =
     Glsl.fragmentShader "constantPointFragment"
-        { uniforms = [ color, pointRadius, sceneProperties ]
+        { uniforms = [ constantColor, pointRadius, sceneProperties ]
         , varyings = []
         , constants = []
         , functions = [ pointAlpha ]
@@ -540,7 +540,7 @@ constantPointFragmentShader =
         """
         void main () {
             float alpha = pointAlpha(pointRadius, gl_PointCoord);
-            gl_FragColor = vec4(color, alpha);
+            gl_FragColor = vec4(constantColor, alpha);
         }
         """
 
