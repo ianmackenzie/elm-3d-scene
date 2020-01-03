@@ -645,8 +645,8 @@ lambertianFragmentShader =
             vec3 litColor6 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources56[2], lightSources56[3]);
             vec3 litColor7 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources78[0], lightSources78[1]);
             vec3 litColor8 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources78[2], lightSources78[3]);
-            vec3 litColorSum = litColor0 + litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
-            gl_FragColor = toSrgb(litColorSum, sceneProperties);
+            vec3 linearColor = litColor0 + litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
+            gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
         """
 
