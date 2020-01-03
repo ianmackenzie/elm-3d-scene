@@ -620,7 +620,10 @@ lambertianFragmentShader =
             , materialColor
             , viewMatrix
             ]
-        , varyings = [ interpolatedPosition, interpolatedNormal ]
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            ]
         , constants = []
         , functions =
             [ getDirectionToCamera
