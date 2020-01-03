@@ -19,6 +19,7 @@ import Illuminance
 import Length exposing (Length, inMeters, meters)
 import Luminance
 import Mass
+import Palette.Tango as Tango
 import Physics.Body as Body exposing (Body)
 import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
 import Physics.World as World exposing (World)
@@ -27,10 +28,10 @@ import Point3d
 import Random
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Drawable as Drawable exposing (Drawable, Material)
+import Scene3d.Drawable as Drawable exposing (Entity, Material)
 import Scene3d.Exposure as Exposure
-import Scene3d.Light as Light
-import Scene3d.Mesh as Mesh exposing (Mesh, NoTangents, NoUV, ShadowsDisabled, ShadowsEnabled, Triangles, WithNormals)
+import Scene3d.LightSource as LightSource
+import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
 import Scene3d.Shape as Shape
 import Sphere3d
 import Task
@@ -38,7 +39,7 @@ import Viewpoint3d
 
 
 type alias Model =
-    { world : World (Drawable BodyCoordinates)
+    { world : World (Entity BodyCoordinates)
     , screenWidth : Float
     , screenHeight : Float
     }
@@ -112,15 +113,15 @@ view { world, screenWidth, screenHeight } =
             List.map getTransformedDrawable (World.getBodies world)
 
         sunlight =
-            Light.directional Chromaticity.daylight
+            LightSource.directionalLight Chromaticity.d65
                 (Illuminance.lux 10000)
                 (Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60))
 
-        ambientLighting =
-            Light.overcast
-                { zenithDirection = Direction3d.z
-                , chromaticity = Chromaticity.daylight
-                , zenithLuminance = Luminance.nits 5000
+        environmentalLighting =
+            Scene3d.softLighting
+                { upDirection = Direction3d.z
+                , above = ( Luminance.nits 5000, Chromaticity.d65 )
+                , below = ( Luminance.nits 0, Chromaticity.d65 )
                 }
     in
     Html.div
@@ -128,20 +129,21 @@ view { world, screenWidth, screenHeight } =
         , Html.Attributes.style "left" "0"
         , Html.Attributes.style "top" "0"
         ]
-        [ Scene3d.render []
+        [ Scene3d.toHtml
             { width = pixels screenWidth
             , height = pixels screenHeight
             , camera = camera
-            , lights = Scene3d.oneLight sunlight { castsShadows = True }
-            , ambientLighting = Just ambientLighting
+            , directLighting = Scene3d.oneLightSource sunlight { castsShadows = True }
+            , environmentalLighting = environmentalLighting
             , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
-            , whiteBalance = Chromaticity.daylight
+            , whiteBalance = Chromaticity.d65
+            , backgroundColor = Scene3d.transparentBackground
             }
             drawables
         ]
 
 
-initialWorld : World (Drawable BodyCoordinates)
+initialWorld : World (Entity BodyCoordinates)
 initialWorld =
     let
         moonGravity =
@@ -159,10 +161,10 @@ materials =
         [ Materials.aluminum
         , Materials.whitePlastic
         , Materials.copper
-        , { baseColor = Color.lightBlue, roughness = 0.25, metallic = False }
+        , { baseColor = Tango.skyBlue1, roughness = 0.25, metallic = False }
         , Materials.gold
         , Materials.whitePlastic
-        , { baseColor = Color.blue, roughness = 0.25, metallic = False }
+        , { baseColor = Tango.skyBlue2, roughness = 0.25, metallic = False }
         ]
 
 
@@ -191,7 +193,7 @@ randomOffsets index =
         |> Tuple.first
 
 
-addBoxes : World (Drawable BodyCoordinates) -> World (Drawable BodyCoordinates)
+addBoxes : World (Entity BodyCoordinates) -> World (Entity BodyCoordinates)
 addBoxes world =
     let
         xySize =
@@ -257,12 +259,12 @@ floorRadius =
     Length.meters 30
 
 
-floorMesh : Mesh BodyCoordinates (Triangles WithNormals NoUV NoTangents ShadowsDisabled)
+floorMesh : Mesh BodyCoordinates { hasNormals : Yes }
 floorMesh =
     Shape.sphere { radius = floorRadius, subdivisions = 144 }
 
 
-floor : Body (Drawable BodyCoordinates)
+floor : Body (Entity BodyCoordinates)
 floor =
     Drawable.physical Materials.aluminum floorMesh
         |> Body.sphere (Sphere3d.atOrigin floorRadius)
@@ -279,16 +281,20 @@ boxSize =
     Length.meters 0.9
 
 
-boxMesh : Mesh BodyCoordinates (Triangles WithNormals NoUV NoTangents ShadowsEnabled)
+boxMesh : Mesh BodyCoordinates { hasNormals : Yes }
 boxMesh =
     Shape.block boxSize boxSize boxSize
-        |> Mesh.enableShadows
 
 
-box : Material -> Body (Drawable BodyCoordinates)
+boxShadow : Mesh.Shadow BodyCoordinates
+boxShadow =
+    Mesh.shadow boxMesh
+
+
+box : Material -> Body (Entity BodyCoordinates)
 box material =
     Drawable.physical material boxMesh
-        |> Drawable.withShadow boxMesh
+        |> Drawable.withShadow boxShadow
         |> Body.block
             (Block3d.centeredOn Frame3d.atOrigin
                 ( boxSize
@@ -304,20 +310,24 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphereMesh : Mesh BodyCoordinates (Triangles WithNormals NoUV NoTangents ShadowsEnabled)
+sphereMesh : Mesh BodyCoordinates { hasNormals : Yes }
 sphereMesh =
     Shape.sphere { radius = sphereRadius, subdivisions = 36 }
-        |> Mesh.enableShadows
 
 
-sphere : Material -> Body (Drawable BodyCoordinates)
+sphereShadow : Mesh.Shadow BodyCoordinates
+sphereShadow =
+    Mesh.shadow sphereMesh
+
+
+sphere : Material -> Body (Entity BodyCoordinates)
 sphere material =
     Drawable.physical material sphereMesh
-        |> Drawable.withShadow sphereMesh
+        |> Drawable.withShadow sphereShadow
         |> Body.sphere (Sphere3d.atOrigin sphereRadius)
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
 
 
-getTransformedDrawable : Body (Drawable BodyCoordinates) -> Drawable WorldCoordinates
+getTransformedDrawable : Body (Entity BodyCoordinates) -> Entity WorldCoordinates
 getTransformedDrawable body =
     Drawable.placeIn (Body.getFrame3d body) (Body.getData body)
