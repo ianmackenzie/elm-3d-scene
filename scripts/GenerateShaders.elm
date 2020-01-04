@@ -851,7 +851,7 @@ physicalDirectLighting =
 
 
 
----------- SHADERS ----------
+---------- VERTEX SHADERS ----------
 
 
 plainVertexShader : Glsl.Shader
@@ -937,6 +937,10 @@ shadowVertexShader =
             gl_Position = project(viewMatrix * offsetPosition, sceneProperties[0]);
         }
         """
+
+
+
+---------- FRAGMENT SHADERS ----------
 
 
 shadowFragmentShader : Glsl.Shader
