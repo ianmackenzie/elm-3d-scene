@@ -29,7 +29,7 @@ plainVertex :
             | position : Vec3
         }
         { uniforms
-            | modelScale : Float
+            | modelScale : Vec3
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -42,7 +42,7 @@ plainVertex =
         
         attribute vec3 position;
         
-        uniform float modelScale;
+        uniform vec3 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -77,7 +77,7 @@ pointVertex :
             | position : Vec3
         }
         { uniforms
-            | modelScale : Float
+            | modelScale : Vec3
             , modelMatrix : Mat4
             , pointRadius : Float
             , viewMatrix : Mat4
@@ -90,7 +90,7 @@ pointVertex =
         
         attribute vec3 position;
         
-        uniform float modelScale;
+        uniform vec3 modelScale;
         uniform mat4 modelMatrix;
         uniform float pointRadius;
         uniform mat4 viewMatrix;
@@ -125,7 +125,7 @@ smoothVertex :
             , normal : Vec3
         }
         { uniforms
-            | modelScale : Float
+            | modelScale : Vec3
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -140,7 +140,7 @@ smoothVertex =
         attribute vec3 position;
         attribute vec3 normal;
         
-        uniform float modelScale;
+        uniform vec3 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -178,7 +178,7 @@ shadowVertex :
             , normal : Vec3
         }
         { uniforms
-            | modelScale : Float
+            | modelScale : Vec3
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -192,7 +192,7 @@ shadowVertex =
         attribute vec3 position;
         attribute vec3 normal;
         
-        uniform float modelScale;
+        uniform vec3 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;

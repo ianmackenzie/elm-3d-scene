@@ -27,7 +27,7 @@ normal =
 
 modelScale : Glsl.Uniform
 modelScale =
-    Glsl.uniform Glsl.float "modelScale"
+    Glsl.uniform Glsl.vec3 "modelScale"
 
 
 modelMatrix : Glsl.Uniform

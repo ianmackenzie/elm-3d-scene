@@ -36,7 +36,9 @@ type alias Transformation =
     , px : Float
     , py : Float
     , pz : Float
-    , scale : Float
+    , scaleX : Float
+    , scaleY : Float
+    , scaleZ : Float
     , isRightHanded : Bool
     }
 
@@ -77,16 +79,11 @@ type alias DeformableVertex =
     }
 
 
-type Color
-    = ConstantColor Vec3
-    | EmissiveColor Vec3
-
-
 type Material properties
     = ConstantMaterial Vec3
-    | EmissiveMaterial Vec3
-    | LambertianMaterial Vec3
-    | PbrMaterial Vec3 Float Float
+    | EmissiveMaterial LinearRgb
+    | LambertianMaterial LinearRgb
+    | PbrMaterial LinearRgb Float Float
 
 
 type BackFaceSetting
@@ -132,7 +129,7 @@ type alias LightMatrices =
 
 type alias DrawFunction =
     Mat4 -- scene properties
-    -> Float -- model scale
+    -> Vec3 -- model scale
     -> Mat4 -- model matrix
     -> Bool -- model matrix is right-handed
     -> Mat4 -- view matrix

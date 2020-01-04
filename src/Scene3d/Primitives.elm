@@ -1,7 +1,10 @@
-module Scene3d.Shape exposing
+module Scene3d.Primitives exposing
     ( block
+    , blockShadow
     , cylinder
+    , cylinderShadow
     , sphere
+    , sphereShadow
     )
 
 import Angle
@@ -13,19 +16,22 @@ import Length exposing (Length, Meters)
 import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
-import Scene3d.Drawable as Drawable exposing (Entity, Material)
 import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
+import Scene3d.Types as Types exposing (Entity, Material)
 import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : { radius : Length, subdivisions : Int } -> Mesh coordinates { hasNormals : Yes }
-sphere { radius, subdivisions } =
+sphere : Mesh coordinates { hasNormals : Yes }
+sphere =
     let
         n =
-            subdivisions
+            72
+
+        radius =
+            Length.meters 1
 
         m =
             ceiling (toFloat n / 2)
@@ -112,9 +118,18 @@ sphere { radius, subdivisions } =
         |> Mesh.cullBackFaces
 
 
-cylinder : { radius : Length, height : Length, subdivisions : Int } -> Mesh coordinates { hasNormals : Yes }
-cylinder { radius, height, subdivisions } =
+cylinder : Mesh coordinates { hasNormals : Yes }
+cylinder =
     let
+        radius =
+            Length.meters 1
+
+        subdivisions =
+            72
+
+        height =
+            Length.meters 1
+
         wedgeAngle =
             Angle.turns 1 |> Quantity.divideBy (toFloat subdivisions)
 
@@ -124,8 +139,17 @@ cylinder { radius, height, subdivisions } =
         positiveZVector =
             Direction3d.positiveZ |> Direction3d.toVector
 
+        bottomZ =
+            Quantity.multiplyBy -0.5 height
+
+        topZ =
+            Quantity.multiplyBy 0.5 height
+
+        bottomCenter =
+            Point3d.xyz zero zero bottomZ
+
         topCenter =
-            Point3d.xyz zero zero height
+            Point3d.xyz zero zero topZ
 
         wedge index =
             let
@@ -148,16 +172,16 @@ cylinder { radius, height, subdivisions } =
                     radius |> Quantity.multiplyBy (Angle.sin endAngle)
 
                 p0 =
-                    Point3d.xyz startX startY zero
+                    Point3d.xyz startX startY bottomZ
 
                 p1 =
-                    Point3d.xyz endX endY zero
+                    Point3d.xyz endX endY bottomZ
 
                 p2 =
-                    Point3d.xyz startX startY height
+                    Point3d.xyz startX startY topZ
 
                 p3 =
-                    Point3d.xyz endX endY height
+                    Point3d.xyz endX endY topZ
 
                 startNormal =
                     Direction3d.on SketchPlane3d.xy
@@ -169,7 +193,7 @@ cylinder { radius, height, subdivisions } =
                         (Direction2d.fromAngle endAngle)
                         |> Direction3d.toVector
             in
-            [ ( { position = Point3d.origin, normal = negativeZVector }
+            [ ( { position = bottomCenter, normal = negativeZVector }
               , { position = p0, normal = negativeZVector }
               , { position = p1, normal = negativeZVector }
               )
@@ -197,9 +221,18 @@ cylinder { radius, height, subdivisions } =
     Mesh.smooth triangularMesh |> Mesh.cullBackFaces
 
 
-block : Length -> Length -> Length -> Mesh coordinates { hasNormals : Yes }
-block x y z =
+block : Mesh coordinates { hasNormals : Yes }
+block =
     let
+        x =
+            Length.meters 1
+
+        y =
+            Length.meters 1
+
+        z =
+            Length.meters 1
+
         minX =
             Quantity.multiplyBy -0.5 x
 
@@ -257,3 +290,18 @@ block x y z =
         , Triangle3d.from p3 p7 p6
         ]
         |> Mesh.cullBackFaces
+
+
+blockShadow : Mesh.Shadow coordinates
+blockShadow =
+    Mesh.shadow block
+
+
+sphereShadow : Mesh.Shadow coordinates
+sphereShadow =
+    Mesh.shadow sphere
+
+
+cylinderShadow : Mesh.Shadow coordinates
+cylinderShadow =
+    Mesh.shadow cylinder

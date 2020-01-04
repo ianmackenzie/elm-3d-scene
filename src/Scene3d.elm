@@ -1,5 +1,10 @@
 module Scene3d exposing
     ( toHtml
+    , Entity
+    , nothing, block, sphere, cylinder, mesh, group
+    , shadow, withShadow
+    , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
+    , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
     , DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
@@ -9,6 +14,16 @@ module Scene3d exposing
 {-|
 
 @docs toHtml
+
+@docs Entity
+
+@docs nothing, block, sphere, cylinder, mesh, group
+
+@docs shadow, withShadow
+
+@docs rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
+
+@docs placeIn, relativeTo
 
 @docs transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
 
@@ -20,37 +35,130 @@ module Scene3d exposing
 
 -}
 
+import Angle exposing (Angle)
+import Axis3d exposing (Axis3d)
+import Block3d exposing (Block3d)
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Color.Transparent
+import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
+import Frame3d exposing (Frame3d)
 import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
-import Length exposing (Meters)
 import Illuminance exposing (Illuminance)
+import Length exposing (Length, Meters)
 import Luminance exposing (Luminance)
 import LuminousFlux exposing (LuminousFlux)
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels, inPixels)
+import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity(..))
 import Rectangle2d
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
-import Scene3d.Drawable as Drawable exposing (Entity)
+import Scene3d.Entity as Entity
 import Scene3d.Exposure as Exposure exposing (Exposure)
+import Scene3d.Material as Material exposing (Material)
+import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, LinearRgb(..), Node(..))
+import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
+import Sphere3d exposing (Sphere3d)
+import Vector3d exposing (Vector3d)
 import Viewpoint3d
 import WebGL
 import WebGL.Settings
 import WebGL.Settings.DepthTest as DepthTest
 import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture exposing (Texture)
+
+
+
+----- ENTITIES -----
+
+
+type alias Entity coordinates =
+    Types.Entity coordinates
+
+
+nothing : Entity coordinates
+nothing =
+    Entity.empty
+
+
+sphere : Sphere3d Meters coordinates -> Material { hasNormals : Yes } -> { castsShadow : Bool } -> Entity coordinates
+sphere givenSphere givenMaterial { castsShadow } =
+    Entity.sphere givenSphere givenMaterial castsShadow
+
+
+block : Block3d Meters coordinates -> Material { hasNormals : Yes } -> { castsShadow : Bool } -> Entity coordinates
+block givenBlock givenMaterial { castsShadow } =
+    Entity.block givenBlock givenMaterial castsShadow
+
+
+cylinder : Cylinder3d Meters coordinates -> Material { hasNormals : Yes } -> { castsShadow : Bool } -> Entity coordinates
+cylinder givenCylinder givenMaterial { castsShadow } =
+    Entity.cylinder givenCylinder givenMaterial castsShadow
+
+
+mesh : Mesh coordinates properties -> Material properties -> Entity coordinates
+mesh givenMesh givenMaterial =
+    Entity.mesh givenMesh givenMaterial
+
+
+group : List (Entity coordinates) -> Entity coordinates
+group entities =
+    Entity.group entities
+
+
+shadow : Mesh.Shadow coordinates -> Entity coordinates
+shadow givenShadow =
+    Entity.shadow givenShadow
+
+
+withShadow : Mesh.Shadow coordinates -> Entity coordinates -> Entity coordinates
+withShadow givenShadow givenEntity =
+    group [ givenEntity, shadow givenShadow ]
+
+
+rotateAround : Axis3d Meters coordinates -> Angle -> Entity coordinates -> Entity coordinates
+rotateAround axis angle entity =
+    Entity.rotateAround axis angle entity
+
+
+translateBy : Vector3d Meters coordinates -> Entity coordinates -> Entity coordinates
+translateBy displacement entity =
+    Entity.translateBy displacement entity
+
+
+translateIn : Direction3d coordinates -> Length -> Entity coordinates -> Entity coordinates
+translateIn direction distance entity =
+    Entity.translateIn direction distance entity
+
+
+scaleAbout : Point3d Meters coordinates -> Float -> Entity coordinates -> Entity coordinates
+scaleAbout centerPoint scale entity =
+    Entity.scaleAbout centerPoint scale entity
+
+
+mirrorAcross : Plane3d Meters coordinates -> Entity coordinates -> Entity coordinates
+mirrorAcross plane entity =
+    Entity.mirrorAcross plane entity
+
+
+placeIn : Frame3d Meters coordinates { defines : localCoordinates } -> Entity localCoordinates -> Entity coordinates
+placeIn frame entity =
+    Entity.placeIn frame entity
+
+
+relativeTo : Frame3d Meters coordinates { defines : localCoordinates } -> Entity coordinates -> Entity localCoordinates
+relativeTo frame entity =
+    Entity.relativeTo frame entity
 
 
 
@@ -487,7 +595,7 @@ createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> Ren
 createRenderPass sceneProperties viewMatrix ambientLightingMatrix transformation drawFunction =
     drawFunction
         sceneProperties
-        transformation.scale
+        (Math.Vector3.vec3 transformation.scaleX transformation.scaleY transformation.scaleZ)
         (Transformation.modelMatrix transformation)
         transformation.isRightHanded
         viewMatrix
@@ -707,7 +815,7 @@ toWebGLEntities arguments drawables =
                     environmentalLightingDisabled
 
         (Types.Entity rootNode) =
-            Drawable.group drawables
+            Entity.group drawables
 
         renderPasses =
             collectRenderPasses

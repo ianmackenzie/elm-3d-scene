@@ -1,28 +1,29 @@
-module Scene3d.Drawable exposing
+module Scene3d.Entity exposing
     ( Entity
     , Material
-    , colored
-    , emissive
+    , block
+    , cylinder
     , empty
     , group
-    , lambertian
+    , mesh
     , mirrorAcross
-    , physical
     , placeIn
     , relativeTo
     , rotateAround
     , scaleAbout
     , shadow
+    , sphere
     , translateBy
     , translateIn
-    , withShadow
     )
 
 import Angle exposing (Angle)
 import Array
 import Axis3d exposing (Axis3d)
+import Block3d exposing (Block3d)
 import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
+import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
 import Length exposing (Length, Meters)
@@ -36,9 +37,11 @@ import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Mesh exposing (Mesh, Shadow, Yes)
+import Scene3d.Primitives as Primitives
 import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (BackFaceSetting(..), Bounds, LinearRgb(..), Node(..), PlainVertex, SmoothVertex)
+import Scene3d.Types as Types exposing (BackFaceSetting(..), Bounds, LinearRgb(..), Material(..), Node(..), PlainVertex, SmoothVertex)
+import Sphere3d exposing (Sphere3d)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
@@ -50,11 +53,8 @@ type alias Entity coordinates =
     Types.Entity coordinates
 
 
-type alias Material =
-    { baseColor : Color
-    , roughness : Float
-    , metallic : Bool
-    }
+type alias Material properties =
+    Types.Material properties
 
 
 empty : Entity coordinates
@@ -62,170 +62,191 @@ empty =
     Types.Entity EmptyNode
 
 
-colored : Color -> Mesh coordinates primitives -> Entity coordinates
-colored givenColor givenMesh =
+mesh : Mesh coordinates properties -> Material properties -> Entity coordinates
+mesh givenMesh givenMaterial =
+    case givenMaterial of
+        Types.ConstantMaterial color ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                    constantMesh color webGLMesh backFaceSetting
+
+                Types.Facets _ _ webGLMesh backFaceSetting ->
+                    constantMesh color webGLMesh backFaceSetting
+
+                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                    constantMesh color webGLMesh backFaceSetting
+
+                Types.Smooth _ _ webGLMesh backFaceSetting ->
+                    constantMesh color webGLMesh backFaceSetting
+
+                Types.LineSegments _ _ webGLMesh ->
+                    constantMesh color webGLMesh KeepBackFaces
+
+                Types.Polyline _ _ webGLMesh ->
+                    constantMesh color webGLMesh KeepBackFaces
+
+                Types.Points _ radius _ webGLMesh ->
+                    constantPointMesh color radius webGLMesh
+
+        Types.EmissiveMaterial (LinearRgb emissiveColor) ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+
+                Types.Facets _ _ webGLMesh backFaceSetting ->
+                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+
+                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+
+                Types.Smooth _ _ webGLMesh backFaceSetting ->
+                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+
+                Types.LineSegments _ _ webGLMesh ->
+                    emissiveMesh emissiveColor webGLMesh KeepBackFaces
+
+                Types.Polyline _ _ webGLMesh ->
+                    emissiveMesh emissiveColor webGLMesh KeepBackFaces
+
+                Types.Points _ radius _ webGLMesh ->
+                    emissivePointMesh emissiveColor radius webGLMesh
+
+        Types.LambertianMaterial (LinearRgb materialColor) ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ _ _ ->
+                    empty
+
+                Types.Facets _ _ webGLMesh cullBackFaces ->
+                    lambertianMesh materialColor webGLMesh cullBackFaces
+
+                Types.Indexed _ _ _ _ ->
+                    empty
+
+                Types.Smooth _ _ webGLMesh cullBackFaces ->
+                    lambertianMesh materialColor webGLMesh cullBackFaces
+
+                Types.LineSegments _ _ _ ->
+                    empty
+
+                Types.Polyline _ _ _ ->
+                    empty
+
+                Types.Points _ _ _ _ ->
+                    empty
+
+        Types.PbrMaterial (LinearRgb baseColor) roughness metallic ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ _ _ ->
+                    empty
+
+                Types.Facets _ _ webGLMesh backFaceSetting ->
+                    physicalMesh
+                        baseColor
+                        roughness
+                        metallic
+                        webGLMesh
+                        backFaceSetting
+
+                Types.Indexed _ _ _ _ ->
+                    empty
+
+                Types.Smooth _ _ webGLMesh backFaceSetting ->
+                    physicalMesh
+                        baseColor
+                        roughness
+                        metallic
+                        webGLMesh
+                        backFaceSetting
+
+                Types.LineSegments _ _ _ ->
+                    empty
+
+                Types.Polyline _ _ _ ->
+                    empty
+
+                Types.Points _ _ _ _ ->
+                    empty
+
+
+sphere : Sphere3d Meters coordinates -> Material { hasNormals : Yes } -> Bool -> Entity coordinates
+sphere givenSphere givenMaterial castsShadow =
     let
-        ( red, green, blue ) =
-            Color.toRGB givenColor
+        (Quantity r) =
+            Sphere3d.radius givenSphere
 
-        colorVec =
-            Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
-    in
-    case givenMesh of
-        Types.EmptyMesh ->
-            empty
+        baseEntity =
+            mesh Primitives.sphere givenMaterial
 
-        Types.Triangles _ _ webGLMesh backFaceSetting ->
-            constantMesh colorVec webGLMesh backFaceSetting
-
-        Types.Facets _ _ webGLMesh backFaceSetting ->
-            constantMesh colorVec webGLMesh backFaceSetting
-
-        Types.Indexed _ _ webGLMesh backFaceSetting ->
-            constantMesh colorVec webGLMesh backFaceSetting
-
-        Types.Smooth _ _ webGLMesh backFaceSetting ->
-            constantMesh colorVec webGLMesh backFaceSetting
-
-        Types.LineSegments _ _ webGLMesh ->
-            constantMesh colorVec webGLMesh KeepBackFaces
-
-        Types.Polyline _ _ webGLMesh ->
-            constantMesh colorVec webGLMesh KeepBackFaces
-
-        Types.Points _ radius _ webGLMesh ->
-            constantPointMesh colorVec radius webGLMesh
-
-
-emissive : Chromaticity -> Luminance -> Mesh coordinates primitives -> Entity coordinates
-emissive givenChromaticity givenLuminance givenMesh =
-    let
-        (LinearRgb chromaticityInLinearRgb) =
-            ColorConversions.chromaticityToLinearRgb givenChromaticity
-
-        nits =
-            Luminance.inNits givenLuminance
-
-        linearColor =
-            Math.Vector3.scale nits chromaticityInLinearRgb
-    in
-    case givenMesh of
-        Types.EmptyMesh ->
-            empty
-
-        Types.Triangles _ _ webGLMesh backFaceSetting ->
-            emissiveMesh linearColor webGLMesh backFaceSetting
-
-        Types.Facets _ _ webGLMesh backFaceSetting ->
-            emissiveMesh linearColor webGLMesh backFaceSetting
-
-        Types.Indexed _ _ webGLMesh backFaceSetting ->
-            emissiveMesh linearColor webGLMesh backFaceSetting
-
-        Types.Smooth _ _ webGLMesh backFaceSetting ->
-            emissiveMesh linearColor webGLMesh backFaceSetting
-
-        Types.LineSegments _ _ webGLMesh ->
-            emissiveMesh linearColor webGLMesh KeepBackFaces
-
-        Types.Polyline _ _ webGLMesh ->
-            emissiveMesh linearColor webGLMesh KeepBackFaces
-
-        Types.Points _ radius _ webGLMesh ->
-            emissivePointMesh linearColor radius webGLMesh
-
-
-toLinear : Color -> Vec3
-toLinear color =
-    let
-        (LinearRgb rgb) =
-            ColorConversions.colorToLinearRgb color
-    in
-    rgb
-
-
-lambertian : Color -> Mesh coordinates { a | hasNormals : Yes } -> Entity coordinates
-lambertian givenColor givenMesh =
-    let
-        linearColor =
-            toLinear givenColor
-    in
-    case givenMesh of
-        Types.EmptyMesh ->
-            empty
-
-        Types.Triangles _ _ _ _ ->
-            empty
-
-        Types.Facets _ _ webGLMesh cullBackFaces ->
-            lambertianMesh linearColor webGLMesh cullBackFaces
-
-        Types.Indexed _ _ _ _ ->
-            empty
-
-        Types.Smooth _ _ webGLMesh cullBackFaces ->
-            lambertianMesh linearColor webGLMesh cullBackFaces
-
-        Types.LineSegments _ _ _ ->
-            empty
-
-        Types.Polyline _ _ _ ->
-            empty
-
-        Types.Points _ _ _ _ ->
-            empty
-
-
-physical : Material -> Mesh coordinates { a | hasNormals : Yes } -> Entity coordinates
-physical givenMaterial givenMesh =
-    let
-        linearColor =
-            toLinear givenMaterial.baseColor
-
-        roughness =
-            clamp 0 1 givenMaterial.roughness
-
-        metallic =
-            if givenMaterial.metallic then
-                1
+        untransformedEntity =
+            if castsShadow then
+                group [ baseEntity, shadow Primitives.sphereShadow ]
 
             else
-                0
+                baseEntity
     in
-    case givenMesh of
-        Types.EmptyMesh ->
-            empty
+    untransformedEntity
+        |> transformBy (Transformation.preScale r r r)
+        |> translateBy (Vector3d.from Point3d.origin (Sphere3d.centerPoint givenSphere))
 
-        Types.Triangles _ _ _ _ ->
-            empty
 
-        Types.Facets _ _ webGLMesh backFaceSetting ->
-            physicalMesh
-                linearColor
-                roughness
-                metallic
-                webGLMesh
-                backFaceSetting
+block : Block3d Meters coordinates -> Material { hasNormals : Yes } -> Bool -> Entity coordinates
+block givenBlock givenMaterial castsShadow =
+    let
+        ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
+            Block3d.dimensions givenBlock
 
-        Types.Indexed _ _ _ _ ->
-            empty
+        baseEntity =
+            mesh Primitives.block givenMaterial
 
-        Types.Smooth _ _ webGLMesh backFaceSetting ->
-            physicalMesh
-                linearColor
-                roughness
-                metallic
-                webGLMesh
-                backFaceSetting
+        untransformedEntity =
+            if castsShadow then
+                group [ baseEntity, shadow Primitives.blockShadow ]
 
-        Types.LineSegments _ _ _ ->
-            empty
+            else
+                baseEntity
+    in
+    untransformedEntity
+        |> transformBy (Transformation.preScale scaleX scaleY scaleZ)
+        |> placeIn (Block3d.axes givenBlock)
 
-        Types.Polyline _ _ _ ->
-            empty
 
-        Types.Points _ _ _ _ ->
-            empty
+cylinder : Cylinder3d Meters coordinates -> Material { hasNormals : Yes } -> Bool -> Entity coordinates
+cylinder givenCylinder givenMaterial castsShadow =
+    let
+        (Quantity radius) =
+            Cylinder3d.radius givenCylinder
+
+        (Quantity length) =
+            Cylinder3d.length givenCylinder
+
+        centerFrame =
+            Frame3d.fromZAxis (Cylinder3d.axis givenCylinder)
+
+        baseEntity =
+            mesh Primitives.cylinder givenMaterial
+
+        untransformedEntity =
+            if castsShadow then
+                group [ baseEntity, shadow Primitives.cylinderShadow ]
+
+            else
+                baseEntity
+    in
+    untransformedEntity
+        |> transformBy (Transformation.preScale radius radius length)
+        |> placeIn centerFrame
 
 
 shadow : Shadow coordinates -> Entity coordinates
@@ -236,11 +257,6 @@ shadow givenShadow =
 
         Nothing ->
             empty
-
-
-withShadow : Shadow coordinates -> Entity coordinates -> Entity coordinates
-withShadow givenShadow drawable =
-    group [ drawable, shadow givenShadow ]
 
 
 shadowDrawFunction : Types.Shadow coordinates -> Maybe Types.DrawFunction
