@@ -2,6 +2,7 @@ module Spheres exposing (main)
 
 import Angle
 import Axis3d
+import Block3d
 import Camera3d exposing (Camera3d)
 import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
@@ -14,11 +15,9 @@ import Pixels exposing (pixels)
 import Point3d
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Drawable as Drawable exposing (Entity)
 import Scene3d.Exposure as Exposure
-import Scene3d.LightSource as LightSource exposing (LightSource)
 import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
-import Scene3d.Shape as Shape
+import Sphere3d
 import Vector3d
 import Viewpoint3d
 
@@ -27,53 +26,52 @@ type World
     = World
 
 
-sphereMesh : Mesh World { hasNormals : Yes }
-sphereMesh =
-    Shape.sphere { radius = meters 1, subdivisions = 72 }
-
-
-sphereShadow : Mesh.Shadow World
-sphereShadow =
-    Mesh.shadow sphereMesh
-
-
-floorMesh : Mesh World { hasNormals : Yes }
-floorMesh =
-    Shape.block (meters 8) (meters 8) (meters 0.2)
-
-
-floor : Entity World
+floor : Scene3d.Entity World
 floor =
-    Drawable.physical Materials.aluminum floorMesh
-        |> Drawable.translateBy (Vector3d.meters 0 0 -2)
+    Scene3d.block
+        (Block3d.with
+            { x1 = meters -4
+            , x2 = meters 4
+            , y1 = meters -4
+            , y2 = meters 4
+            , z1 = meters -2.2
+            , z2 = meters -2
+            }
+        )
+        Materials.aluminum
+        { castsShadow = False }
 
 
-goldSphere : Entity World
+goldSphere : Scene3d.Entity World
 goldSphere =
-    Drawable.physical Materials.gold sphereMesh
-        |> Drawable.withShadow sphereShadow
-        |> Drawable.translateBy (Vector3d.meters 2 2 0)
+    Scene3d.sphere
+        (Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0))
+        Materials.gold
+        { castsShadow = True }
 
 
-aluminumSphere : Entity World
+aluminumSphere : Scene3d.Entity World
 aluminumSphere =
-    Drawable.physical Materials.aluminum sphereMesh
-        |> Drawable.withShadow sphereShadow
-        |> Drawable.translateBy (Vector3d.meters 2 -2 0)
+    Scene3d.sphere
+        (Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0))
+        Materials.aluminum
+        { castsShadow = True }
 
 
-blackPlasticSphere : Entity World
+blackPlasticSphere : Scene3d.Entity World
 blackPlasticSphere =
-    Drawable.physical Materials.blackPlastic sphereMesh
-        |> Drawable.withShadow sphereShadow
-        |> Drawable.translateBy (Vector3d.meters -2 -2 0)
+    Scene3d.sphere
+        (Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0))
+        Materials.blackPlastic
+        { castsShadow = True }
 
 
-whitePlasticSphere : Entity World
+whitePlasticSphere : Scene3d.Entity World
 whitePlasticSphere =
-    Drawable.physical Materials.whitePlastic sphereMesh
-        |> Drawable.withShadow sphereShadow
-        |> Drawable.translateBy (Vector3d.meters -2 2 0)
+    Scene3d.sphere
+        (Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0))
+        Materials.whitePlastic
+        { castsShadow = True }
 
 
 camera : Camera3d Meters World
@@ -90,9 +88,9 @@ camera =
         }
 
 
-sunlight : LightSource World
+sunlight : Scene3d.LightSource World
 sunlight =
-    LightSource.directionalLight
+    Scene3d.directionalLight
         Chromaticity.d65
         (lux 20000)
         (Direction3d.negativeZ

@@ -16,25 +16,16 @@ import Point3d
 import Quantity
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Drawable as Drawable
 import Scene3d.Exposure as Exposure
-import Scene3d.LightSource as LightSource
-import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
-import Scene3d.Shape as Shape
+import Scene3d.Material as Material exposing (Material)
+import Scene3d.Mesh exposing (Yes)
+import Sphere3d
 import Temperature
 import Viewpoint3d exposing (Viewpoint3d)
 
 
 type World
     = World
-
-
-mesh : Mesh World { hasNormals : Yes }
-mesh =
-    Shape.sphere
-        { radius = Length.centimeters 5
-        , subdivisions = 72
-        }
 
 
 viewpoint : Viewpoint3d Meters World
@@ -47,7 +38,7 @@ viewpoint =
 
 
 sunlight =
-    LightSource.directionalLight
+    Scene3d.directionalLight
         Chromaticity.d65
         (Illuminance.lux 10000)
         (Direction3d.yz (Angle.degrees -120))
@@ -62,11 +53,12 @@ camera =
         }
 
 
+material : Material { hasNormals : Yes }
 material =
-    { baseColor = Tango.skyBlue2
-    , roughness = 0.4
-    , metallic = False
-    }
+    Material.nonmetal
+        { baseColor = Tango.skyBlue2
+        , roughness = 0.4
+        }
 
 
 main : Html msg
@@ -88,4 +80,8 @@ main =
         , whiteBalance = Scene3d.defaultWhiteBalance
         , backgroundColor = Scene3d.transparentBackground
         }
-        [ Drawable.physical material mesh ]
+        [ Scene3d.sphere
+            (Sphere3d.withRadius (Length.centimeters 5) Point3d.origin)
+            material
+            { castsShadow = False }
+        ]

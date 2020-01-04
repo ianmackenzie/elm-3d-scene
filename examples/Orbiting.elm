@@ -15,8 +15,8 @@ import Point3d
 import Quantity
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Drawable as Drawable
 import Scene3d.Exposure as Exposure
+import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import SketchPlane3d
 import Triangle3d
@@ -153,8 +153,8 @@ view model =
             , exposure = Scene3d.defaultExposure
             , whiteBalance = Scene3d.defaultWhiteBalance
             }
-            [ Drawable.colored Tango.orange2 model.mesh1
-            , Drawable.colored Tango.skyBlue2 model.mesh2
+            [ Scene3d.mesh model.mesh1 (Material.solidColor Tango.orange2)
+            , Scene3d.mesh model.mesh2 (Material.solidColor Tango.skyBlue2)
             ]
         ]
     }

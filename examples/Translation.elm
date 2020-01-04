@@ -11,7 +11,7 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
-import Scene3d.Drawable as Drawable
+import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh
 import Triangle3d
 import Viewpoint3d
@@ -53,13 +53,13 @@ main =
                 }
 
         square =
-            Drawable.group
-                [ Drawable.colored Tango.orange2 mesh1
-                , Drawable.colored Tango.skyBlue2 mesh2
+            Scene3d.group
+                [ Scene3d.mesh mesh1 (Material.solidColor Tango.orange2)
+                , Scene3d.mesh mesh2 (Material.solidColor Tango.skyBlue2)
                 ]
 
         squareAtHeight height =
-            square |> Drawable.translateIn Direction3d.z height
+            square |> Scene3d.translateIn Direction3d.z height
     in
     Scene3d.toHtml
         { camera = camera

@@ -12,7 +12,7 @@ import Parameter1d
 import Pixels
 import Point3d
 import Scene3d
-import Scene3d.Drawable as Drawable
+import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Viewpoint3d exposing (Viewpoint3d)
 
@@ -53,4 +53,4 @@ main =
         , exposure = Scene3d.defaultExposure
         , whiteBalance = Scene3d.defaultWhiteBalance
         }
-        [ Drawable.colored Tango.skyBlue2 mesh ]
+        [ Scene3d.mesh mesh (Material.solidColor Tango.skyBlue2) ]
