@@ -1,19 +1,22 @@
 module Scene3d exposing
-    ( toHtml, toEntities
+    ( toHtml
     , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
     , DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
+    , toWebGLEntities
     )
 
 {-|
 
-@docs toHtml, toEntities
+@docs toHtml
 
 @docs transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
 
 @docs DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
 
 @docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
+
+@docs toWebGLEntities
 
 -}
 
@@ -624,7 +627,7 @@ call renderPasses lightMatrices settings =
         |> List.map (\renderPass -> renderPass lightMatrices settings)
 
 
-toEntities :
+toWebGLEntities :
     { directLighting : DirectLighting coordinates
     , environmentalLighting : EnvironmentalLighting coordinates
     , camera : Camera3d Meters coordinates
@@ -636,7 +639,7 @@ toEntities :
     }
     -> List (Entity coordinates)
     -> List WebGL.Entity
-toEntities arguments drawables =
+toWebGLEntities arguments drawables =
     let
         aspectRatio =
             Quantity.ratio arguments.width arguments.height
@@ -778,4 +781,4 @@ toHtml arguments drawables =
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         , Html.Attributes.style "display" "block"
         ]
-        (toEntities arguments drawables)
+        (toWebGLEntities arguments drawables)
