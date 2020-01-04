@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( toHtml, toEntities
     , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
-    , DirectLighting, LightSource, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+    , DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     )
 
@@ -11,7 +11,7 @@ module Scene3d exposing
 
 @docs transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
 
-@docs DirectLighting, LightSource, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+@docs DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
 
 @docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
 
@@ -26,9 +26,11 @@ import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
 import Length exposing (Meters)
+import Illuminance exposing (Illuminance)
 import Luminance exposing (Luminance)
+import LuminousFlux exposing (LuminousFlux)
 import Math.Matrix4 exposing (Mat4)
-import Math.Vector3 as Vector3 exposing (Vec3)
+import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels, inPixels)
 import Point3d exposing (Point3d)
@@ -285,6 +287,54 @@ eightLightSources ( first, { castsShadows } ) second third fourth fifth sixth se
             }
 
 
+directionalLight : Chromaticity -> Illuminance -> Direction3d coordinates -> LightSource coordinates
+directionalLight chromaticity illuminance direction =
+    let
+        { x, y, z } =
+            Direction3d.unwrap direction
+
+        (LinearRgb rgb) =
+            ColorConversions.chromaticityToLinearRgb chromaticity
+
+        lux =
+            Illuminance.inLux illuminance
+    in
+    Types.LightSource
+        { type_ = 1
+        , x = -x
+        , y = -y
+        , z = -z
+        , r = lux * Math.Vector3.getX rgb
+        , g = lux * Math.Vector3.getY rgb
+        , b = lux * Math.Vector3.getZ rgb
+        , radius = 0
+        }
+
+
+pointLight : Chromaticity -> LuminousFlux -> Point3d Meters coordinates -> LightSource coordinates
+pointLight chromaticity luminousFlux position =
+    let
+        (LinearRgb rgb) =
+            ColorConversions.chromaticityToLinearRgb chromaticity
+
+        lumens =
+            LuminousFlux.inLumens luminousFlux
+
+        { x, y, z } =
+            Point3d.unwrap position
+    in
+    Types.LightSource
+        { type_ = 2
+        , x = x
+        , y = y
+        , z = z
+        , r = lumens * Math.Vector3.getX rgb
+        , g = lumens * Math.Vector3.getY rgb
+        , b = lumens * Math.Vector3.getZ rgb
+        , radius = 0
+        }
+
+
 
 ----- ENVIRONMENTAL LIGHTING ------
 
@@ -357,13 +407,13 @@ softLighting { upDirection, above, below } =
             , m21 = y
             , m31 = z
             , m41 = 1
-            , m12 = aboveNits * Vector3.getX aboveRgb
-            , m22 = aboveNits * Vector3.getY aboveRgb
-            , m32 = aboveNits * Vector3.getZ aboveRgb
+            , m12 = aboveNits * Math.Vector3.getX aboveRgb
+            , m22 = aboveNits * Math.Vector3.getY aboveRgb
+            , m32 = aboveNits * Math.Vector3.getZ aboveRgb
             , m42 = 0
-            , m13 = belowNits * Vector3.getX belowRgb
-            , m23 = belowNits * Vector3.getY belowRgb
-            , m33 = belowNits * Vector3.getZ belowRgb
+            , m13 = belowNits * Math.Vector3.getX belowRgb
+            , m23 = belowNits * Math.Vector3.getY belowRgb
+            , m33 = belowNits * Math.Vector3.getZ belowRgb
             , m43 = 0
             , m14 = 0
             , m24 = 0
@@ -632,9 +682,9 @@ toEntities arguments drawables =
                 , m22 = eyePoint.y
                 , m32 = eyePoint.z
                 , m42 = projectionType
-                , m13 = maxLuminance * Vector3.getX linearRgb
-                , m23 = maxLuminance * Vector3.getY linearRgb
-                , m33 = maxLuminance * Vector3.getZ linearRgb
+                , m13 = maxLuminance * Math.Vector3.getX linearRgb
+                , m23 = maxLuminance * Math.Vector3.getY linearRgb
+                , m33 = maxLuminance * Math.Vector3.getZ linearRgb
                 , m43 = 0
                 , m14 = 0
                 , m24 = 0
