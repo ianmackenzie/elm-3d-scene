@@ -28,18 +28,16 @@ import Point3d
 import Random
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Drawable as Drawable exposing (Entity, Material)
 import Scene3d.Exposure as Exposure
-import Scene3d.LightSource as LightSource
+import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
-import Scene3d.Shape as Shape
 import Sphere3d
 import Task
 import Viewpoint3d
 
 
 type alias Model =
-    { world : World (Entity BodyCoordinates)
+    { world : World (Scene3d.Entity BodyCoordinates)
     , screenWidth : Float
     , screenHeight : Float
     }
@@ -113,7 +111,7 @@ view { world, screenWidth, screenHeight } =
             List.map getTransformedDrawable (World.getBodies world)
 
         sunlight =
-            LightSource.directionalLight Chromaticity.d65
+            Scene3d.directionalLight Chromaticity.d65
                 (Illuminance.lux 10000)
                 (Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60))
 
@@ -143,7 +141,7 @@ view { world, screenWidth, screenHeight } =
         ]
 
 
-initialWorld : World (Entity BodyCoordinates)
+initialWorld : World (Scene3d.Entity BodyCoordinates)
 initialWorld =
     let
         moonGravity =
@@ -155,16 +153,16 @@ initialWorld =
         |> addBoxes
 
 
-materials : Array Material
+materials : Array (Material { hasNormals : Yes })
 materials =
     Array.fromList
         [ Materials.aluminum
         , Materials.whitePlastic
         , Materials.copper
-        , { baseColor = Tango.skyBlue1, roughness = 0.25, metallic = False }
+        , Material.nonmetal { baseColor = Tango.skyBlue1, roughness = 0.25 }
         , Materials.gold
         , Materials.whitePlastic
-        , { baseColor = Tango.skyBlue2, roughness = 0.25, metallic = False }
+        , Material.nonmetal { baseColor = Tango.skyBlue2, roughness = 0.25 }
         ]
 
 
@@ -193,7 +191,7 @@ randomOffsets index =
         |> Tuple.first
 
 
-addBoxes : World (Entity BodyCoordinates) -> World (Entity BodyCoordinates)
+addBoxes : World (Scene3d.Entity BodyCoordinates) -> World (Scene3d.Entity BodyCoordinates)
 addBoxes world =
     let
         xySize =
@@ -259,15 +257,14 @@ floorRadius =
     Length.meters 30
 
 
-floorMesh : Mesh BodyCoordinates { hasNormals : Yes }
-floorMesh =
-    Shape.sphere { radius = floorRadius, subdivisions = 144 }
-
-
-floor : Body (Entity BodyCoordinates)
+floor : Body (Scene3d.Entity BodyCoordinates)
 floor =
-    Drawable.physical Materials.aluminum floorMesh
-        |> Body.sphere (Sphere3d.atOrigin floorRadius)
+    let
+        shape =
+            Sphere3d.atOrigin floorRadius
+    in
+    Scene3d.sphere shape Materials.aluminum { castsShadow = False }
+        |> Body.sphere shape
         |> Body.moveTo
             (Point3d.meters
                 0
@@ -281,27 +278,15 @@ boxSize =
     Length.meters 0.9
 
 
-boxMesh : Mesh BodyCoordinates { hasNormals : Yes }
-boxMesh =
-    Shape.block boxSize boxSize boxSize
-
-
-boxShadow : Mesh.Shadow BodyCoordinates
-boxShadow =
-    Mesh.shadow boxMesh
-
-
-box : Material -> Body (Entity BodyCoordinates)
+box : Material { hasNormals : Yes } -> Body (Scene3d.Entity BodyCoordinates)
 box material =
-    Drawable.physical material boxMesh
-        |> Drawable.withShadow boxShadow
-        |> Body.block
-            (Block3d.centeredOn Frame3d.atOrigin
-                ( boxSize
-                , boxSize
-                , boxSize
-                )
-            )
+    let
+        shape =
+            Block3d.centeredOn Frame3d.atOrigin
+                ( boxSize, boxSize, boxSize )
+    in
+    Scene3d.block shape material { castsShadow = True }
+        |> Body.block shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 5))
 
 
@@ -310,24 +295,17 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphereMesh : Mesh BodyCoordinates { hasNormals : Yes }
-sphereMesh =
-    Shape.sphere { radius = sphereRadius, subdivisions = 36 }
-
-
-sphereShadow : Mesh.Shadow BodyCoordinates
-sphereShadow =
-    Mesh.shadow sphereMesh
-
-
-sphere : Material -> Body (Entity BodyCoordinates)
+sphere : Material { hasNormals : Yes } -> Body (Scene3d.Entity BodyCoordinates)
 sphere material =
-    Drawable.physical material sphereMesh
-        |> Drawable.withShadow sphereShadow
-        |> Body.sphere (Sphere3d.atOrigin sphereRadius)
+    let
+        shape =
+            Sphere3d.atOrigin sphereRadius
+    in
+    Scene3d.sphere shape material { castsShadow = True }
+        |> Body.sphere shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
 
 
-getTransformedDrawable : Body (Entity BodyCoordinates) -> Entity WorldCoordinates
+getTransformedDrawable : Body (Scene3d.Entity BodyCoordinates) -> Scene3d.Entity WorldCoordinates
 getTransformedDrawable body =
-    Drawable.placeIn (Body.getFrame3d body) (Body.getData body)
+    Scene3d.placeIn (Body.getFrame3d body) (Body.getData body)
