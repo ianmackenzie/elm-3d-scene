@@ -425,14 +425,14 @@ lambertianEnvironmentalLighting =
         """
 
 
-lambertianDirectLighting : Glsl.Function
-lambertianDirectLighting =
+lambertianLightSource : Glsl.Function
+lambertianLightSource =
     Glsl.function
         { dependencies = [ getDirectionToLightAndNormalIlluminance, positiveDotProduct ]
         , constants = [ kDisabledLightSource, kPi ]
         }
         """
-        vec3 lambertianDirectLighting(
+        vec3 lambertianLightSource(
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 materialColor,
@@ -456,6 +456,35 @@ lambertianDirectLighting =
 
             float dotNL = positiveDotProduct(directionToLight, surfaceNormal);
             return (normalIlluminance * dotNL) * (materialColor / kPi);
+        }
+        """
+
+
+lambertianDirectLighting : Glsl.Function
+lambertianDirectLighting =
+    Glsl.function
+        { dependencies = [ lambertianLightSource ]
+        , constants = []
+        }
+        """
+        vec3 lambertianDirectLighting(
+            vec3 surfacePosition,
+            vec3 surfaceNormal,
+            vec3 materialColor,
+            mat4 lightSources12,
+            mat4 lightSources34,
+            mat4 lightSources56,
+            mat4 lightSources78
+        ) {
+            vec3 litColor1 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[0], lightSources12[1]);
+            vec3 litColor2 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[2], lightSources12[3]);
+            vec3 litColor3 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[0], lightSources34[1]);
+            vec3 litColor4 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[2], lightSources34[3]);
+            vec3 litColor5 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[0], lightSources56[1]);
+            vec3 litColor6 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[2], lightSources56[3]);
+            vec3 litColor7 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[0], lightSources78[1]);
+            vec3 litColor8 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[2], lightSources78[3]);
+            return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         """
 
@@ -988,16 +1017,23 @@ lambertianFragmentShader =
         void main() {
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-            vec3 litColor0 = lambertianEnvironmentalLighting(normalDirection, materialColor, directionToCamera, viewMatrix, environmentalLighting);
-            vec3 litColor1 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources12[0], lightSources12[1]);
-            vec3 litColor2 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources12[2], lightSources12[3]);
-            vec3 litColor3 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources34[0], lightSources34[1]);
-            vec3 litColor4 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources34[2], lightSources34[3]);
-            vec3 litColor5 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources56[0], lightSources56[1]);
-            vec3 litColor6 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources56[2], lightSources56[3]);
-            vec3 litColor7 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources78[0], lightSources78[1]);
-            vec3 litColor8 = lambertianDirectLighting(interpolatedPosition, normalDirection, materialColor, lightSources78[2], lightSources78[3]);
-            vec3 linearColor = litColor0 + litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
+            vec3 environmentalLighting = lambertianEnvironmentalLighting(
+                normalDirection,
+                materialColor,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
+            vec3 directLighting = lambertianDirectLighting(
+                interpolatedPosition,
+                normalDirection,
+                materialColor,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
+            vec3 linearColor = environmentalLighting + directLighting;
             gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
         """
