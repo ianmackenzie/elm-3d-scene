@@ -761,7 +761,6 @@ physicalFragment =
             float alpha,
             vec3 directionToCamera,
             mat4 viewMatrix,
-            float dotNV,
             mat4 enviromentalLighting
         ) {
             float enviromentalLightingType = environmentalLighting[0].w;
@@ -950,7 +949,7 @@ physicalFragment =
             return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
         }
         
-        vec3 physicalDirectLighting(
+        vec3 physicalLightSource(
             vec4 xyz_type,
             vec4 rgb_radius,
             vec3 surfacePosition,
@@ -975,6 +974,30 @@ physicalFragment =
             return (normalIlluminance * dotNL) * ((diffuseBaseColor / kPi) + specularColor);
         }
         
+        vec3 physicalDirectLighting(
+            vec3 surfacePosition,
+            vec3 surfaceNormal,
+            vec3 directionToCamera,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha,
+            mat4 lightSources12,
+            mat4 lightSources34,
+            mat4 lightSources56,
+            mat4 lightSources78
+        ) {
+            float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
+            vec3 litColor1 = physicalLightSource(lightSources12[0], lightSources12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor2 = physicalLightSource(lightSources12[2], lightSources12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor3 = physicalLightSource(lightSources34[0], lightSources34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor4 = physicalLightSource(lightSources34[2], lightSources34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor5 = physicalLightSource(lightSources56[0], lightSources56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor6 = physicalLightSource(lightSources56[2], lightSources56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor7 = physicalLightSource(lightSources78[0], lightSources78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor8 = physicalLightSource(lightSources78[2], lightSources78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
+        }
+        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -994,25 +1017,36 @@ physicalFragment =
         void main() {
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-            float dotNV = positiveDotProduct(normalDirection, directionToCamera);
         
             float alpha = roughness * roughness;
             float nonmetallic = 1.0 - metallic;
             vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
             vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
         
-            vec3 litColor0 = physicalEnvironmentalLighting(normalDirection, diffuseBaseColor, specularBaseColor, alpha, directionToCamera, viewMatrix, dotNV, environmentalLighting);
+            vec3 environmentalLighting = physicalEnvironmentalLighting(
+                normalDirection,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
         
-            vec3 litColor1 = physicalDirectLighting(lightSources12[0], lightSources12[1], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalDirectLighting(lightSources12[2], lightSources12[3], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalDirectLighting(lightSources34[0], lightSources34[1], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalDirectLighting(lightSources34[2], lightSources34[3], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalDirectLighting(lightSources56[0], lightSources56[1], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalDirectLighting(lightSources56[2], lightSources56[3], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalDirectLighting(lightSources78[0], lightSources78[1], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalDirectLighting(lightSources78[2], lightSources78[3], interpolatedPosition, normalDirection, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 directLighting = physicalDirectLighting(
+                interpolatedPosition,
+                normalDirection,
+                directionToCamera,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
         
-            vec3 linearColor = litColor0 + litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
+            vec3 linearColor = environmentalLighting + directLighting;
             gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
     |]
