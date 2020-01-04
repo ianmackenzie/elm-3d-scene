@@ -11,6 +11,7 @@ import Camera3d exposing (Camera3d)
 import Color
 import Direction3d
 import Duration exposing (seconds)
+import Frame3d
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -33,11 +34,10 @@ import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d
 import Scene3d.Chromaticity
-import Scene3d.Drawable as Drawable exposing (Entity)
 import Scene3d.Exposure
-import Scene3d.LightSource
+import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh
-import Scene3d.Shape
+import Sphere3d
 import Task
 import Vector3d
 import Viewpoint3d
@@ -50,7 +50,7 @@ type Id
 
 
 type alias Data =
-    { entity : Entity BodyCoordinates
+    { entity : Scene3d.Entity BodyCoordinates
     , id : Id
     }
 
@@ -108,12 +108,18 @@ initialWorld =
 
 floor : Body Data
 floor =
+    let
+        shape =
+            Block3d.centeredOn Frame3d.atOrigin
+                ( meters 25, meters 25, millimeters 10 )
+    in
     Body.plane
         { id = Floor
         , entity =
-            Scene3d.Shape.block (meters 25) (meters 25) (millimeters 10)
-                |> Drawable.lambertian Tango.aluminum6
-                |> Drawable.translateBy (Vector3d.millimeters 0 0 -5)
+            Scene3d.block shape
+                (Material.diffuse Tango.aluminum6)
+                { castsShadow = False }
+                |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
 
@@ -146,26 +152,18 @@ table =
             blocks
                 |> List.map
                     (\block ->
-                        let
-                            ( xSize, ySize, zSize ) =
-                                Block3d.dimensions block
-
-                            mesh =
-                                Scene3d.Shape.block xSize ySize zSize
-                        in
-                        mesh
-                            |> Drawable.physical
+                        Scene3d.block block
+                            (Material.nonmetal
                                 { baseColor = Color.fromRGB ( 255, 255, 255 )
                                 , roughness = 0.25
-                                , metallic = False
                                 }
-                            |> Drawable.withShadow (Scene3d.Mesh.shadow mesh)
-                            |> Drawable.placeIn (Block3d.axes block)
+                            )
+                            { castsShadow = True }
                     )
     in
     Body.compound shapes
         { id = Table
-        , entity = Drawable.group entities
+        , entity = Scene3d.group entities
         }
         |> Body.setBehavior (Body.dynamic (kilograms 3.58))
 
@@ -188,7 +186,7 @@ view : Model -> Html Msg
 view { world, width, height } =
     let
         sunlight =
-            Scene3d.LightSource.directionalLight Scene3d.Chromaticity.d65
+            Scene3d.directionalLight Scene3d.Chromaticity.d65
                 (Illuminance.lux 10000)
                 (Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60))
 
@@ -202,7 +200,7 @@ view { world, width, height } =
         drawables =
             List.map
                 (\body ->
-                    Drawable.placeIn
+                    Scene3d.placeIn
                         (Body.getFrame3d body)
                         (Body.getData body).entity
                 )
@@ -343,11 +341,9 @@ mouse =
     Body.compound []
         { id = Mouse
         , entity =
-            Scene3d.Shape.sphere
-                { radius = millimeters 20
-                , subdivisions = 20
-                }
-                |> Drawable.lambertian (Color.fromRGB ( 255, 255, 255 ))
+            Scene3d.sphere (Sphere3d.atOrigin (millimeters 20))
+                (Material.diffuse (Color.fromRGB ( 255, 255, 255 )))
+                { castsShadow = False }
         }
 
 
