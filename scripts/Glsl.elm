@@ -249,7 +249,15 @@ capitalize string =
 
 elmField : Type -> String -> String
 elmField (Type glslType) name =
-    name ++ " : " ++ capitalize glslType
+    let
+        elmType =
+            if glslType == "sampler2D" then
+                "Texture"
+
+            else
+                capitalize glslType
+    in
+    name ++ " : " ++ elmType
 
 
 varyingsSignature : List Varying -> String
