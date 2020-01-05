@@ -85,14 +85,29 @@ baseColor =
     Glsl.uniform Glsl.vec3 "baseColor"
 
 
+baseColorTexture : Glsl.Uniform
+baseColorTexture =
+    Glsl.uniform Glsl.sampler2D "baseColorTexture"
+
+
 roughness : Glsl.Uniform
 roughness =
     Glsl.uniform Glsl.float "roughness"
 
 
+roughnessTexture : Glsl.Uniform
+roughnessTexture =
+    Glsl.uniform Glsl.sampler2D "roughnessTexture"
+
+
 metallic : Glsl.Uniform
 metallic =
     Glsl.uniform Glsl.float "metallic"
+
+
+metallicTexture : Glsl.Uniform
+metallicTexture =
+    Glsl.uniform Glsl.sampler2D "metallicTexture"
 
 
 environmentalLighting : Glsl.Uniform
@@ -123,6 +138,11 @@ lightSources78 =
 materialColor : Glsl.Uniform
 materialColor =
     Glsl.uniform Glsl.vec3 "materialColor"
+
+
+materialColorTexture : Glsl.Uniform
+materialColorTexture =
+    Glsl.uniform Glsl.sampler2D "materialColorTexture"
 
 
 
@@ -1164,6 +1184,59 @@ lambertianFragmentShader =
         """
 
 
+lambertianTextureFragmentShader : Glsl.Shader
+lambertianTextureFragmentShader =
+    Glsl.fragmentShader "lambertianTextureFragment"
+        { uniforms =
+            [ sceneProperties
+            , environmentalLighting
+            , lightSources12
+            , lightSources34
+            , lightSources56
+            , lightSources78
+            , materialColorTexture
+            , viewMatrix
+            ]
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            , interpolatedUv
+            ]
+        , constants = []
+        , functions =
+            [ getDirectionToCamera
+            , lambertianEnvironmentalLighting
+            , lambertianDirectLighting
+            , toSrgb
+            ]
+        }
+        """
+        void main() {
+            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
+            vec3 materialColor = texture(materialColorTexture, interpolatedUv);
+            vec3 environmentalLighting = lambertianEnvironmentalLighting(
+                normalDirection,
+                materialColor,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
+            vec3 directLighting = lambertianDirectLighting(
+                interpolatedPosition,
+                normalDirection,
+                materialColor,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
+            vec3 linearColor = environmentalLighting + directLighting;
+            gl_FragColor = toSrgb(linearColor, sceneProperties);
+        }
+        """
+
+
 physicalFragmentShader : Glsl.Shader
 physicalFragmentShader =
     Glsl.fragmentShader "physicalFragment"
@@ -1230,6 +1303,77 @@ physicalFragmentShader =
         """
 
 
+physicalTexturesFragmentShader : Glsl.Shader
+physicalTexturesFragmentShader =
+    Glsl.fragmentShader "physicalTexturesFragment"
+        { uniforms =
+            [ sceneProperties
+            , environmentalLighting
+            , viewMatrix
+            , lightSources12
+            , lightSources34
+            , lightSources56
+            , lightSources78
+            , baseColorTexture
+            , roughnessTexture
+            , metallicTexture
+            ]
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            , interpolatedUv
+            ]
+        , functions =
+            [ getDirectionToCamera
+            , physicalEnvironmentalLighting
+            , physicalDirectLighting
+            , toSrgb
+            ]
+        , constants = []
+        }
+        """
+        void main() {
+            vec3 baseColor = texture(baseColorTexture, interpolatedUv);
+            float roughness = texture(roughnessTexture, interpolatedUv).r;
+            float metallic = texture(metallicTexture, interpolatedUv).r;
+
+            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
+
+            float alpha = roughness * roughness;
+            float nonmetallic = 1.0 - metallic;
+            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
+            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
+
+            vec3 environmentalLighting = physicalEnvironmentalLighting(
+                normalDirection,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
+
+            vec3 directLighting = physicalDirectLighting(
+                interpolatedPosition,
+                normalDirection,
+                directionToCamera,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
+
+            vec3 linearColor = environmentalLighting + directLighting;
+            gl_FragColor = toSrgb(linearColor, sceneProperties);
+        }
+        """
+
+
 
 ---------- SCRIPT ----------
 
@@ -1257,7 +1401,9 @@ script { workingDirectory, userPrivileges } =
                     , emissiveTextureFragmentShader
                     , emissivePointFragmentShader
                     , lambertianFragmentShader
+                    , lambertianTextureFragmentShader
                     , physicalFragmentShader
+                    , physicalTexturesFragmentShader
                     ]
     in
     Script.printLine "Writing output file..."

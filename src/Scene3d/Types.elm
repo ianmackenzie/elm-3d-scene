@@ -104,6 +104,7 @@ type Mesh coordinates properties
     | Indexed (BoundingBox3d Meters coordinates) (TriangularMesh (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
     | MeshWithNormals (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh VertexWithNormal) BackFaceSetting
     | MeshWithUvs (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }) (WebGL.Mesh VertexWithUv) BackFaceSetting
+    | MeshWithNormalsAndUvs (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ) }) (WebGL.Mesh VertexWithNormalAndUv) BackFaceSetting
     | LineSegments (BoundingBox3d Meters coordinates) (List (LineSegment3d Meters coordinates)) (WebGL.Mesh PlainVertex)
     | Polyline (BoundingBox3d Meters coordinates) (Polyline3d Meters coordinates) (WebGL.Mesh PlainVertex)
     | Points (BoundingBox3d Meters coordinates) Float (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)

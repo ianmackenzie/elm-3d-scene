@@ -114,7 +114,7 @@ sphere =
                     )
                 |> List.concat
     in
-    Mesh.smooth (TriangularMesh.indexed pointsAndNormals faces)
+    Mesh.withNormals (TriangularMesh.indexed pointsAndNormals faces)
         |> Mesh.cullBackFaces
 
 
@@ -218,7 +218,7 @@ cylinder =
         triangularMesh =
             TriangularMesh.triangles (List.concat wedges)
     in
-    Mesh.smooth triangularMesh |> Mesh.cullBackFaces
+    Mesh.withNormals triangularMesh |> Mesh.cullBackFaces
 
 
 block : Mesh.WithNormals coordinates

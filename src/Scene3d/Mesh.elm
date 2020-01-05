@@ -3,7 +3,7 @@ module Scene3d.Mesh exposing
     , Plain, WithNormals, WithUvs, WithNormalsAndUvs, WithTangents
     , points, lineSegments, polyline
     , triangles, facets
-    , indexed, smooth
+    , plain, withNormals, withUvs, withNormalsAndUvs
     , Shadow, shadow
     , cullBackFaces
     )
@@ -18,7 +18,7 @@ module Scene3d.Mesh exposing
 
 @docs triangles, facets
 
-@docs indexed, smooth
+@docs plain, withNormals, withUvs, withNormalsAndUvs
 
 @docs Shadow, shadow
 
@@ -227,8 +227,8 @@ plainBounds first rest =
     plainBoundsHelp x x y y z z rest
 
 
-indexed : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
-indexed givenMesh =
+plain : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
+plain givenMesh =
     let
         collectedVertices =
             Array.foldr collectPlain [] (TriangularMesh.vertices givenMesh)
@@ -316,10 +316,10 @@ vertexBounds first rest =
     vertexBoundsHelp x x y y z z rest
 
 
-smooth :
+withNormals :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
     -> WithNormals coordinates
-smooth givenMesh =
+withNormals givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmooth [] (TriangularMesh.vertices givenMesh)
@@ -354,10 +354,10 @@ collectTextured { position, uv } accumulated =
         :: accumulated
 
 
-textured :
+withUvs :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
     -> Mesh coordinates { uvs : () }
-textured givenMesh =
+withUvs givenMesh =
     let
         collectedVertices =
             Array.foldr collectTextured [] (TriangularMesh.vertices givenMesh)
@@ -379,24 +379,46 @@ textured givenMesh =
             Types.MeshWithUvs bounds givenMesh webGLMesh KeepBackFaces
 
 
+collectSmoothTextured :
+    { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ) }
+    -> List VertexWithNormalAndUv
+    -> List VertexWithNormalAndUv
+collectSmoothTextured { position, normal, uv } accumulated =
+    let
+        ( u, v ) =
+            uv
+    in
+    { position = Point3d.toVec3 position, normal = Vector3d.toVec3 normal, uv = Math.Vector2.vec2 u v }
+        :: accumulated
 
--- smoothTextured :
---     List Option
---     -> TriangularMesh
---         { position : Point3d Meters coordinates
---         , normal : Vector3d Unitless coordinates
---         , uv : ( Float, Float )
---         }
---     -> Mesh coordinates { normals : (), uvs : () }
--- WithTangents :
---     List Option
---     -> TriangularMesh
---         { position : Point3d Meters coordinates
---         , uv : ( Float, Float )
---         , normal : Vector3d Unitless coordinates
---         , tangent : Vector3d Unitless coordinates
---         }
---     -> Mesh coordinates { normals : (), uvs : (), tangents : () }
+
+withNormalsAndUvs :
+    TriangularMesh
+        { position : Point3d Meters coordinates
+        , normal : Vector3d Unitless coordinates
+        , uv : ( Float, Float )
+        }
+    -> WithNormalsAndUvs coordinates
+withNormalsAndUvs givenMesh =
+    let
+        collectedVertices =
+            Array.foldr collectSmoothTextured [] (TriangularMesh.vertices givenMesh)
+    in
+    case collectedVertices of
+        [] ->
+            Types.EmptyMesh
+
+        first :: rest ->
+            let
+                bounds =
+                    vertexBounds first rest
+
+                webGLMesh =
+                    WebGL.indexedTriangles
+                        collectedVertices
+                        (TriangularMesh.faceIndices givenMesh)
+            in
+            Types.MeshWithNormalsAndUvs bounds givenMesh webGLMesh KeepBackFaces
 
 
 lineSegmentAttributes : LineSegment3d Meters coordinates -> ( PlainVertex, PlainVertex )
@@ -491,6 +513,10 @@ shadow mesh =
                 (TriangularMesh.mapVertices .position triangularMesh)
 
         Types.MeshWithUvs boundingBox triangularMesh _ _ ->
+            shadowImpl boundingBox
+                (TriangularMesh.mapVertices .position triangularMesh)
+
+        Types.MeshWithNormalsAndUvs boundingBox triangularMesh _ _ ->
             shadowImpl boundingBox
                 (TriangularMesh.mapVertices .position triangularMesh)
 
@@ -681,6 +707,9 @@ cullBackFaces mesh =
 
         Types.MeshWithUvs boundingBox triangularMesh webGLMesh _ ->
             Types.MeshWithUvs boundingBox triangularMesh webGLMesh CullBackFaces
+
+        Types.MeshWithNormalsAndUvs boundingBox triangularMesh webGLMesh _ ->
+            Types.MeshWithNormalsAndUvs boundingBox triangularMesh webGLMesh CullBackFaces
 
         Types.LineSegments _ _ _ ->
             mesh

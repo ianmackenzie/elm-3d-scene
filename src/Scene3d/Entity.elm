@@ -96,6 +96,9 @@ mesh givenMesh givenMaterial =
                 Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
                     constantMesh color webGLMesh backFaceSetting
 
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                    constantMesh color webGLMesh backFaceSetting
+
                 Types.LineSegments _ _ webGLMesh ->
                     constantMesh color webGLMesh KeepBackFaces
 
@@ -123,6 +126,9 @@ mesh givenMesh givenMaterial =
                     emissiveMesh emissiveColor webGLMesh backFaceSetting
 
                 Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
+                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
                     emissiveMesh emissiveColor webGLMesh backFaceSetting
 
                 Types.LineSegments _ _ webGLMesh ->
@@ -153,6 +159,9 @@ mesh givenMesh givenMaterial =
 
                 Types.MeshWithUvs _ _ _ _ ->
                     empty
+
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh cullBackFaces ->
+                    lambertianMesh materialColor webGLMesh cullBackFaces
 
                 Types.LineSegments _ _ _ ->
                     empty
@@ -192,6 +201,14 @@ mesh givenMesh givenMaterial =
 
                 Types.MeshWithUvs _ _ _ _ ->
                     empty
+
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                    physicalMesh
+                        baseColor
+                        roughness
+                        metallic
+                        webGLMesh
+                        backFaceSetting
 
                 Types.LineSegments _ _ _ ->
                     empty
