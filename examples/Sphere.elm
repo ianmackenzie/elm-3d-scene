@@ -18,7 +18,6 @@ import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh exposing (Yes)
 import Sphere3d
 import Temperature
 import Viewpoint3d exposing (Viewpoint3d)
@@ -53,7 +52,7 @@ camera =
         }
 
 
-material : Material { hasNormals : Yes }
+material : Material.ForMeshWithNormals
 material =
     Material.nonmetal
         { baseColor = Tango.skyBlue2

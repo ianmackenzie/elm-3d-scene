@@ -1,5 +1,6 @@
 module Scene3d.Mesh exposing
-    ( Mesh, Yes
+    ( Mesh
+    , Plain, WithNormals, WithUvs, WithNormalsAndUvs, WithTangents
     , points, lineSegments, polyline
     , triangles, facets
     , indexed, smooth
@@ -9,7 +10,9 @@ module Scene3d.Mesh exposing
 
 {-|
 
-@docs Mesh, Yes
+@docs Mesh
+
+@docs Plain, WithNormals, WithUvs, WithNormalsAndUvs, WithTangents
 
 @docs points, lineSegments, polyline
 
@@ -57,12 +60,28 @@ type alias Mesh coordinates properties =
     Types.Mesh coordinates properties
 
 
+type alias Plain coordinates =
+    Mesh coordinates {}
+
+
+type alias WithNormals coordinates =
+    Mesh coordinates { normals : () }
+
+
+type alias WithUvs coordinates =
+    Mesh coordinates { uvs : () }
+
+
+type alias WithNormalsAndUvs coordinates =
+    Mesh coordinates { normals : (), uvs : () }
+
+
+type alias WithTangents coordinates =
+    Mesh coordinates { normals : (), uvs : (), tangents : () }
+
+
 type alias Shadow coordinates =
     Types.Shadow coordinates
-
-
-type alias Yes =
-    Types.Yes
 
 
 empty : Mesh coordinates properties
@@ -109,7 +128,7 @@ facetAttributes triangle =
     )
 
 
-triangles : List (Triangle3d Meters coordinates) -> Mesh coordinates {}
+triangles : List (Triangle3d Meters coordinates) -> Plain coordinates
 triangles givenTriangles =
     case givenTriangles of
         [] ->
@@ -126,9 +145,7 @@ triangles givenTriangles =
             Types.Triangles bounds givenTriangles webGLMesh KeepBackFaces
 
 
-facets :
-    List (Triangle3d Meters coordinates)
-    -> Mesh coordinates { hasNormals : Yes }
+facets : List (Triangle3d Meters coordinates) -> WithNormals coordinates
 facets givenTriangles =
     case givenTriangles of
         [] ->
@@ -207,7 +224,7 @@ plainBounds first rest =
     plainBoundsHelp x x y y z z rest
 
 
-indexed : TriangularMesh (Point3d Meters coordinates) -> Mesh coordinates {}
+indexed : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
 indexed givenMesh =
     let
         collectedVertices =
@@ -298,7 +315,7 @@ smoothBounds first rest =
 
 smooth :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
-    -> Mesh coordinates { hasNormals : Yes }
+    -> WithNormals coordinates
 smooth givenMesh =
     let
         collectedVertices =
@@ -328,7 +345,7 @@ smooth givenMesh =
 --         { position : Point3d Meters coordinates
 --         , uv : ( Float, Float )
 --         }
---     -> Mesh coordinates { hasUv : Yes }
+--     -> Mesh coordinates { uvs : () }
 -- smoothTextured :
 --     List Option
 --     -> TriangularMesh
@@ -336,8 +353,8 @@ smooth givenMesh =
 --         , normal : Vector3d Unitless coordinates
 --         , uv : ( Float, Float )
 --         }
---     -> Mesh coordinates { hasNormals : Yes, hasUv : Yes }
--- withTangents :
+--     -> Mesh coordinates { normals : (), uvs : () }
+-- WithTangents :
 --     List Option
 --     -> TriangularMesh
 --         { position : Point3d Meters coordinates
@@ -345,7 +362,7 @@ smooth givenMesh =
 --         , normal : Vector3d Unitless coordinates
 --         , tangent : Vector3d Unitless coordinates
 --         }
---     -> Mesh coordinates { hasNormals : Yes, hasUv : Yes, hasTangents : Yes }
+--     -> Mesh coordinates { normals : (), uvs : (), tangents : () }
 
 
 lineSegmentAttributes : LineSegment3d Meters coordinates -> ( PlainVertex, PlainVertex )
@@ -357,7 +374,7 @@ lineSegmentAttributes givenSegment =
     ( plainVertex p1, plainVertex p2 )
 
 
-lineSegments : List (LineSegment3d Meters coordinates) -> Mesh coordinates {}
+lineSegments : List (LineSegment3d Meters coordinates) -> Plain coordinates
 lineSegments givenSegments =
     case givenSegments of
         [] ->
@@ -374,7 +391,7 @@ lineSegments givenSegments =
             Types.LineSegments bounds givenSegments webGLMesh
 
 
-polyline : Polyline3d Meters coordinates -> Mesh coordinates {}
+polyline : Polyline3d Meters coordinates -> Plain coordinates
 polyline givenPolyline =
     let
         vertices =
@@ -395,7 +412,7 @@ polyline givenPolyline =
             Types.Polyline bounds givenPolyline webGLMesh
 
 
-points : { radius : Quantity Float Pixels } -> List (Point3d Meters coordinates) -> Mesh coordinates {}
+points : { radius : Quantity Float Pixels } -> List (Point3d Meters coordinates) -> Plain coordinates
 points { radius } givenPoints =
     case givenPoints of
         [] ->

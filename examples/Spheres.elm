@@ -16,7 +16,7 @@ import Point3d
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
-import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
 import Vector3d
 import Viewpoint3d

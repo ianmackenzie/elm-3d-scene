@@ -9,10 +9,9 @@ module Common.Materials exposing
 
 import Color exposing (Color)
 import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh exposing (Yes)
 
 
-gold : Material { hasNormals : Yes }
+gold : Material.ForMeshWithNormals
 gold =
     Material.metal
         { baseColor = Color.fromRGB ( 255, 195, 86 )
@@ -20,7 +19,7 @@ gold =
         }
 
 
-aluminum : Material { hasNormals : Yes }
+aluminum : Material.ForMeshWithNormals
 aluminum =
     Material.metal
         { baseColor = Color.fromRGB ( 233, 235, 236 )
@@ -28,7 +27,7 @@ aluminum =
         }
 
 
-copper : Material { hasNormals : Yes }
+copper : Material.ForMeshWithNormals
 copper =
     Material.metal
         { baseColor = Color.fromRGB ( 244, 162, 137 )
@@ -36,7 +35,7 @@ copper =
         }
 
 
-chromium : Material { hasNormals : Yes }
+chromium : Material.ForMeshWithNormals
 chromium =
     Material.metal
         { baseColor = Color.fromRGB ( 140, 142, 141 )
@@ -44,7 +43,7 @@ chromium =
         }
 
 
-blackPlastic : Material { hasNormals : Yes }
+blackPlastic : Material.ForMeshWithNormals
 blackPlastic =
     Material.nonmetal
         { baseColor = Color.fromRGB ( 0, 0, 0 )
@@ -52,7 +51,7 @@ blackPlastic =
         }
 
 
-whitePlastic : Material { hasNormals : Yes }
+whitePlastic : Material.ForMeshWithNormals
 whitePlastic =
     Material.nonmetal
         { baseColor = Color.fromRGB ( 255, 255, 255 )

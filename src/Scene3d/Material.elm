@@ -1,5 +1,6 @@
 module Scene3d.Material exposing
     ( Material
+    , Plain, ForMeshWithNormals, ForMeshWithUvs, ForMeshWithNormalsAndUvs, ForMeshWithTangents
     , solidColor, diffuse, emissive
     , metal, nonmetal, hybrid
     -- , solidColorTexture
@@ -14,6 +15,8 @@ module Scene3d.Material exposing
 {-|
 
 @docs Material
+
+@docs Plain, ForMeshWithNormals, ForMeshWithUvs, ForMeshWithNormalsAndUvs, ForMeshWithTangents
 
 
 ## Simple materials
@@ -32,7 +35,6 @@ import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
 import Scene3d.Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
-import Scene3d.Mesh exposing (Yes)
 import Scene3d.Types as Types exposing (LinearRgb(..))
 
 
@@ -40,7 +42,27 @@ type alias Material properties =
     Types.Material properties
 
 
-solidColor : Color -> Material properties
+type alias Plain =
+    Material {}
+
+
+type alias ForMeshWithNormals =
+    Material { normals : () }
+
+
+type alias ForMeshWithUvs =
+    Material { uvs : () }
+
+
+type alias ForMeshWithNormalsAndUvs =
+    Material { normals : (), uvs : () }
+
+
+type alias ForMeshWithTangents =
+    Material { normals : (), uvs : (), tangents : () }
+
+
+solidColor : Color -> Material a
 solidColor givenColor =
     let
         ( red, green, blue ) =
@@ -50,7 +72,7 @@ solidColor givenColor =
         Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
-emissive : Luminance -> Chromaticity -> Material properties
+emissive : Luminance -> Chromaticity -> Material a
 emissive luminance chromaticity =
     let
         (LinearRgb chromaticityRgb) =
@@ -62,22 +84,22 @@ emissive luminance chromaticity =
     Types.EmissiveMaterial (LinearRgb (Math.Vector3.scale nits chromaticityRgb))
 
 
-diffuse : Color -> Material { a | hasNormals : Yes }
+diffuse : Color -> Material { a | normals : () }
 diffuse givenColor =
     Types.LambertianMaterial (ColorConversions.colorToLinearRgb givenColor)
 
 
-metal : { baseColor : Color, roughness : Float } -> Material { a | hasNormals : Yes }
+metal : { baseColor : Color, roughness : Float } -> Material { a | normals : () }
 metal { baseColor, roughness } =
     hybrid { baseColor = baseColor, roughness = roughness, metallic = 1 }
 
 
-nonmetal : { baseColor : Color, roughness : Float } -> Material { a | hasNormals : Yes }
+nonmetal : { baseColor : Color, roughness : Float } -> Material { a | normals : () }
 nonmetal { baseColor, roughness } =
     hybrid { baseColor = baseColor, roughness = roughness, metallic = 0 }
 
 
-hybrid : { baseColor : Color, roughness : Float, metallic : Float } -> Material { a | hasNormals : Yes }
+hybrid : { baseColor : Color, roughness : Float, metallic : Float } -> Material { a | normals : () }
 hybrid { baseColor, roughness, metallic } =
     Types.PbrMaterial
         (ColorConversions.colorToLinearRgb baseColor)
@@ -86,15 +108,15 @@ hybrid { baseColor, roughness, metallic } =
 
 
 
--- solidColorTexture : Texture -> Material { a | hasUv : Yes }
--- emissiveTexture : Luminance -> Texture -> Material { a | hasUv : Yes }
--- diffuseTexture : Texture -> Material { a | hasNormals : Yes, hasUv : Yes }
--- texturedMetal : { baseColor : Texture, roughness : Texture } -> Material { a | hasNormals : Yes, hasUv : Yes }
--- texturedNonmetal : { baseColor : Texture, roughness : Texture } -> Material { a | hasNormals : Yes, hasUv : Yes }
--- texturedHybrid : { baseColor : Texture, roughness : Texture, metallic : Float } -> Material { a | hasNormals : Yes, hasUv : Yes }
+-- solidColorTexture : Texture -> Material { a | uvs : () }
+-- emissiveTexture : Luminance -> Texture -> Material { a | uvs : () }
+-- diffuseTexture : Texture -> Material { a | normals : (), uvs : () }
+-- texturedMetal : { baseColor : Texture, roughness : Texture } -> Material { a | normals : (), uvs : () }
+-- texturedNonmetal : { baseColor : Texture, roughness : Texture } -> Material { a | normals : (), uvs : () }
+-- texturedHybrid : { baseColor : Texture, roughness : Texture, metallic : Float } -> Material { a | normals : (), uvs : () }
 -- {-| Add a normal map to an existing material
 -- -}
 -- withNormalMap :
 --     Texture
---     -> Material { a | hasUv : Yes, hasNormals : Yes, hasTangents : Yes }
---     -> Material { a | hasUv : Yes, hasNormals : Yes, hasTangents : Yes }
+--     -> Material { a | uvs : (), normals : (), tangents : () }
+--     -> Material { a | uvs : (), normals : (), tangents : () }

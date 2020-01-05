@@ -30,7 +30,7 @@ import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
 import Task
 import Viewpoint3d
@@ -153,7 +153,7 @@ initialWorld =
         |> addBoxes
 
 
-materials : Array (Material { hasNormals : Yes })
+materials : Array Material.ForMeshWithNormals
 materials =
     Array.fromList
         [ Materials.aluminum
@@ -278,7 +278,7 @@ boxSize =
     Length.meters 0.9
 
 
-box : Material { hasNormals : Yes } -> Body (Scene3d.Entity BodyCoordinates)
+box : Material.ForMeshWithNormals -> Body (Scene3d.Entity BodyCoordinates)
 box material =
     let
         shape =
@@ -295,7 +295,7 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphere : Material { hasNormals : Yes } -> Body (Scene3d.Entity BodyCoordinates)
+sphere : Material.ForMeshWithNormals -> Body (Scene3d.Entity BodyCoordinates)
 sphere material =
     let
         shape =

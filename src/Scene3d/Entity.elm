@@ -36,7 +36,8 @@ import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
-import Scene3d.Mesh exposing (Mesh, Shadow, Yes)
+import Scene3d.Material as Material
+import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
 import Scene3d.Primitives as Primitives
 import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)
@@ -180,7 +181,7 @@ mesh givenMesh givenMaterial =
                     empty
 
 
-sphere : Sphere3d Meters coordinates -> Material { hasNormals : Yes } -> Bool -> Entity coordinates
+sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
 sphere givenSphere givenMaterial castsShadow =
     let
         (Quantity r) =
@@ -201,7 +202,7 @@ sphere givenSphere givenMaterial castsShadow =
         |> translateBy (Vector3d.from Point3d.origin (Sphere3d.centerPoint givenSphere))
 
 
-block : Block3d Meters coordinates -> Material { hasNormals : Yes } -> Bool -> Entity coordinates
+block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
 block givenBlock givenMaterial castsShadow =
     let
         ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
@@ -222,7 +223,7 @@ block givenBlock givenMaterial castsShadow =
         |> placeIn (Block3d.axes givenBlock)
 
 
-cylinder : Cylinder3d Meters coordinates -> Material { hasNormals : Yes } -> Bool -> Entity coordinates
+cylinder : Cylinder3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
 cylinder givenCylinder givenMaterial castsShadow =
     let
         (Quantity radius) =

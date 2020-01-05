@@ -16,7 +16,7 @@ import Length exposing (Length, Meters)
 import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
-import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Types as Types exposing (Entity, Material)
 import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
@@ -24,7 +24,7 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : Mesh coordinates { hasNormals : Yes }
+sphere : Mesh.WithNormals coordinates
 sphere =
     let
         n =
@@ -118,7 +118,7 @@ sphere =
         |> Mesh.cullBackFaces
 
 
-cylinder : Mesh coordinates { hasNormals : Yes }
+cylinder : Mesh.WithNormals coordinates
 cylinder =
     let
         radius =
@@ -221,7 +221,7 @@ cylinder =
     Mesh.smooth triangularMesh |> Mesh.cullBackFaces
 
 
-block : Mesh coordinates { hasNormals : Yes }
+block : Mesh.WithNormals coordinates
 block =
     let
         x =

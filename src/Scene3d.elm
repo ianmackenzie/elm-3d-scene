@@ -65,7 +65,7 @@ import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Entity as Entity
 import Scene3d.Exposure as Exposure exposing (Exposure)
 import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh as Mesh exposing (Mesh, Yes)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
 import Sphere3d exposing (Sphere3d)
@@ -91,17 +91,17 @@ nothing =
     Entity.empty
 
 
-sphere : Sphere3d Meters coordinates -> Material { hasNormals : Yes } -> { castsShadow : Bool } -> Entity coordinates
+sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormals -> { castsShadow : Bool } -> Entity coordinates
 sphere givenSphere givenMaterial { castsShadow } =
     Entity.sphere givenSphere givenMaterial castsShadow
 
 
-block : Block3d Meters coordinates -> Material { hasNormals : Yes } -> { castsShadow : Bool } -> Entity coordinates
+block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> { castsShadow : Bool } -> Entity coordinates
 block givenBlock givenMaterial { castsShadow } =
     Entity.block givenBlock givenMaterial castsShadow
 
 
-cylinder : Cylinder3d Meters coordinates -> Material { hasNormals : Yes } -> { castsShadow : Bool } -> Entity coordinates
+cylinder : Cylinder3d Meters coordinates -> Material.ForMeshWithNormals -> { castsShadow : Bool } -> Entity coordinates
 cylinder givenCylinder givenMaterial { castsShadow } =
     Entity.cylinder givenCylinder givenMaterial castsShadow
 
