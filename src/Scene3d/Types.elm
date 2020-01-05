@@ -58,20 +58,26 @@ type alias PlainVertex =
     }
 
 
-type alias SmoothVertex =
+type alias VertexWithNormal =
     { position : Vec3
     , normal : Vec3
     }
 
 
-type alias TexturableVertex =
+type alias VertexWithUv =
+    { position : Vec3
+    , uv : Vec2
+    }
+
+
+type alias VertexWithNormalAndUv =
     { position : Vec3
     , normal : Vec3
     , uv : Vec2
     }
 
 
-type alias DeformableVertex =
+type alias VertexWithTangent =
     { position : Vec3
     , normal : Vec3
     , uv : Vec2
@@ -94,9 +100,10 @@ type BackFaceSetting
 type Mesh coordinates properties
     = EmptyMesh
     | Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
-    | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh SmoothVertex) BackFaceSetting
+    | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh VertexWithNormal) BackFaceSetting
     | Indexed (BoundingBox3d Meters coordinates) (TriangularMesh (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
-    | Smooth (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh SmoothVertex) BackFaceSetting
+    | MeshWithNormals (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh VertexWithNormal) BackFaceSetting
+    | MeshWithUvs (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }) (WebGL.Mesh VertexWithUv) BackFaceSetting
     | LineSegments (BoundingBox3d Meters coordinates) (List (LineSegment3d Meters coordinates)) (WebGL.Mesh PlainVertex)
     | Polyline (BoundingBox3d Meters coordinates) (Polyline3d Meters coordinates) (WebGL.Mesh PlainVertex)
     | Points (BoundingBox3d Meters coordinates) Float (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)
@@ -112,7 +119,7 @@ type alias ShadowEdge coordinates =
 
 type Shadow coordinates
     = EmptyShadow
-    | Shadow (List (ShadowEdge coordinates)) (WebGL.Mesh SmoothVertex)
+    | Shadow (List (ShadowEdge coordinates)) (WebGL.Mesh VertexWithNormal)
 
 
 type alias LightMatrices =

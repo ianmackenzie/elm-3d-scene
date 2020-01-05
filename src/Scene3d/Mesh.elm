@@ -36,6 +36,7 @@ import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Geometry.Interop.LinearAlgebra.Vector3d as Vector3d
 import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
+import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Pixels exposing (Pixels, inPixels)
 import Point3d exposing (Point3d)
@@ -48,7 +49,9 @@ import Scene3d.Types as Types
         , PlainVertex
         , Shadow
         , ShadowEdge
-        , SmoothVertex
+        , VertexWithNormal
+        , VertexWithNormalAndUv
+        , VertexWithUv
         )
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
@@ -107,7 +110,7 @@ triangleAttributes triangle =
 
 facetAttributes :
     Triangle3d Meters coordinates
-    -> ( SmoothVertex, SmoothVertex, SmoothVertex )
+    -> ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
 facetAttributes triangle =
     let
         ( p1, p2, p3 ) =
@@ -249,23 +252,23 @@ indexed givenMesh =
 
 collectSmooth :
     { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
-    -> List SmoothVertex
-    -> List SmoothVertex
+    -> List VertexWithNormal
+    -> List VertexWithNormal
 collectSmooth { position, normal } accumulated =
     { position = Point3d.toVec3 position, normal = Vector3d.toVec3 normal }
         :: accumulated
 
 
-smoothBoundsHelp :
+vertexBoundsHelp :
     Float
     -> Float
     -> Float
     -> Float
     -> Float
     -> Float
-    -> List SmoothVertex
+    -> List { a | position : Vec3 }
     -> BoundingBox3d Meters coordinates
-smoothBoundsHelp minX maxX minY maxY minZ maxZ remaining =
+vertexBoundsHelp minX maxX minY maxY minZ maxZ remaining =
     case remaining of
         next :: rest ->
             let
@@ -278,7 +281,7 @@ smoothBoundsHelp minX maxX minY maxY minZ maxZ remaining =
                 z =
                     Math.Vector3.getZ next.position
             in
-            smoothBoundsHelp
+            vertexBoundsHelp
                 (min minX x)
                 (max maxX x)
                 (min minY y)
@@ -298,8 +301,8 @@ smoothBoundsHelp minX maxX minY maxY minZ maxZ remaining =
                 }
 
 
-smoothBounds : SmoothVertex -> List SmoothVertex -> BoundingBox3d Meters coordinates
-smoothBounds first rest =
+vertexBounds : { a | position : Vec3 } -> List { a | position : Vec3 } -> BoundingBox3d Meters coordinates
+vertexBounds first rest =
     let
         x =
             Math.Vector3.getX first.position
@@ -310,7 +313,7 @@ smoothBounds first rest =
         z =
             Math.Vector3.getZ first.position
     in
-    smoothBoundsHelp x x y y z z rest
+    vertexBoundsHelp x x y y z z rest
 
 
 smooth :
@@ -328,24 +331,55 @@ smooth givenMesh =
         first :: rest ->
             let
                 bounds =
-                    smoothBounds first rest
+                    vertexBounds first rest
 
                 webGLMesh =
                     WebGL.indexedTriangles
                         collectedVertices
                         (TriangularMesh.faceIndices givenMesh)
             in
-            Types.Smooth bounds givenMesh webGLMesh KeepBackFaces
+            Types.MeshWithNormals bounds givenMesh webGLMesh KeepBackFaces
+
+
+collectTextured :
+    { position : Point3d Meters coordinates, uv : ( Float, Float ) }
+    -> List VertexWithUv
+    -> List VertexWithUv
+collectTextured { position, uv } accumulated =
+    let
+        ( u, v ) =
+            uv
+    in
+    { position = Point3d.toVec3 position, uv = Math.Vector2.vec2 u v }
+        :: accumulated
+
+
+textured :
+    TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
+    -> Mesh coordinates { uvs : () }
+textured givenMesh =
+    let
+        collectedVertices =
+            Array.foldr collectTextured [] (TriangularMesh.vertices givenMesh)
+    in
+    case collectedVertices of
+        [] ->
+            Types.EmptyMesh
+
+        first :: rest ->
+            let
+                bounds =
+                    vertexBounds first rest
+
+                webGLMesh =
+                    WebGL.indexedTriangles
+                        collectedVertices
+                        (TriangularMesh.faceIndices givenMesh)
+            in
+            Types.MeshWithUvs bounds givenMesh webGLMesh KeepBackFaces
 
 
 
--- textured :
---     List Option
---     -> TriangularMesh
---         { position : Point3d Meters coordinates
---         , uv : ( Float, Float )
---         }
---     -> Mesh coordinates { uvs : () }
 -- smoothTextured :
 --     List Option
 --     -> TriangularMesh
@@ -452,7 +486,11 @@ shadow mesh =
         Types.Indexed boundingBox triangularMesh _ _ ->
             shadowImpl boundingBox triangularMesh
 
-        Types.Smooth boundingBox triangularMesh _ _ ->
+        Types.MeshWithNormals boundingBox triangularMesh _ _ ->
+            shadowImpl boundingBox
+                (TriangularMesh.mapVertices .position triangularMesh)
+
+        Types.MeshWithUvs boundingBox triangularMesh _ _ ->
             shadowImpl boundingBox
                 (TriangularMesh.mapVertices .position triangularMesh)
 
@@ -527,7 +565,7 @@ buildShadowEdges numVertices faceIndices faceVertices edgeDictionary =
             Dict.values edgeDictionary
 
 
-collectShadowFaces : ShadowEdge coordinates -> List ( SmoothVertex, SmoothVertex, SmoothVertex ) -> List ( SmoothVertex, SmoothVertex, SmoothVertex )
+collectShadowFaces : ShadowEdge coordinates -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal ) -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
 collectShadowFaces { startPoint, endPoint, leftNormal, rightNormal } accumulated =
     let
         firstFace =
@@ -638,8 +676,11 @@ cullBackFaces mesh =
         Types.Indexed boundingBox triangularMesh webGLMesh _ ->
             Types.Indexed boundingBox triangularMesh webGLMesh CullBackFaces
 
-        Types.Smooth boundingBox triangularMesh webGLMesh _ ->
-            Types.Smooth boundingBox triangularMesh webGLMesh CullBackFaces
+        Types.MeshWithNormals boundingBox triangularMesh webGLMesh _ ->
+            Types.MeshWithNormals boundingBox triangularMesh webGLMesh CullBackFaces
+
+        Types.MeshWithUvs boundingBox triangularMesh webGLMesh _ ->
+            Types.MeshWithUvs boundingBox triangularMesh webGLMesh CullBackFaces
 
         Types.LineSegments _ _ _ ->
             mesh

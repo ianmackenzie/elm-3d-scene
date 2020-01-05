@@ -2,17 +2,21 @@
 
 
 module Scene3d.Shaders exposing
-    ( constantFragment
+    ( colorTextureFragment
+    , constantFragment
     , constantPointFragment
     , emissiveFragment
     , emissivePointFragment
+    , emissiveTextureFragment
     , lambertianFragment
     , physicalFragment
     , plainVertex
     , pointVertex
     , shadowFragment
     , shadowVertex
+    , smoothTexturedVertex
     , smoothVertex
+    , texturedVertex
     )
 
 import Math.Matrix4 as Matrix4 exposing (Mat4)
@@ -67,6 +71,59 @@ plainVertex =
             vec4 transformedPosition = modelMatrix * scaledPosition;
             gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
             interpolatedPosition = transformedPosition.xyz;
+        }
+    |]
+
+
+texturedVertex :
+    WebGL.Shader
+        { attributes
+            | position : Vec3
+            , uv : Vec2
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedUv : Vec2
+        }
+texturedVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 position;
+        attribute vec2 uv;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        
+        varying vec3 interpolatedPosition;
+        varying vec2 interpolatedUv;
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main() {
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedUv = uv;
         }
     |]
 
@@ -167,6 +224,64 @@ smoothVertex =
             gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
             interpolatedPosition = transformedPosition.xyz;
             interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+        }
+    |]
+
+
+smoothTexturedVertex :
+    WebGL.Shader
+        { attributes
+            | position : Vec3
+            , normal : Vec3
+            , uv : Vec2
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        }
+smoothTexturedVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 position;
+        attribute vec3 normal;
+        attribute vec2 uv;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main () {
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            interpolatedUv = uv;
         }
     |]
 
@@ -273,6 +388,29 @@ constantFragment =
     |]
 
 
+colorTextureFragment :
+    WebGL.Shader {}
+        { uniforms
+            | colorTexture : Texture
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedUv : Vec2
+        }
+colorTextureFragment =
+    [glsl|
+        precision mediump float;
+        
+        uniform sampler2D colorTexture;
+        
+        varying vec3 interpolatedPosition;
+        varying vec2 interpolatedUv;
+        
+        void main () {
+            gl_FragColor = vec4(texture(colorTexture, interpolatedUv), 1.0);
+        }
+    |]
+
+
 constantPointFragment :
     WebGL.Shader {}
         { uniforms
@@ -346,6 +484,50 @@ emissiveFragment =
         }
         
         void main () {
+            gl_FragColor = toSrgb(emissiveColor, sceneProperties);
+        }
+    |]
+
+
+emissiveTextureFragment :
+    WebGL.Shader {}
+        { uniforms
+            | colorTexture : Texture
+            , maxEmissiveLuminance : Float
+            , sceneProperties : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedUv : Vec2
+        }
+emissiveTextureFragment =
+    [glsl|
+        precision mediump float;
+        
+        uniform sampler2D colorTexture;
+        uniform float maxEmissiveLuminance;
+        uniform mat4 sceneProperties;
+        
+        varying vec3 interpolatedPosition;
+        varying vec2 interpolatedUv;
+        
+        float gammaCorrect(float u) {
+            if (u <= 0.0031308) {
+                return 12.92 * u;
+            } else {
+                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
+            }
+        }
+        
+        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
+            vec3 referenceWhite = sceneProperties[2].rgb;
+            float red = gammaCorrect(linearColor.r / referenceWhite.r);
+            float green = gammaCorrect(linearColor.g / referenceWhite.g);
+            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
+            return vec4(red, green, blue, 1.0);
+        }
+        
+        void main () {
+            vec3 emissiveColor = texture(colorTexture, interpolatedUv) * maxEmissiveLuminance;
             gl_FragColor = toSrgb(emissiveColor, sceneProperties);
         }
     |]

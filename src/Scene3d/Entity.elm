@@ -41,7 +41,17 @@ import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
 import Scene3d.Primitives as Primitives
 import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (BackFaceSetting(..), Bounds, LinearRgb(..), Material(..), Node(..), PlainVertex, SmoothVertex)
+import Scene3d.Types as Types
+    exposing
+        ( BackFaceSetting(..)
+        , Bounds
+        , LinearRgb(..)
+        , Material(..)
+        , Node(..)
+        , PlainVertex
+        , VertexWithNormal
+        , VertexWithUv
+        )
 import Sphere3d exposing (Sphere3d)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
@@ -80,7 +90,10 @@ mesh givenMesh givenMaterial =
                 Types.Indexed _ _ webGLMesh backFaceSetting ->
                     constantMesh color webGLMesh backFaceSetting
 
-                Types.Smooth _ _ webGLMesh backFaceSetting ->
+                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                    constantMesh color webGLMesh backFaceSetting
+
+                Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
                     constantMesh color webGLMesh backFaceSetting
 
                 Types.LineSegments _ _ webGLMesh ->
@@ -106,7 +119,10 @@ mesh givenMesh givenMaterial =
                 Types.Indexed _ _ webGLMesh backFaceSetting ->
                     emissiveMesh emissiveColor webGLMesh backFaceSetting
 
-                Types.Smooth _ _ webGLMesh backFaceSetting ->
+                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+
+                Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
                     emissiveMesh emissiveColor webGLMesh backFaceSetting
 
                 Types.LineSegments _ _ webGLMesh ->
@@ -132,8 +148,11 @@ mesh givenMesh givenMaterial =
                 Types.Indexed _ _ _ _ ->
                     empty
 
-                Types.Smooth _ _ webGLMesh cullBackFaces ->
+                Types.MeshWithNormals _ _ webGLMesh cullBackFaces ->
                     lambertianMesh materialColor webGLMesh cullBackFaces
+
+                Types.MeshWithUvs _ _ _ _ ->
+                    empty
 
                 Types.LineSegments _ _ _ ->
                     empty
@@ -163,13 +182,16 @@ mesh givenMesh givenMaterial =
                 Types.Indexed _ _ _ _ ->
                     empty
 
-                Types.Smooth _ _ webGLMesh backFaceSetting ->
+                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
                     physicalMesh
                         baseColor
                         roughness
                         metallic
                         webGLMesh
                         backFaceSetting
+
+                Types.MeshWithUvs _ _ _ _ ->
+                    empty
 
                 Types.LineSegments _ _ _ ->
                     empty
