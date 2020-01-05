@@ -1,7 +1,7 @@
 module Glsl exposing
     ( function, vertexShader, fragmentShader, generateModule
     , Attribute, Uniform, Varying, Constant, Function, Type, Shader
-    , float, vec2, vec3, vec4, mat4
+    , float, vec2, vec3, vec4, mat4, sampler2D
     , attribute, uniform, varying, constant
     )
 
@@ -11,7 +11,7 @@ module Glsl exposing
 
 @docs Attribute, Uniform, Varying, Constant, Function, Type, Shader
 
-@docs float, vec2, vec3, vec4, mat4
+@docs float, vec2, vec3, vec4, mat4, sampler2D
 
 @docs attribute, uniform, varying, constant
 
@@ -49,6 +49,11 @@ vec4 =
 mat4 : Type
 mat4 =
     Type "mat4"
+
+
+sampler2D : Type
+sampler2D =
+    Type "sampler2D"
 
 
 type Attribute
