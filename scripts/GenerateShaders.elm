@@ -1064,7 +1064,7 @@ colorTextureFragmentShader =
         }
         """
         void main () {
-            gl_FragColor = vec4(texture(colorTexture, interpolatedUv), 1.0);
+            gl_FragColor = texture2D(colorTexture, interpolatedUv);
         }
         """
 
@@ -1110,7 +1110,7 @@ emissiveTextureFragmentShader =
         }
         """
         void main () {
-            vec3 emissiveColor = texture(colorTexture, interpolatedUv) * maxEmissiveLuminance;
+            vec3 emissiveColor = texture2D(colorTexture, interpolatedUv).rgb * maxEmissiveLuminance;
             gl_FragColor = toSrgb(emissiveColor, sceneProperties);
         }
         """
@@ -1214,7 +1214,7 @@ lambertianTextureFragmentShader =
         void main() {
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-            vec3 materialColor = texture(materialColorTexture, interpolatedUv);
+            vec3 materialColor = texture2D(materialColorTexture, interpolatedUv).rgb;
             vec3 environmentalLighting = lambertianEnvironmentalLighting(
                 normalDirection,
                 materialColor,
@@ -1333,9 +1333,9 @@ physicalTexturesFragmentShader =
         }
         """
         void main() {
-            vec3 baseColor = texture(baseColorTexture, interpolatedUv);
-            float roughness = texture(roughnessTexture, interpolatedUv).r;
-            float metallic = texture(metallicTexture, interpolatedUv).r;
+            vec3 baseColor = texture2D(baseColorTexture, interpolatedUv).rgb;
+            float roughness = texture2D(roughnessTexture, interpolatedUv).r;
+            float metallic = texture2D(metallicTexture, interpolatedUv).r;
 
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);

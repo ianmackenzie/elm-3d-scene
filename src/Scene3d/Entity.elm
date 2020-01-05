@@ -29,6 +29,7 @@ import Frame3d exposing (Frame3d)
 import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
+import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
@@ -58,6 +59,7 @@ import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
+import WebGL.Texture exposing (Texture)
 
 
 type alias Entity coordinates =
@@ -219,6 +221,38 @@ mesh givenMesh givenMaterial =
                 Types.Points _ _ _ _ ->
                     empty
 
+        Types.ColorTextureMaterial texture ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.Facets _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
+                    colorTextureMesh texture webGLMesh backFaceSetting
+
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                    colorTextureMesh texture webGLMesh backFaceSetting
+
+                Types.LineSegments _ _ webGLMesh ->
+                    empty
+
+                Types.Polyline _ _ webGLMesh ->
+                    empty
+
+                Types.Points _ radius _ webGLMesh ->
+                    empty
+
 
 sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
 sphere givenSphere givenMaterial castsShadow =
@@ -356,6 +390,25 @@ constantMesh color webGLMesh backFaceSetting =
                     Shaders.constantFragment
                     webGLMesh
                     { constantColor = color
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+
+
+colorTextureMesh : Texture -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+colorTextureMesh texture webGLMesh backFaceSetting =
+    Types.Entity <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded backFaceSetting settings)
+                    Shaders.texturedVertex
+                    Shaders.colorTextureFragment
+                    webGLMesh
+                    { colorTexture = texture
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix

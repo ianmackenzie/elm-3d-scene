@@ -3,7 +3,7 @@ module Scene3d.Material exposing
     , Plain, ForMeshWithNormals, ForMeshWithUvs, ForMeshWithNormalsAndUvs, ForMeshWithTangents
     , solidColor, diffuse, emissive
     , metal, nonmetal, hybrid
-    -- , solidColorTexture
+    , colorTexture
     -- , emissiveTexture
     -- , diffuseTexture
     -- , texturedMetal
@@ -28,6 +28,11 @@ module Scene3d.Material exposing
 
 @docs metal, nonmetal, hybrid
 
+
+## Simple textured materials
+
+@docs colorTexture
+
 -}
 
 import Color exposing (Color)
@@ -36,6 +41,7 @@ import Math.Vector3 exposing (Vec3)
 import Scene3d.Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Types as Types exposing (LinearRgb(..))
+import WebGL.Texture exposing (Texture)
 
 
 type alias Material properties =
@@ -105,6 +111,11 @@ hybrid { baseColor, roughness, metallic } =
         (ColorConversions.colorToLinearRgb baseColor)
         (clamp 0 1 roughness)
         (clamp 0 1 metallic)
+
+
+colorTexture : Texture -> Material { a | uvs : () }
+colorTexture givenTexture =
+    Types.ColorTextureMaterial givenTexture
 
 
 

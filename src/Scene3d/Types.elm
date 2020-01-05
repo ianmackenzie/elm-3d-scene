@@ -90,6 +90,7 @@ type Material properties
     | EmissiveMaterial LinearRgb
     | LambertianMaterial LinearRgb
     | PbrMaterial LinearRgb Float Float
+    | ColorTextureMaterial Texture
 
 
 type BackFaceSetting
