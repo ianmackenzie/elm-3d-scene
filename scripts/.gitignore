@@ -1,3 +1,4 @@
 *.glsl
 elm-script
+elm-script.cmd
 Shaders.elm
