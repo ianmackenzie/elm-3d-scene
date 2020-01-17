@@ -551,7 +551,12 @@ shadowImpl boundingBox triangularMesh =
     Types.Shadow shadowEdges (WebGL.triangles shadowVolumeFaces)
 
 
-buildShadowEdges : Int -> List ( Int, Int, Int ) -> List ( Point3d Meters coordinates, Point3d Meters coordinates, Point3d Meters coordinates ) -> Dict Int (ShadowEdge coordinates) -> List (ShadowEdge coordinates)
+buildShadowEdges :
+    Int
+    -> List ( Int, Int, Int )
+    -> List ( Point3d Meters coordinates, Point3d Meters coordinates, Point3d Meters coordinates )
+    -> Dict Int (ShadowEdge coordinates)
+    -> List (ShadowEdge coordinates)
 buildShadowEdges numVertices faceIndices faceVertices edgeDictionary =
     case faceIndices of
         ( i, j, k ) :: remainingFaceIndices ->
@@ -591,7 +596,10 @@ buildShadowEdges numVertices faceIndices faceVertices edgeDictionary =
             Dict.values edgeDictionary
 
 
-collectShadowFaces : ShadowEdge coordinates -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal ) -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
+collectShadowFaces :
+    ShadowEdge coordinates
+    -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
+    -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
 collectShadowFaces { startPoint, endPoint, leftNormal, rightNormal } accumulated =
     let
         firstFace =
@@ -618,7 +626,14 @@ edgeKey numVertices i j =
         j * numVertices + i
 
 
-updateShadowEdge : Int -> Int -> Point3d Meters coordinates -> Point3d Meters coordinates -> Vector3d Unitless coordinates -> Maybe (ShadowEdge coordinates) -> Maybe (ShadowEdge coordinates)
+updateShadowEdge :
+    Int
+    -> Int
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Vector3d Unitless coordinates
+    -> Maybe (ShadowEdge coordinates)
+    -> Maybe (ShadowEdge coordinates)
 updateShadowEdge i j pi pj normalVector currentEntry =
     case currentEntry of
         Nothing ->
