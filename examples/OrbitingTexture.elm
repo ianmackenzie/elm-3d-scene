@@ -5,7 +5,7 @@ import Array
 import Browser
 import Browser.Events
 import Camera3d
-import Color
+import Color exposing (Color)
 import Html exposing (Html)
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
@@ -36,7 +36,7 @@ type alias Model =
     , elevation : Angle
     , orbiting : Bool
     , mesh : Mesh.WithUvs World
-    , texture : Maybe Texture
+    , texture : Maybe (Material.Channel Color { uvs : () })
     }
 
 
@@ -44,7 +44,7 @@ type Msg
     = MouseDown
     | MouseUp
     | MouseMove Float Float
-    | GotTexture (Result Texture.Error Texture)
+    | GotTexture (Result Texture.Error (Material.Channel Color { uvs : () }))
 
 
 init : () -> ( Model, Cmd Msg )
@@ -83,8 +83,7 @@ init () =
       , texture = Nothing
       }
     , Task.attempt GotTexture
-        (Texture.load "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/512px-Elm_logo.svg.png")
-      --(Texture.load "https://avatars0.githubusercontent.com/u/1576199?s=256&v=4")
+        (Material.load "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/512px-Elm_logo.svg.png")
     )
 
 
@@ -180,7 +179,7 @@ view model =
                     , exposure = Scene3d.defaultExposure
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     }
-                    [ Scene3d.mesh model.mesh (Material.colorTexture texture)
+                    [ Scene3d.mesh model.mesh (Material.unlit texture)
                     ]
                 ]
 
