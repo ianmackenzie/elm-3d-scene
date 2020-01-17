@@ -24,7 +24,7 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : Mesh.WithNormals coordinates
+sphere : Mesh.WithNormalsAndUvs coordinates
 sphere =
     let
         n =
@@ -47,7 +47,7 @@ sphere =
                     (Angle.degrees -90)
                 )
 
-        pointsAndNormals =
+        vertices =
             thetaValues
                 |> List.map
                     (\theta ->
@@ -65,6 +65,12 @@ sphere =
                                             theta
                                             phi
                                             |> Direction3d.toVector
+                                    , uv =
+                                        ( Quantity.ratio theta (Angle.turns 1)
+                                        , Quantity.ratio
+                                            (phi |> Quantity.plus (Angle.degrees 90))
+                                            (Angle.degrees 180)
+                                        )
                                     }
                                 )
                     )
@@ -114,7 +120,7 @@ sphere =
                     )
                 |> List.concat
     in
-    Mesh.withNormals (TriangularMesh.indexed pointsAndNormals faces)
+    Mesh.withNormalsAndUvs (TriangularMesh.indexed vertices faces)
         |> Mesh.cullBackFaces
 
 

@@ -11,7 +11,7 @@ import Color exposing (Color)
 import Scene3d.Material as Material exposing (Material)
 
 
-gold : Material.ForMeshWithNormals
+gold : Material { a | normals : () }
 gold =
     Material.metal
         { baseColor = Material.constant (Color.fromRGB ( 255, 195, 86 ))
@@ -19,7 +19,7 @@ gold =
         }
 
 
-aluminum : Material.ForMeshWithNormals
+aluminum : Material { a | normals : () }
 aluminum =
     Material.metal
         { baseColor = Material.constant (Color.fromRGB ( 233, 235, 236 ))
@@ -27,7 +27,7 @@ aluminum =
         }
 
 
-copper : Material.ForMeshWithNormals
+copper : Material { a | normals : () }
 copper =
     Material.metal
         { baseColor = Material.constant (Color.fromRGB ( 244, 162, 137 ))
@@ -35,7 +35,7 @@ copper =
         }
 
 
-chromium : Material.ForMeshWithNormals
+chromium : Material { a | normals : () }
 chromium =
     Material.metal
         { baseColor = Material.constant (Color.fromRGB ( 140, 142, 141 ))
@@ -43,7 +43,7 @@ chromium =
         }
 
 
-blackPlastic : Material.ForMeshWithNormals
+blackPlastic : Material { a | normals : () }
 blackPlastic =
     Material.nonmetal
         { baseColor = Material.constant (Color.fromRGB ( 0, 0, 0 ))
@@ -51,7 +51,7 @@ blackPlastic =
         }
 
 
-whitePlastic : Material.ForMeshWithNormals
+whitePlastic : Material { a | normals : () }
 whitePlastic =
     Material.nonmetal
         { baseColor = Material.constant (Color.fromRGB ( 255, 255, 255 ))

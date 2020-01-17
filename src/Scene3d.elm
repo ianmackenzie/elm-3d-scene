@@ -91,7 +91,7 @@ nothing =
     Entity.empty
 
 
-sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormals -> { castsShadow : Bool } -> Entity coordinates
+sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> { castsShadow : Bool } -> Entity coordinates
 sphere givenSphere givenMaterial { castsShadow } =
     Entity.sphere givenSphere givenMaterial castsShadow
 

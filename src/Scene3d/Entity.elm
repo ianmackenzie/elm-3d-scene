@@ -436,7 +436,7 @@ resolve baseColorChannel roughnessChannel metallicChannel =
                 ( data, zeroVec2 )
 
 
-sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
+sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> Bool -> Entity coordinates
 sphere givenSphere givenMaterial castsShadow =
     let
         (Quantity r) =
