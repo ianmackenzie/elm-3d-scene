@@ -159,10 +159,16 @@ materials =
         [ Materials.aluminum
         , Materials.whitePlastic
         , Materials.copper
-        , Material.nonmetal { baseColor = Tango.skyBlue1, roughness = 0.25 }
+        , Material.nonmetal
+            { baseColor = Material.constant Tango.skyBlue1
+            , roughness = Material.constant 0.25
+            }
         , Materials.gold
         , Materials.whitePlastic
-        , Material.nonmetal { baseColor = Tango.skyBlue2, roughness = 0.25 }
+        , Material.nonmetal
+            { baseColor = Material.constant Tango.skyBlue2
+            , roughness = Material.constant 0.25
+            }
         ]
 
 

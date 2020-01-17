@@ -31,6 +31,7 @@ import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
+import Math.Vector4 exposing (Vec4)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
@@ -46,6 +47,7 @@ import Scene3d.Types as Types
     exposing
         ( BackFaceSetting(..)
         , Bounds
+        , Channel(..)
         , LinearRgb(..)
         , Material(..)
         , Node(..)
@@ -78,7 +80,7 @@ empty =
 mesh : Mesh coordinates properties -> Material properties -> Entity coordinates
 mesh givenMesh givenMaterial =
     case givenMaterial of
-        Types.ConstantMaterial color ->
+        Types.UnlitMaterial (Types.Constant color) ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -110,7 +112,39 @@ mesh givenMesh givenMaterial =
                 Types.Points _ radius _ webGLMesh ->
                     constantPointMesh color radius webGLMesh
 
-        Types.EmissiveMaterial (LinearRgb emissiveColor) ->
+        Types.UnlitMaterial (Types.Textured { data }) ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.Facets _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
+                    colorTextureMesh data webGLMesh backFaceSetting
+
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                    colorTextureMesh data webGLMesh backFaceSetting
+
+                Types.LineSegments _ _ webGLMesh ->
+                    empty
+
+                Types.Polyline _ _ webGLMesh ->
+                    empty
+
+                Types.Points _ radius _ webGLMesh ->
+                    empty
+
+        Types.EmissiveMaterial (Types.Constant (LinearRgb emissiveColor)) backlight ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -142,7 +176,39 @@ mesh givenMesh givenMaterial =
                 Types.Points _ radius _ webGLMesh ->
                     emissivePointMesh emissiveColor radius webGLMesh
 
-        Types.LambertianMaterial (LinearRgb materialColor) ->
+        Types.EmissiveMaterial (Types.Textured { data }) backlight ->
+            case givenMesh of
+                Types.EmptyMesh ->
+                    empty
+
+                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.Facets _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                    empty
+
+                Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
+                    texturedEmissiveMesh data backlight webGLMesh backFaceSetting
+
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                    texturedEmissiveMesh data backlight webGLMesh backFaceSetting
+
+                Types.LineSegments _ _ webGLMesh ->
+                    empty
+
+                Types.Polyline _ _ webGLMesh ->
+                    empty
+
+                Types.Points _ radius _ webGLMesh ->
+                    empty
+
+        Types.LambertianMaterial (Types.Constant (LinearRgb materialColor)) ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -174,7 +240,7 @@ mesh givenMesh givenMaterial =
                 Types.Points _ _ _ _ ->
                     empty
 
-        Types.PbrMaterial (LinearRgb baseColor) roughness metallic ->
+        Types.LambertianMaterial (Types.Textured { data }) ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -182,35 +248,20 @@ mesh givenMesh givenMaterial =
                 Types.Triangles _ _ _ _ ->
                     empty
 
-                Types.Facets _ _ webGLMesh backFaceSetting ->
-                    physicalMesh
-                        baseColor
-                        roughness
-                        metallic
-                        webGLMesh
-                        backFaceSetting
+                Types.Facets _ _ webGLMesh cullBackFaces ->
+                    empty
 
                 Types.Indexed _ _ _ _ ->
                     empty
 
-                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
-                    physicalMesh
-                        baseColor
-                        roughness
-                        metallic
-                        webGLMesh
-                        backFaceSetting
+                Types.MeshWithNormals _ _ webGLMesh cullBackFaces ->
+                    empty
 
                 Types.MeshWithUvs _ _ _ _ ->
                     empty
 
-                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
-                    physicalMesh
-                        baseColor
-                        roughness
-                        metallic
-                        webGLMesh
-                        backFaceSetting
+                Types.MeshWithNormalsAndUvs _ _ webGLMesh cullBackFaces ->
+                    texturedLambertianMesh data webGLMesh cullBackFaces
 
                 Types.LineSegments _ _ _ ->
                     empty
@@ -221,37 +272,168 @@ mesh givenMesh givenMaterial =
                 Types.Points _ _ _ _ ->
                     empty
 
-        Types.ColorTextureMaterial texture ->
-            case givenMesh of
-                Types.EmptyMesh ->
-                    empty
+        Types.PbrMaterial baseColorChannel roughnessChannel metallicChannel ->
+            case resolve baseColorChannel roughnessChannel metallicChannel of
+                ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
+                    case givenMesh of
+                        Types.EmptyMesh ->
+                            empty
 
-                Types.Triangles _ _ webGLMesh backFaceSetting ->
-                    empty
+                        Types.Triangles _ _ _ _ ->
+                            empty
 
-                Types.Facets _ _ webGLMesh backFaceSetting ->
-                    empty
+                        Types.Facets _ _ webGLMesh backFaceSetting ->
+                            physicalMesh
+                                baseColor
+                                roughness
+                                metallic
+                                webGLMesh
+                                backFaceSetting
 
-                Types.Indexed _ _ webGLMesh backFaceSetting ->
-                    empty
+                        Types.Indexed _ _ _ _ ->
+                            empty
 
-                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
-                    empty
+                        Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                            physicalMesh
+                                baseColor
+                                roughness
+                                metallic
+                                webGLMesh
+                                backFaceSetting
 
-                Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
-                    colorTextureMesh texture webGLMesh backFaceSetting
+                        Types.MeshWithUvs _ _ _ _ ->
+                            empty
 
-                Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
-                    colorTextureMesh texture webGLMesh backFaceSetting
+                        Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                            physicalMesh
+                                baseColor
+                                roughness
+                                metallic
+                                webGLMesh
+                                backFaceSetting
 
-                Types.LineSegments _ _ webGLMesh ->
-                    empty
+                        Types.LineSegments _ _ _ ->
+                            empty
 
-                Types.Polyline _ _ webGLMesh ->
-                    empty
+                        Types.Polyline _ _ _ ->
+                            empty
 
-                Types.Points _ radius _ webGLMesh ->
-                    empty
+                        Types.Points _ _ _ _ ->
+                            empty
+
+                TexturedPbrMaterial ( baseColorTexture, constantBaseColor ) ( roughnessTexture, constantRoughness ) ( metallicTexture, constantMetallic ) ->
+                    case givenMesh of
+                        Types.EmptyMesh ->
+                            empty
+
+                        Types.Triangles _ _ _ _ ->
+                            empty
+
+                        Types.Facets _ _ webGLMesh backFaceSetting ->
+                            empty
+
+                        Types.Indexed _ _ _ _ ->
+                            empty
+
+                        Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                            empty
+
+                        Types.MeshWithUvs _ _ _ _ ->
+                            empty
+
+                        Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
+                            texturedPhysicalMesh
+                                baseColorTexture
+                                constantBaseColor
+                                roughnessTexture
+                                constantRoughness
+                                metallicTexture
+                                constantMetallic
+                                webGLMesh
+                                backFaceSetting
+
+                        Types.LineSegments _ _ _ ->
+                            empty
+
+                        Types.Polyline _ _ _ ->
+                            empty
+
+                        Types.Points _ _ _ _ ->
+                            empty
+
+
+type ResolvedPbrMaterial
+    = ConstantPbrMaterial LinearRgb Float Float
+    | TexturedPbrMaterial ( Texture, Vec4 ) ( Texture, Vec2 ) ( Texture, Vec2 )
+
+
+zeroVec2 : Vec2
+zeroVec2 =
+    Math.Vector2.vec2 0 0
+
+
+zeroVec4 : Vec4
+zeroVec4 =
+    Math.Vector4.vec4 0 0 0 0
+
+
+enabledVec3 : Vec3 -> Vec4
+enabledVec3 vector =
+    Math.Vector4.vec4
+        (Math.Vector3.getX vector)
+        (Math.Vector3.getY vector)
+        (Math.Vector3.getZ vector)
+        1
+
+
+enabledFloat : Float -> Vec2
+enabledFloat givenValue =
+    Math.Vector2.vec2 givenValue 1
+
+
+vec3Tuple : Texture -> Channel LinearRgb vertexAttributes -> ( Texture, Vec4 )
+vec3Tuple fallbackTexture channel =
+    case channel of
+        Types.Constant (LinearRgb baseColor) ->
+            ( fallbackTexture, enabledVec3 baseColor )
+
+        Types.Textured { data } ->
+            ( data, zeroVec4 )
+
+
+floatTuple : Texture -> Channel Float vertexAttributes -> ( Texture, Vec2 )
+floatTuple fallbackTexture channel =
+    case channel of
+        Types.Constant value ->
+            ( fallbackTexture, enabledFloat value )
+
+        Types.Textured { data } ->
+            ( data, zeroVec2 )
+
+
+resolve : Channel LinearRgb vertexAttributes -> Channel Float vertexAttributes -> Channel Float vertexAttributes -> ResolvedPbrMaterial
+resolve baseColorChannel roughnessChannel metallicChannel =
+    case ( baseColorChannel, roughnessChannel, metallicChannel ) of
+        ( Types.Constant baseColor, Types.Constant roughness, Types.Constant metallic ) ->
+            ConstantPbrMaterial baseColor roughness metallic
+
+        ( Types.Textured { data }, _, _ ) ->
+            TexturedPbrMaterial
+                ( data, zeroVec4 )
+                (floatTuple data roughnessChannel)
+                (floatTuple data metallicChannel)
+
+        ( _, Types.Textured { data }, _ ) ->
+            TexturedPbrMaterial
+                (vec3Tuple data baseColorChannel)
+                ( data, zeroVec2 )
+                (floatTuple data metallicChannel)
+
+        ( _, _, Types.Textured { data } ) ->
+            TexturedPbrMaterial
+                (vec3Tuple data baseColorChannel)
+                (floatTuple data roughnessChannel)
+                ( data, zeroVec2 )
 
 
 sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
@@ -456,6 +638,26 @@ emissiveMesh color webGLMesh backFaceSetting =
             )
 
 
+texturedEmissiveMesh : Texture -> Float -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedEmissiveMesh colorTexture backlight webGLMesh backFaceSetting =
+    Types.Entity <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded backFaceSetting settings)
+                    Shaders.texturedVertex
+                    Shaders.emissiveTextureFragment
+                    webGLMesh
+                    { colorTexture = colorTexture
+                    , backlight = backlight
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+
+
 emissivePointMesh : Vec3 -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
 emissivePointMesh color radius webGLMesh =
     Types.Entity <|
@@ -500,6 +702,30 @@ lambertianMesh color webGLMesh backFaceSetting =
             )
 
 
+texturedLambertianMesh : Texture -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedLambertianMesh texture webGLMesh backFaceSetting =
+    Types.Entity <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded backFaceSetting settings)
+                    Shaders.smoothTexturedVertex
+                    Shaders.lambertianTextureFragment
+                    webGLMesh
+                    { materialColorTexture = texture
+                    , sceneProperties = sceneProperties
+                    , environmentalLighting = environmentalLighting
+                    , lightSources12 = lightSources.lightSources12
+                    , lightSources34 = lightSources.lightSources34
+                    , lightSources56 = lightSources.lightSources56
+                    , lightSources78 = lightSources.lightSources78
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+
+
 physicalMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
 physicalMesh color roughness metallic webGLMesh backFaceSetting =
     Types.Entity <|
@@ -513,6 +739,35 @@ physicalMesh color roughness metallic webGLMesh backFaceSetting =
                     { baseColor = color
                     , roughness = roughness
                     , metallic = metallic
+                    , sceneProperties = sceneProperties
+                    , environmentalLighting = environmentalLighting
+                    , lightSources12 = lightSources.lightSources12
+                    , lightSources34 = lightSources.lightSources34
+                    , lightSources56 = lightSources.lightSources56
+                    , lightSources78 = lightSources.lightSources78
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    }
+            )
+
+
+texturedPhysicalMesh : Texture -> Vec4 -> Texture -> Vec2 -> Texture -> Vec2 -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedPhysicalMesh baseColorTexture constantBaseColor roughnessTexture constantRoughness metallicTexture constantMetallic webGLMesh backFaceSetting =
+    Types.Entity <|
+        MeshNode
+            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                WebGL.entityWith
+                    (meshSettings isRightHanded backFaceSetting settings)
+                    Shaders.smoothTexturedVertex
+                    Shaders.physicalTexturesFragment
+                    webGLMesh
+                    { baseColorTexture = baseColorTexture
+                    , constantBaseColor = constantBaseColor
+                    , roughnessTexture = roughnessTexture
+                    , constantRoughness = constantRoughness
+                    , metallicTexture = metallicTexture
+                    , constantMetallic = constantMetallic
                     , sceneProperties = sceneProperties
                     , environmentalLighting = environmentalLighting
                     , lightSources12 = lightSources.lightSources12

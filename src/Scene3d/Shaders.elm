@@ -495,7 +495,7 @@ emissiveTextureFragment :
     WebGL.Shader {}
         { uniforms
             | colorTexture : Texture
-            , maxEmissiveLuminance : Float
+            , backlight : Float
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
@@ -506,7 +506,7 @@ emissiveTextureFragment =
         precision mediump float;
         
         uniform sampler2D colorTexture;
-        uniform float maxEmissiveLuminance;
+        uniform float backlight;
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
@@ -529,7 +529,7 @@ emissiveTextureFragment =
         }
         
         void main () {
-            vec3 emissiveColor = texture2D(colorTexture, interpolatedUv).rgb * maxEmissiveLuminance;
+            vec3 emissiveColor = texture2D(colorTexture, interpolatedUv).rgb * backlight;
             gl_FragColor = toSrgb(emissiveColor, sceneProperties);
         }
     |]
@@ -642,10 +642,10 @@ lambertianFragment =
             mat4 viewMatrix,
             mat4 environmentalLighting
         ) {
-            float enviromentalLightingType = environmentalLighting[0][3];
-            if (enviromentalLightingType == kNoEnvironmentalLighting) {
+            float environmentalLightingType = environmentalLighting[0][3];
+            if (environmentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
-            } else if (enviromentalLightingType == kSoftLighting) {
+            } else if (environmentalLightingType == kSoftLighting) {
                 vec3 upDirection = environmentalLighting[0].xyz;
                 vec3 aboveLuminance = environmentalLighting[1].rgb;
                 vec3 belowLuminance = environmentalLighting[2].rgb;
@@ -784,6 +784,37 @@ lambertianFragment =
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
+        vec3 lambertianLighting(
+            vec3 position,
+            vec3 normalDirection,
+            vec3 materialColor,
+            vec3 directionToCamera,
+            mat4 viewMatrix,
+            mat4 environmentalLighting,
+            mat4 lightSources12,
+            mat4 lightSources34,
+            mat4 lightSources56,
+            mat4 lightSources78
+        ) {
+            vec3 environmentalContribution = lambertianEnvironmentalLighting(
+                normalDirection,
+                materialColor,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
+            vec3 directContribution = lambertianDirectLighting(
+                position,
+                normalDirection,
+                materialColor,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
+            return environmentalContribution + directContribution;
+        }
+        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -803,23 +834,20 @@ lambertianFragment =
         void main() {
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-            vec3 environmentalLighting = lambertianEnvironmentalLighting(
+        
+            vec3 linearColor = lambertianLighting(
+                interpolatedPosition,
                 normalDirection,
                 materialColor,
                 directionToCamera,
                 viewMatrix,
-                environmentalLighting
-            );
-            vec3 directLighting = lambertianDirectLighting(
-                interpolatedPosition,
-                normalDirection,
-                materialColor,
+                environmentalLighting,
                 lightSources12,
                 lightSources34,
                 lightSources56,
                 lightSources78
             );
-            vec3 linearColor = environmentalLighting + directLighting;
+        
             gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
     |]
@@ -894,10 +922,10 @@ lambertianTextureFragment =
             mat4 viewMatrix,
             mat4 environmentalLighting
         ) {
-            float enviromentalLightingType = environmentalLighting[0][3];
-            if (enviromentalLightingType == kNoEnvironmentalLighting) {
+            float environmentalLightingType = environmentalLighting[0][3];
+            if (environmentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
-            } else if (enviromentalLightingType == kSoftLighting) {
+            } else if (environmentalLightingType == kSoftLighting) {
                 vec3 upDirection = environmentalLighting[0].xyz;
                 vec3 aboveLuminance = environmentalLighting[1].rgb;
                 vec3 belowLuminance = environmentalLighting[2].rgb;
@@ -1056,23 +1084,20 @@ lambertianTextureFragment =
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = texture2D(materialColorTexture, interpolatedUv).rgb;
-            vec3 environmentalLighting = lambertianEnvironmentalLighting(
+        
+            vec3 linearColor = lambertianLighting(
+                interpolatedPosition,
                 normalDirection,
                 materialColor,
                 directionToCamera,
                 viewMatrix,
-                environmentalLighting
-            );
-            vec3 directLighting = lambertianDirectLighting(
-                interpolatedPosition,
-                normalDirection,
-                materialColor,
+                environmentalLighting,
                 lightSources12,
                 lightSources34,
                 lightSources56,
                 lightSources78
             );
-            vec3 linearColor = environmentalLighting + directLighting;
+        
             gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
     |]
@@ -1198,16 +1223,16 @@ physicalFragment =
             float alpha,
             vec3 directionToCamera,
             mat4 viewMatrix,
-            mat4 enviromentalLighting
+            mat4 environmentalLighting
         ) {
-            float enviromentalLightingType = environmentalLighting[0].w;
+            float environmentalLightingType = environmentalLighting[0].w;
             float alphaSquared = alpha * alpha;
         
-            if (enviromentalLightingType == kNoEnvironmentalLighting) {
+            if (environmentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
             }
         
-            if (enviromentalLightingType == kSoftLighting) {
+            if (environmentalLightingType == kSoftLighting) {
                 vec3 upDirection = environmentalLighting[0].xyz;
                 vec3 aboveLuminance = environmentalLighting[1].rgb;
                 vec3 belowLuminance = environmentalLighting[2].rgb;
@@ -1435,6 +1460,51 @@ physicalFragment =
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
+        vec3 physicalLighting(
+            vec3 position,
+            vec3 normalDirection,
+            vec3 baseColor,
+            vec3 directionToCamera,
+            mat4 viewMatrix,
+            float roughness,
+            float metallic,
+            mat4 environmentalLighting,
+            mat4 lightSources12,
+            mat4 lightSources34,
+            mat4 lightSources56,
+            mat4 lightSources78
+        ) {
+            float alpha = roughness * roughness;
+            float nonmetallic = 1.0 - metallic;
+            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
+            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
+        
+            vec3 environmentalContribution = physicalEnvironmentalLighting(
+                normalDirection,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
+        
+            vec3 directContribution = physicalDirectLighting(
+                interpolatedPosition,
+                normalDirection,
+                directionToCamera,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
+        
+            return environmentalContribution + directContribution;
+        }
+        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -1455,35 +1525,21 @@ physicalFragment =
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
-            float alpha = roughness * roughness;
-            float nonmetallic = 1.0 - metallic;
-            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
-            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
-        
-            vec3 environmentalLighting = physicalEnvironmentalLighting(
-                normalDirection,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting
-            );
-        
-            vec3 directLighting = physicalDirectLighting(
+            vec3 linearColor = physicalLighting(
                 interpolatedPosition,
                 normalDirection,
+                baseColor,
                 directionToCamera,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
+                viewMatrix,
+                roughness,
+                metallic,
+                environmentalLighting,
                 lightSources12,
                 lightSources34,
                 lightSources56,
                 lightSources78
             );
         
-            vec3 linearColor = environmentalLighting + directLighting;
             gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
     |]
@@ -1500,8 +1556,11 @@ physicalTexturesFragment :
             , lightSources56 : Mat4
             , lightSources78 : Mat4
             , baseColorTexture : Texture
+            , constantBaseColor : Vec4
             , roughnessTexture : Texture
+            , constantRoughness : Vec2
             , metallicTexture : Texture
+            , constantMetallic : Vec2
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
@@ -1519,8 +1578,11 @@ physicalTexturesFragment =
         uniform mat4 lightSources56;
         uniform mat4 lightSources78;
         uniform sampler2D baseColorTexture;
+        uniform vec4 constantBaseColor;
         uniform sampler2D roughnessTexture;
+        uniform vec2 constantRoughness;
         uniform sampler2D metallicTexture;
+        uniform vec2 constantMetallic;
         
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
@@ -1611,16 +1673,16 @@ physicalTexturesFragment =
             float alpha,
             vec3 directionToCamera,
             mat4 viewMatrix,
-            mat4 enviromentalLighting
+            mat4 environmentalLighting
         ) {
-            float enviromentalLightingType = environmentalLighting[0].w;
+            float environmentalLightingType = environmentalLighting[0].w;
             float alphaSquared = alpha * alpha;
         
-            if (enviromentalLightingType == kNoEnvironmentalLighting) {
+            if (environmentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
             }
         
-            if (enviromentalLightingType == kSoftLighting) {
+            if (environmentalLightingType == kSoftLighting) {
                 vec3 upDirection = environmentalLighting[0].xyz;
                 vec3 aboveLuminance = environmentalLighting[1].rgb;
                 vec3 belowLuminance = environmentalLighting[2].rgb;
@@ -1865,42 +1927,28 @@ physicalTexturesFragment =
         }
         
         void main() {
-            vec3 baseColor = texture2D(baseColorTexture, interpolatedUv).rgb;
-            float roughness = texture2D(roughnessTexture, interpolatedUv).r;
-            float metallic = texture2D(metallicTexture, interpolatedUv).r;
+            vec3 baseColor = texture2D(baseColorTexture, interpolatedUv).rgb * (1 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
+            float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
+            float metallic = texture2D(metallicTexture, interpolatedUv).r * (1 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
         
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
-            float alpha = roughness * roughness;
-            float nonmetallic = 1.0 - metallic;
-            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
-            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
-        
-            vec3 environmentalLighting = physicalEnvironmentalLighting(
-                normalDirection,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting
-            );
-        
-            vec3 directLighting = physicalDirectLighting(
+            vec3 linearColor = physicalLighting(
                 interpolatedPosition,
                 normalDirection,
+                baseColor,
                 directionToCamera,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
+                viewMatrix,
+                roughness,
+                metallic,
+                environmentalLighting,
                 lightSources12,
                 lightSources34,
                 lightSources56,
                 lightSources78
             );
         
-            vec3 linearColor = environmentalLighting + directLighting;
             gl_FragColor = toSrgb(linearColor, sceneProperties);
         }
     |]

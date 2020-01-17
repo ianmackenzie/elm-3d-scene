@@ -20,7 +20,7 @@ import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
-import WebGL.Texture exposing (Texture)
+import WebGL.Texture
 
 
 type alias Transformation =
@@ -85,12 +85,20 @@ type alias VertexWithTangent =
     }
 
 
-type Material properties
-    = ConstantMaterial Vec3
-    | EmissiveMaterial LinearRgb
-    | LambertianMaterial LinearRgb
-    | PbrMaterial LinearRgb Float Float
-    | ColorTextureMaterial Texture
+type Material vertexAttributes
+    = UnlitMaterial (Channel Vec3 vertexAttributes)
+    | EmissiveMaterial (Channel LinearRgb vertexAttributes) Float
+    | LambertianMaterial (Channel LinearRgb vertexAttributes)
+    | PbrMaterial (Channel LinearRgb vertexAttributes) (Channel Float vertexAttributes) (Channel Float vertexAttributes)
+
+
+type Channel value vertexAttributes
+    = Constant value
+    | Textured
+        { url : String
+        , options : WebGL.Texture.Options
+        , data : WebGL.Texture.Texture
+        }
 
 
 type BackFaceSetting
@@ -98,7 +106,7 @@ type BackFaceSetting
     | CullBackFaces
 
 
-type Mesh coordinates properties
+type Mesh coordinates vertexAttributes
     = EmptyMesh
     | Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
     | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh VertexWithNormal) BackFaceSetting

@@ -55,8 +55,8 @@ camera =
 material : Material.ForMeshWithNormals
 material =
     Material.nonmetal
-        { baseColor = Tango.skyBlue2
-        , roughness = 0.4
+        { baseColor = Material.constant Tango.skyBlue2
+        , roughness = Material.constant 0.4
         }
 
 

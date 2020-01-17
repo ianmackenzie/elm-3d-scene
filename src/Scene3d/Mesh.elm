@@ -59,8 +59,8 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
-type alias Mesh coordinates properties =
-    Types.Mesh coordinates properties
+type alias Mesh coordinates vertexAttributes =
+    Types.Mesh coordinates vertexAttributes
 
 
 type alias Plain coordinates =
@@ -87,7 +87,7 @@ type alias Shadow coordinates =
     Types.Shadow coordinates
 
 
-empty : Mesh coordinates properties
+empty : Mesh coordinates vertexAttributes
 empty =
     Types.EmptyMesh
 
@@ -485,7 +485,7 @@ points { radius } givenPoints =
             Types.Points bounds (inPixels radius) givenPoints webGLMesh
 
 
-shadow : Mesh coordinates properties -> Shadow coordinates
+shadow : Mesh coordinates vertexAttributes -> Shadow coordinates
 shadow mesh =
     case mesh of
         Types.EmptyMesh ->
@@ -702,7 +702,7 @@ updateShadowEdge i j pi pj normalVector currentEntry =
                     }
 
 
-cullBackFaces : Mesh coordinates properties -> Mesh coordinates properties
+cullBackFaces : Mesh coordinates vertexAttributes -> Mesh coordinates vertexAttributes
 cullBackFaces mesh =
     case mesh of
         Types.EmptyMesh ->
