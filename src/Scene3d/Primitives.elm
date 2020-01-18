@@ -37,7 +37,7 @@ sphere =
             ceiling (toFloat n / 2)
 
         thetaValues =
-            Parameter1d.leading n
+            Parameter1d.steps n
                 (Quantity.interpolateFrom zero (Angle.turns 1))
 
         phiValues =
@@ -80,7 +80,7 @@ sphere =
             List.range 0 (m - 1)
 
         linearIndex i j =
-            (i |> modBy n) * (m + 1) + j
+            i * (m + 1) + j
 
         faces =
             thetaStartIndices
