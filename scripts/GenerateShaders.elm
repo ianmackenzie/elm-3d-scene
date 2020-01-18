@@ -284,6 +284,34 @@ toSrgb =
         """
 
 
+inverseGamma : Glsl.Function
+inverseGamma =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float inverseGamma(float u) {
+            if (u <= 0.04045) {
+                return clamp(u / 12.92, 0.0, 1.0);
+            } else {
+                return clamp(pow((u + 0.055) / 1.055, 2.4), 0.0, 1.0);
+            }
+        }
+        """
+
+
+fromSrgb : Glsl.Function
+fromSrgb =
+    Glsl.function { dependencies = [ inverseGamma ], constants = [] }
+        """
+        vec3 fromSrgb(vec3 srgbColor) {
+            return vec3(
+                inverseGamma(srgbColor.r),
+                inverseGamma(srgbColor.g),
+                inverseGamma(srgbColor.b)
+            );
+        }
+        """
+
+
 pointAlpha : Glsl.Function
 pointAlpha =
     Glsl.function { dependencies = [], constants = [] }
@@ -1220,11 +1248,11 @@ emissiveTextureFragmentShader =
         { uniforms = [ colorTexture, backlight, sceneProperties ]
         , varyings = [ interpolatedPosition, interpolatedUv ]
         , constants = []
-        , functions = [ toSrgb ]
+        , functions = [ fromSrgb, toSrgb ]
         }
         """
         void main () {
-            vec3 emissiveColor = texture2D(colorTexture, interpolatedUv).rgb * backlight;
+            vec3 emissiveColor = fromSrgb(texture2D(colorTexture, interpolatedUv).rgb) * backlight;
             gl_FragColor = toSrgb(emissiveColor, sceneProperties);
         }
         """
@@ -1317,6 +1345,7 @@ lambertianTextureFragmentShader =
             [ getDirectionToCamera
             , lambertianEnvironmentalLighting
             , lambertianDirectLighting
+            , fromSrgb
             , toSrgb
             ]
         }
@@ -1324,7 +1353,7 @@ lambertianTextureFragmentShader =
         void main() {
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-            vec3 materialColor = texture2D(materialColorTexture, interpolatedUv).rgb;
+            vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
 
             vec3 linearColor = lambertianLighting(
                 interpolatedPosition,
@@ -1422,13 +1451,14 @@ physicalTexturesFragmentShader =
             [ getDirectionToCamera
             , physicalEnvironmentalLighting
             , physicalDirectLighting
+            , fromSrgb
             , toSrgb
             ]
         , constants = []
         }
         """
         void main() {
-            vec3 baseColor = texture2D(baseColorTexture, interpolatedUv).rgb * (1 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
+            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
             float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
             float metallic = texture2D(metallicTexture, interpolatedUv).r * (1 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
 
