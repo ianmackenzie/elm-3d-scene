@@ -86,13 +86,13 @@ type alias VertexWithTangent =
 
 
 type Material vertexAttributes
-    = UnlitMaterial (Channel Vec3 vertexAttributes)
-    | EmissiveMaterial (Channel LinearRgb vertexAttributes) Float
-    | LambertianMaterial (Channel LinearRgb vertexAttributes)
-    | PbrMaterial (Channel LinearRgb vertexAttributes) (Channel Float vertexAttributes) (Channel Float vertexAttributes)
+    = UnlitMaterial (Channel Vec3)
+    | EmissiveMaterial (Channel LinearRgb) Float
+    | LambertianMaterial (Channel LinearRgb)
+    | PbrMaterial (Channel LinearRgb) (Channel Float) (Channel Float)
 
 
-type Channel value vertexAttributes
+type Channel value
     = Constant value
     | Textured
         { url : String

@@ -391,7 +391,7 @@ enabledFloat givenValue =
     Math.Vector2.vec2 givenValue 1
 
 
-vec3Tuple : Texture -> Channel LinearRgb vertexAttributes -> ( Texture, Vec4 )
+vec3Tuple : Texture -> Channel LinearRgb -> ( Texture, Vec4 )
 vec3Tuple fallbackTexture channel =
     case channel of
         Types.Constant (LinearRgb baseColor) ->
@@ -401,7 +401,7 @@ vec3Tuple fallbackTexture channel =
             ( data, zeroVec4 )
 
 
-floatTuple : Texture -> Channel Float vertexAttributes -> ( Texture, Vec2 )
+floatTuple : Texture -> Channel Float -> ( Texture, Vec2 )
 floatTuple fallbackTexture channel =
     case channel of
         Types.Constant value ->
@@ -411,7 +411,7 @@ floatTuple fallbackTexture channel =
             ( data, zeroVec2 )
 
 
-resolve : Channel LinearRgb vertexAttributes -> Channel Float vertexAttributes -> Channel Float vertexAttributes -> ResolvedPbrMaterial
+resolve : Channel LinearRgb -> Channel Float -> Channel Float -> ResolvedPbrMaterial
 resolve baseColorChannel roughnessChannel metallicChannel =
     case ( baseColorChannel, roughnessChannel, metallicChannel ) of
         ( Types.Constant baseColor, Types.Constant roughness, Types.Constant metallic ) ->

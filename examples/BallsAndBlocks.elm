@@ -153,21 +153,21 @@ initialWorld =
         |> addBoxes
 
 
-materials : Array Material.ForMeshWithNormals
+materials : Array (Material { a | normals : () })
 materials =
     Array.fromList
         [ Materials.aluminum
         , Materials.whitePlastic
         , Materials.copper
         , Material.nonmetal
-            { baseColor = Material.constant Tango.skyBlue1
-            , roughness = Material.constant 0.25
+            { baseColor = Tango.skyBlue1
+            , roughness = 0.25
             }
         , Materials.gold
         , Materials.whitePlastic
         , Material.nonmetal
-            { baseColor = Material.constant Tango.skyBlue2
-            , roughness = Material.constant 0.25
+            { baseColor = Tango.skyBlue2
+            , roughness = 0.25
             }
         ]
 
@@ -301,7 +301,7 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphere : Material.ForMeshWithNormals -> Body (Scene3d.Entity BodyCoordinates)
+sphere : Material.ForMeshWithNormalsAndUvs -> Body (Scene3d.Entity BodyCoordinates)
 sphere material =
     let
         shape =

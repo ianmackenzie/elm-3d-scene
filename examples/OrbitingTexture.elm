@@ -36,7 +36,7 @@ type alias Model =
     , elevation : Angle
     , orbiting : Bool
     , mesh : Mesh.WithUvs World
-    , texture : Maybe (Material.Channel Color { uvs : () })
+    , texture : Maybe (Material.Channel Color)
     }
 
 
@@ -44,7 +44,7 @@ type Msg
     = MouseDown
     | MouseUp
     | MouseMove Float Float
-    | GotTexture (Result Texture.Error (Material.Channel Color { uvs : () }))
+    | GotTexture (Result Texture.Error (Material.Channel Color))
 
 
 init : () -> ( Model, Cmd Msg )
@@ -179,7 +179,7 @@ view model =
                     , exposure = Scene3d.defaultExposure
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     }
-                    [ Scene3d.mesh model.mesh (Material.unlit texture)
+                    [ Scene3d.mesh model.mesh (Material.unlitTexture texture)
                     ]
                 ]
 

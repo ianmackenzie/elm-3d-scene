@@ -54,8 +54,8 @@ main =
 
         square =
             Scene3d.group
-                [ Scene3d.mesh mesh1 (Material.solidColor Tango.orange2)
-                , Scene3d.mesh mesh2 (Material.solidColor Tango.skyBlue2)
+                [ Scene3d.mesh mesh1 (Material.unlit Tango.orange2)
+                , Scene3d.mesh mesh2 (Material.unlit Tango.skyBlue2)
                 ]
 
         squareAtHeight height =

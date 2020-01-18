@@ -1,21 +1,30 @@
 module Scene3d.Material exposing
-    ( Material, solidColor
+    ( Material
+    , unlit, diffuse, backlit, metal, nonmetal, pbr
     , Channel, constant, load
-    , unlit, diffuse, emissive, metal, nonmetal, pbr
+    , unlitTexture, diffuseTexture, backlitTexture, texturedMetal, texturedNonmetal, texturedPbr
     , Plain, ForMeshWithNormals, ForMeshWithUvs, ForMeshWithNormalsAndUvs, ForMeshWithTangents
     -- , withNormalMap
     )
 
 {-|
 
+@docs Material
 
-## Basics
 
-@docs Material, solidColor
+## Simple materials
+
+@docs unlit, diffuse, backlit, metal, nonmetal, pbr
+
+
+## Textured materials
 
 @docs Channel, constant, load
 
-@docs unlit, diffuse, emissive, metal, nonmetal, pbr
+@docs unlitTexture, diffuseTexture, backlitTexture, texturedMetal, texturedNonmetal, texturedPbr
+
+
+## Type aliases
 
 @docs Plain, ForMeshWithNormals, ForMeshWithUvs, ForMeshWithNormalsAndUvs, ForMeshWithTangents
 
@@ -35,21 +44,51 @@ type alias Material vertexAttributes =
     Types.Material vertexAttributes
 
 
-solidColor : Color -> Material vertexAttributes
-solidColor givenColor =
-    unlit (constant givenColor)
+unlit : Color -> Material vertexAttributes
+unlit givenColor =
+    Types.UnlitMaterial (Types.Constant (toVec3 givenColor))
 
 
-type alias Channel value vertexAttributes =
-    Types.Channel value vertexAttributes
+diffuse : Color -> Material { a | normals : () }
+diffuse materialColor =
+    Types.LambertianMaterial (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
 
 
-constant : value -> Channel value vertexAttributes
+backlit : Color -> Luminance -> Material vertexAttributes
+backlit color backlight =
+    Types.EmissiveMaterial
+        (Types.Constant (ColorConversions.colorToLinearRgb color))
+        (Luminance.inNits backlight)
+
+
+metal : { baseColor : Color, roughness : Float } -> Material { a | normals : () }
+metal { baseColor, roughness } =
+    pbr { baseColor = baseColor, roughness = roughness, metallic = 1 }
+
+
+nonmetal : { baseColor : Color, roughness : Float } -> Material { a | normals : () }
+nonmetal { baseColor, roughness } =
+    pbr { baseColor = baseColor, roughness = roughness, metallic = 0 }
+
+
+pbr : { baseColor : Color, roughness : Float, metallic : Float } -> Material { a | normals : () }
+pbr { baseColor, roughness, metallic } =
+    Types.PbrMaterial
+        (Types.Constant (ColorConversions.colorToLinearRgb baseColor))
+        (Types.Constant (clamp 0 1 roughness))
+        (Types.Constant (clamp 0 1 metallic))
+
+
+type alias Channel value =
+    Types.Channel value
+
+
+constant : value -> Channel value
 constant givenValue =
     Types.Constant givenValue
 
 
-load : String -> Task WebGL.Texture.Error (Channel value { a | uvs : () })
+load : String -> Task WebGL.Texture.Error (Channel value)
 load url =
     WebGL.Texture.load url
         |> Task.map
@@ -62,7 +101,7 @@ load url =
             )
 
 
-map : (a -> b) -> Channel a vertexAttributes -> Channel b vertexAttributes
+map : (a -> b) -> Channel a -> Channel b
 map function channel =
     case channel of
         Types.Constant value ->
@@ -81,52 +120,56 @@ toVec3 givenColor =
     Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
-unlit : Channel Color vertexAttributes -> Material vertexAttributes
-unlit colorChannel =
+unlitTexture : Channel Color -> Material { a | uvs : () }
+unlitTexture colorChannel =
     Types.UnlitMaterial (map toVec3 colorChannel)
 
 
-diffuse : Channel Color { a | normals : () } -> Material { a | normals : () }
-diffuse colorChannel =
+diffuseTexture : Channel Color -> Material { a | normals : (), uvs : () }
+diffuseTexture colorChannel =
     Types.LambertianMaterial (map ColorConversions.colorToLinearRgb colorChannel)
 
 
-emissive :
-    { color : Channel Color vertexAttributes
-    , backlight : Luminance
-    }
-    -> Material vertexAttributes
-emissive { color, backlight } =
+backlitTexture : Channel Color -> Luminance -> Material { a | uvs : () }
+backlitTexture colorChannel backlight =
     Types.EmissiveMaterial
-        (map ColorConversions.colorToLinearRgb color)
+        (map ColorConversions.colorToLinearRgb colorChannel)
         (Luminance.inNits backlight)
 
 
-metal :
-    { baseColor : Channel Color { a | normals : () }
-    , roughness : Channel Float { a | normals : () }
+texturedMetal :
+    { baseColor : Channel Color
+    , roughness : Channel Float
     }
-    -> Material { a | normals : () }
-metal { baseColor, roughness } =
-    pbr { baseColor = baseColor, roughness = roughness, metallic = constant 1 }
+    -> Material { a | normals : (), uvs : () }
+texturedMetal { baseColor, roughness } =
+    texturedPbr
+        { baseColor = baseColor
+        , roughness = roughness
+        , metallic = constant 1
+        }
 
 
-nonmetal :
-    { baseColor : Channel Color { a | normals : () }
-    , roughness : Channel Float { a | normals : () }
+texturedNonmetal :
+    { baseColor : Channel Color
+    , roughness : Channel Float
     }
-    -> Material { a | normals : () }
-nonmetal { baseColor, roughness } =
-    pbr { baseColor = baseColor, roughness = roughness, metallic = constant 0 }
+    -> Material { a | normals : (), uvs : () }
+texturedNonmetal { baseColor, roughness } =
+    texturedPbr
+        { baseColor = baseColor
+        , roughness = roughness
+        , metallic = constant 0
+        }
 
 
-pbr :
-    { baseColor : Channel Color { a | normals : () }
-    , roughness : Channel Float { a | normals : () }
-    , metallic : Channel Float { a | normals : () }
+texturedPbr :
+    { baseColor : Channel Color
+    , roughness : Channel Float
+    , metallic : Channel Float
     }
-    -> Material { a | normals : () }
-pbr { baseColor, roughness, metallic } =
+    -> Material { a | normals : (), uvs : () }
+texturedPbr { baseColor, roughness, metallic } =
     Types.PbrMaterial
         (map ColorConversions.colorToLinearRgb baseColor)
         (map (clamp 0 1) roughness)
