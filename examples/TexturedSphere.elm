@@ -195,7 +195,7 @@ viewpoint =
 
 sunlight =
     Scene3d.directionalLight
-        Chromaticity.d65
+        Chromaticity.sunlight
         (Illuminance.lux 20000)
         (Direction3d.yz (Angle.degrees -120))
 
