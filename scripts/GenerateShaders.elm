@@ -1449,8 +1449,7 @@ physicalTexturesFragmentShader =
             ]
         , functions =
             [ getDirectionToCamera
-            , physicalEnvironmentalLighting
-            , physicalDirectLighting
+            , physicalLighting
             , fromSrgb
             , toSrgb
             ]
@@ -1458,9 +1457,9 @@ physicalTexturesFragmentShader =
         }
         """
         void main() {
-            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
-            float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
-            float metallic = texture2D(metallicTexture, interpolatedUv).r * (1 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
+            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
+            float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1.0 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
+            float metallic = texture2D(metallicTexture, interpolatedUv).r * (1.0 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
 
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);

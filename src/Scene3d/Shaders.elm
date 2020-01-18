@@ -1942,6 +1942,51 @@ physicalTexturesFragment =
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
+        vec3 physicalLighting(
+            vec3 position,
+            vec3 normalDirection,
+            vec3 baseColor,
+            vec3 directionToCamera,
+            mat4 viewMatrix,
+            float roughness,
+            float metallic,
+            mat4 environmentalLighting,
+            mat4 lightSources12,
+            mat4 lightSources34,
+            mat4 lightSources56,
+            mat4 lightSources78
+        ) {
+            float alpha = roughness * roughness;
+            float nonmetallic = 1.0 - metallic;
+            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
+            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
+        
+            vec3 environmentalContribution = physicalEnvironmentalLighting(
+                normalDirection,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                directionToCamera,
+                viewMatrix,
+                environmentalLighting
+            );
+        
+            vec3 directContribution = physicalDirectLighting(
+                interpolatedPosition,
+                normalDirection,
+                directionToCamera,
+                diffuseBaseColor,
+                specularBaseColor,
+                alpha,
+                lightSources12,
+                lightSources34,
+                lightSources56,
+                lightSources78
+            );
+        
+            return environmentalContribution + directContribution;
+        }
+        
         float inverseGamma(float u) {
             if (u <= 0.04045) {
                 return clamp(u / 12.92, 0.0, 1.0);
@@ -1975,9 +2020,9 @@ physicalTexturesFragment =
         }
         
         void main() {
-            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
-            float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
-            float metallic = texture2D(metallicTexture, interpolatedUv).r * (1 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
+            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
+            float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1.0 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
+            float metallic = texture2D(metallicTexture, interpolatedUv).r * (1.0 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
         
             vec3 normalDirection = normalize(interpolatedNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
