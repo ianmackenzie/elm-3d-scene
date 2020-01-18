@@ -95,13 +95,13 @@ update message model =
                             checkIfLoaded { textures | roughnessTexture = Just roughnessChannel }
 
                         GotColorTexture (Err error) ->
-                            Errored (Debug.toString error)
+                            Errored "Error loading texture"
 
                         GotMetallicTexture (Err error) ->
-                            Errored (Debug.toString error)
+                            Errored "Error loading texture"
 
                         GotRoughnessTexture (Err error) ->
-                            Errored (Debug.toString error)
+                            Errored "Error loading texture"
 
                         MouseDown ->
                             model
