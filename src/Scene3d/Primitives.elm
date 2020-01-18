@@ -60,11 +60,7 @@ sphere =
                                             (radius |> Quantity.multiplyBy (Angle.cos phi * Angle.sin theta))
                                             (radius |> Quantity.multiplyBy (Angle.sin phi))
                                     , normal =
-                                        Direction3d.fromAzimuthInAndElevationFrom
-                                            SketchPlane3d.xy
-                                            theta
-                                            phi
-                                            |> Direction3d.toVector
+                                        Direction3d.xyZ theta phi |> Direction3d.toVector
                                     , uv =
                                         ( Quantity.ratio theta (Angle.turns 1)
                                         , Quantity.ratio
