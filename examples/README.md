@@ -11,7 +11,7 @@ different kinds of 3D graphics. From (roughly) simplest to most complex:
 - `Orbiting.elm`
 - `Sphere.elm`
 - `Spheres.elm`
-- `Physics.elm`
+- `BallsAndBlocks.elm`
 
 To get started, check out this repository and start up `elm reactor` in this
 directory, then start playing around with the different examples (or add your
