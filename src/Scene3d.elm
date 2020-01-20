@@ -15,21 +15,59 @@ module Scene3d exposing
 
 @docs toHtml
 
+
+# Entities
+
 @docs Entity
 
 @docs nothing, block, sphere, cylinder, mesh, group
 
+
+# Shadows
+
 @docs shadow, withShadow
+
+
+# Transformations
+
+These transformations are 'cheap' in that they don't actually transform the
+underlying mesh; under the hood they use a WebGL [transformation matrix](https://learnopengl.com/Getting-started/Transformations)
+to change where that mesh gets rendered.
 
 @docs rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
 
+
+# Coordinate conversions
+
+You're unlikely to need these functions right away but they can be very useful
+when setting up more complex scenes.
+
 @docs placeIn, relativeTo
 
+
+# Rendering options
+
 @docs transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
+
+
+# Lighting
+
+Lighting in `elm-3d-scene` is a combination of _direct_ and _environmental_
+(indirect, ambient) lighting. Direct lighting comes from specific light sources
+like the sun or a light bulb; you can currently have up to eight separate light
+sources in a scene. Environmental lighting accounts for light coming from all
+around an object; for example, if you are outside, you might be getting direct
+light from the sun but you're also getting light reflected from other surfaces
+around you. Generally, direct lighting gives nice highlights but can be very
+harsh; it's usually best to use a combination of one or more direct lights plus
+some soft indirect lighting.
 
 @docs DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
 
 @docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
+
+
+# Advanced
 
 @docs toWebGLEntities
 
@@ -82,15 +120,34 @@ import WebGL.Texture exposing (Texture)
 ----- ENTITIES -----
 
 
+{-| An `Entity` is a shape or group of shapes in a scene.
+-}
 type alias Entity coordinates =
     Types.Entity coordinates
 
 
+{-| A dummy entity for which nothing will be drawn.
+-}
 nothing : Entity coordinates
 nothing =
     Entity.empty
 
 
+{-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
+type from `elmm-geometry`.
+
+The sphere will have texture (UV) coordinates based on an [equirectangular
+projection](https://wiki.panotools.org/Equirectangular_Projection) where
+positive Z is up. This sounds complex but really just means that U corresponds
+to angle around the sphere and V corresponds to angle up the sphere, similar to
+the diagrams shown [here](https://en.wikipedia.org/wiki/Spherical_coordinate_system)
+except that V is measured up from the bottom (negative Z) instead of down from
+the top (positive Z).
+
+Note that this projection, while simple, maeans that the texture used will get
+'squished' near the poles of the sphere.
+
+-}
 sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> { castsShadow : Bool } -> Entity coordinates
 sphere givenSphere givenMaterial { castsShadow } =
     Entity.sphere givenSphere givenMaterial castsShadow
@@ -106,56 +163,102 @@ cylinder givenCylinder givenMaterial { castsShadow } =
     Entity.cylinder givenCylinder givenMaterial castsShadow
 
 
+{-| Draw the given mesh with the given material.
+-}
 mesh : Mesh coordinates properties -> Material properties -> Entity coordinates
 mesh givenMesh givenMaterial =
     Entity.mesh givenMesh givenMaterial
 
 
+{-| Group a list of entities into a single entity. This entity can then be
+transformed, grouped with other entities, etc.
+-}
 group : List (Entity coordinates) -> Entity coordinates
 group entities =
     Entity.group entities
 
 
+{-| Draw the _shadow_ of an object. Note that this means you can choose to
+render an object and its shadow, and object without its shadow, or even render
+an object's shadow without the object itself for [maximum creepiness](https://en.wikipedia.org/wiki/Identity_Crisis_(Star_Trek:_The_Next_Generation)).
+-}
 shadow : Mesh.Shadow coordinates -> Entity coordinates
 shadow givenShadow =
     Entity.shadow givenShadow
 
 
+{-| Convenience function for rendering an object and its shadow;
+
+    Scene3d.withShadow shadow entity
+
+is shorthand for
+
+    Scene3d.group [ entity, Scene3d.shadow shadow ]
+
+-}
 withShadow : Mesh.Shadow coordinates -> Entity coordinates -> Entity coordinates
 withShadow givenShadow givenEntity =
     group [ givenEntity, shadow givenShadow ]
 
 
+{-| Rotate an entity around a given axis by a given angle.
+-}
 rotateAround : Axis3d Meters coordinates -> Angle -> Entity coordinates -> Entity coordinates
 rotateAround axis angle entity =
     Entity.rotateAround axis angle entity
 
 
+{-| Translate (move) an entity by a given displacement vector.
+-}
 translateBy : Vector3d Meters coordinates -> Entity coordinates -> Entity coordinates
 translateBy displacement entity =
     Entity.translateBy displacement entity
 
 
+{-| Translate an entity in a given direction by a given distance.
+-}
 translateIn : Direction3d coordinates -> Length -> Entity coordinates -> Entity coordinates
 translateIn direction distance entity =
     Entity.translateIn direction distance entity
 
 
+{-| Scale an entity about a given point by a given scale. The given point will
+remain fixed in place and all other points on the entity will be stretched away
+from that point (or contract towards that point, if the scale is less than one).
+
+`elm-3d-scene` tries very hard to do the right thing here even if you use a
+_negative_ scale factor, but that flips the mesh inside out so I don't really
+recommend it.
+
+-}
 scaleAbout : Point3d Meters coordinates -> Float -> Entity coordinates -> Entity coordinates
 scaleAbout centerPoint scale entity =
     Entity.scaleAbout centerPoint scale entity
 
 
+{-| Mirror an entity across a plane.
+-}
 mirrorAcross : Plane3d Meters coordinates -> Entity coordinates -> Entity coordinates
 mirrorAcross plane entity =
     Entity.mirrorAcross plane entity
 
 
+{-| Take an entity that is defined in a local coordinate system and convert it
+to global coordinates. This can be useful if you have some entities which are
+defined in some local coordinate system like inside a car, and you want to
+render them within a larger world.
+-}
 placeIn : Frame3d Meters coordinates { defines : localCoordinates } -> Entity localCoordinates -> Entity coordinates
 placeIn frame entity =
     Entity.placeIn frame entity
 
 
+{-| Take an entity that is defined in global coordinates and convert into a
+local coordinate system. This is even less likely to be useful than `placeIn`,
+but may be useful if you are (for example) rendering an office scene (and
+working primarily in local room coordinates) but want to incorporate some entity
+defined in global coordinates like a bird flying past the window.
+-}
 relativeTo : Frame3d Meters coordinates { defines : localCoordinates } -> Entity coordinates -> Entity localCoordinates
 relativeTo frame entity =
     Entity.relativeTo frame entity
@@ -177,6 +280,10 @@ relativeTo frame entity =
 -- [ type_i  radius_i  type_j  radius_j ]
 
 
+{-| A `LightSource` represents a single source of light in the scene, such as
+the sun or a light bulb. Light sources are not rendered themselves; they can
+only be seen by how they interact with entities (meshes).
+-}
 type alias LightSource coordinates =
     Types.LightSource coordinates
 
