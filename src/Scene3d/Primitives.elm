@@ -37,7 +37,7 @@ sphere =
             ceiling (toFloat n / 2)
 
         thetaValues =
-            Parameter1d.leading n
+            Parameter1d.steps n
                 (Quantity.interpolateFrom zero (Angle.turns 1))
 
         phiValues =
@@ -60,11 +60,7 @@ sphere =
                                             (radius |> Quantity.multiplyBy (Angle.cos phi * Angle.sin theta))
                                             (radius |> Quantity.multiplyBy (Angle.sin phi))
                                     , normal =
-                                        Direction3d.fromAzimuthInAndElevationFrom
-                                            SketchPlane3d.xy
-                                            theta
-                                            phi
-                                            |> Direction3d.toVector
+                                        Direction3d.xyZ theta phi |> Direction3d.toVector
                                     , uv =
                                         ( Quantity.ratio theta (Angle.turns 1)
                                         , Quantity.ratio
@@ -84,7 +80,7 @@ sphere =
             List.range 0 (m - 1)
 
         linearIndex i j =
-            (i |> modBy n) * (m + 1) + j
+            i * (m + 1) + j
 
         faces =
             thetaStartIndices
