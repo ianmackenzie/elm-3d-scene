@@ -26,6 +26,11 @@ uv =
     Glsl.attribute Glsl.vec2 "uv"
 
 
+quadVertex : Glsl.Attribute
+quadVertex =
+    Glsl.attribute Glsl.vec3 "quadVertex"
+
+
 
 ---------- UNIFORMS ----------
 
@@ -163,6 +168,16 @@ materialColorTexture =
 constantMaterialColor : Glsl.Uniform
 constantMaterialColor =
     Glsl.uniform Glsl.vec2 "constantMaterialColor"
+
+
+quadVertexPositions : Glsl.Uniform
+quadVertexPositions =
+    Glsl.uniform Glsl.mat4 "quadVertexPositions"
+
+
+quadVertexNormals : Glsl.Uniform
+quadVertexNormals =
+    Glsl.uniform Glsl.mat4 "quadVertexNormals"
 
 
 
@@ -1075,6 +1090,54 @@ texturedVertexShader =
         """
 
 
+quadVertexShader : Glsl.Shader
+quadVertexShader =
+    Glsl.vertexShader "quadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            , quadVertexNormals
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv ]
+        , constants = []
+        , functions = [ project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            switch (int(quadVertex.z)) {
+                case 0:
+                    position = quadVertexPositions[0].xyz;
+                    normal = quadVertexNormals[0].xyz;
+                    break;
+                case 1:
+                    position = quadVertexPositions[1].xyz;
+                    normal = quadVertexNormals[1].xyz;
+                    break;
+                case 2:
+                    position = quadVertexPositions[2].xyz;
+                    normal = quadVertexNormals[2].xyz;
+                    break;
+                case 3:
+                    position = quadVertexPositions[3].xyz;
+                    normal = quadVertexNormals[3].xyz;
+                    break;
+            }
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            interpolatedUv = quadVertex.xy;
+        }
+        """
+
+
 pointVertexShader : Glsl.Shader
 pointVertexShader =
     Glsl.vertexShader "pointVertex"
@@ -1499,6 +1562,7 @@ script { workingDirectory, userPrivileges } =
                 ++ Glsl.generateModule "Scene3d.Shaders"
                     [ plainVertexShader
                     , texturedVertexShader
+                    , quadVertexShader
                     , pointVertexShader
                     , smoothVertexShader
                     , smoothTexturedVertexShader
