@@ -98,6 +98,11 @@ sunlight =
         )
 
 
+lightBulb : Scene3d.LightSource World
+lightBulb =
+    Scene3d.pointLight Chromaticity.d65 (LuminousFlux.lumens 1000000) (Point3d.meters 0 0 3)
+
+
 environmentalLighting : Scene3d.EnvironmentalLighting World
 environmentalLighting =
     Scene3d.softLighting
@@ -111,11 +116,11 @@ main : Html msg
 main =
     Scene3d.toHtml
         { environmentalLighting = environmentalLighting
-        , directLighting = Scene3d.oneLightSource sunlight { castsShadows = True }
+        , directLighting = Scene3d.oneLightSource lightBulb { castsShadows = True }
         , camera = camera
         , width = pixels 1024
         , height = pixels 768
-        , exposure = Exposure.fromEv100 14
+        , exposure = Exposure.fromEv100 12
         , whiteBalance = Chromaticity.d65
         , backgroundColor = Scene3d.transparentBackground
         }
