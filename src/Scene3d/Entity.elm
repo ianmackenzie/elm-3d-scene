@@ -8,6 +8,7 @@ module Scene3d.Entity exposing
     , mesh
     , mirrorAcross
     , placeIn
+    , quad
     , relativeTo
     , rotateAround
     , scaleAbout
@@ -29,6 +30,7 @@ import Frame3d exposing (Frame3d)
 import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
+import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
@@ -436,6 +438,239 @@ resolve baseColorChannel roughnessChannel metallicChannel =
                 ( data, zeroVec2 )
 
 
+quad :
+    Material.ForMeshWithNormalsAndUvs
+    -> Bool
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+quad givenMaterial castsShadow firstPoint secondPoint thirdPoint fourthPoint =
+    let
+        meshEntity =
+            quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint
+    in
+    if castsShadow then
+        group [ meshEntity, quadShadow firstPoint secondPoint thirdPoint fourthPoint ]
+
+    else
+        meshEntity
+
+
+quadVertices : WebGL.Mesh { quadVertex : Vec3 }
+quadVertices =
+    WebGL.triangleFan
+        [ { quadVertex = Math.Vector3.vec3 0 0 0 }
+        , { quadVertex = Math.Vector3.vec3 1 0 1 }
+        , { quadVertex = Math.Vector3.vec3 1 1 2 }
+        , { quadVertex = Math.Vector3.vec3 0 1 3 }
+        ]
+
+
+quadVertexPositions :
+    Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Mat4
+quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint =
+    let
+        p1 =
+            Point3d.toMeters firstPoint
+
+        p2 =
+            Point3d.toMeters secondPoint
+
+        p3 =
+            Point3d.toMeters thirdPoint
+
+        p4 =
+            Point3d.toMeters fourthPoint
+    in
+    Math.Matrix4.fromRecord
+        { m11 = p1.x
+        , m21 = p1.y
+        , m31 = p1.z
+        , m41 = 0
+        , m12 = p2.x
+        , m22 = p2.y
+        , m32 = p2.z
+        , m42 = 0
+        , m13 = p3.x
+        , m23 = p3.y
+        , m33 = p3.z
+        , m43 = 0
+        , m14 = p4.x
+        , m24 = p4.y
+        , m34 = p4.z
+        , m44 = 0
+        }
+
+
+quadMesh :
+    Material.ForMeshWithNormalsAndUvs
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
+    Types.Entity <|
+        MeshNode <|
+            case givenMaterial of
+                Types.UnlitMaterial (Types.Constant color) ->
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.quadVertex
+                            Shaders.constantFragment
+                            quadVertices
+                            { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                            , constantColor = color
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            }
+
+                Types.UnlitMaterial (Types.Textured { data }) ->
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.texturedQuadVertex
+                            Shaders.colorTextureFragment
+                            quadVertices
+                            { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                            , colorTexture = data
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            }
+
+                Types.EmissiveMaterial (Types.Constant (LinearRgb emissiveColor)) backlight ->
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.quadVertex
+                            Shaders.emissiveFragment
+                            quadVertices
+                            { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                            , backlight = backlight
+                            , emissiveColor = emissiveColor
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            }
+
+                Types.EmissiveMaterial (Types.Textured { data }) backlight ->
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.texturedQuadVertex
+                            Shaders.emissiveTextureFragment
+                            quadVertices
+                            { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                            , backlight = backlight
+                            , colorTexture = data
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            }
+
+                Types.LambertianMaterial (Types.Constant (LinearRgb materialColor)) ->
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.smoothQuadVertex
+                            Shaders.lambertianFragment
+                            quadVertices
+                            { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                            , environmentalLighting = environmentalLighting
+                            , lightSources12 = lightSources.lightSources12
+                            , lightSources34 = lightSources.lightSources34
+                            , lightSources56 = lightSources.lightSources56
+                            , lightSources78 = lightSources.lightSources78
+                            , materialColor = materialColor
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            }
+
+                Types.LambertianMaterial (Types.Textured { data }) ->
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.smoothTexturedQuadVertex
+                            Shaders.lambertianTextureFragment
+                            quadVertices
+                            { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                            , materialColorTexture = data
+                            , environmentalLighting = environmentalLighting
+                            , lightSources12 = lightSources.lightSources12
+                            , lightSources34 = lightSources.lightSources34
+                            , lightSources56 = lightSources.lightSources56
+                            , lightSources78 = lightSources.lightSources78
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            }
+
+                Types.PbrMaterial baseColorChannel roughnessChannel metallicChannel ->
+                    case resolve baseColorChannel roughnessChannel metallicChannel of
+                        ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                                WebGL.entityWith
+                                    (meshSettings isRightHanded Types.KeepBackFaces settings)
+                                    Shaders.smoothQuadVertex
+                                    Shaders.physicalFragment
+                                    quadVertices
+                                    { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                                    , environmentalLighting = environmentalLighting
+                                    , lightSources12 = lightSources.lightSources12
+                                    , lightSources34 = lightSources.lightSources34
+                                    , lightSources56 = lightSources.lightSources56
+                                    , lightSources78 = lightSources.lightSources78
+                                    , baseColor = baseColor
+                                    , roughness = roughness
+                                    , metallic = metallic
+                                    , sceneProperties = sceneProperties
+                                    , modelScale = modelScale
+                                    , modelMatrix = modelMatrix
+                                    , viewMatrix = viewMatrix
+                                    }
+
+                        TexturedPbrMaterial ( baseColorTexture, constantBaseColor ) ( roughnessTexture, constantRoughness ) ( metallicTexture, constantMetallic ) ->
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                                WebGL.entityWith
+                                    (meshSettings isRightHanded Types.KeepBackFaces settings)
+                                    Shaders.smoothTexturedQuadVertex
+                                    Shaders.physicalTexturesFragment
+                                    quadVertices
+                                    { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                                    , environmentalLighting = environmentalLighting
+                                    , lightSources12 = lightSources.lightSources12
+                                    , lightSources34 = lightSources.lightSources34
+                                    , lightSources56 = lightSources.lightSources56
+                                    , lightSources78 = lightSources.lightSources78
+                                    , baseColorTexture = baseColorTexture
+                                    , constantBaseColor = constantBaseColor
+                                    , roughnessTexture = roughnessTexture
+                                    , constantRoughness = constantRoughness
+                                    , metallicTexture = metallicTexture
+                                    , constantMetallic = constantMetallic
+                                    , sceneProperties = sceneProperties
+                                    , modelScale = modelScale
+                                    , modelMatrix = modelMatrix
+                                    , viewMatrix = viewMatrix
+                                    }
+
+
 sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> Bool -> Entity coordinates
 sphere givenSphere givenMaterial castsShadow =
     let
@@ -535,6 +770,67 @@ shadowDrawFunction givenShadow =
                         , viewMatrix = viewMatrix
                         , shadowLightSource = lightSources.lightSources12
                         }
+
+
+quadShadowVertices : WebGL.Mesh { quadShadowVertex : Vec2 }
+quadShadowVertices =
+    WebGL.triangles
+        [ ( { quadShadowVertex = Math.Vector2.vec2 0 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 1 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 1 1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 1 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 0 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 0 -1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 1 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 2 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 2 1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 2 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 1 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 1 -1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 2 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 3 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 3 1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 3 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 2 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 2 -1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 3 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 0 -1 }
+          , { quadShadowVertex = Math.Vector2.vec2 0 1 }
+          )
+        , ( { quadShadowVertex = Math.Vector2.vec2 0 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 3 1 }
+          , { quadShadowVertex = Math.Vector2.vec2 3 -1 }
+          )
+        ]
+
+
+quadShadow :
+    Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+quadShadow firstPoint secondPoint thirdPoint fourthPoint =
+    Types.Entity <|
+        Types.ShadowNode <|
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                WebGL.entityWith settings
+                    Shaders.quadShadowVertex
+                    Shaders.shadowFragment
+                    quadShadowVertices
+                    { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    , shadowLightSource = lightSources.lightSources12
+                    }
 
 
 cullBackFaceSetting : WebGL.Settings.Setting

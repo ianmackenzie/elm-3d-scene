@@ -14,10 +14,15 @@ module Scene3d.Shaders exposing
     , physicalTexturesFragment
     , plainVertex
     , pointVertex
+    , quadShadowVertex
+    , quadVertex
     , shadowFragment
     , shadowVertex
+    , smoothQuadVertex
+    , smoothTexturedQuadVertex
     , smoothTexturedVertex
     , smoothVertex
+    , texturedQuadVertex
     , texturedVertex
     )
 
@@ -126,6 +131,322 @@ texturedVertex =
             gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
             interpolatedPosition = transformedPosition.xyz;
             interpolatedUv = uv;
+        }
+    |]
+
+
+quadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        { interpolatedPosition : Vec3
+        }
+quadVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 quadVertex;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        uniform mat4 quadVertexPositions;
+        
+        varying vec3 interpolatedPosition;
+        
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 next = vec3(0.0, 0.0, 0.0);
+            vec3 prev = vec3(0.0, 0.0, 0.0);
+            if (quadVertexIndex == 0) {
+                prev = quadVertexPositions[3].xyz;
+                position = quadVertexPositions[0].xyz;
+                next = quadVertexPositions[1].xyz;
+            } else if (quadVertexIndex == 1) {
+                prev = quadVertexPositions[0].xyz;
+                position = quadVertexPositions[1].xyz;
+                next = quadVertexPositions[2].xyz;
+            } else if (quadVertexIndex == 2) {
+                prev = quadVertexPositions[1].xyz;
+                position = quadVertexPositions[2].xyz;
+                next = quadVertexPositions[3].xyz;
+            } else {
+                prev = quadVertexPositions[2].xyz;
+                position = quadVertexPositions[3].xyz;
+                next = quadVertexPositions[0].xyz;
+            }
+            normal = normalize(cross(next - position, prev - position));
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+        }
+    |]
+
+
+smoothQuadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        }
+smoothQuadVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 quadVertex;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        uniform mat4 quadVertexPositions;
+        
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 next = vec3(0.0, 0.0, 0.0);
+            vec3 prev = vec3(0.0, 0.0, 0.0);
+            if (quadVertexIndex == 0) {
+                prev = quadVertexPositions[3].xyz;
+                position = quadVertexPositions[0].xyz;
+                next = quadVertexPositions[1].xyz;
+            } else if (quadVertexIndex == 1) {
+                prev = quadVertexPositions[0].xyz;
+                position = quadVertexPositions[1].xyz;
+                next = quadVertexPositions[2].xyz;
+            } else if (quadVertexIndex == 2) {
+                prev = quadVertexPositions[1].xyz;
+                position = quadVertexPositions[2].xyz;
+                next = quadVertexPositions[3].xyz;
+            } else {
+                prev = quadVertexPositions[2].xyz;
+                position = quadVertexPositions[3].xyz;
+                next = quadVertexPositions[0].xyz;
+            }
+            normal = normalize(cross(next - position, prev - position));
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+        }
+    |]
+
+
+texturedQuadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedUv : Vec2
+        }
+texturedQuadVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 quadVertex;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        uniform mat4 quadVertexPositions;
+        
+        varying vec3 interpolatedPosition;
+        varying vec2 interpolatedUv;
+        
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 next = vec3(0.0, 0.0, 0.0);
+            vec3 prev = vec3(0.0, 0.0, 0.0);
+            if (quadVertexIndex == 0) {
+                prev = quadVertexPositions[3].xyz;
+                position = quadVertexPositions[0].xyz;
+                next = quadVertexPositions[1].xyz;
+            } else if (quadVertexIndex == 1) {
+                prev = quadVertexPositions[0].xyz;
+                position = quadVertexPositions[1].xyz;
+                next = quadVertexPositions[2].xyz;
+            } else if (quadVertexIndex == 2) {
+                prev = quadVertexPositions[1].xyz;
+                position = quadVertexPositions[2].xyz;
+                next = quadVertexPositions[3].xyz;
+            } else {
+                prev = quadVertexPositions[2].xyz;
+                position = quadVertexPositions[3].xyz;
+                next = quadVertexPositions[0].xyz;
+            }
+            normal = normalize(cross(next - position, prev - position));
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedUv = quadVertex.xy;
+        }
+    |]
+
+
+smoothTexturedQuadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        }
+smoothTexturedQuadVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 quadVertex;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        uniform mat4 quadVertexPositions;
+        
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 next = vec3(0.0, 0.0, 0.0);
+            vec3 prev = vec3(0.0, 0.0, 0.0);
+            if (quadVertexIndex == 0) {
+                prev = quadVertexPositions[3].xyz;
+                position = quadVertexPositions[0].xyz;
+                next = quadVertexPositions[1].xyz;
+            } else if (quadVertexIndex == 1) {
+                prev = quadVertexPositions[0].xyz;
+                position = quadVertexPositions[1].xyz;
+                next = quadVertexPositions[2].xyz;
+            } else if (quadVertexIndex == 2) {
+                prev = quadVertexPositions[1].xyz;
+                position = quadVertexPositions[2].xyz;
+                next = quadVertexPositions[3].xyz;
+            } else {
+                prev = quadVertexPositions[2].xyz;
+                position = quadVertexPositions[3].xyz;
+                next = quadVertexPositions[0].xyz;
+            }
+            normal = normalize(cross(next - position, prev - position));
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            interpolatedUv = quadVertex.xy;
         }
     |]
 
@@ -318,6 +639,88 @@ shadowVertex =
         const float kDirectionalLightSource = 1.0;
         const float kPointLightSource = 2.0;
         
+        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
+            float lightSourceType = xyz_type.w;
+            if (lightSourceType == kDirectionalLightSource) {
+                return xyz_type.xyz;
+            } else if (lightSourceType == kPointLightSource) {
+                vec3 lightPosition = xyz_type.xyz;
+                return normalize(lightPosition - surfacePosition);
+            }
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, float modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            vec3 transformedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            vec4 xyz_type = shadowLightSource[0];
+            vec4 rgb_radius = shadowLightSource[1];
+            vec3 directionToLight = getDirectionToLight(transformedPosition.xyz, xyz_type, rgb_radius);
+            vec3 offset = vec3(0.0, 0.0, 0.0);
+            if (dot(directionToLight, transformedNormal) <= 0.0) {
+                offset = -1.0e9 * directionToLight;
+            }
+            vec4 offsetPosition = transformedPosition + vec4(offset, 0.0);
+            return project(viewMatrix * offsetPosition, sceneProperties[0]);
+        }
+        
+        void main () {
+            gl_Position = shadowVertexPosition(
+                position,
+                normal,
+                shadowLightSource,
+                modelScale,
+                modelMatrix,
+                viewMatrix,
+                sceneProperties
+            );
+        }
+    |]
+
+
+quadShadowVertex :
+    WebGL.Shader
+        { attributes
+            | quadShadowVertex : Vec2
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , shadowLightSource : Mat4
+            , quadVertexPositions : Mat4
+        }
+        {}
+quadShadowVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec2 quadShadowVertex;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        uniform mat4 shadowLightSource;
+        uniform mat4 quadVertexPositions;
+        
+        const float kDirectionalLightSource = 1.0;
+        const float kPointLightSource = 2.0;
+        
         vec4 project(vec4 position, vec4 projectionProperties) {
             float n = projectionProperties[0];
             float a = projectionProperties[1];
@@ -342,18 +745,19 @@ shadowVertex =
         }
         
         void main () {
-            vec4 scaledPosition = vec4(modelScale * position, 1.0);
-            vec4 transformedPosition = modelMatrix * scaledPosition;
-            vec3 transformedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
-            vec3 directionToLight = getDirectionToLight(transformedPosition.xyz, xyz_type, rgb_radius);
-            vec3 offset = vec3(0.0, 0.0, 0.0);
-            if (dot(directionToLight, transformedNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
-            }
-            vec4 offsetPosition = transformedPosition + vec4(offset, 0.0);
-            gl_Position = project(viewMatrix * offsetPosition, sceneProperties[0]);
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal);
+            normal *= quadShadowVertex.y;
+            gl_Position = shadowVertexPosition(
+                position,
+                normal,
+                shadowLightSource,
+                modelScale,
+                modelMatrix,
+                viewMatrix,
+                sceneProperties
+            );
         }
     |]
 

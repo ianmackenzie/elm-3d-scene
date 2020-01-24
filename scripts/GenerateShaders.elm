@@ -31,6 +31,11 @@ quadVertex =
     Glsl.attribute Glsl.vec3 "quadVertex"
 
 
+quadShadowVertex : Glsl.Attribute
+quadShadowVertex =
+    Glsl.attribute Glsl.vec2 "quadShadowVertex"
+
+
 
 ---------- UNIFORMS ----------
 
@@ -173,11 +178,6 @@ constantMaterialColor =
 quadVertexPositions : Glsl.Uniform
 quadVertexPositions =
     Glsl.uniform Glsl.mat4 "quadVertexPositions"
-
-
-quadVertexNormals : Glsl.Uniform
-quadVertexNormals =
-    Glsl.uniform Glsl.mat4 "quadVertexNormals"
 
 
 
@@ -1047,6 +1047,56 @@ physicalLighting =
         """
 
 
+getQuadVertex : Glsl.Function
+getQuadVertex =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 next = vec3(0.0, 0.0, 0.0);
+            vec3 prev = vec3(0.0, 0.0, 0.0);
+            if (quadVertexIndex == 0) {
+                prev = quadVertexPositions[3].xyz;
+                position = quadVertexPositions[0].xyz;
+                next = quadVertexPositions[1].xyz;
+            } else if (quadVertexIndex == 1) {
+                prev = quadVertexPositions[0].xyz;
+                position = quadVertexPositions[1].xyz;
+                next = quadVertexPositions[2].xyz;
+            } else if (quadVertexIndex == 2) {
+                prev = quadVertexPositions[1].xyz;
+                position = quadVertexPositions[2].xyz;
+                next = quadVertexPositions[3].xyz;
+            } else {
+                prev = quadVertexPositions[2].xyz;
+                position = quadVertexPositions[3].xyz;
+                next = quadVertexPositions[0].xyz;
+            }
+            normal = normalize(cross(next - position, prev - position));
+        }
+        """
+
+
+shadowVertexPosition : Glsl.Function
+shadowVertexPosition =
+    Glsl.function { dependencies = [ getDirectionToLight, project ], constants = [] }
+        """
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, float modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            vec3 transformedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+            vec4 xyz_type = shadowLightSource[0];
+            vec4 rgb_radius = shadowLightSource[1];
+            vec3 directionToLight = getDirectionToLight(transformedPosition.xyz, xyz_type, rgb_radius);
+            vec3 offset = vec3(0.0, 0.0, 0.0);
+            if (dot(directionToLight, transformedNormal) <= 0.0) {
+                offset = -1.0e9 * directionToLight;
+            }
+            vec4 offsetPosition = transformedPosition + vec4(offset, 0.0);
+            return project(viewMatrix * offsetPosition, sceneProperties[0]);
+        }
+        """
+
+
 
 ---------- VERTEX SHADERS ----------
 
@@ -1100,34 +1150,102 @@ quadVertexShader =
             , viewMatrix
             , sceneProperties
             , quadVertexPositions
-            , quadVertexNormals
             ]
-        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv ]
+        , varyings = [ interpolatedPosition ]
         , constants = []
-        , functions = [ project ]
+        , functions = [ getQuadVertex, project ]
         }
         """
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            switch (int(quadVertex.z)) {
-                case 0:
-                    position = quadVertexPositions[0].xyz;
-                    normal = quadVertexNormals[0].xyz;
-                    break;
-                case 1:
-                    position = quadVertexPositions[1].xyz;
-                    normal = quadVertexNormals[1].xyz;
-                    break;
-                case 2:
-                    position = quadVertexPositions[2].xyz;
-                    normal = quadVertexNormals[2].xyz;
-                    break;
-                case 3:
-                    position = quadVertexPositions[3].xyz;
-                    normal = quadVertexNormals[3].xyz;
-                    break;
-            }
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+        }
+        """
+
+
+smoothQuadVertexShader : Glsl.Shader
+smoothQuadVertexShader =
+    Glsl.vertexShader "smoothQuadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
+        , constants = []
+        , functions = [ getQuadVertex, project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+        }
+        """
+
+
+texturedQuadVertexShader : Glsl.Shader
+texturedQuadVertexShader =
+    Glsl.vertexShader "texturedQuadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            ]
+        , varyings = [ interpolatedPosition, interpolatedUv ]
+        , constants = []
+        , functions = [ getQuadVertex, project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec4 scaledPosition = vec4(modelScale * position, 1.0);
+            vec4 transformedPosition = modelMatrix * scaledPosition;
+            gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
+            interpolatedPosition = transformedPosition.xyz;
+            interpolatedUv = quadVertex.xy;
+        }
+        """
+
+
+smoothTexturedQuadVertexShader : Glsl.Shader
+smoothTexturedQuadVertexShader =
+    Glsl.vertexShader "smoothTexturedQuadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv ]
+        , constants = []
+        , functions = [ getQuadVertex, project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
             vec4 scaledPosition = vec4(modelScale * position, 1.0);
             vec4 transformedPosition = modelMatrix * scaledPosition;
             gl_Position = project(viewMatrix * transformedPosition, sceneProperties[0]);
@@ -1205,22 +1323,47 @@ shadowVertexShader =
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, shadowLightSource ]
         , varyings = []
         , constants = []
+        , functions = [ shadowVertexPosition ]
+        }
+        """
+        void main () {
+            gl_Position = shadowVertexPosition(
+                position,
+                normal,
+                shadowLightSource,
+                modelScale,
+                modelMatrix,
+                viewMatrix,
+                sceneProperties
+            );
+        }
+        """
+
+
+quadShadowVertexShader : Glsl.Shader
+quadShadowVertexShader =
+    Glsl.vertexShader "quadShadowVertex"
+        { attributes = [ quadShadowVertex ]
+        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, shadowLightSource, quadVertexPositions ]
+        , varyings = []
+        , constants = []
         , functions = [ project, getDirectionToLight ]
         }
         """
         void main () {
-            vec4 scaledPosition = vec4(modelScale * position, 1.0);
-            vec4 transformedPosition = modelMatrix * scaledPosition;
-            vec3 transformedNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
-            vec3 directionToLight = getDirectionToLight(transformedPosition.xyz, xyz_type, rgb_radius);
-            vec3 offset = vec3(0.0, 0.0, 0.0);
-            if (dot(directionToLight, transformedNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
-            }
-            vec4 offsetPosition = transformedPosition + vec4(offset, 0.0);
-            gl_Position = project(viewMatrix * offsetPosition, sceneProperties[0]);
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal);
+            normal *= quadShadowVertex.y;
+            gl_Position = shadowVertexPosition(
+                position,
+                normal,
+                shadowLightSource,
+                modelScale,
+                modelMatrix,
+                viewMatrix,
+                sceneProperties
+            );
         }
         """
 
@@ -1563,10 +1706,14 @@ script { workingDirectory, userPrivileges } =
                     [ plainVertexShader
                     , texturedVertexShader
                     , quadVertexShader
+                    , smoothQuadVertexShader
+                    , texturedQuadVertexShader
+                    , smoothTexturedQuadVertexShader
                     , pointVertexShader
                     , smoothVertexShader
                     , smoothTexturedVertexShader
                     , shadowVertexShader
+                    , quadShadowVertexShader
                     , shadowFragmentShader
                     , constantFragmentShader
                     , colorTextureFragmentShader

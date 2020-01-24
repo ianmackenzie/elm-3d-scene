@@ -35,7 +35,6 @@ type alias Model =
     { azimuth : Angle
     , elevation : Angle
     , orbiting : Bool
-    , mesh : Mesh.WithUvs World
     , texture : Maybe (Material.Channel Color)
     }
 
@@ -49,37 +48,9 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    let
-        v0 =
-            { position = Point3d.meters 0 0 0
-            , uv = ( 0, 0 )
-            }
-
-        v1 =
-            { position = Point3d.meters 1 0 0
-            , uv = ( 1, 0 )
-            }
-
-        v2 =
-            { position = Point3d.meters 1 1 0
-            , uv = ( 1, 1 )
-            }
-
-        v3 =
-            { position = Point3d.meters 0 1 0
-            , uv = ( 0, 1 )
-            }
-
-        mesh =
-            Mesh.withUvs <|
-                TriangularMesh.indexed
-                    (Array.fromList [ v0, v1, v2, v3 ])
-                    [ ( 0, 1, 2 ), ( 0, 2, 3 ) ]
-    in
     ( { azimuth = Angle.degrees 45
       , elevation = Angle.degrees 30
       , orbiting = False
-      , mesh = mesh
       , texture = Nothing
       }
     , Task.attempt GotTexture
@@ -179,7 +150,12 @@ view model =
                     , exposure = Scene3d.defaultExposure
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     }
-                    [ Scene3d.mesh model.mesh (Material.unlitTexture texture)
+                    [ Scene3d.quad (Material.unlitTexture texture)
+                        { castsShadow = False }
+                        (Point3d.meters 0 0 0)
+                        (Point3d.meters 1 0 0)
+                        (Point3d.meters 1 1 0)
+                        (Point3d.meters 0 1 0)
                     ]
                 ]
 

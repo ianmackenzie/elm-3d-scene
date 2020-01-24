@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( toHtml
     , Entity
-    , nothing, block, sphere, cylinder, mesh, group
+    , nothing, quad, block, sphere, cylinder, mesh, group
     , shadow, withShadow
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
@@ -20,7 +20,7 @@ module Scene3d exposing
 
 @docs Entity
 
-@docs nothing, block, sphere, cylinder, mesh, group
+@docs nothing, quad, block, sphere, cylinder, mesh, group
 
 
 # Shadows
@@ -131,6 +131,18 @@ type alias Entity coordinates =
 nothing : Entity coordinates
 nothing =
     Entity.empty
+
+
+quad :
+    Material.ForMeshWithNormalsAndUvs
+    -> { castsShadow : Bool }
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+quad givenMaterial { castsShadow } p1 p2 p3 p4 =
+    Entity.quad givenMaterial castsShadow p1 p2 p3 p4
 
 
 {-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
