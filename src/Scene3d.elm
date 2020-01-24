@@ -6,7 +6,8 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
-    , DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+    , LightSource, directionalLight, pointLight
+    , DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     , toWebGLEntities
     )
@@ -62,7 +63,9 @@ around you. Generally, direct lighting gives nice highlights but can be very
 harsh; it's usually best to use a combination of one or more direct lights plus
 some soft indirect lighting.
 
-@docs DirectLighting, LightSource, directionalLight, pointLight, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+@docs LightSource, directionalLight, pointLight
+
+@docs DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
 
 @docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
 
