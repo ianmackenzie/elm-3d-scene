@@ -111,9 +111,11 @@ view { world, screenWidth, screenHeight } =
             List.map getTransformedDrawable (World.getBodies world)
 
         sunlight =
-            Scene3d.directionalLight Chromaticity.d65
-                (Illuminance.lux 10000)
-                (Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60))
+            Scene3d.directionalLight Scene3d.castsShadows
+                { chromaticity = Chromaticity.d65
+                , intensity = Illuminance.lux 10000
+                , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
+                }
 
         environmentalLighting =
             Scene3d.softLighting
@@ -131,7 +133,7 @@ view { world, screenWidth, screenHeight } =
             { width = pixels screenWidth
             , height = pixels screenHeight
             , camera = camera
-            , directLighting = Scene3d.oneLightSource sunlight { castsShadows = True }
+            , directLighting = Scene3d.oneLightSource sunlight
             , environmentalLighting = environmentalLighting
             , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
             , whiteBalance = Chromaticity.d65
@@ -269,7 +271,7 @@ floor =
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere shape Materials.aluminum { castsShadow = False }
+    Scene3d.sphere shape Materials.aluminum Scene3d.doesNotCastShadows
         |> Body.sphere shape
         |> Body.moveTo
             (Point3d.meters
@@ -291,7 +293,7 @@ box material =
             Block3d.centeredOn Frame3d.atOrigin
                 ( boxSize, boxSize, boxSize )
     in
-    Scene3d.block shape material { castsShadow = True }
+    Scene3d.block shape material Scene3d.castsShadows
         |> Body.block shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 5))
 
@@ -307,7 +309,7 @@ sphere material =
         shape =
             Sphere3d.atOrigin sphereRadius
     in
-    Scene3d.sphere shape material { castsShadow = True }
+    Scene3d.sphere shape material Scene3d.castsShadows
         |> Body.sphere shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
 

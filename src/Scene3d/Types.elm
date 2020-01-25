@@ -176,9 +176,10 @@ type LinearRgb
     = LinearRgb Vec3
 
 
-type LightSource coordinates
+type LightSource coordinates castsShadows
     = LightSource
         { type_ : Float
+        , castsShadows : Bool
         , radius : Float
         , x : Float
         , y : Float

@@ -194,10 +194,11 @@ viewpoint =
 
 
 sunlight =
-    Scene3d.directionalLight
-        Chromaticity.sunlight
-        (Illuminance.lux 20000)
-        (Direction3d.yz (Angle.degrees -120))
+    Scene3d.directionalLight Scene3d.doesNotCastShadows
+        { chromaticity = Chromaticity.sunlight
+        , intensity = Illuminance.lux 20000
+        , direction = Direction3d.yz (Angle.degrees -120)
+        }
 
 
 camera : Camera3d Meters WorldCoordinates
@@ -224,7 +225,7 @@ view model =
                         , below = ( Quantity.zero, Chromaticity.d65 )
                         }
                 , directLighting =
-                    Scene3d.oneLightSource sunlight { castsShadows = False }
+                    Scene3d.oneLightSource sunlight
                 , exposure = Exposure.fromEv100 12
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , backgroundColor = Scene3d.transparentBackground
@@ -237,7 +238,7 @@ view model =
                         , metallic = metallicTexture
                         }
                     )
-                    { castsShadow = False }
+                    Scene3d.doesNotCastShadows
                     |> Scene3d.placeIn sphereFrame
                 ]
 

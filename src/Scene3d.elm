@@ -7,6 +7,7 @@ module Scene3d exposing
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
     , LightSource, directionalLight, pointLight
+    , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     , toWebGLEntities
@@ -63,9 +64,17 @@ around you. Generally, direct lighting gives nice highlights but can be very
 harsh; it's usually best to use a combination of one or more direct lights plus
 some soft indirect lighting.
 
+
+## Direct lighting
+
 @docs LightSource, directionalLight, pointLight
 
+@docs CastsShadows, Yes, No, castsShadows, doesNotCastShadows
+
 @docs DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+
+
+## Environmental lighting
 
 @docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
 
@@ -138,14 +147,14 @@ nothing =
 
 quad :
     Material.ForMeshWithNormalsAndUvs
-    -> { castsShadow : Bool }
+    -> CastsShadows a
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Entity coordinates
-quad givenMaterial { castsShadow } p1 p2 p3 p4 =
-    Entity.quad givenMaterial castsShadow p1 p2 p3 p4
+quad givenMaterial (CastsShadows shadowFlag) p1 p2 p3 p4 =
+    Entity.quad givenMaterial shadowFlag p1 p2 p3 p4
 
 
 {-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
@@ -163,19 +172,19 @@ Note that this projection, while simple, maeans that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
-sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> { castsShadow : Bool } -> Entity coordinates
-sphere givenSphere givenMaterial { castsShadow } =
-    Entity.sphere givenSphere givenMaterial castsShadow
+sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> CastsShadows a -> Entity coordinates
+sphere givenSphere givenMaterial (CastsShadows shadowFlag) =
+    Entity.sphere givenSphere givenMaterial shadowFlag
 
 
-block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> { castsShadow : Bool } -> Entity coordinates
-block givenBlock givenMaterial { castsShadow } =
-    Entity.block givenBlock givenMaterial castsShadow
+block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> CastsShadows a -> Entity coordinates
+block givenBlock givenMaterial (CastsShadows shadowFlag) =
+    Entity.block givenBlock givenMaterial shadowFlag
 
 
-cylinder : Cylinder3d Meters coordinates -> Material.ForMeshWithNormals -> { castsShadow : Bool } -> Entity coordinates
-cylinder givenCylinder givenMaterial { castsShadow } =
-    Entity.cylinder givenCylinder givenMaterial castsShadow
+cylinder : Cylinder3d Meters coordinates -> Material.ForMeshWithNormals -> CastsShadows a -> Entity coordinates
+cylinder givenCylinder givenMaterial (CastsShadows shadowFlag) =
+    Entity.cylinder givenCylinder givenMaterial shadowFlag
 
 
 {-| Draw the given mesh with the given material.
@@ -299,8 +308,8 @@ relativeTo frame entity =
 the sun or a light bulb. Light sources are not rendered themselves; they can
 only be seen by how they interact with entities (meshes).
 -}
-type alias LightSource coordinates =
-    Types.LightSource coordinates
+type alias LightSource coordinates castsShadows =
+    Types.LightSource coordinates castsShadows
 
 
 type DirectLighting coordinates
@@ -309,10 +318,11 @@ type DirectLighting coordinates
     | TwoPasses LightMatrices LightMatrices
 
 
-disabledLightSource : LightSource coordinates
+disabledLightSource : LightSource coordinates castsShadows
 disabledLightSource =
     Types.LightSource
         { type_ = 0
+        , castsShadows = False
         , x = 0
         , y = 0
         , z = 0
@@ -323,7 +333,7 @@ disabledLightSource =
         }
 
 
-lightSourcePair : LightSource coordinates -> LightSource coordinates -> Mat4
+lightSourcePair : LightSource coordinates firstCastsShadows -> LightSource coordinates secondCastsShadows -> Mat4
 lightSourcePair (Types.LightSource first) (Types.LightSource second) =
     Math.Matrix4.fromRecord
         { m11 = first.x
@@ -359,8 +369,13 @@ noDirectLighting =
     SingleUnshadowedPass lightingDisabled
 
 
-oneLightSource : LightSource coordinates -> { castsShadows : Bool } -> DirectLighting coordinates
-oneLightSource lightSource { castsShadows } =
+lightCastsShadows : LightSource coordinates castsShadows -> Bool
+lightCastsShadows (Types.LightSource properties) =
+    properties.castsShadows
+
+
+oneLightSource : LightSource coordinates (CastsShadows a) -> DirectLighting coordinates
+oneLightSource lightSource =
     let
         lightMatrices =
             { lightSources12 = lightSourcePair lightSource disabledLightSource
@@ -369,7 +384,7 @@ oneLightSource lightSource { castsShadows } =
             , lightSources78 = lightSourcePair disabledLightSource disabledLightSource
             }
     in
-    if castsShadows then
+    if lightCastsShadows lightSource then
         SingleShadowedPass lightMatrices
 
     else
@@ -377,8 +392,8 @@ oneLightSource lightSource { castsShadows } =
 
 
 twoLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
 twoLightSources first second =
     eightLightSources
@@ -393,9 +408,9 @@ twoLightSources first second =
 
 
 threeLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
 threeLightSources first second third =
     eightLightSources
@@ -410,10 +425,10 @@ threeLightSources first second third =
 
 
 fourLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
 fourLightSources first second third fourth =
     eightLightSources
@@ -428,11 +443,11 @@ fourLightSources first second third fourth =
 
 
 fiveLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
 fiveLightSources first second third fourth fifth =
     eightLightSources
@@ -447,12 +462,12 @@ fiveLightSources first second third fourth fifth =
 
 
 sixLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
 sixLightSources first second third fourth fifth sixth =
     eightLightSources
@@ -467,13 +482,13 @@ sixLightSources first second third fourth fifth sixth =
 
 
 sevenLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
 sevenLightSources first second third fourth fifth sixth seventh =
     eightLightSources
@@ -488,17 +503,17 @@ sevenLightSources first second third fourth fifth sixth seventh =
 
 
 eightLightSources :
-    ( LightSource coordinates, { castsShadows : Bool } )
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
-    -> LightSource coordinates
+    LightSource coordinates (CastsShadows a)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
+    -> LightSource coordinates (CastsShadows No)
     -> DirectLighting coordinates
-eightLightSources ( first, { castsShadows } ) second third fourth fifth sixth seventh eigth =
-    if castsShadows then
+eightLightSources first second third fourth fifth sixth seventh eigth =
+    if lightCastsShadows first then
         TwoPasses
             { lightSources12 = lightSourcePair first second
             , lightSources34 = lightSourcePair third fourth
@@ -520,8 +535,37 @@ eightLightSources ( first, { castsShadows } ) second third fourth fifth sixth se
             }
 
 
-directionalLight : Chromaticity -> Illuminance -> Direction3d coordinates -> LightSource coordinates
-directionalLight chromaticity illuminance direction =
+type CastsShadows a
+    = CastsShadows Bool
+
+
+type Yes
+    = Yes
+
+
+type No
+    = No
+
+
+castsShadows : CastsShadows Yes
+castsShadows =
+    CastsShadows True
+
+
+doesNotCastShadows : CastsShadows No
+doesNotCastShadows =
+    CastsShadows False
+
+
+directionalLight :
+    CastsShadows a
+    ->
+        { chromaticity : Chromaticity
+        , intensity : Illuminance
+        , direction : Direction3d coordinates
+        }
+    -> LightSource coordinates (CastsShadows a)
+directionalLight (CastsShadows shadowFlag) { chromaticity, intensity, direction } =
     let
         { x, y, z } =
             Direction3d.unwrap direction
@@ -530,10 +574,11 @@ directionalLight chromaticity illuminance direction =
             ColorConversions.chromaticityToLinearRgb chromaticity
 
         lux =
-            Illuminance.inLux illuminance
+            Illuminance.inLux intensity
     in
     Types.LightSource
         { type_ = 1
+        , castsShadows = shadowFlag
         , x = -x
         , y = -y
         , z = -z
@@ -544,20 +589,28 @@ directionalLight chromaticity illuminance direction =
         }
 
 
-pointLight : Chromaticity -> LuminousFlux -> Point3d Meters coordinates -> LightSource coordinates
-pointLight chromaticity luminousFlux position =
+pointLight :
+    CastsShadows a
+    ->
+        { chromaticity : Chromaticity
+        , intensity : LuminousFlux
+        , position : Point3d Meters coordinates
+        }
+    -> LightSource coordinates (CastsShadows a)
+pointLight (CastsShadows shadowFlag) { chromaticity, intensity, position } =
     let
         (LinearRgb rgb) =
             ColorConversions.chromaticityToLinearRgb chromaticity
 
         lumens =
-            LuminousFlux.inLumens luminousFlux
+            LuminousFlux.inLumens intensity
 
         { x, y, z } =
             Point3d.unwrap position
     in
     Types.LightSource
         { type_ = 2
+        , castsShadows = shadowFlag
         , x = x
         , y = y
         , z = z

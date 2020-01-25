@@ -3,11 +3,14 @@ module Spheres exposing (main)
 import Angle
 import Axis3d
 import Block3d
+import Browser
+import Browser.Events
 import Camera3d exposing (Camera3d)
 import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Illuminance exposing (lux)
+import Json.Decode as Decode
 import Length exposing (Meters, meters)
 import Luminance
 import LuminousFlux exposing (lumens)
@@ -39,7 +42,7 @@ floor =
             }
         )
         Materials.aluminum
-        { castsShadow = False }
+        Scene3d.doesNotCastShadows
 
 
 goldSphere : Scene3d.Entity World
@@ -47,7 +50,7 @@ goldSphere =
     Scene3d.sphere
         (Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0))
         Materials.gold
-        { castsShadow = True }
+        Scene3d.castsShadows
 
 
 aluminumSphere : Scene3d.Entity World
@@ -55,7 +58,7 @@ aluminumSphere =
     Scene3d.sphere
         (Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0))
         Materials.aluminum
-        { castsShadow = True }
+        Scene3d.castsShadows
 
 
 blackPlasticSphere : Scene3d.Entity World
@@ -63,7 +66,7 @@ blackPlasticSphere =
     Scene3d.sphere
         (Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0))
         Materials.blackPlastic
-        { castsShadow = True }
+        Scene3d.castsShadows
 
 
 whitePlasticSphere : Scene3d.Entity World
@@ -71,7 +74,7 @@ whitePlasticSphere =
     Scene3d.sphere
         (Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0))
         Materials.whitePlastic
-        { castsShadow = True }
+        Scene3d.castsShadows
 
 
 camera : Camera3d Meters World
@@ -88,19 +91,24 @@ camera =
         }
 
 
-sunlight : Scene3d.LightSource World
+sunlight : Scene3d.LightSource World (Scene3d.CastsShadows Scene3d.Yes)
 sunlight =
-    Scene3d.directionalLight
-        Chromaticity.d65
-        (lux 20000)
-        (Direction3d.negativeZ
-            |> Direction3d.rotateAround Axis3d.x (Angle.degrees -30)
-        )
+    Scene3d.directionalLight Scene3d.castsShadows
+        { chromaticity = Chromaticity.d65
+        , intensity = lux 20000
+        , direction =
+            Direction3d.negativeZ
+                |> Direction3d.rotateAround Axis3d.x (Angle.degrees -30)
+        }
 
 
-lightBulb : Scene3d.LightSource World
+lightBulb : Scene3d.LightSource World (Scene3d.CastsShadows Scene3d.Yes)
 lightBulb =
-    Scene3d.pointLight Chromaticity.d65 (LuminousFlux.lumens 1000000) (Point3d.meters 0 0 3)
+    Scene3d.pointLight Scene3d.castsShadows
+        { chromaticity = Chromaticity.d65
+        , intensity = LuminousFlux.lumens 3000000
+        , position = Point3d.meters 0 0 3
+        }
 
 
 environmentalLighting : Scene3d.EnvironmentalLighting World
@@ -112,21 +120,42 @@ environmentalLighting =
         }
 
 
-main : Html msg
+main : Program () Bool ()
 main =
-    Scene3d.toHtml
-        { environmentalLighting = environmentalLighting
-        , directLighting = Scene3d.oneLightSource lightBulb { castsShadows = True }
-        , camera = camera
-        , width = pixels 1024
-        , height = pixels 768
-        , exposure = Exposure.fromEv100 12
-        , whiteBalance = Chromaticity.d65
-        , backgroundColor = Scene3d.transparentBackground
+    Browser.element
+        { init = always ( True, Cmd.none )
+        , update =
+            \() usePointLight -> ( not usePointLight, Cmd.none )
+        , view =
+            \usePointLight ->
+                Scene3d.toHtml
+                    { environmentalLighting = environmentalLighting
+                    , directLighting =
+                        Scene3d.oneLightSource <|
+                            if usePointLight then
+                                lightBulb
+
+                            else
+                                sunlight
+                    , camera = camera
+                    , width = pixels 1024
+                    , height = pixels 768
+                    , exposure = Exposure.fromEv100 14
+                    , whiteBalance = Chromaticity.d65
+                    , backgroundColor = Scene3d.transparentBackground
+                    }
+                    [ goldSphere
+                    , aluminumSphere
+                    , blackPlasticSphere
+                    , whitePlasticSphere
+                    , floor
+                    , Scene3d.quad
+                        Materials.aluminum
+                        Scene3d.castsShadows
+                        (Point3d.meters 1 1 -0.5)
+                        (Point3d.meters -1 1 0)
+                        (Point3d.meters -1 -1 0.5)
+                        (Point3d.meters 1 -1 0)
+                    ]
+        , subscriptions = always (Browser.Events.onClick (Decode.succeed ()))
         }
-        [ goldSphere
-        , aluminumSphere
-        , blackPlasticSphere
-        , whitePlasticSphere
-        , floor
-        ]

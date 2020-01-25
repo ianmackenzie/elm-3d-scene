@@ -118,7 +118,7 @@ floor =
         , entity =
             Scene3d.block shape
                 (Material.diffuse Tango.aluminum6)
-                { castsShadow = False }
+                Scene3d.doesNotCastShadows
                 |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -158,7 +158,7 @@ table =
                                 , roughness = 0.25
                                 }
                             )
-                            { castsShadow = True }
+                            Scene3d.castsShadows
                     )
     in
     Body.compound shapes
@@ -186,9 +186,11 @@ view : Model -> Html Msg
 view { world, width, height } =
     let
         sunlight =
-            Scene3d.directionalLight Scene3d.Chromaticity.d65
-                (Illuminance.lux 10000)
-                (Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60))
+            Scene3d.directionalLight Scene3d.castsShadows
+                { chromaticity = Scene3d.Chromaticity.d65
+                , intensity = Illuminance.lux 10000
+                , direction = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60)
+                }
 
         environmentalLighting =
             Scene3d.softLighting
@@ -218,7 +220,7 @@ view { world, width, height } =
             { width = width
             , height = height
             , camera = camera
-            , directLighting = Scene3d.oneLightSource sunlight { castsShadows = True }
+            , directLighting = Scene3d.oneLightSource sunlight
             , environmentalLighting = environmentalLighting
             , exposure = Scene3d.Exposure.fromMaxLuminance (Luminance.nits 10000)
             , whiteBalance = Scene3d.defaultWhiteBalance
@@ -343,7 +345,7 @@ mouse =
         , entity =
             Scene3d.sphere (Sphere3d.atOrigin (millimeters 20))
                 (Material.diffuse (Color.fromRGB ( 255, 255, 255 )))
-                { castsShadow = False }
+                Scene3d.doesNotCastShadows
         }
 
 
