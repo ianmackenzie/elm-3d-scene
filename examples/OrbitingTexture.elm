@@ -151,7 +151,7 @@ view model =
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     }
                     [ Scene3d.quad (Material.unlitTexture texture)
-                        { castsShadow = False }
+                        Scene3d.doesNotCastShadows
                         (Point3d.meters 0 0 0)
                         (Point3d.meters 1 0 0)
                         (Point3d.meters 1 1 0)
