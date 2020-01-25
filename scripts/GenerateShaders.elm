@@ -1363,7 +1363,14 @@ quadShadowVertexShader : Glsl.Shader
 quadShadowVertexShader =
     Glsl.vertexShader "quadShadowVertex"
         { attributes = [ quadShadowVertex ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, shadowLightSource, quadVertexPositions ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , shadowLightSource
+            , quadVertexPositions
+            ]
         , varyings = []
         , constants = []
         , functions = [ project, getDirectionToLight ]
