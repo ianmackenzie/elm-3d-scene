@@ -136,7 +136,7 @@ view model =
                 , clipDepth = Length.meters 0.1
                 }
     in
-    { title = "Triangles"
+    { title = "OrbitingTexture"
     , body =
         case model.texture of
             Just texture ->
