@@ -4,7 +4,6 @@ module Scene3d.Primitives exposing
     , cylinder
     , cylinderShadow
     , sphere
-    , sphereShadow
     )
 
 import Angle
@@ -297,11 +296,6 @@ block =
 blockShadow : Mesh.Shadow coordinates
 blockShadow =
     Mesh.shadow block
-
-
-sphereShadow : Mesh.Shadow coordinates
-sphereShadow =
-    Mesh.shadow sphere
 
 
 cylinderShadow : Mesh.Shadow coordinates

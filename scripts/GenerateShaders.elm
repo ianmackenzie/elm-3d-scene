@@ -36,6 +36,16 @@ quadShadowVertex =
     Glsl.attribute Glsl.vec2 "quadShadowVertex"
 
 
+angle : Glsl.Attribute
+angle =
+    Glsl.attribute Glsl.float "angle"
+
+
+offsetScale : Glsl.Attribute
+offsetScale =
+    Glsl.attribute Glsl.float "offsetScale"
+
+
 
 ---------- UNIFORMS ----------
 
@@ -1125,6 +1135,35 @@ shadowVertexPosition =
         """
 
 
+perpendicularTo : Glsl.Function
+perpendicularTo =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 perpendicularTo(vec3 d) {
+            float absX = abs(d.x);
+            float absY = abs(d.y);
+            float absZ = abs(d.z);
+            if (absX <= absY) {
+                if (absX <= absZ) {
+                    float scale = 1.0 / length(d.zy);
+                    return vec3(0.0, -d.z * scale, d.y * scale);
+                } else {
+                    float scale = 1.0 / length(d.xy);
+                    return vec3(-d.y * scale, d.x * scale, 0.0);
+                }
+            } else {
+                if (absY <= absZ) {
+                    float scale = 1.0 / length(d.xz);
+                    return vec3(d.z * scale, 0.0, -d.x * scale);
+                } else {
+                    float scale = 1.0 / length(d.xy);
+                    return vec3(-d.y * scale, d.x * scale, 0.0);
+                }
+            }
+        }
+        """
+
+
 
 ---------- VERTEX SHADERS ----------
 
@@ -1390,6 +1429,57 @@ quadShadowVertexShader =
                 viewMatrix,
                 sceneProperties
             );
+        }
+        """
+
+
+sphereShadowVertexShader : Glsl.Shader
+sphereShadowVertexShader =
+    Glsl.vertexShader "sphereShadowVertex"
+        { attributes = [ angle, offsetScale ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , shadowLightSource
+            ]
+        , functions =
+            [ getWorldPosition
+            , getDirectionToLight
+            , perpendicularTo
+            , project
+            ]
+        , constants = [ kPerspectiveProjection ]
+        , varyings = []
+        }
+        """
+        void main () {
+            vec4 worldCenter = getWorldPosition(vec3(0.0, 0.0, 0.0), modelScale, modelMatrix);
+            vec4 xyz_type = shadowLightSource[0];
+            vec4 rgb_radius = shadowLightSource[1];
+            vec3 zDirection = getDirectionToLight(worldCenter.xyz, xyz_type, rgb_radius);
+            vec3 xDirection = perpendicularTo(zDirection);
+            vec3 yDirection = cross(zDirection, xDirection);
+            float r = modelScale.x;
+            float adjustedRadius = r;
+            float zOffset = 0.0;
+            if (xyz_type.w == kPointLightSource) {
+                float distanceToLight = length(xyz_type.xyz - worldCenter.xyz);
+                float rSquared = r * r;
+                zOffset = rSquared / distanceToLight;
+                float zSquared = zOffset * zOffset;
+                adjustedRadius = sqrt(rSquared - zSquared);
+            }
+            vec3 worldPosition =
+                worldCenter.xyz
+                    + zDirection * zOffset
+                    + xDirection * adjustedRadius * cos(angle)
+                    + yDirection * adjustedRadius * sin(angle);
+            vec3 directionToLight = getDirectionToLight(worldPosition, xyz_type, rgb_radius);
+            vec3 offset = -1.0e9 * offsetScale * directionToLight;
+            vec4 offsetPosition = vec4(worldPosition + offset, 1.0);
+            gl_Position = project(viewMatrix * offsetPosition, sceneProperties[0]);
         }
         """
 
@@ -1740,6 +1830,7 @@ script { workingDirectory, userPrivileges } =
                     , smoothTexturedVertexShader
                     , shadowVertexShader
                     , quadShadowVertexShader
+                    , sphereShadowVertexShader
                     , shadowFragmentShader
                     , constantFragmentShader
                     , colorTextureFragmentShader

@@ -26,6 +26,7 @@ import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
+import Float.Extra as Float
 import Frame3d exposing (Frame3d)
 import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
@@ -682,7 +683,7 @@ sphere givenSphere givenMaterial castsShadow =
 
         untransformedEntity =
             if castsShadow then
-                group [ baseEntity, shadow Primitives.sphereShadow ]
+                group [ baseEntity, sphereShadow givenSphere ]
 
             else
                 baseEntity
@@ -690,6 +691,56 @@ sphere givenSphere givenMaterial castsShadow =
     untransformedEntity
         |> transformBy (Transformation.preScale r r r)
         |> translateBy (Vector3d.from Point3d.origin (Sphere3d.centerPoint givenSphere))
+
+
+sphereShadow : Sphere3d Meters coordinates -> Entity coordinates
+sphereShadow givenSphere =
+    Types.Entity <|
+        Types.ShadowNode <|
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
+                WebGL.entityWith settings
+                    Shaders.sphereShadowVertex
+                    Shaders.shadowFragment
+                    sphereOutlineMesh
+                    { sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    , shadowLightSource = lightSources.lightSources12
+                    , constantColor = Math.Vector3.vec3 0 0 1
+                    }
+
+
+sphereOutlineMesh : WebGL.Mesh { angle : Float, offsetScale : Float }
+sphereOutlineMesh =
+    WebGL.triangleStrip (buildSphereOutline numOutlineSegments [])
+
+
+numOutlineSegments : number
+numOutlineSegments =
+    72
+
+
+buildSphereOutline : Float -> List { angle : Float, offsetScale : Float } -> List { angle : Float, offsetScale : Float }
+buildSphereOutline index accumulated =
+    let
+        angle =
+            Float.interpolateFrom 0 (2 * pi) (index / numOutlineSegments)
+
+        left =
+            { angle = angle, offsetScale = 0 }
+
+        right =
+            { angle = angle, offsetScale = 1 }
+
+        updated =
+            left :: right :: accumulated
+    in
+    if index == 0 then
+        updated
+
+    else
+        buildSphereOutline (index - 1) updated
 
 
 block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
