@@ -1373,7 +1373,7 @@ quadShadowVertexShader =
             ]
         , varyings = []
         , constants = []
-        , functions = [ project, getDirectionToLight ]
+        , functions = [ getQuadVertex, shadowVertexPosition ]
         }
         """
         void main () {
