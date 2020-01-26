@@ -886,21 +886,6 @@ createShadowStencil : List WebGL.Settings.Setting
 createShadowStencil =
     [ DepthTest.less { write = False, near = 0, far = 1 }
     , WebGL.Settings.colorMask False False False False
-    , StencilTest.testSeparate
-        { ref = 1
-        , mask = 0xFF
-        , writeMask = 0xFF
-        }
-        { test = StencilTest.always
-        , fail = StencilTest.keep
-        , zfail = StencilTest.keep
-        , zpass = StencilTest.incrementWrap
-        }
-        { test = StencilTest.always
-        , fail = StencilTest.keep
-        , zfail = StencilTest.keep
-        , zpass = StencilTest.decrementWrap
-        }
     ]
 
 

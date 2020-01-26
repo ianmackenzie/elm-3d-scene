@@ -64,6 +64,7 @@ import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
+import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture exposing (Texture)
 
 
@@ -698,7 +699,10 @@ sphereShadow givenSphere =
     Types.Entity <|
         Types.ShadowNode <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
-                WebGL.entityWith settings
+                -- Note that the way the sphere shadow mesh is constructed in the vertex shaders, it
+                -- will always form proper right-handed triangles regardless of the current model
+                -- matrix handedness
+                WebGL.entityWith (shadowSettings True settings)
                     Shaders.sphereShadowVertex
                     Shaders.shadowFragment
                     sphereOutlineMesh
@@ -811,7 +815,7 @@ shadowDrawFunction givenShadow =
             -- TODO take handedness into account?
             Just <|
                 \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
-                    WebGL.entityWith settings
+                    WebGL.entityWith (shadowSettings isRightHanded settings)
                         Shaders.shadowVertex
                         Shaders.shadowFragment
                         webGLMesh
@@ -871,7 +875,7 @@ quadShadow firstPoint secondPoint thirdPoint fourthPoint =
     Types.Entity <|
         Types.ShadowNode <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
-                WebGL.entityWith settings
+                WebGL.entityWith (shadowSettings isRightHanded settings)
                     Shaders.quadShadowVertex
                     Shaders.shadowFragment
                     quadShadowVertices
@@ -906,6 +910,53 @@ meshSettings isRightHanded backFaceSetting settings =
 
         KeepBackFaces ->
             settings
+
+
+rightHandedStencilTest : WebGL.Settings.Setting
+rightHandedStencilTest =
+    StencilTest.testSeparate
+        { ref = 1
+        , mask = 0xFF
+        , writeMask = 0xFF
+        }
+        { test = StencilTest.always
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.incrementWrap
+        }
+        { test = StencilTest.always
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.decrementWrap
+        }
+
+
+leftHandedStencilTest : WebGL.Settings.Setting
+leftHandedStencilTest =
+    StencilTest.testSeparate
+        { ref = 1
+        , mask = 0xFF
+        , writeMask = 0xFF
+        }
+        { test = StencilTest.always
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.decrementWrap
+        }
+        { test = StencilTest.always
+        , fail = StencilTest.keep
+        , zfail = StencilTest.keep
+        , zpass = StencilTest.incrementWrap
+        }
+
+
+shadowSettings : Bool -> List WebGL.Settings.Setting -> List WebGL.Settings.Setting
+shadowSettings isRightHanded settings =
+    if isRightHanded then
+        rightHandedStencilTest :: settings
+
+    else
+        leftHandedStencilTest :: settings
 
 
 constantMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
