@@ -128,34 +128,39 @@ main =
             \() usePointLight -> ( not usePointLight, Cmd.none )
         , view =
             \usePointLight ->
-                Scene3d.toHtml
-                    { environmentalLighting = environmentalLighting
-                    , directLighting =
-                        Scene3d.oneLightSource <|
-                            if usePointLight then
-                                lightBulb
+                Html.div []
+                    [ Html.text "Click to toggle between point and directional light"
+                    , Html.div []
+                        [ Scene3d.toHtml
+                            { environmentalLighting = environmentalLighting
+                            , directLighting =
+                                Scene3d.oneLightSource <|
+                                    if usePointLight then
+                                        lightBulb
 
-                            else
-                                sunlight
-                    , camera = camera
-                    , width = pixels 1024
-                    , height = pixels 768
-                    , exposure = Exposure.fromEv100 14
-                    , whiteBalance = Chromaticity.d65
-                    , backgroundColor = Scene3d.transparentBackground
-                    }
-                    [ goldSphere
-                    , aluminumSphere
-                    , blackPlasticSphere
-                    , whitePlasticSphere
-                    , floor
-                    , Scene3d.quad
-                        Materials.aluminum
-                        Scene3d.castsShadows
-                        (Point3d.meters 1 1 -0.5)
-                        (Point3d.meters -1 1 0)
-                        (Point3d.meters -1 -1 0.5)
-                        (Point3d.meters 1 -1 0)
+                                    else
+                                        sunlight
+                            , camera = camera
+                            , width = pixels 1024
+                            , height = pixels 768
+                            , exposure = Exposure.fromEv100 14
+                            , whiteBalance = Chromaticity.d65
+                            , backgroundColor = Scene3d.transparentBackground
+                            }
+                            [ goldSphere
+                            , aluminumSphere
+                            , blackPlasticSphere
+                            , whitePlasticSphere
+                            , floor
+                            , Scene3d.quad
+                                Materials.aluminum
+                                Scene3d.castsShadows
+                                (Point3d.meters 1 1 -0.5)
+                                (Point3d.meters -1 1 0)
+                                (Point3d.meters -1 -1 0.5)
+                                (Point3d.meters 1 -1 0)
+                            ]
+                        ]
                     ]
         , subscriptions = always (Browser.Events.onClick (Decode.succeed ()))
         }
