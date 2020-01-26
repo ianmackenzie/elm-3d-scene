@@ -1042,19 +1042,15 @@ toHtml arguments drawables =
         heightInPixels =
             inPixels arguments.height
 
-        { red, green, blue, alpha } =
-            Color.Transparent.toRGBA arguments.backgroundColor
+        backgroundColorString =
+            Color.Transparent.toRGBAString arguments.backgroundColor
 
         webGLOptions =
             [ WebGL.depth 1
             , WebGL.stencil 0
             , WebGL.alpha True
             , WebGL.antialias
-            , WebGL.clearColor
-                (red / 255)
-                (green / 255)
-                (blue / 255)
-                (Color.Transparent.opacityToFloat alpha)
+            , WebGL.clearColor 0 0 0 0
             ]
     in
     WebGL.toHtmlWith webGLOptions
@@ -1063,5 +1059,6 @@ toHtml arguments drawables =
         , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
         , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
         , Html.Attributes.style "display" "block"
+        , Html.Attributes.style "background-color" backgroundColorString
         ]
         (toWebGLEntities arguments drawables)
