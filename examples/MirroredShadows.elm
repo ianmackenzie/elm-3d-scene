@@ -38,7 +38,7 @@ objectMaterial =
 
 floorMaterial : Material { a | normals : () }
 floorMaterial =
-    Material.diffuse Tango.orange1
+    Material.diffuse Tango.chameleon1
 
 
 floor : Scene3d.Entity World
@@ -63,15 +63,16 @@ initialQuad : Scene3d.Entity World
 initialQuad =
     Scene3d.quad Scene3d.castsShadows
         objectMaterial
-        (Point3d.meters 1 4 1)
-        (Point3d.meters 2 4 1)
-        (Point3d.meters 2 5 1)
+        (Point3d.meters 1 3.5 1)
+        (Point3d.meters 2.5 3.5 1)
+        (Point3d.meters 2.5 5 1)
         (Point3d.meters 1 5 1)
 
 
 initialGroup : Scene3d.Entity World
 initialGroup =
     Scene3d.group [ initialBlock, initialSphere, initialQuad ]
+        |> Scene3d.translateBy (Vector3d.meters 0.25 0.25 0)
 
 
 camera : Camera3d Meters World
@@ -94,8 +95,7 @@ sunlight =
         { chromaticity = Chromaticity.d65
         , intensity = lux 20000
         , direction =
-            Direction3d.negativeZ
-                |> Direction3d.rotateAround Axis3d.x (Angle.degrees -30)
+            Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -60)
         }
 
 
