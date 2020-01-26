@@ -884,6 +884,10 @@ insideStencil =
 
 createShadowStencil : List WebGL.Settings.Setting
 createShadowStencil =
+    -- Note that the actual stencil test is added by each individual shadow
+    -- entity (in Scene3d.Entity.shadowSettings) since the exact test to perform
+    -- depends on whether the current model matrix is right-handed or
+    -- left-handed
     [ DepthTest.less { write = False, near = 0, far = 1 }
     , WebGL.Settings.colorMask False False False False
     ]
