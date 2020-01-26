@@ -116,9 +116,8 @@ floor =
     Body.plane
         { id = Floor
         , entity =
-            Scene3d.block shape
-                (Material.diffuse Tango.aluminum6)
-                Scene3d.doesNotCastShadows
+            shape
+                |> Scene3d.block Scene3d.doesNotCastShadows (Material.diffuse Tango.aluminum6)
                 |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -151,14 +150,12 @@ table =
         entities =
             blocks
                 |> List.map
-                    (\block ->
-                        Scene3d.block block
-                            (Material.nonmetal
-                                { baseColor = Color.fromRGB ( 255, 255, 255 )
-                                , roughness = 0.25
-                                }
-                            )
-                            Scene3d.castsShadows
+                    (Scene3d.block Scene3d.castsShadows
+                        (Material.nonmetal
+                            { baseColor = Color.fromRGB ( 255, 255, 255 )
+                            , roughness = 0.25
+                            }
+                        )
                     )
     in
     Body.compound shapes
@@ -343,9 +340,9 @@ mouse =
     Body.compound []
         { id = Mouse
         , entity =
-            Scene3d.sphere (Sphere3d.atOrigin (millimeters 20))
+            Scene3d.sphere Scene3d.doesNotCastShadows
                 (Material.diffuse (Color.fromRGB ( 255, 255, 255 )))
-                Scene3d.doesNotCastShadows
+                (Sphere3d.atOrigin (millimeters 20))
         }
 
 

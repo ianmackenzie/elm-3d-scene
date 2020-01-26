@@ -53,4 +53,4 @@ main =
         , exposure = Scene3d.defaultExposure
         , whiteBalance = Scene3d.defaultWhiteBalance
         }
-        [ Scene3d.mesh mesh (Material.unlit Tango.skyBlue2) ]
+        [ Scene3d.mesh (Material.unlit Tango.skyBlue2) mesh ]

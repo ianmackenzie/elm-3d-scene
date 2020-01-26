@@ -271,7 +271,7 @@ floor =
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere shape Materials.aluminum Scene3d.doesNotCastShadows
+    Scene3d.sphere Scene3d.doesNotCastShadows Materials.aluminum shape
         |> Body.sphere shape
         |> Body.moveTo
             (Point3d.meters
@@ -293,7 +293,7 @@ box material =
             Block3d.centeredOn Frame3d.atOrigin
                 ( boxSize, boxSize, boxSize )
     in
-    Scene3d.block shape material Scene3d.castsShadows
+    Scene3d.block Scene3d.castsShadows material shape
         |> Body.block shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 5))
 
@@ -309,7 +309,7 @@ sphere material =
         shape =
             Sphere3d.atOrigin sphereRadius
     in
-    Scene3d.sphere shape material Scene3d.castsShadows
+    Scene3d.sphere Scene3d.castsShadows material shape
         |> Body.sphere shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
 

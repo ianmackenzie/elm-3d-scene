@@ -80,8 +80,6 @@ main =
         , whiteBalance = Scene3d.defaultWhiteBalance
         , backgroundColor = Scene3d.transparentBackground
         }
-        [ Scene3d.sphere
-            (Sphere3d.withRadius (Length.centimeters 5) Point3d.origin)
-            material
-            Scene3d.doesNotCastShadows
+        [ Scene3d.sphere Scene3d.doesNotCastShadows material <|
+            Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
         ]

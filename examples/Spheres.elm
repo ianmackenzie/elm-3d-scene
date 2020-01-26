@@ -31,8 +31,8 @@ type World
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block
-        (Block3d.with
+    Scene3d.block Scene3d.doesNotCastShadows Materials.aluminum <|
+        Block3d.with
             { x1 = meters -4
             , x2 = meters 4
             , y1 = meters -4
@@ -40,41 +40,30 @@ floor =
             , z1 = meters -2.2
             , z2 = meters -2
             }
-        )
-        Materials.aluminum
-        Scene3d.doesNotCastShadows
 
 
 goldSphere : Scene3d.Entity World
 goldSphere =
-    Scene3d.sphere
-        (Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0))
-        Materials.gold
-        Scene3d.castsShadows
+    Scene3d.sphere Scene3d.castsShadows Materials.gold <|
+        Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0)
 
 
 aluminumSphere : Scene3d.Entity World
 aluminumSphere =
-    Scene3d.sphere
-        (Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0))
-        Materials.aluminum
-        Scene3d.castsShadows
+    Scene3d.sphere Scene3d.castsShadows Materials.aluminum <|
+        Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0)
 
 
 blackPlasticSphere : Scene3d.Entity World
 blackPlasticSphere =
-    Scene3d.sphere
-        (Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0))
-        Materials.blackPlastic
-        Scene3d.castsShadows
+    Scene3d.sphere Scene3d.castsShadows Materials.blackPlastic <|
+        Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0)
 
 
 whitePlasticSphere : Scene3d.Entity World
 whitePlasticSphere =
-    Scene3d.sphere
-        (Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0))
-        Materials.whitePlastic
-        Scene3d.castsShadows
+    Scene3d.sphere Scene3d.castsShadows Materials.whitePlastic <|
+        Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0)
 
 
 camera : Camera3d Meters World
@@ -152,9 +141,8 @@ main =
                             , blackPlasticSphere
                             , whitePlasticSphere
                             , floor
-                            , Scene3d.quad
+                            , Scene3d.quad Scene3d.castsShadows
                                 Materials.aluminum
-                                Scene3d.castsShadows
                                 (Point3d.meters 1 1 -0.5)
                                 (Point3d.meters -1 1 0)
                                 (Point3d.meters -1 -1 0.5)

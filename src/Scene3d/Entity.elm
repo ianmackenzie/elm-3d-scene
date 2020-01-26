@@ -80,8 +80,8 @@ empty =
     Types.Entity EmptyNode
 
 
-mesh : Mesh coordinates properties -> Material properties -> Entity coordinates
-mesh givenMesh givenMaterial =
+mesh : Material properties -> Mesh coordinates properties -> Entity coordinates
+mesh givenMaterial givenMesh =
     case givenMaterial of
         Types.UnlitMaterial (Types.Constant color) ->
             case givenMesh of
@@ -440,14 +440,14 @@ resolve baseColorChannel roughnessChannel metallicChannel =
 
 
 quad :
-    Material.ForMeshWithNormalsAndUvs
-    -> Bool
+    Bool
+    -> Material.ForMeshWithNormalsAndUvs
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Entity coordinates
-quad givenMaterial castsShadow firstPoint secondPoint thirdPoint fourthPoint =
+quad castsShadow givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
     let
         meshEntity =
             quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint
@@ -672,14 +672,14 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
 
-sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> Bool -> Entity coordinates
-sphere givenSphere givenMaterial castsShadow =
+sphere : Bool -> Material.ForMeshWithNormalsAndUvs -> Sphere3d Meters coordinates -> Entity coordinates
+sphere castsShadow givenMaterial givenSphere =
     let
         (Quantity r) =
             Sphere3d.radius givenSphere
 
         baseEntity =
-            mesh Primitives.sphere givenMaterial
+            mesh givenMaterial Primitives.sphere
 
         untransformedEntity =
             if castsShadow then
@@ -743,14 +743,14 @@ buildSphereOutline index accumulated =
         buildSphereOutline (index - 1) updated
 
 
-block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
-block givenBlock givenMaterial castsShadow =
+block : Bool -> Material.ForMeshWithNormals -> Block3d Meters coordinates -> Entity coordinates
+block castsShadow givenMaterial givenBlock =
     let
         ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
             Block3d.dimensions givenBlock
 
         baseEntity =
-            mesh Primitives.block givenMaterial
+            mesh givenMaterial Primitives.block
 
         untransformedEntity =
             if castsShadow then
@@ -764,8 +764,8 @@ block givenBlock givenMaterial castsShadow =
         |> placeIn (Block3d.axes givenBlock)
 
 
-cylinder : Cylinder3d Meters coordinates -> Material.ForMeshWithNormals -> Bool -> Entity coordinates
-cylinder givenCylinder givenMaterial castsShadow =
+cylinder : Bool -> Material.ForMeshWithNormals -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder castsShadow givenMaterial givenCylinder =
     let
         (Quantity radius) =
             Cylinder3d.radius givenCylinder
@@ -777,7 +777,7 @@ cylinder givenCylinder givenMaterial castsShadow =
             Frame3d.fromZAxis (Cylinder3d.axis givenCylinder)
 
         baseEntity =
-            mesh Primitives.cylinder givenMaterial
+            mesh givenMaterial Primitives.cylinder
 
         untransformedEntity =
             if castsShadow then

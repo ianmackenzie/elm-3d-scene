@@ -146,15 +146,15 @@ nothing =
 
 
 quad :
-    Material.ForMeshWithNormalsAndUvs
-    -> CastsShadows a
+    CastsShadows a
+    -> Material.ForMeshWithNormalsAndUvs
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Entity coordinates
-quad givenMaterial (CastsShadows shadowFlag) p1 p2 p3 p4 =
-    Entity.quad givenMaterial shadowFlag p1 p2 p3 p4
+quad (CastsShadows shadowFlag) givenMaterial p1 p2 p3 p4 =
+    Entity.quad shadowFlag givenMaterial p1 p2 p3 p4
 
 
 {-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
@@ -172,26 +172,26 @@ Note that this projection, while simple, maeans that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
-sphere : Sphere3d Meters coordinates -> Material.ForMeshWithNormalsAndUvs -> CastsShadows a -> Entity coordinates
-sphere givenSphere givenMaterial (CastsShadows shadowFlag) =
-    Entity.sphere givenSphere givenMaterial shadowFlag
+sphere : CastsShadows a -> Material.ForMeshWithNormalsAndUvs -> Sphere3d Meters coordinates -> Entity coordinates
+sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
+    Entity.sphere shadowFlag givenMaterial givenSphere
 
 
-block : Block3d Meters coordinates -> Material.ForMeshWithNormals -> CastsShadows a -> Entity coordinates
-block givenBlock givenMaterial (CastsShadows shadowFlag) =
-    Entity.block givenBlock givenMaterial shadowFlag
+block : CastsShadows a -> Material.ForMeshWithNormals -> Block3d Meters coordinates -> Entity coordinates
+block (CastsShadows shadowFlag) givenMaterial givenBlock =
+    Entity.block shadowFlag givenMaterial givenBlock
 
 
-cylinder : Cylinder3d Meters coordinates -> Material.ForMeshWithNormals -> CastsShadows a -> Entity coordinates
-cylinder givenCylinder givenMaterial (CastsShadows shadowFlag) =
-    Entity.cylinder givenCylinder givenMaterial shadowFlag
+cylinder : CastsShadows a -> Material.ForMeshWithNormals -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
+    Entity.cylinder shadowFlag givenMaterial givenCylinder
 
 
 {-| Draw the given mesh with the given material.
 -}
-mesh : Mesh coordinates properties -> Material properties -> Entity coordinates
-mesh givenMesh givenMaterial =
-    Entity.mesh givenMesh givenMaterial
+mesh : Material properties -> Mesh coordinates properties -> Entity coordinates
+mesh givenMaterial givenMesh =
+    Entity.mesh givenMaterial givenMesh
 
 
 {-| Group a list of entities into a single entity. This entity can then be

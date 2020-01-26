@@ -150,8 +150,8 @@ view model =
                     , exposure = Scene3d.defaultExposure
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     }
-                    [ Scene3d.quad (Material.unlitTexture texture)
-                        Scene3d.doesNotCastShadows
+                    [ Scene3d.quad Scene3d.doesNotCastShadows
+                        (Material.unlitTexture texture)
                         (Point3d.meters 0 0 0)
                         (Point3d.meters 1 0 0)
                         (Point3d.meters 1 1 0)

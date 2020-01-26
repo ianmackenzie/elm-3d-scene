@@ -62,6 +62,6 @@ main =
         , exposure = Scene3d.defaultExposure
         , whiteBalance = Scene3d.defaultWhiteBalance
         }
-        [ Scene3d.mesh mesh1 (Material.unlit Tango.orange2)
-        , Scene3d.mesh mesh2 (Material.unlit Tango.skyBlue2)
+        [ Scene3d.mesh (Material.unlit Tango.orange2) mesh1
+        , Scene3d.mesh (Material.unlit Tango.skyBlue2) mesh2
         ]

@@ -214,6 +214,14 @@ view : Model -> Html msg
 view model =
     case model of
         Loaded { colorTexture, roughnessTexture, metallicTexture, sphereFrame } ->
+            let
+                material =
+                    Material.texturedPbr
+                        { baseColor = colorTexture
+                        , roughness = roughnessTexture
+                        , metallic = metallicTexture
+                        }
+            in
             Scene3d.toHtml
                 { camera = camera
                 , width = Pixels.pixels 800
@@ -230,15 +238,8 @@ view model =
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , backgroundColor = Scene3d.transparentBackground
                 }
-                [ Scene3d.sphere
-                    (Sphere3d.withRadius (Length.centimeters 5) Point3d.origin)
-                    (Material.texturedPbr
-                        { baseColor = colorTexture
-                        , roughness = roughnessTexture
-                        , metallic = metallicTexture
-                        }
-                    )
-                    Scene3d.doesNotCastShadows
+                [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
+                    |> Scene3d.sphere Scene3d.doesNotCastShadows material
                     |> Scene3d.placeIn sphereFrame
                 ]
 
