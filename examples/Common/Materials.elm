@@ -11,49 +11,49 @@ import Color exposing (Color)
 import Scene3d.Material as Material exposing (Material)
 
 
-gold : Material.Pbr
+gold : Material.Untextured
 gold =
-    { baseColor = Color.fromRGB ( 255, 195, 86 )
-    , roughness = 0.4
-    , metallic = 1
-    }
+    Material.metal
+        { baseColor = Color.fromRGB ( 255, 195, 86 )
+        , roughness = 0.4
+        }
 
 
-aluminum : Material.Pbr
+aluminum : Material.Untextured
 aluminum =
-    { baseColor = Color.fromRGB ( 233, 235, 236 )
-    , roughness = 0.6
-    , metallic = 1
-    }
+    Material.metal
+        { baseColor = Color.fromRGB ( 233, 235, 236 )
+        , roughness = 0.6
+        }
 
 
-copper : Material.Pbr
+copper : Material.Untextured
 copper =
-    { baseColor = Color.fromRGB ( 244, 162, 137 )
-    , roughness = 0.25
-    , metallic = 1
-    }
+    Material.metal
+        { baseColor = Color.fromRGB ( 244, 162, 137 )
+        , roughness = 0.25
+        }
 
 
-chromium : Material.Pbr
+chromium : Material.Untextured
 chromium =
-    { baseColor = Color.fromRGB ( 140, 142, 141 )
-    , roughness = 0.5
-    , metallic = 1
-    }
+    Material.metal
+        { baseColor = Color.fromRGB ( 140, 142, 141 )
+        , roughness = 0.5
+        }
 
 
-blackPlastic : Material.Pbr
+blackPlastic : Material.Untextured
 blackPlastic =
-    { baseColor = Color.fromRGB ( 0, 0, 0 )
-    , roughness = 0.5
-    , metallic = 0
-    }
+    Material.nonmetal
+        { baseColor = Color.fromRGB ( 0, 0, 0 )
+        , roughness = 0.5
+        }
 
 
-whitePlastic : Material.Pbr
+whitePlastic : Material.Untextured
 whitePlastic =
-    { baseColor = Color.fromRGB ( 255, 255, 255 )
-    , roughness = 0.25
-    , metallic = 0
-    }
+    Material.nonmetal
+        { baseColor = Color.fromRGB ( 255, 255, 255 )
+        , roughness = 0.25
+        }

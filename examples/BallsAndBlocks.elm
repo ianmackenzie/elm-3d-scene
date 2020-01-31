@@ -155,29 +155,22 @@ initialWorld =
         |> addBoxes
 
 
-materials : Array Material.Pbr
+materials : Array  Material.Untextured
 materials =
-    let
-        lightBluePlastic =
-            { baseColor = Tango.skyBlue1
-            , roughness = 0.25
-            , metallic = 0
-            }
-
-        darkBluePlastic =
-            { baseColor = Tango.skyBlue2
-            , roughness = 0.25
-            , metallic = 0
-            }
-    in
     Array.fromList
         [ Materials.aluminum
         , Materials.whitePlastic
         , Materials.copper
-        , lightBluePlastic
+        , Material.nonmetal
+            { baseColor = Tango.skyBlue1
+            , roughness = 0.25
+            }
         , Materials.gold
         , Materials.whitePlastic
-        , darkBluePlastic
+        , Material.nonmetal
+            { baseColor = Tango.skyBlue2
+            , roughness = 0.25
+            }
         ]
 
 
@@ -240,10 +233,10 @@ addBoxes world =
 
                                 body =
                                     if (index |> modBy 3) == 0 then
-                                        box (Material.pbr material)
+                                        box material
 
                                     else
-                                        sphere (Material.pbr material)
+                                        sphere (Material.untextured material)
 
                                 offsets =
                                     randomOffsets index
@@ -278,7 +271,10 @@ floor =
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere Scene3d.doesNotCastShadows (Material.pbr Materials.aluminum) shape
+    Scene3d.sphere Scene3d.doesNotCastShadows
+        (Material.untextured Materials.aluminum)
+         shape
+         
         |> Body.sphere shape
         |> Body.moveTo
             (Point3d.meters

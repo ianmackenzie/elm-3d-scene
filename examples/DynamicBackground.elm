@@ -57,12 +57,12 @@ camera =
         }
 
 
-material : Material.Pbr
+material : Material.Textured
 material =
-    { baseColor = Tango.skyBlue2
-    , roughness = 0.4
-    , metallic = 0
-    }
+    Material.nonmetal
+        { baseColor = Tango.skyBlue2
+        , roughness = 0.4
+        }
 
 
 backgroundColor : Duration -> Color.Transparent.Color
@@ -97,7 +97,7 @@ main =
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     , backgroundColor = backgroundColor elapsedTime
                     }
-                    [ Scene3d.sphere Scene3d.doesNotCastShadows (Material.pbr material) <|
+                    [ Scene3d.sphere Scene3d.doesNotCastShadows material <|
                         Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
                     ]
         }

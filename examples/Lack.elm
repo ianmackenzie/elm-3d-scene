@@ -151,10 +151,9 @@ table =
             blocks
                 |> List.map
                     (Scene3d.block Scene3d.castsShadows
-                        (Material.pbr
+                        (Material.nonmetal
                             { baseColor = Color.fromRGB ( 255, 255, 255 )
                             , roughness = 0.25
-                            , metallic = 0
                             }
                         )
                     )

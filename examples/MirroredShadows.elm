@@ -6,10 +6,8 @@ import Block3d
 import Browser
 import Browser.Events
 import Camera3d exposing (Camera3d)
-import Color exposing (Color)
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
-import Html.Attributes
 import Illuminance exposing (lux)
 import Json.Decode as Decode
 import Length exposing (Meters, meters)
@@ -19,6 +17,7 @@ import Palette.Tango as Tango
 import Pixels exposing (pixels)
 import Plane3d
 import Point3d
+import Html.Attributes
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
@@ -33,38 +32,38 @@ type World
     = World
 
 
-bluePlastic : Material.Pbr
-bluePlastic =
-    { baseColor = Tango.skyBlue1, roughness = 0.4, metallic = 0 }
+objectMaterial : Material.Untextured
+objectMaterial =
+    Material.nonmetal { baseColor = Tango.skyBlue1, roughness = 0.4 }
 
 
-floorColor : Color
-floorColor =
-    Tango.chameleon1
+floorMaterial : Material.Untextured
+floorMaterial =
+    Material.matte Tango.chameleon1
 
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block Scene3d.doesNotCastShadows (Material.matte floorColor) <|
+    Scene3d.block Scene3d.doesNotCastShadows floorMaterial <|
         Block3d.from (Point3d.meters -7.5 -7.5 -0.2) (Point3d.meters 7.5 7.5 0)
 
 
 initialBlock : Scene3d.Entity World
 initialBlock =
-    Scene3d.block Scene3d.castsShadows (Material.pbr bluePlastic) <|
+    Scene3d.block Scene3d.castsShadows objectMaterial <|
         Block3d.from (Point3d.meters 1 1 1) (Point3d.meters 2.5 2.5 2.5)
 
 
 initialSphere : Scene3d.Entity World
 initialSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.pbr bluePlastic) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.untextured objectMaterial) <|
         Sphere3d.withRadius (Length.meters 1) (Point3d.meters 4 1.5 1.5)
 
 
 initialQuad : Scene3d.Entity World
 initialQuad =
     Scene3d.quad Scene3d.castsShadows
-        (Material.pbr bluePlastic)
+        (Material.untextured objectMaterial)
         (Point3d.meters 1 3.5 1)
         (Point3d.meters 2.5 3.5 1)
         (Point3d.meters 2.5 5 1)
