@@ -2,7 +2,6 @@ module Spheres exposing (main)
 
 import Angle
 import Axis3d
-import Html.Attributes
 import Block3d
 import Browser
 import Browser.Events
@@ -10,6 +9,7 @@ import Camera3d exposing (Camera3d)
 import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
+import Html.Attributes
 import Illuminance exposing (lux)
 import Json.Decode as Decode
 import Length exposing (Meters, meters)
@@ -20,10 +20,10 @@ import Point3d
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
+import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
 import Vector3d
-import Scene3d.Material as Material exposing (Material)
 import Viewpoint3d
 
 
@@ -33,7 +33,7 @@ type World
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block Scene3d.doesNotCastShadows Materials.aluminum <|
+    Scene3d.block Scene3d.doesNotCastShadows (Material.pbr Materials.aluminum) <|
         Block3d.with
             { x1 = meters -4
             , x2 = meters 4
@@ -46,25 +46,25 @@ floor =
 
 goldSphere : Scene3d.Entity World
 goldSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.gold) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.pbr Materials.gold) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0)
 
 
 aluminumSphere : Scene3d.Entity World
 aluminumSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.aluminum) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.pbr Materials.aluminum) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0)
 
 
 blackPlasticSphere : Scene3d.Entity World
 blackPlasticSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.blackPlastic) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.pbr Materials.blackPlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0)
 
 
 whitePlasticSphere : Scene3d.Entity World
 whitePlasticSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.whitePlastic) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.pbr Materials.whitePlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0)
 
 
@@ -145,7 +145,7 @@ main =
                             , whitePlasticSphere
                             , floor
                             , Scene3d.quad Scene3d.castsShadows
-                                (Material.untextured Materials.aluminum)
+                                (Material.pbr Materials.aluminum)
                                 (Point3d.meters 1 1 -0.5)
                                 (Point3d.meters -1 1 0)
                                 (Point3d.meters -1 -1 0.5)
