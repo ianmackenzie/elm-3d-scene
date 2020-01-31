@@ -2,6 +2,7 @@ module Spheres exposing (main)
 
 import Angle
 import Axis3d
+import Html.Attributes
 import Block3d
 import Browser
 import Browser.Events
@@ -118,7 +119,8 @@ main =
         , view =
             \usePointLight ->
                 Html.div []
-                    [ Html.text "Click to toggle between point and directional light"
+                    [ Html.span [ Html.Attributes.style "user-select" "none" ]
+                        [ Html.text "Click to toggle between point and directional light" ]
                     , Html.div []
                         [ Scene3d.toHtml
                             { environmentalLighting = environmentalLighting

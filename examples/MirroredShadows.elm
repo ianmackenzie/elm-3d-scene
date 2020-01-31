@@ -17,6 +17,7 @@ import Palette.Tango as Tango
 import Pixels exposing (pixels)
 import Plane3d
 import Point3d
+import Html.Attributes
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
@@ -126,7 +127,8 @@ main =
         , view =
             \usePointLight ->
                 Html.div []
-                    [ Html.text "Click to toggle between point and directional light"
+                    [ Html.span [ Html.Attributes.style "user-select" "none" ]
+                        [ Html.text "Click to toggle between point and directional light" ]
                     , Html.div []
                         [ Scene3d.toHtml
                             { environmentalLighting = environmentalLighting
