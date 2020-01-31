@@ -155,7 +155,7 @@ initialWorld =
         |> addBoxes
 
 
-materials : Array (Material { a | normals : () })
+materials : Array  Material.Untextured
 materials =
     Array.fromList
         [ Materials.aluminum
@@ -236,7 +236,7 @@ addBoxes world =
                                         box material
 
                                     else
-                                        sphere material
+                                        sphere (Material.untextured material)
 
                                 offsets =
                                     randomOffsets index
@@ -271,7 +271,10 @@ floor =
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere Scene3d.doesNotCastShadows Materials.aluminum shape
+    Scene3d.sphere Scene3d.doesNotCastShadows
+        (Material.untextured Materials.aluminum)
+         shape
+         
         |> Body.sphere shape
         |> Body.moveTo
             (Point3d.meters
@@ -286,7 +289,7 @@ boxSize =
     Length.meters 0.9
 
 
-box : Material.ForMeshWithNormals -> Body (Scene3d.Entity BodyCoordinates)
+box : Material.Untextured -> Body (Scene3d.Entity BodyCoordinates)
 box material =
     let
         shape =
@@ -303,7 +306,7 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphere : Material.ForMeshWithNormalsAndUvs -> Body (Scene3d.Entity BodyCoordinates)
+sphere : Material.Textured -> Body (Scene3d.Entity BodyCoordinates)
 sphere material =
     let
         shape =

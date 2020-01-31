@@ -153,8 +153,8 @@ view model =
             , exposure = Scene3d.defaultExposure
             , whiteBalance = Scene3d.defaultWhiteBalance
             }
-            [ Scene3d.mesh (Material.unlit Tango.orange2) model.mesh1
-            , Scene3d.mesh (Material.unlit Tango.skyBlue2) model.mesh2
+            [ Scene3d.mesh (Material.color Tango.orange2) model.mesh1
+            , Scene3d.mesh (Material.color Tango.skyBlue2) model.mesh2
             ]
         ]
     }

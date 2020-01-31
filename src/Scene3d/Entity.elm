@@ -42,7 +42,7 @@ import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
+import Scene3d.Mesh as Mesh exposing (Attributes, Mesh, Shadow)
 import Scene3d.Primitives as Primitives
 import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)
@@ -442,7 +442,7 @@ resolve baseColorChannel roughnessChannel metallicChannel =
 
 quad :
     Bool
-    -> Material.ForMeshWithNormalsAndUvs
+    -> Material.Textured
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -511,7 +511,7 @@ quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint =
 
 
 quadMesh :
-    Material.ForMeshWithNormalsAndUvs
+    Material.Textured
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -673,7 +673,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
 
-sphere : Bool -> Material.ForMeshWithNormalsAndUvs -> Sphere3d Meters coordinates -> Entity coordinates
+sphere : Bool -> Material.Textured -> Sphere3d Meters coordinates -> Entity coordinates
 sphere castsShadow givenMaterial givenSphere =
     let
         (Quantity r) =
@@ -747,7 +747,7 @@ buildSphereOutline index accumulated =
         buildSphereOutline (index - 1) updated
 
 
-block : Bool -> Material.ForMeshWithNormals -> Block3d Meters coordinates -> Entity coordinates
+block : Bool -> Material.Untextured -> Block3d Meters coordinates -> Entity coordinates
 block castsShadow givenMaterial givenBlock =
     let
         ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
@@ -768,7 +768,7 @@ block castsShadow givenMaterial givenBlock =
         |> placeIn (Block3d.axes givenBlock)
 
 
-cylinder : Bool -> Material.ForMeshWithNormals -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder : Bool -> Material.Untextured -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder castsShadow givenMaterial givenCylinder =
     let
         (Quantity radius) =

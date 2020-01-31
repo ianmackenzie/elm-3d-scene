@@ -32,14 +32,14 @@ type World
     = World
 
 
-objectMaterial : Material { a | normals : () }
+objectMaterial : Material.Untextured
 objectMaterial =
     Material.nonmetal { baseColor = Tango.skyBlue1, roughness = 0.4 }
 
 
-floorMaterial : Material { a | normals : () }
+floorMaterial : Material.Untextured
 floorMaterial =
-    Material.diffuse Tango.chameleon1
+    Material.matte Tango.chameleon1
 
 
 floor : Scene3d.Entity World
@@ -56,14 +56,14 @@ initialBlock =
 
 initialSphere : Scene3d.Entity World
 initialSphere =
-    Scene3d.sphere Scene3d.castsShadows objectMaterial <|
+    Scene3d.sphere Scene3d.castsShadows (Material.untextured objectMaterial) <|
         Sphere3d.withRadius (Length.meters 1) (Point3d.meters 4 1.5 1.5)
 
 
 initialQuad : Scene3d.Entity World
 initialQuad =
     Scene3d.quad Scene3d.castsShadows
-        objectMaterial
+        (Material.untextured objectMaterial)
         (Point3d.meters 1 3.5 1)
         (Point3d.meters 2.5 3.5 1)
         (Point3d.meters 2.5 5 1)

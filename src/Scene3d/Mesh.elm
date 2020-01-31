@@ -1,29 +1,38 @@
 module Scene3d.Mesh exposing
-    ( Mesh
-    , Plain, WithNormals, WithUvs, WithNormalsAndUvs, WithTangents
+    ( Mesh, Attributes
+    , Plain, Untextured, Unlit, Textured
     , points, lineSegments, polyline
     , triangles, facets
-    , plain, withNormals, withUvs, withNormalsAndUvs
+    , plain, untextured, unlit, textured
     , Shadow, shadow
     , cullBackFaces
     )
 
 {-|
 
-@docs Mesh
+@docs Mesh, Attributes
 
-@docs Plain, WithNormals, WithUvs, WithNormalsAndUvs, WithTangents
+
+## Specific mesh types
+
+@docs Plain, Untextured, Unlit, Textured
+
+
+# Constructors
 
 @docs points, lineSegments, polyline
 
 @docs triangles, facets
 
-@docs plain, withNormals, withUvs, withNormalsAndUvs
+@docs plain, untextured, unlit, textured
+
+
+# Shadows
 
 @docs Shadow, shadow
 
 
-## Optimizations
+# Optimizations
 
 @docs cullBackFaces
 
@@ -59,35 +68,62 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
-type alias Mesh coordinates vertexAttributes =
-    Types.Mesh coordinates vertexAttributes
+type alias Mesh coordinates attributes =
+    Types.Mesh coordinates attributes
 
 
+{-| Phantom type used to help indicate which attributes are present in a given
+mesh.
+-}
+type Attributes
+    = Attributes
+
+
+{-| A mesh containing vertex positions only.
+-}
 type alias Plain coordinates =
     Mesh coordinates {}
 
 
-type alias WithNormals coordinates =
-    Mesh coordinates { normals : () }
+{-| A mesh with normal vectors at each vertex but no UV (texture) coordinates.
+-}
+type alias Untextured coordinates =
+    Mesh coordinates { normal : Attributes }
 
 
-type alias WithUvs coordinates =
-    Mesh coordinates { uvs : () }
+{-| A mesh with UV coordinates at each vertex but no normal vectors (normal
+vectors are required for any kind of lighting calculation).
+-}
+type alias Unlit coordinates =
+    Mesh coordinates { uv : Attributes }
 
 
-type alias WithNormalsAndUvs coordinates =
-    Mesh coordinates { normals : (), uvs : () }
+{-| A mesh with both normal vectors and UV coordinates at each vertex, allowing
+for general-purpose texturing of lit objects.
+-}
+type alias Textured coordinates =
+    Mesh coordinates { normal : Attributes, uv : Attributes }
 
 
-type alias WithTangents coordinates =
-    Mesh coordinates { normals : (), uvs : (), tangents : () }
+{-| A mesh with normal vectors, UV coordinates and tangent vectors at each
+vertex, allowing for full texturing including normal maps.
+-}
+type alias NormalMapped coordinates =
+    Mesh coordinates { normal : Attributes, uv : Attributes, tangent : Attributes }
+
+
+{-| A mesh with normal and tangent vectors but no UV coordinates, allowing for
+some specialized material models such as brushed metal but no texturing.
+-}
+type alias Anisotropic coordinates =
+    Mesh coordinates { normal : Attributes, tangent : Attributes }
 
 
 type alias Shadow coordinates =
     Types.Shadow coordinates
 
 
-empty : Mesh coordinates vertexAttributes
+empty : Mesh coordinates attributes
 empty =
     Types.EmptyMesh
 
@@ -148,7 +184,7 @@ triangles givenTriangles =
             Types.Triangles bounds givenTriangles webGLMesh KeepBackFaces
 
 
-facets : List (Triangle3d Meters coordinates) -> WithNormals coordinates
+facets : List (Triangle3d Meters coordinates) -> Untextured coordinates
 facets givenTriangles =
     case givenTriangles of
         [] ->
@@ -316,10 +352,10 @@ vertexBounds first rest =
     vertexBoundsHelp x x y y z z rest
 
 
-withNormals :
+untextured :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
-    -> WithNormals coordinates
-withNormals givenMesh =
+    -> Untextured coordinates
+untextured givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmooth [] (TriangularMesh.vertices givenMesh)
@@ -354,10 +390,10 @@ collectTextured { position, uv } accumulated =
         :: accumulated
 
 
-withUvs :
+unlit :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
-    -> Mesh coordinates { uvs : () }
-withUvs givenMesh =
+    -> Unlit coordinates
+unlit givenMesh =
     let
         collectedVertices =
             Array.foldr collectTextured [] (TriangularMesh.vertices givenMesh)
@@ -392,14 +428,14 @@ collectSmoothTextured { position, normal, uv } accumulated =
         :: accumulated
 
 
-withNormalsAndUvs :
+textured :
     TriangularMesh
         { position : Point3d Meters coordinates
         , normal : Vector3d Unitless coordinates
         , uv : ( Float, Float )
         }
-    -> WithNormalsAndUvs coordinates
-withNormalsAndUvs givenMesh =
+    -> Textured coordinates
+textured givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmoothTextured [] (TriangularMesh.vertices givenMesh)
@@ -468,7 +504,10 @@ polyline givenPolyline =
             Types.Polyline bounds givenPolyline webGLMesh
 
 
-points : { radius : Quantity Float Pixels } -> List (Point3d Meters coordinates) -> Plain coordinates
+points :
+    { radius : Quantity Float Pixels }
+    -> List (Point3d Meters coordinates)
+    -> Plain coordinates
 points { radius } givenPoints =
     case givenPoints of
         [] ->
@@ -485,7 +524,7 @@ points { radius } givenPoints =
             Types.Points bounds (inPixels radius) givenPoints webGLMesh
 
 
-shadow : Mesh coordinates vertexAttributes -> Shadow coordinates
+shadow : Mesh coordinates attributes -> Shadow coordinates
 shadow mesh =
     case mesh of
         Types.EmptyMesh ->
@@ -702,7 +741,7 @@ updateShadowEdge i j pi pj normalVector currentEntry =
                     }
 
 
-cullBackFaces : Mesh coordinates vertexAttributes -> Mesh coordinates vertexAttributes
+cullBackFaces : Mesh coordinates attributes -> Mesh coordinates attributes
 cullBackFaces mesh =
     case mesh of
         Types.EmptyMesh ->

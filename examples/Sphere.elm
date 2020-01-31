@@ -53,7 +53,7 @@ camera =
         }
 
 
-material : Material.ForMeshWithNormalsAndUvs
+material : Material.Textured
 material =
     Material.nonmetal
         { baseColor = Tango.skyBlue2

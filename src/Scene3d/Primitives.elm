@@ -15,7 +15,7 @@ import Length exposing (Length, Meters)
 import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
-import Scene3d.Mesh as Mesh exposing (Mesh)
+import Scene3d.Mesh as Mesh exposing (Attributes, Mesh)
 import Scene3d.Types as Types exposing (Entity, Material)
 import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
@@ -23,7 +23,7 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : Mesh.WithNormalsAndUvs coordinates
+sphere : Mesh.Textured coordinates
 sphere =
     let
         n =
@@ -115,11 +115,11 @@ sphere =
                     )
                 |> List.concat
     in
-    Mesh.withNormalsAndUvs (TriangularMesh.indexed vertices faces)
+    Mesh.textured (TriangularMesh.indexed vertices faces)
         |> Mesh.cullBackFaces
 
 
-cylinder : Mesh.WithNormals coordinates
+cylinder : Mesh.Untextured coordinates
 cylinder =
     let
         radius =
@@ -219,10 +219,10 @@ cylinder =
         triangularMesh =
             TriangularMesh.triangles (List.concat wedges)
     in
-    Mesh.withNormals triangularMesh |> Mesh.cullBackFaces
+    Mesh.untextured triangularMesh |> Mesh.cullBackFaces
 
 
-block : Mesh.WithNormals coordinates
+block : Mesh.Untextured coordinates
 block =
     let
         x =

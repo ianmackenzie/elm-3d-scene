@@ -117,7 +117,7 @@ floor =
         { id = Floor
         , entity =
             shape
-                |> Scene3d.block Scene3d.doesNotCastShadows (Material.diffuse Tango.aluminum6)
+                |> Scene3d.block Scene3d.doesNotCastShadows (Material.matte Tango.aluminum6)
                 |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -341,7 +341,7 @@ mouse =
         { id = Mouse
         , entity =
             Scene3d.sphere Scene3d.doesNotCastShadows
-                (Material.diffuse (Color.fromRGB ( 255, 255, 255 )))
+                (Material.matte (Color.fromRGB ( 255, 255, 255 )))
                 (Sphere3d.atOrigin (millimeters 20))
         }
 
