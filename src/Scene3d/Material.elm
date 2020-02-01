@@ -25,7 +25,7 @@ module Scene3d.Material exposing
 @docs colorTexture, emissiveTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
 
 
-# Specific types
+# Type annotations
 
 @docs Plain, Unlit, Uniform, Textured
 
