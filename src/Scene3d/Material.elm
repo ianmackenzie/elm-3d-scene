@@ -1,8 +1,8 @@
 module Scene3d.Material exposing
     ( Material
-    , color, backlit, matte, metal, nonmetal, pbr
+    , color, emissive, matte, metal, nonmetal, pbr
     , Channel, constant, load
-    , colorTexture, backlitTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
+    , colorTexture, emissiveTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
     , Plain, Unlit, Uniform, Textured
     , plain, unlit, uniform
     -- , withNormalMap
@@ -15,14 +15,14 @@ module Scene3d.Material exposing
 
 # Simple materials
 
-@docs color, backlit, matte, metal, nonmetal, pbr
+@docs color, emissive, matte, metal, nonmetal, pbr
 
 
 # Textured materials
 
 @docs Channel, constant, load
 
-@docs colorTexture, backlitTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
+@docs colorTexture, emissiveTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
 
 
 # Specific types
@@ -58,11 +58,11 @@ matte materialColor =
     Types.LambertianMaterial (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
 
 
-backlit : Color -> Luminance -> Material a
-backlit givenColor backlight =
+emissive : Color -> Luminance -> Material a
+emissive givenColor brightness =
     Types.EmissiveMaterial
         (Types.Constant (ColorConversions.colorToLinearRgb givenColor))
-        (Luminance.inNits backlight)
+        (Luminance.inNits brightness)
 
 
 metal : { baseColor : Color, roughness : Float } -> Material { a | normal : Attributes }
@@ -134,11 +134,11 @@ matteTexture colorChannel =
     Types.LambertianMaterial (map ColorConversions.colorToLinearRgb colorChannel)
 
 
-backlitTexture : Channel Color -> Luminance -> Material { a | uv : Attributes }
-backlitTexture colorChannel backlight =
+emissiveTexture : Channel Color -> Luminance -> Material { a | uv : Attributes }
+emissiveTexture colorChannel brightness =
     Types.EmissiveMaterial
         (map ColorConversions.colorToLinearRgb colorChannel)
-        (Luminance.inNits backlight)
+        (Luminance.inNits brightness)
 
 
 texturedMetal :
@@ -189,7 +189,7 @@ texturedPbr { baseColor, roughness, metallic } =
 
 {-| A simple material that doesn't require any particular vertex attributes to
 be present and so can be applied to any mesh. The only possibilities here are
-[`color`](#color) and [`backlit`](#backlit).
+[`color`](#color) and [`emissive`](#emissive).
 -}
 type alias Plain =
     Material {}
@@ -207,7 +207,7 @@ type alias Uniform =
 {-| A material that can be applied to an [`Unlit`](Scene3d-Mesh#Unlit) mesh that
 has UV coordinates but no normal vectors. This includes the `Plain` materials
 plus their textured versions [`colorTexture`](#colorTexture) and
-[`backlitTexture`](#backlitTexture).
+[`emissiveTexture`](#emissiveTexture).
 -}
 type alias Unlit =
     Material { uv : Attributes }
@@ -267,8 +267,8 @@ coerce material =
         Types.UnlitMaterial colorChannel ->
             Types.UnlitMaterial colorChannel
 
-        Types.EmissiveMaterial colorChannel backlight ->
-            Types.EmissiveMaterial colorChannel backlight
+        Types.EmissiveMaterial colorChannel brightness ->
+            Types.EmissiveMaterial colorChannel brightness
 
         Types.LambertianMaterial colorChannel ->
             Types.LambertianMaterial colorChannel
