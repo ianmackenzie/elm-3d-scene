@@ -177,12 +177,12 @@ sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
     Entity.sphere shadowFlag givenMaterial givenSphere
 
 
-block : CastsShadows a -> Material.Untextured -> Block3d Meters coordinates -> Entity coordinates
+block : CastsShadows a -> Material.Uniform -> Block3d Meters coordinates -> Entity coordinates
 block (CastsShadows shadowFlag) givenMaterial givenBlock =
     Entity.block shadowFlag givenMaterial givenBlock
 
 
-cylinder : CastsShadows a -> Material.Untextured -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder : CastsShadows a -> Material.Uniform -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
     Entity.cylinder shadowFlag givenMaterial givenCylinder
 

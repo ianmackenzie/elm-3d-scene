@@ -1,9 +1,9 @@
 module Scene3d.Mesh exposing
     ( Mesh, Attributes
-    , Plain, Untextured, Unlit, Textured
+    , Plain, Uniform, Unlit, Textured
     , points, lineSegments, polyline
     , triangles, facets
-    , plain, untextured, unlit, textured
+    , plain, uniform, unlit, textured
     , Shadow, shadow
     , cullBackFaces
     )
@@ -15,7 +15,7 @@ module Scene3d.Mesh exposing
 
 ## Specific mesh types
 
-@docs Plain, Untextured, Unlit, Textured
+@docs Plain, Uniform, Unlit, Textured
 
 
 # Constructors
@@ -24,7 +24,7 @@ module Scene3d.Mesh exposing
 
 @docs triangles, facets
 
-@docs plain, untextured, unlit, textured
+@docs plain, uniform, unlit, textured
 
 
 # Shadows
@@ -85,9 +85,10 @@ type alias Plain coordinates =
     Mesh coordinates {}
 
 
-{-| A mesh with normal vectors at each vertex but no UV (texture) coordinates.
+{-| A mesh with normal vectors at each vertex but no UV (texture) coordinates,
+meaning that surface appearance will be uniform across the mesh.
 -}
-type alias Untextured coordinates =
+type alias Uniform coordinates =
     Mesh coordinates { normal : Attributes }
 
 
@@ -184,7 +185,7 @@ triangles givenTriangles =
             Types.Triangles bounds givenTriangles webGLMesh KeepBackFaces
 
 
-facets : List (Triangle3d Meters coordinates) -> Untextured coordinates
+facets : List (Triangle3d Meters coordinates) -> Uniform coordinates
 facets givenTriangles =
     case givenTriangles of
         [] ->
@@ -352,10 +353,10 @@ vertexBounds first rest =
     vertexBoundsHelp x x y y z z rest
 
 
-untextured :
+uniform :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
-    -> Untextured coordinates
-untextured givenMesh =
+    -> Uniform coordinates
+uniform givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmooth [] (TriangularMesh.vertices givenMesh)

@@ -3,8 +3,8 @@ module Scene3d.Material exposing
     , color, backlit, matte, metal, nonmetal, pbr
     , Channel, constant, load
     , colorTexture, backlitTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
-    , Plain, Unlit, Untextured, Textured
-    , plain, unlit, untextured
+    , Plain, Unlit, Uniform, Textured
+    , plain, unlit, uniform
     -- , withNormalMap
     )
 
@@ -27,9 +27,9 @@ module Scene3d.Material exposing
 
 # Specific types
 
-@docs Plain, Unlit, Untextured, Textured
+@docs Plain, Unlit, Uniform, Textured
 
-@docs plain, unlit, untextured
+@docs plain, unlit, uniform
 
 -}
 
@@ -195,12 +195,12 @@ type alias Plain =
     Material {}
 
 
-{-| A material that can be applied to an [`Untextured`](Scene3d-Mesh#Untextured)
-mesh that has normal vectors but no UV coordinates. This includes the `Plain`
+{-| A material that can be applied to an [`Uniform`](Scene3d-Mesh#Uniform) mesh
+that has normal vectors but no UV coordinates. This includes the `Plain`
 materials plus [`matte`](#matte), [`metal`](#metal), [`nonmetal`](#nonmetal) and
 [`pbr`](#pbr).
 -}
-type alias Untextured =
+type alias Uniform =
     Material { normal : Attributes }
 
 
@@ -215,7 +215,7 @@ type alias Unlit =
 
 {-| A material that can be applied to a [`Textured`](Scene3d-Mesh#Textured) mesh
 that has normal vectors and UV coordinates. This includes all the `Unlit` and
-`Untextured` materials plus the textured versions of the `Untextured` materials
+`Uniform` materials plus the textured versions of the `Uniform` materials
 ([`matteTexture`](#matteTexture), [`texturedMetal`](#texturedMetal) etc.)
 -}
 type alias Textured =
@@ -241,8 +241,8 @@ plain =
     coerce
 
 
-untextured : Untextured -> Material { a | normal : Attributes }
-untextured =
+uniform : Uniform -> Material { a | normal : Attributes }
+uniform =
     coerce
 
 

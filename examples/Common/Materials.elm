@@ -11,7 +11,7 @@ import Color exposing (Color)
 import Scene3d.Material as Material exposing (Material)
 
 
-gold : Material.Untextured
+gold : Material.Uniform
 gold =
     Material.metal
         { baseColor = Color.fromRGB ( 255, 195, 86 )
@@ -19,7 +19,7 @@ gold =
         }
 
 
-aluminum : Material.Untextured
+aluminum : Material.Uniform
 aluminum =
     Material.metal
         { baseColor = Color.fromRGB ( 233, 235, 236 )
@@ -27,7 +27,7 @@ aluminum =
         }
 
 
-copper : Material.Untextured
+copper : Material.Uniform
 copper =
     Material.metal
         { baseColor = Color.fromRGB ( 244, 162, 137 )
@@ -35,7 +35,7 @@ copper =
         }
 
 
-chromium : Material.Untextured
+chromium : Material.Uniform
 chromium =
     Material.metal
         { baseColor = Color.fromRGB ( 140, 142, 141 )
@@ -43,7 +43,7 @@ chromium =
         }
 
 
-blackPlastic : Material.Untextured
+blackPlastic : Material.Uniform
 blackPlastic =
     Material.nonmetal
         { baseColor = Color.fromRGB ( 0, 0, 0 )
@@ -51,7 +51,7 @@ blackPlastic =
         }
 
 
-whitePlastic : Material.Untextured
+whitePlastic : Material.Uniform
 whitePlastic =
     Material.nonmetal
         { baseColor = Color.fromRGB ( 255, 255, 255 )

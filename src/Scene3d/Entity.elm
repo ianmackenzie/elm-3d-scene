@@ -747,7 +747,7 @@ buildSphereOutline index accumulated =
         buildSphereOutline (index - 1) updated
 
 
-block : Bool -> Material.Untextured -> Block3d Meters coordinates -> Entity coordinates
+block : Bool -> Material.Uniform -> Block3d Meters coordinates -> Entity coordinates
 block castsShadow givenMaterial givenBlock =
     let
         ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
@@ -768,7 +768,7 @@ block castsShadow givenMaterial givenBlock =
         |> placeIn (Block3d.axes givenBlock)
 
 
-cylinder : Bool -> Material.Untextured -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder : Bool -> Material.Uniform -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder castsShadow givenMaterial givenCylinder =
     let
         (Quantity radius) =

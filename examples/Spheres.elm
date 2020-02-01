@@ -46,25 +46,25 @@ floor =
 
 goldSphere : Scene3d.Entity World
 goldSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.gold) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.gold) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0)
 
 
 aluminumSphere : Scene3d.Entity World
 aluminumSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.aluminum) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.aluminum) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0)
 
 
 blackPlasticSphere : Scene3d.Entity World
 blackPlasticSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.blackPlastic) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.blackPlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0)
 
 
 whitePlasticSphere : Scene3d.Entity World
 whitePlasticSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.untextured Materials.whitePlastic) <|
+    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.whitePlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0)
 
 
@@ -145,7 +145,7 @@ main =
                             , whitePlasticSphere
                             , floor
                             , Scene3d.quad Scene3d.castsShadows
-                                (Material.untextured Materials.aluminum)
+                                (Material.uniform Materials.aluminum)
                                 (Point3d.meters 1 1 -0.5)
                                 (Point3d.meters -1 1 0)
                                 (Point3d.meters -1 -1 0.5)

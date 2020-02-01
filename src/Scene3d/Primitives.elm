@@ -119,7 +119,7 @@ sphere =
         |> Mesh.cullBackFaces
 
 
-cylinder : Mesh.Untextured coordinates
+cylinder : Mesh.Uniform coordinates
 cylinder =
     let
         radius =
@@ -219,10 +219,10 @@ cylinder =
         triangularMesh =
             TriangularMesh.triangles (List.concat wedges)
     in
-    Mesh.untextured triangularMesh |> Mesh.cullBackFaces
+    Mesh.uniform triangularMesh |> Mesh.cullBackFaces
 
 
-block : Mesh.Untextured coordinates
+block : Mesh.Uniform coordinates
 block =
     let
         x =
