@@ -2,7 +2,6 @@ module Spheres exposing (main)
 
 import Angle
 import Axis3d
-import Html.Attributes
 import Block3d
 import Browser
 import Browser.Events
@@ -10,6 +9,7 @@ import Camera3d exposing (Camera3d)
 import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
+import Html.Attributes
 import Illuminance exposing (lux)
 import Json.Decode as Decode
 import Length exposing (Meters, meters)
@@ -20,10 +20,10 @@ import Point3d
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
+import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
 import Vector3d
-import Scene3d.Material as Material exposing (Material)
 import Viewpoint3d
 
 
