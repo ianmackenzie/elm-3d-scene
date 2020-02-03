@@ -53,7 +53,7 @@ camera =
         }
 
 
-material : Material.Textured
+material : Material.Uniform
 material =
     Material.nonmetal
         { baseColor = Tango.skyBlue2
@@ -80,6 +80,6 @@ main =
         , whiteBalance = Scene3d.defaultWhiteBalance
         , backgroundColor = Scene3d.transparentBackground
         }
-        [ Scene3d.sphere Scene3d.doesNotCastShadows material <|
+        [ Scene3d.sphere Scene3d.doesNotCastShadows (Material.uniform material) <|
             Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
         ]
