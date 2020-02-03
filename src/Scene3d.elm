@@ -147,7 +147,7 @@ nothing =
 
 quad :
     CastsShadows a
-    -> Material.Textured
+    -> Material.NormalMapped
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -172,7 +172,7 @@ Note that this projection, while simple, maeans that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
-sphere : CastsShadows a -> Material.Textured -> Sphere3d Meters coordinates -> Entity coordinates
+sphere : CastsShadows a -> Material.NormalMapped -> Sphere3d Meters coordinates -> Entity coordinates
 sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
     Entity.sphere shadowFlag givenMaterial givenSphere
 

@@ -2,10 +2,11 @@ module Scene3d.Material exposing
     ( Material
     , color, emissive, matte, metal, nonmetal, pbr
     , Channel, constant, load
-    , colorTexture, emissiveTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
-    , Plain, Unlit, Uniform, Textured
-    , plain, unlit, uniform
-    -- , withNormalMap
+    , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
+    , NormalMap
+    , normalMappedMatte, normalMappedMetal, normalMappedNonmetal, normalMappedPbr
+    , Plain, Unlit, Uniform, Textured, NormalMapped
+    , plain, unlit, uniform, textured
     )
 
 {-|
@@ -22,14 +23,21 @@ module Scene3d.Material exposing
 
 @docs Channel, constant, load
 
-@docs colorTexture, emissiveTexture, matteTexture, texturedMetal, texturedNonmetal, texturedPbr
+@docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
+
+
+# Normal-mapped materials
+
+@docs NormalMap
+
+@docs normalMappedMatte, normalMappedMetal, normalMappedNonmetal, normalMappedPbr
 
 
 # Type annotations
 
-@docs Plain, Unlit, Uniform, Textured
+@docs Plain, Unlit, Uniform, Textured, NormalMapped
 
-@docs plain, unlit, uniform
+@docs plain, unlit, uniform, textured
 
 -}
 
@@ -55,7 +63,9 @@ color givenColor =
 
 matte : Color -> Material { a | normal : Attributes }
 matte materialColor =
-    Types.LambertianMaterial (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
+    Types.LambertianMaterial
+        (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
+        (Types.Constant Types.VerticalNormal)
 
 
 emissive : Color -> Luminance -> Material a
@@ -81,6 +91,7 @@ pbr { baseColor, roughness, metallic } =
         (Types.Constant (ColorConversions.colorToLinearRgb baseColor))
         (Types.Constant (clamp 0 1 roughness))
         (Types.Constant (clamp 0 1 metallic))
+        (Types.Constant Types.VerticalNormal)
 
 
 type alias Channel value =
@@ -124,18 +135,20 @@ toVec3 givenColor =
     Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
-colorTexture : Channel Color -> Material { a | uv : Attributes }
-colorTexture colorChannel =
+texturedColor : Channel Color -> Material { a | uv : Attributes }
+texturedColor colorChannel =
     Types.UnlitMaterial (map toVec3 colorChannel)
 
 
-matteTexture : Channel Color -> Material { a | normal : Attributes, uv : Attributes }
-matteTexture colorChannel =
-    Types.LambertianMaterial (map ColorConversions.colorToLinearRgb colorChannel)
+texturedMatte : Channel Color -> Material { a | normal : Attributes, uv : Attributes }
+texturedMatte colorChannel =
+    Types.LambertianMaterial
+        (map ColorConversions.colorToLinearRgb colorChannel)
+        (Types.Constant Types.VerticalNormal)
 
 
-emissiveTexture : Channel Color -> Luminance -> Material { a | uv : Attributes }
-emissiveTexture colorChannel brightness =
+texturedEmissive : Channel Color -> Luminance -> Material { a | uv : Attributes }
+texturedEmissive colorChannel brightness =
     Types.EmissiveMaterial
         (map ColorConversions.colorToLinearRgb colorChannel)
         (Luminance.inNits brightness)
@@ -178,13 +191,63 @@ texturedPbr { baseColor, roughness, metallic } =
         (map ColorConversions.colorToLinearRgb baseColor)
         (map (clamp 0 1) roughness)
         (map (clamp 0 1) metallic)
+        (Types.Constant Types.VerticalNormal)
 
 
+type alias NormalMap =
+    Types.NormalMap
 
--- withNormalMap :
---     Texture
---     -> Material { a | uv : Attributes, normal : Attributes, tangents : () }
---     -> Material { a | uv : Attributes, normal : Attributes, tangents : () }
+
+normalMappedMatte : Channel Color -> Channel NormalMap -> NormalMapped
+normalMappedMatte colorChannel normalMapChannel =
+    Types.LambertianMaterial
+        (map ColorConversions.colorToLinearRgb colorChannel)
+        normalMapChannel
+
+
+normalMappedMetal :
+    { baseColor : Channel Color
+    , roughness : Channel Float
+    , normalMap : Channel NormalMap
+    }
+    -> NormalMapped
+normalMappedMetal { baseColor, roughness, normalMap } =
+    normalMappedPbr
+        { baseColor = baseColor
+        , roughness = roughness
+        , metallic = constant 1
+        , normalMap = normalMap
+        }
+
+
+normalMappedNonmetal :
+    { baseColor : Channel Color
+    , roughness : Channel Float
+    , normalMap : Channel NormalMap
+    }
+    -> NormalMapped
+normalMappedNonmetal { baseColor, roughness, normalMap } =
+    normalMappedPbr
+        { baseColor = baseColor
+        , roughness = roughness
+        , metallic = constant 0
+        , normalMap = normalMap
+        }
+
+
+normalMappedPbr :
+    { baseColor : Channel Color
+    , roughness : Channel Float
+    , metallic : Channel Float
+    , normalMap : Channel NormalMap
+    }
+    -> NormalMapped
+normalMappedPbr { baseColor, roughness, metallic, normalMap } =
+    Types.PbrMaterial
+        (map ColorConversions.colorToLinearRgb baseColor)
+        (map (clamp 0 1) roughness)
+        (map (clamp 0 1) metallic)
+        normalMap
 
 
 {-| A simple material that doesn't require any particular vertex attributes to
@@ -206,8 +269,8 @@ type alias Uniform =
 
 {-| A material that can be applied to an [`Unlit`](Scene3d-Mesh#Unlit) mesh that
 has UV coordinates but no normal vectors. This includes the `Plain` materials
-plus their textured versions [`colorTexture`](#colorTexture) and
-[`emissiveTexture`](#emissiveTexture).
+plus their textured versions [`texturedColor`](#texturedColor) and
+[`texturedEmissive`](#texturedEmissive).
 -}
 type alias Unlit =
     Material { uv : Attributes }
@@ -216,7 +279,7 @@ type alias Unlit =
 {-| A material that can be applied to a [`Textured`](Scene3d-Mesh#Textured) mesh
 that has normal vectors and UV coordinates. This includes all the `Unlit` and
 `Uniform` materials plus the textured versions of the `Uniform` materials
-([`matteTexture`](#matteTexture), [`texturedMetal`](#texturedMetal) etc.)
+([`texturedMatte`](#texturedMatte), [`texturedMetal`](#texturedMetal) etc.)
 -}
 type alias Textured =
     Material { normal : Attributes, uv : Attributes }
@@ -270,8 +333,8 @@ coerce material =
         Types.EmissiveMaterial colorChannel brightness ->
             Types.EmissiveMaterial colorChannel brightness
 
-        Types.LambertianMaterial colorChannel ->
-            Types.LambertianMaterial colorChannel
+        Types.LambertianMaterial colorChannel normalMapChannel ->
+            Types.LambertianMaterial colorChannel normalMapChannel
 
-        Types.PbrMaterial colorChannel roughnessChannel metallicChannel ->
-            Types.PbrMaterial colorChannel roughnessChannel metallicChannel
+        Types.PbrMaterial colorChannel roughnessChannel metallicChannel normalMapChannel ->
+            Types.PbrMaterial colorChannel roughnessChannel metallicChannel normalMapChannel

@@ -26,6 +26,11 @@ uv =
     Glsl.attribute Glsl.vec2 "uv"
 
 
+tangent : Glsl.Attribute
+tangent =
+    Glsl.attribute Glsl.vec3 "tangent"
+
+
 quadVertex : Glsl.Attribute
 quadVertex =
     Glsl.attribute Glsl.vec3 "quadVertex"
@@ -145,6 +150,16 @@ constantMetallic =
     Glsl.uniform Glsl.vec2 "constantMetallic"
 
 
+normalMapTexture : Glsl.Uniform
+normalMapTexture =
+    Glsl.uniform Glsl.sampler2D "normalMapTexture"
+
+
+useNormalMap : Glsl.Uniform
+useNormalMap =
+    Glsl.uniform Glsl.float "useNormalMap"
+
+
 environmentalLighting : Glsl.Uniform
 environmentalLighting =
     Glsl.uniform Glsl.mat4 "environmentalLighting"
@@ -207,6 +222,20 @@ interpolatedNormal =
 interpolatedUv : Glsl.Varying
 interpolatedUv =
     Glsl.varying Glsl.vec2 "interpolatedUv"
+
+
+interpolatedTangent : Glsl.Varying
+interpolatedTangent =
+    Glsl.varying Glsl.vec3 "interpolatedTangent"
+
+
+varyings : List Glsl.Varying
+varyings =
+    [ interpolatedPosition
+    , interpolatedNormal
+    , interpolatedUv
+    , interpolatedTangent
+    ]
 
 
 
@@ -370,12 +399,12 @@ getWorldPosition =
         """
 
 
-getWorldNormal : Glsl.Function
-getWorldNormal =
+getWorldDirection : Glsl.Function
+getWorldDirection =
     Glsl.function { dependencies = [], constants = [] }
         """
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
         }
         """
 
@@ -467,6 +496,31 @@ getDirectionToCamera =
             } else {
                 return sceneProperties[1].xyz;
             }
+        }
+        """
+
+
+getLocalNormal : Glsl.Function
+getLocalNormal =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
+            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
+            float x = 2.0 * (rgb.r - 0.5);
+            float y = 2.0 * (rgb.g - 0.5);
+            float z = 2.0 * (rgb.b - 0.5);
+            return normalize(vec3(-x, -y, z));
+        }
+        """
+
+
+getMappedNormal : Glsl.Function
+getMappedNormal =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 getMappedNormal(vec3 normal, vec3 tangent, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent);
+            return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
         }
         """
 
@@ -1082,25 +1136,29 @@ getQuadVertex : Glsl.Function
 getQuadVertex =
     Glsl.function { dependencies = [], constants = [] }
         """
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
+                tangent = normalize(next - position);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
+                tangent = normalize(position - prev);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
+                tangent = normalize(position - next);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
+                tangent = normalize(prev - position);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -1112,7 +1170,7 @@ shadowVertexPosition =
     Glsl.function
         { dependencies =
             [ getWorldPosition
-            , getWorldNormal
+            , getWorldDirection
             , getDirectionToLight
             , project
             ]
@@ -1121,7 +1179,7 @@ shadowVertexPosition =
         """
         vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldNormal(normal, modelMatrix);
+            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
             vec4 xyz_type = shadowLightSource[0];
             vec4 rgb_radius = shadowLightSource[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
@@ -1173,7 +1231,7 @@ plainVertexShader =
     Glsl.vertexShader "plainVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = [ interpolatedPosition ]
+        , varyings = varyings
         , constants = []
         , functions = [ getWorldPosition, project ]
         }
@@ -1182,16 +1240,19 @@ plainVertexShader =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = vec3(0.0, 0.0, 0.0);
+            interpolatedUv = vec2(0.0, 0.0);
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
         """
 
 
-texturedVertexShader : Glsl.Shader
-texturedVertexShader =
-    Glsl.vertexShader "texturedVertex"
+unlitVertexShader : Glsl.Shader
+unlitVertexShader =
+    Glsl.vertexShader "unlitVertex"
         { attributes = [ position, uv ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = [ interpolatedPosition, interpolatedUv ]
+        , varyings = varyings
         , constants = []
         , functions = [ getWorldPosition, project ]
         }
@@ -1201,6 +1262,71 @@ texturedVertexShader =
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
             interpolatedUv = uv;
+            interpolatedNormal = vec3(0.0, 0.0, 0.0);
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+        }
+        """
+
+
+uniformVertexShader : Glsl.Shader
+uniformVertexShader =
+    Glsl.vertexShader "uniformVertex"
+        { attributes = [ position, normal ]
+        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
+        , varyings = varyings
+        , constants = []
+        , functions = [ getWorldPosition, getWorldDirection, project ]
+        }
+        """
+        void main () {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedUv = vec2(0.0, 0.0);
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+        }
+        """
+
+
+texturedVertexShader : Glsl.Shader
+texturedVertexShader =
+    Glsl.vertexShader "texturedVertex"
+        { attributes = [ position, normal, uv ]
+        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
+        , varyings = varyings
+        , constants = []
+        , functions = [ getWorldPosition, getWorldDirection, project ]
+        }
+        """
+        void main () {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedUv = uv;
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+        }
+        """
+
+
+normalMappedVertexShader : Glsl.Shader
+normalMappedVertexShader =
+    Glsl.vertexShader "normalMappedVertex"
+        { attributes = [ position, normal, uv, tangent ]
+        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
+        , varyings = varyings
+        , constants = []
+        , functions = [ getWorldPosition, getWorldDirection, project ]
+        }
+        """
+        void main () {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedUv = uv;
+            interpolatedTangent = getWorldDirection(tangent, modelMatrix);
         }
         """
 
@@ -1216,103 +1342,22 @@ quadVertexShader =
             , sceneProperties
             , quadVertexPositions
             ]
-        , varyings = [ interpolatedPosition ]
+        , varyings = varyings
         , constants = []
-        , functions = [ getQuadVertex, getWorldPosition, project ]
+        , functions = [ getQuadVertex, getWorldPosition, getWorldDirection, project ]
         }
         """
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-        }
-        """
-
-
-smoothQuadVertexShader : Glsl.Shader
-smoothQuadVertexShader =
-    Glsl.vertexShader "smoothQuadVertex"
-        { attributes = [ quadVertex ]
-        , uniforms =
-            [ modelScale
-            , modelMatrix
-            , viewMatrix
-            , sceneProperties
-            , quadVertexPositions
-            ]
-        , varyings = [ interpolatedPosition, interpolatedNormal ]
-        , constants = []
-        , functions = [ getQuadVertex, getWorldPosition, getWorldNormal, project ]
-        }
-        """
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-        }
-        """
-
-
-texturedQuadVertexShader : Glsl.Shader
-texturedQuadVertexShader =
-    Glsl.vertexShader "texturedQuadVertex"
-        { attributes = [ quadVertex ]
-        , uniforms =
-            [ modelScale
-            , modelMatrix
-            , viewMatrix
-            , sceneProperties
-            , quadVertexPositions
-            ]
-        , varyings = [ interpolatedPosition, interpolatedUv ]
-        , constants = []
-        , functions = [ getQuadVertex, getWorldPosition, project ]
-        }
-        """
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
             interpolatedUv = quadVertex.xy;
-        }
-        """
-
-
-smoothTexturedQuadVertexShader : Glsl.Shader
-smoothTexturedQuadVertexShader =
-    Glsl.vertexShader "smoothTexturedQuadVertex"
-        { attributes = [ quadVertex ]
-        , uniforms =
-            [ modelScale
-            , modelMatrix
-            , viewMatrix
-            , sceneProperties
-            , quadVertexPositions
-            ]
-        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv ]
-        , constants = []
-        , functions = [ getQuadVertex, getWorldPosition, getWorldNormal, project ]
-        }
-        """
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-            interpolatedUv = quadVertex.xy;
+            interpolatedTangent = tangent;
         }
         """
 
@@ -1331,45 +1376,6 @@ pointVertexShader =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             gl_PointSize = 2.0 * pointRadius + 2.0;
-        }
-        """
-
-
-smoothVertexShader : Glsl.Shader
-smoothVertexShader =
-    Glsl.vertexShader "smoothVertex"
-        { attributes = [ position, normal ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = [ interpolatedPosition, interpolatedNormal ]
-        , constants = []
-        , functions = [ getWorldPosition, getWorldNormal, project ]
-        }
-        """
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-        }
-        """
-
-
-smoothTexturedVertexShader : Glsl.Shader
-smoothTexturedVertexShader =
-    Glsl.vertexShader "smoothTexturedVertex"
-        { attributes = [ position, normal, uv ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv ]
-        , constants = []
-        , functions = [ getWorldPosition, getWorldNormal, project ]
-        }
-        """
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-            interpolatedUv = uv;
         }
         """
 
@@ -1418,7 +1424,8 @@ quadShadowVertexShader =
         void main () {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal, tangent);
             normal *= quadShadowVertex.y;
             gl_Position = shadowVertexPosition(
                 position,
@@ -1507,7 +1514,7 @@ constantFragmentShader : Glsl.Shader
 constantFragmentShader =
     Glsl.fragmentShader "constantFragment"
         { uniforms = [ constantColor ]
-        , varyings = [ interpolatedPosition ]
+        , varyings = varyings
         , constants = []
         , functions = []
         }
@@ -1522,7 +1529,7 @@ colorTextureFragmentShader : Glsl.Shader
 colorTextureFragmentShader =
     Glsl.fragmentShader "colorTextureFragment"
         { uniforms = [ colorTexture ]
-        , varyings = [ interpolatedPosition, interpolatedUv ]
+        , varyings = varyings
         , constants = []
         , functions = []
         }
@@ -1553,7 +1560,7 @@ emissiveFragmentShader : Glsl.Shader
 emissiveFragmentShader =
     Glsl.fragmentShader "emissiveFragment"
         { uniforms = [ emissiveColor, sceneProperties ]
-        , varyings = [ interpolatedPosition ]
+        , varyings = varyings
         , constants = []
         , functions = [ toSrgb ]
         }
@@ -1568,7 +1575,7 @@ emissiveTextureFragmentShader : Glsl.Shader
 emissiveTextureFragmentShader =
     Glsl.fragmentShader "emissiveTextureFragment"
         { uniforms = [ colorTexture, backlight, sceneProperties ]
-        , varyings = [ interpolatedPosition, interpolatedUv ]
+        , varyings = varyings
         , constants = []
         , functions = [ fromSrgb, toSrgb ]
         }
@@ -1610,10 +1617,7 @@ lambertianFragmentShader =
             , materialColor
             , viewMatrix
             ]
-        , varyings =
-            [ interpolatedPosition
-            , interpolatedNormal
-            ]
+        , varyings = varyings
         , constants = []
         , functions =
             [ getDirectionToCamera
@@ -1655,16 +1659,16 @@ lambertianTextureFragmentShader =
             , lightSources56
             , lightSources78
             , materialColorTexture
+            , normalMapTexture
+            , useNormalMap
             , viewMatrix
             ]
-        , varyings =
-            [ interpolatedPosition
-            , interpolatedNormal
-            , interpolatedUv
-            ]
+        , varyings = varyings
         , constants = []
         , functions =
-            [ getDirectionToCamera
+            [ getLocalNormal
+            , getMappedNormal
+            , getDirectionToCamera
             , lambertianEnvironmentalLighting
             , lambertianDirectLighting
             , fromSrgb
@@ -1673,7 +1677,8 @@ lambertianTextureFragmentShader =
         }
         """
         void main() {
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
+            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
 
@@ -1710,10 +1715,7 @@ physicalFragmentShader =
             , roughness
             , metallic
             ]
-        , varyings =
-            [ interpolatedPosition
-            , interpolatedNormal
-            ]
+        , varyings = varyings
         , functions =
             [ getDirectionToCamera
             , physicalLighting
@@ -1763,14 +1765,14 @@ physicalTexturesFragmentShader =
             , constantRoughness
             , metallicTexture
             , constantMetallic
+            , normalMapTexture
+            , useNormalMap
             ]
-        , varyings =
-            [ interpolatedPosition
-            , interpolatedNormal
-            , interpolatedUv
-            ]
+        , varyings = varyings
         , functions =
-            [ getDirectionToCamera
+            [ getLocalNormal
+            , getMappedNormal
+            , getDirectionToCamera
             , physicalLighting
             , fromSrgb
             , toSrgb
@@ -1783,7 +1785,8 @@ physicalTexturesFragmentShader =
             float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1.0 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
             float metallic = texture2D(metallicTexture, interpolatedUv).r * (1.0 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
 
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
+            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
 
             vec3 linearColor = physicalLighting(
@@ -1820,14 +1823,12 @@ script { workingDirectory, userPrivileges } =
             "-- Generated by scripts/GenerateShaders.elm, please do not edit by hand\n"
                 ++ Glsl.generateModule "Scene3d.Shaders"
                     [ plainVertexShader
+                    , unlitVertexShader
+                    , uniformVertexShader
                     , texturedVertexShader
+                    , normalMappedVertexShader
                     , quadVertexShader
-                    , smoothQuadVertexShader
-                    , texturedQuadVertexShader
-                    , smoothTexturedQuadVertexShader
                     , pointVertexShader
-                    , smoothVertexShader
-                    , smoothTexturedVertexShader
                     , shadowVertexShader
                     , quadShadowVertexShader
                     , sphereShadowVertexShader

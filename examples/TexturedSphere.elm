@@ -42,13 +42,13 @@ type WorldCoordinates
 type Model
     = Loading
         { colorTexture : Maybe (Material.Channel Color)
-        , metallicTexture : Maybe (Material.Channel Float)
         , roughnessTexture : Maybe (Material.Channel Float)
+        , normalMapTexture : Maybe (Material.Channel Material.NormalMap)
         }
     | Loaded
         { colorTexture : Material.Channel Color
-        , metallicTexture : Material.Channel Float
         , roughnessTexture : Material.Channel Float
+        , normalMapTexture : Material.Channel Material.NormalMap
         , sphereFrame : Frame3d Meters WorldCoordinates { defines : SphereCoordinates }
         , orbiting : Bool
         }
@@ -57,8 +57,8 @@ type Model
 
 type Msg
     = GotColorTexture (Result WebGL.Texture.Error (Material.Channel Color))
-    | GotMetallicTexture (Result WebGL.Texture.Error (Material.Channel Float))
     | GotRoughnessTexture (Result WebGL.Texture.Error (Material.Channel Float))
+    | GotNormalMapTexture (Result WebGL.Texture.Error (Material.Channel Material.NormalMap))
     | MouseDown
     | MouseUp
     | MouseMove Float Float
@@ -66,14 +66,18 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    ( Loading { colorTexture = Nothing, metallicTexture = Nothing, roughnessTexture = Nothing }
+    ( Loading
+        { colorTexture = Nothing
+        , roughnessTexture = Nothing
+        , normalMapTexture = Nothing
+        }
     , Cmd.batch
-        [ Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_col.jpg"
+        [ Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_col.jpg"
             |> Task.attempt GotColorTexture
-        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_rgh.jpg"
+        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_rgh.jpg"
             |> Task.attempt GotRoughnessTexture
-        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_met.jpg"
-            |> Task.attempt GotMetallicTexture
+        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_nrm.jpg"
+            |> Task.attempt GotNormalMapTexture
         ]
     )
 
@@ -88,20 +92,20 @@ update message model =
                         GotColorTexture (Ok colorChannel) ->
                             checkIfLoaded { textures | colorTexture = Just colorChannel }
 
-                        GotMetallicTexture (Ok metallicChannel) ->
-                            checkIfLoaded { textures | metallicTexture = Just metallicChannel }
-
                         GotRoughnessTexture (Ok roughnessChannel) ->
                             checkIfLoaded { textures | roughnessTexture = Just roughnessChannel }
 
-                        GotColorTexture (Err error) ->
-                            Errored "Error loading texture"
+                        GotNormalMapTexture (Ok normalMapChannel) ->
+                            checkIfLoaded { textures | normalMapTexture = Just normalMapChannel }
 
-                        GotMetallicTexture (Err error) ->
-                            Errored "Error loading texture"
+                        GotColorTexture (Err error) ->
+                            Errored "Error loading color texture"
 
                         GotRoughnessTexture (Err error) ->
-                            Errored "Error loading texture"
+                            Errored "Error loading roughness texture"
+
+                        GotNormalMapTexture (Err error) ->
+                            Errored "Error loading normal map texture"
 
                         MouseDown ->
                             model
@@ -117,10 +121,10 @@ update message model =
                         GotColorTexture _ ->
                             model
 
-                        GotMetallicTexture _ ->
+                        GotRoughnessTexture _ ->
                             model
 
-                        GotRoughnessTexture _ ->
+                        GotNormalMapTexture _ ->
                             model
 
                         MouseDown ->
@@ -165,17 +169,17 @@ update message model =
 
 checkIfLoaded :
     { colorTexture : Maybe (Material.Channel Color)
-    , metallicTexture : Maybe (Material.Channel Float)
     , roughnessTexture : Maybe (Material.Channel Float)
+    , normalMapTexture : Maybe (Material.Channel Material.NormalMap)
     }
     -> Model
 checkIfLoaded textures =
-    case ( textures.colorTexture, textures.metallicTexture, textures.roughnessTexture ) of
-        ( Just colorTexture, Just metallicTexture, Just roughnessTexture ) ->
+    case ( textures.colorTexture, textures.roughnessTexture, textures.normalMapTexture ) of
+        ( Just colorTexture, Just roughnessTexture, Just normalMapTexture ) ->
             Loaded
                 { colorTexture = colorTexture
-                , metallicTexture = metallicTexture
                 , roughnessTexture = roughnessTexture
+                , normalMapTexture = normalMapTexture
                 , sphereFrame = Frame3d.atOrigin
                 , orbiting = False
                 }
@@ -213,13 +217,14 @@ camera =
 view : Model -> Html msg
 view model =
     case model of
-        Loaded { colorTexture, roughnessTexture, metallicTexture, sphereFrame } ->
+        Loaded { colorTexture, roughnessTexture, normalMapTexture, sphereFrame } ->
             let
                 material =
-                    Material.texturedPbr
-                        { baseColor = colorTexture
+                    Material.normalMappedPbr
+                        { baseColor = Material.constant Tango.chocolate3
                         , roughness = roughnessTexture
-                        , metallic = metallicTexture
+                        , metallic = Material.constant 0
+                        , normalMap = normalMapTexture
                         }
             in
             Scene3d.toHtml

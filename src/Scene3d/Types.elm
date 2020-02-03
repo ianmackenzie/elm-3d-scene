@@ -88,8 +88,12 @@ type alias VertexWithTangent =
 type Material vertexAttributes
     = UnlitMaterial (Channel Vec3)
     | EmissiveMaterial (Channel LinearRgb) Float
-    | LambertianMaterial (Channel LinearRgb)
-    | PbrMaterial (Channel LinearRgb) (Channel Float) (Channel Float)
+    | LambertianMaterial (Channel LinearRgb) (Channel NormalMap)
+    | PbrMaterial (Channel LinearRgb) (Channel Float) (Channel Float) (Channel NormalMap)
+
+
+type NormalMap
+    = VerticalNormal
 
 
 type Channel value
@@ -114,6 +118,7 @@ type Mesh coordinates vertexAttributes
     | MeshWithNormals (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }) (WebGL.Mesh VertexWithNormal) BackFaceSetting
     | MeshWithUvs (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }) (WebGL.Mesh VertexWithUv) BackFaceSetting
     | MeshWithNormalsAndUvs (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ) }) (WebGL.Mesh VertexWithNormalAndUv) BackFaceSetting
+    | MeshWithTangents (BoundingBox3d Meters coordinates) (TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ), tangent : Vector3d Unitless coordinates }) (WebGL.Mesh VertexWithTangent) BackFaceSetting
     | LineSegments (BoundingBox3d Meters coordinates) (List (LineSegment3d Meters coordinates)) (WebGL.Mesh PlainVertex)
     | Polyline (BoundingBox3d Meters coordinates) (Polyline3d Meters coordinates) (WebGL.Mesh PlainVertex)
     | Points (BoundingBox3d Meters coordinates) Float (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)

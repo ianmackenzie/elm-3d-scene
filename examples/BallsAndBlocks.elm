@@ -311,7 +311,7 @@ sphere material =
         shape =
             Sphere3d.atOrigin sphereRadius
     in
-    Scene3d.sphere Scene3d.castsShadows material shape
+    Scene3d.sphere Scene3d.castsShadows (Material.textured material) shape
         |> Body.sphere shape
         |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
 

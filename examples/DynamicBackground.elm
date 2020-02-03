@@ -97,7 +97,7 @@ main =
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     , backgroundColor = backgroundColor elapsedTime
                     }
-                    [ Scene3d.sphere Scene3d.doesNotCastShadows material <|
+                    [ Scene3d.sphere Scene3d.doesNotCastShadows (Material.textured material) <|
                         Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
                     ]
         }

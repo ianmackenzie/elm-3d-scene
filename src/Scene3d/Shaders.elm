@@ -10,6 +10,7 @@ module Scene3d.Shaders exposing
     , emissiveTextureFragment
     , lambertianFragment
     , lambertianTextureFragment
+    , normalMappedVertex
     , physicalFragment
     , physicalTexturesFragment
     , plainVertex
@@ -18,13 +19,10 @@ module Scene3d.Shaders exposing
     , quadVertex
     , shadowFragment
     , shadowVertex
-    , smoothQuadVertex
-    , smoothTexturedQuadVertex
-    , smoothTexturedVertex
-    , smoothVertex
     , sphereShadowVertex
-    , texturedQuadVertex
     , texturedVertex
+    , uniformVertex
+    , unlitVertex
     )
 
 import Math.Matrix4 as Matrix4 exposing (Mat4)
@@ -47,6 +45,9 @@ plainVertex :
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 plainVertex =
     [glsl|
@@ -60,6 +61,9 @@ plainVertex =
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
@@ -83,11 +87,14 @@ plainVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = vec3(0.0, 0.0, 0.0);
+            interpolatedUv = vec2(0.0, 0.0);
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
     |]
 
 
-texturedVertex :
+unlitVertex :
     WebGL.Shader
         { attributes
             | position : Vec3
@@ -100,9 +107,11 @@ texturedVertex :
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
-texturedVertex =
+unlitVertex =
     [glsl|
         precision mediump float;
         
@@ -115,7 +124,9 @@ texturedVertex =
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
         varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
@@ -140,6 +151,215 @@ texturedVertex =
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
             interpolatedUv = uv;
+            interpolatedNormal = vec3(0.0, 0.0, 0.0);
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+        }
+    |]
+
+
+uniformVertex :
+    WebGL.Shader
+        { attributes
+            | position : Vec3
+            , normal : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
+        }
+uniformVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 position;
+        attribute vec3 normal;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main () {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedUv = vec2(0.0, 0.0);
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+        }
+    |]
+
+
+texturedVertex :
+    WebGL.Shader
+        { attributes
+            | position : Vec3
+            , normal : Vec3
+            , uv : Vec2
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
+        }
+texturedVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 position;
+        attribute vec3 normal;
+        attribute vec2 uv;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main () {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedUv = uv;
+            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+        }
+    |]
+
+
+normalMappedVertex :
+    WebGL.Shader
+        { attributes
+            | position : Vec3
+            , normal : Vec3
+            , uv : Vec2
+            , tangent : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
+        }
+normalMappedVertex =
+    [glsl|
+        precision mediump float;
+        
+        attribute vec3 position;
+        attribute vec3 normal;
+        attribute vec2 uv;
+        attribute vec3 tangent;
+        
+        uniform vec3 modelScale;
+        uniform mat4 modelMatrix;
+        uniform mat4 viewMatrix;
+        uniform mat4 sceneProperties;
+        
+        varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        }
+        
+        vec4 project(vec4 position, vec4 projectionProperties) {
+            float n = projectionProperties[0];
+            float a = projectionProperties[1];
+            float kc = projectionProperties[2];
+            float kz = projectionProperties[3];
+            return vec4(
+                (kc + kz * position.z) * (position.x / a),
+                (kc + kz * position.z) * position.y,
+                (-position.z - 2.0 * n),
+                -position.z
+            );
+        }
+        
+        void main () {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedUv = uv;
+            interpolatedTangent = getWorldDirection(tangent, modelMatrix);
         }
     |]
 
@@ -157,6 +377,9 @@ quadVertex :
             , quadVertexPositions : Mat4
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 quadVertex =
     [glsl|
@@ -171,280 +394,33 @@ quadVertex =
         uniform mat4 quadVertexPositions;
         
         varying vec3 interpolatedPosition;
-        
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
-            vec3 next = vec3(0.0, 0.0, 0.0);
-            vec3 prev = vec3(0.0, 0.0, 0.0);
-            if (quadVertexIndex == 0) {
-                prev = quadVertexPositions[3].xyz;
-                position = quadVertexPositions[0].xyz;
-                next = quadVertexPositions[1].xyz;
-            } else if (quadVertexIndex == 1) {
-                prev = quadVertexPositions[0].xyz;
-                position = quadVertexPositions[1].xyz;
-                next = quadVertexPositions[2].xyz;
-            } else if (quadVertexIndex == 2) {
-                prev = quadVertexPositions[1].xyz;
-                position = quadVertexPositions[2].xyz;
-                next = quadVertexPositions[3].xyz;
-            } else {
-                prev = quadVertexPositions[2].xyz;
-                position = quadVertexPositions[3].xyz;
-                next = quadVertexPositions[0].xyz;
-            }
-            normal = normalize(cross(next - position, prev - position));
-        }
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-        }
-    |]
-
-
-smoothQuadVertex :
-    WebGL.Shader
-        { attributes
-            | quadVertex : Vec3
-        }
-        { uniforms
-            | modelScale : Vec3
-            , modelMatrix : Mat4
-            , viewMatrix : Mat4
-            , sceneProperties : Mat4
-            , quadVertexPositions : Mat4
-        }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        }
-smoothQuadVertex =
-    [glsl|
-        precision mediump float;
-        
-        attribute vec3 quadVertex;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
-            vec3 next = vec3(0.0, 0.0, 0.0);
-            vec3 prev = vec3(0.0, 0.0, 0.0);
-            if (quadVertexIndex == 0) {
-                prev = quadVertexPositions[3].xyz;
-                position = quadVertexPositions[0].xyz;
-                next = quadVertexPositions[1].xyz;
-            } else if (quadVertexIndex == 1) {
-                prev = quadVertexPositions[0].xyz;
-                position = quadVertexPositions[1].xyz;
-                next = quadVertexPositions[2].xyz;
-            } else if (quadVertexIndex == 2) {
-                prev = quadVertexPositions[1].xyz;
-                position = quadVertexPositions[2].xyz;
-                next = quadVertexPositions[3].xyz;
-            } else {
-                prev = quadVertexPositions[2].xyz;
-                position = quadVertexPositions[3].xyz;
-                next = quadVertexPositions[0].xyz;
-            }
-            normal = normalize(cross(next - position, prev - position));
-        }
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-        }
-    |]
-
-
-texturedQuadVertex :
-    WebGL.Shader
-        { attributes
-            | quadVertex : Vec3
-        }
-        { uniforms
-            | modelScale : Vec3
-            , modelMatrix : Mat4
-            , viewMatrix : Mat4
-            , sceneProperties : Mat4
-            , quadVertexPositions : Mat4
-        }
-        { interpolatedPosition : Vec3
-        , interpolatedUv : Vec2
-        }
-texturedQuadVertex =
-    [glsl|
-        precision mediump float;
-        
-        attribute vec3 quadVertex;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
-        
-        varying vec3 interpolatedPosition;
-        varying vec2 interpolatedUv;
-        
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
-            vec3 next = vec3(0.0, 0.0, 0.0);
-            vec3 prev = vec3(0.0, 0.0, 0.0);
-            if (quadVertexIndex == 0) {
-                prev = quadVertexPositions[3].xyz;
-                position = quadVertexPositions[0].xyz;
-                next = quadVertexPositions[1].xyz;
-            } else if (quadVertexIndex == 1) {
-                prev = quadVertexPositions[0].xyz;
-                position = quadVertexPositions[1].xyz;
-                next = quadVertexPositions[2].xyz;
-            } else if (quadVertexIndex == 2) {
-                prev = quadVertexPositions[1].xyz;
-                position = quadVertexPositions[2].xyz;
-                next = quadVertexPositions[3].xyz;
-            } else {
-                prev = quadVertexPositions[2].xyz;
-                position = quadVertexPositions[3].xyz;
-                next = quadVertexPositions[0].xyz;
-            }
-            normal = normalize(cross(next - position, prev - position));
-        }
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedUv = quadVertex.xy;
-        }
-    |]
-
-
-smoothTexturedQuadVertex :
-    WebGL.Shader
-        { attributes
-            | quadVertex : Vec3
-        }
-        { uniforms
-            | modelScale : Vec3
-            , modelMatrix : Mat4
-            , viewMatrix : Mat4
-            , sceneProperties : Mat4
-            , quadVertexPositions : Mat4
-        }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        }
-smoothTexturedQuadVertex =
-    [glsl|
-        precision mediump float;
-        
-        attribute vec3 quadVertex;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
-        
-        varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
         varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
+                tangent = normalize(next - position);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
+                tangent = normalize(position - prev);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
+                tangent = normalize(position - next);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
+                tangent = normalize(prev - position);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -454,8 +430,8 @@ smoothTexturedQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -474,12 +450,14 @@ smoothTexturedQuadVertex =
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
             interpolatedUv = quadVertex.xy;
+            interpolatedTangent = tangent;
         }
     |]
 
@@ -535,133 +513,6 @@ pointVertex =
     |]
 
 
-smoothVertex :
-    WebGL.Shader
-        { attributes
-            | position : Vec3
-            , normal : Vec3
-        }
-        { uniforms
-            | modelScale : Vec3
-            , modelMatrix : Mat4
-            , viewMatrix : Mat4
-            , sceneProperties : Mat4
-        }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        }
-smoothVertex =
-    [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec3 normal;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-        }
-    |]
-
-
-smoothTexturedVertex :
-    WebGL.Shader
-        { attributes
-            | position : Vec3
-            , normal : Vec3
-            , uv : Vec2
-        }
-        { uniforms
-            | modelScale : Vec3
-            , modelMatrix : Mat4
-            , viewMatrix : Mat4
-            , sceneProperties : Mat4
-        }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        }
-smoothTexturedVertex =
-    [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec2 uv;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix);
-            interpolatedUv = uv;
-        }
-    |]
-
-
 shadowVertex :
     WebGL.Shader
         { attributes
@@ -697,8 +548,8 @@ shadowVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
@@ -726,7 +577,7 @@ shadowVertex =
         
         vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldNormal(normal, modelMatrix);
+            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
             vec4 xyz_type = shadowLightSource[0];
             vec4 rgb_radius = shadowLightSource[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
@@ -782,25 +633,29 @@ quadShadowVertex =
         const float kDirectionalLightSource = 1.0;
         const float kPointLightSource = 2.0;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
+                tangent = normalize(next - position);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
+                tangent = normalize(position - prev);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
+                tangent = normalize(position - next);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
+                tangent = normalize(prev - position);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -810,8 +665,8 @@ quadShadowVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz;
+        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
@@ -839,7 +694,7 @@ quadShadowVertex =
         
         vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldNormal(normal, modelMatrix);
+            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
             vec4 xyz_type = shadowLightSource[0];
             vec4 rgb_radius = shadowLightSource[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
@@ -854,7 +709,8 @@ quadShadowVertex =
         void main () {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal, tangent);
             normal *= quadShadowVertex.y;
             gl_Position = shadowVertexPosition(
                 position,
@@ -998,6 +854,9 @@ constantFragment :
             | constantColor : Vec3
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 constantFragment =
     [glsl|
@@ -1006,6 +865,9 @@ constantFragment =
         uniform vec3 constantColor;
         
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         void main () {
             gl_FragColor = vec4(constantColor, 1.0);
@@ -1019,7 +881,9 @@ colorTextureFragment :
             | colorTexture : Texture
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 colorTextureFragment =
     [glsl|
@@ -1028,7 +892,9 @@ colorTextureFragment =
         uniform sampler2D colorTexture;
         
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
         varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         void main () {
             gl_FragColor = texture2D(colorTexture, interpolatedUv);
@@ -1082,6 +948,9 @@ emissiveFragment :
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 emissiveFragment =
     [glsl|
@@ -1091,6 +960,9 @@ emissiveFragment =
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
@@ -1122,7 +994,9 @@ emissiveTextureFragment :
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 emissiveTextureFragment =
     [glsl|
@@ -1133,7 +1007,9 @@ emissiveTextureFragment =
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
+        varying vec3 interpolatedNormal;
         varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         float inverseGamma(float u) {
             if (u <= 0.04045) {
@@ -1228,6 +1104,8 @@ lambertianFragment :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 lambertianFragment =
     [glsl|
@@ -1244,6 +1122,8 @@ lambertianFragment =
         
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         const float kPerspectiveProjection = 0.0;
         const float kNoEnvironmentalLighting = 0.0;
@@ -1502,11 +1382,14 @@ lambertianTextureFragment :
             , lightSources56 : Mat4
             , lightSources78 : Mat4
             , materialColorTexture : Texture
+            , normalMapTexture : Texture
+            , useNormalMap : Float
             , viewMatrix : Mat4
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 lambertianTextureFragment =
     [glsl|
@@ -1519,11 +1402,14 @@ lambertianTextureFragment =
         uniform mat4 lightSources56;
         uniform mat4 lightSources78;
         uniform sampler2D materialColorTexture;
+        uniform sampler2D normalMapTexture;
+        uniform float useNormalMap;
         uniform mat4 viewMatrix;
         
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
         varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         const float kPerspectiveProjection = 0.0;
         const float kNoEnvironmentalLighting = 0.0;
@@ -1532,6 +1418,19 @@ lambertianTextureFragment =
         const float kPointLightSource = 2.0;
         const float kPi = 3.14159265359;
         const float kDisabledLightSource = 0.0;
+        
+        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
+            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
+            float x = 2.0 * (rgb.r - 0.5);
+            float y = 2.0 * (rgb.g - 0.5);
+            float z = 2.0 * (rgb.b - 0.5);
+            return normalize(vec3(-x, -y, z));
+        }
+        
+        vec3 getMappedNormal(vec3 normal, vec3 tangent, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent);
+            return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
+        }
         
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
             float projectionType = sceneProperties[1].w;
@@ -1736,7 +1635,8 @@ lambertianTextureFragment =
         }
         
         void main() {
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
+            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
         
@@ -1774,6 +1674,8 @@ physicalFragment :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
+        , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 physicalFragment =
     [glsl|
@@ -1792,6 +1694,8 @@ physicalFragment =
         
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
+        varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         const float kPerspectiveProjection = 0.0;
         const float kNoEnvironmentalLighting = 0.0;
@@ -2216,10 +2120,13 @@ physicalTexturesFragment :
             , constantRoughness : Vec2
             , metallicTexture : Texture
             , constantMetallic : Vec2
+            , normalMapTexture : Texture
+            , useNormalMap : Float
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
+        , interpolatedTangent : Vec3
         }
 physicalTexturesFragment =
     [glsl|
@@ -2238,10 +2145,13 @@ physicalTexturesFragment =
         uniform vec2 constantRoughness;
         uniform sampler2D metallicTexture;
         uniform vec2 constantMetallic;
+        uniform sampler2D normalMapTexture;
+        uniform float useNormalMap;
         
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
         varying vec2 interpolatedUv;
+        varying vec3 interpolatedTangent;
         
         const float kPerspectiveProjection = 0.0;
         const float kNoEnvironmentalLighting = 0.0;
@@ -2251,6 +2161,19 @@ physicalTexturesFragment =
         const float kPi = 3.14159265359;
         const float kMediumpFloatMax = 65504.0;
         const float kDisabledLightSource = 0.0;
+        
+        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
+            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
+            float x = 2.0 * (rgb.r - 0.5);
+            float y = 2.0 * (rgb.g - 0.5);
+            float z = 2.0 * (rgb.b - 0.5);
+            return normalize(vec3(-x, -y, z));
+        }
+        
+        vec3 getMappedNormal(vec3 normal, vec3 tangent, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent);
+            return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
+        }
         
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
             float projectionType = sceneProperties[1].w;
@@ -2647,7 +2570,8 @@ physicalTexturesFragment =
             float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1.0 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
             float metallic = texture2D(metallicTexture, interpolatedUv).r * (1.0 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
         
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
+            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
             vec3 linearColor = physicalLighting(

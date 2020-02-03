@@ -1,9 +1,9 @@
 module Scene3d.Mesh exposing
     ( Mesh, Attributes
-    , Plain, Uniform, Unlit, Textured
+    , Plain, Uniform, Unlit, Textured, NormalMapped
     , points, lineSegments, polyline
     , triangles, facets
-    , plain, uniform, unlit, textured
+    , plain, uniform, unlit, textured, normalMapped
     , Shadow, shadow
     , cullBackFaces
     )
@@ -15,7 +15,7 @@ module Scene3d.Mesh exposing
 
 ## Specific mesh types
 
-@docs Plain, Uniform, Unlit, Textured
+@docs Plain, Uniform, Unlit, Textured, NormalMapped
 
 
 # Constructors
@@ -24,7 +24,7 @@ module Scene3d.Mesh exposing
 
 @docs triangles, facets
 
-@docs plain, uniform, unlit, textured
+@docs plain, uniform, unlit, textured, normalMapped
 
 
 # Shadows
@@ -60,6 +60,7 @@ import Scene3d.Types as Types
         , ShadowEdge
         , VertexWithNormal
         , VertexWithNormalAndUv
+        , VertexWithTangent
         , VertexWithUv
         )
 import Triangle3d exposing (Triangle3d)
@@ -458,6 +459,49 @@ textured givenMesh =
             Types.MeshWithNormalsAndUvs bounds givenMesh webGLMesh KeepBackFaces
 
 
+collectNormalMapped :
+    { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ), tangent : Vector3d Unitless coordinates }
+    -> List VertexWithTangent
+    -> List VertexWithTangent
+collectNormalMapped { position, normal, uv, tangent } accumulated =
+    let
+        ( u, v ) =
+            uv
+    in
+    { position = Point3d.toVec3 position, normal = Vector3d.toVec3 normal, uv = Math.Vector2.vec2 u v, tangent = Vector3d.toVec3 tangent }
+        :: accumulated
+
+
+normalMapped :
+    TriangularMesh
+        { position : Point3d Meters coordinates
+        , normal : Vector3d Unitless coordinates
+        , uv : ( Float, Float )
+        , tangent : Vector3d Unitless coordinates
+        }
+    -> NormalMapped coordinates
+normalMapped givenMesh =
+    let
+        collectedVertices =
+            Array.foldr collectNormalMapped [] (TriangularMesh.vertices givenMesh)
+    in
+    case collectedVertices of
+        [] ->
+            Types.EmptyMesh
+
+        first :: rest ->
+            let
+                bounds =
+                    vertexBounds first rest
+
+                webGLMesh =
+                    WebGL.indexedTriangles
+                        collectedVertices
+                        (TriangularMesh.faceIndices givenMesh)
+            in
+            Types.MeshWithTangents bounds givenMesh webGLMesh KeepBackFaces
+
+
 lineSegmentAttributes : LineSegment3d Meters coordinates -> ( PlainVertex, PlainVertex )
 lineSegmentAttributes givenSegment =
     let
@@ -557,6 +601,10 @@ shadow mesh =
                 (TriangularMesh.mapVertices .position triangularMesh)
 
         Types.MeshWithNormalsAndUvs boundingBox triangularMesh _ _ ->
+            shadowImpl boundingBox
+                (TriangularMesh.mapVertices .position triangularMesh)
+
+        Types.MeshWithTangents boundingBox triangularMesh _ _ ->
             shadowImpl boundingBox
                 (TriangularMesh.mapVertices .position triangularMesh)
 
@@ -765,6 +813,9 @@ cullBackFaces mesh =
 
         Types.MeshWithNormalsAndUvs boundingBox triangularMesh webGLMesh _ ->
             Types.MeshWithNormalsAndUvs boundingBox triangularMesh webGLMesh CullBackFaces
+
+        Types.MeshWithTangents boundingBox triangularMesh webGLMesh _ ->
+            Types.MeshWithTangents boundingBox triangularMesh webGLMesh CullBackFaces
 
         Types.LineSegments _ _ _ ->
             mesh
