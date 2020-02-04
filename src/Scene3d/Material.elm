@@ -1,7 +1,7 @@
 module Scene3d.Material exposing
     ( Material
     , color, emissive, matte, metal, nonmetal, pbr
-    , Channel, constant, load
+    , Texture, constant, load
     , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
     , NormalMap
     , normalMappedMatte, normalMappedMetal, normalMappedNonmetal, normalMappedPbr
@@ -21,7 +21,7 @@ module Scene3d.Material exposing
 
 # Textured materials
 
-@docs Channel, constant, load
+@docs Texture, constant, load
 
 @docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
 
@@ -94,36 +94,36 @@ pbr { baseColor, roughness, metallic } =
         (Types.Constant Types.VerticalNormal)
 
 
-type alias Channel value =
-    Types.Channel value
+type alias Texture value =
+    Types.Texture value
 
 
-constant : value -> Channel value
+constant : value -> Texture value
 constant givenValue =
     Types.Constant givenValue
 
 
-load : String -> Task WebGL.Texture.Error (Channel value)
+load : String -> Task WebGL.Texture.Error (Texture value)
 load url =
     WebGL.Texture.load url
         |> Task.map
-            (\texture ->
-                Types.Textured
+            (\data ->
+                Types.Texture
                     { url = url
                     , options = WebGL.Texture.defaultOptions
-                    , data = texture
+                    , data = data
                     }
             )
 
 
-map : (a -> b) -> Channel a -> Channel b
-map function channel =
-    case channel of
+map : (a -> b) -> Texture a -> Texture b
+map function texture =
+    case texture of
         Types.Constant value ->
             Types.Constant (function value)
 
-        Types.Textured texture ->
-            Types.Textured texture
+        Types.Texture properties ->
+            Types.Texture properties
 
 
 toVec3 : Color -> Vec3
@@ -135,28 +135,28 @@ toVec3 givenColor =
     Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
-texturedColor : Channel Color -> Material { a | uv : Attributes }
-texturedColor colorChannel =
-    Types.UnlitMaterial (map toVec3 colorChannel)
+texturedColor : Texture Color -> Material { a | uv : Attributes }
+texturedColor colorTexture =
+    Types.UnlitMaterial (map toVec3 colorTexture)
 
 
-texturedMatte : Channel Color -> Material { a | normal : Attributes, uv : Attributes }
-texturedMatte colorChannel =
+texturedMatte : Texture Color -> Material { a | normal : Attributes, uv : Attributes }
+texturedMatte colorTexture =
     Types.LambertianMaterial
-        (map ColorConversions.colorToLinearRgb colorChannel)
+        (map ColorConversions.colorToLinearRgb colorTexture)
         (Types.Constant Types.VerticalNormal)
 
 
-texturedEmissive : Channel Color -> Luminance -> Material { a | uv : Attributes }
-texturedEmissive colorChannel brightness =
+texturedEmissive : Texture Color -> Luminance -> Material { a | uv : Attributes }
+texturedEmissive colorTexture brightness =
     Types.EmissiveMaterial
-        (map ColorConversions.colorToLinearRgb colorChannel)
+        (map ColorConversions.colorToLinearRgb colorTexture)
         (Luminance.inNits brightness)
 
 
 texturedMetal :
-    { baseColor : Channel Color
-    , roughness : Channel Float
+    { baseColor : Texture Color
+    , roughness : Texture Float
     }
     -> Material { a | normal : Attributes, uv : Attributes }
 texturedMetal { baseColor, roughness } =
@@ -168,8 +168,8 @@ texturedMetal { baseColor, roughness } =
 
 
 texturedNonmetal :
-    { baseColor : Channel Color
-    , roughness : Channel Float
+    { baseColor : Texture Color
+    , roughness : Texture Float
     }
     -> Material { a | normal : Attributes, uv : Attributes }
 texturedNonmetal { baseColor, roughness } =
@@ -181,9 +181,9 @@ texturedNonmetal { baseColor, roughness } =
 
 
 texturedPbr :
-    { baseColor : Channel Color
-    , roughness : Channel Float
-    , metallic : Channel Float
+    { baseColor : Texture Color
+    , roughness : Texture Float
+    , metallic : Texture Float
     }
     -> Material { a | normal : Attributes, uv : Attributes }
 texturedPbr { baseColor, roughness, metallic } =
@@ -198,17 +198,17 @@ type alias NormalMap =
     Types.NormalMap
 
 
-normalMappedMatte : Channel Color -> Channel NormalMap -> NormalMapped
-normalMappedMatte colorChannel normalMapChannel =
+normalMappedMatte : Texture Color -> Texture NormalMap -> NormalMapped
+normalMappedMatte colorTexture normalMapTexture =
     Types.LambertianMaterial
-        (map ColorConversions.colorToLinearRgb colorChannel)
-        normalMapChannel
+        (map ColorConversions.colorToLinearRgb colorTexture)
+        normalMapTexture
 
 
 normalMappedMetal :
-    { baseColor : Channel Color
-    , roughness : Channel Float
-    , normalMap : Channel NormalMap
+    { baseColor : Texture Color
+    , roughness : Texture Float
+    , normalMap : Texture NormalMap
     }
     -> NormalMapped
 normalMappedMetal { baseColor, roughness, normalMap } =
@@ -221,9 +221,9 @@ normalMappedMetal { baseColor, roughness, normalMap } =
 
 
 normalMappedNonmetal :
-    { baseColor : Channel Color
-    , roughness : Channel Float
-    , normalMap : Channel NormalMap
+    { baseColor : Texture Color
+    , roughness : Texture Float
+    , normalMap : Texture NormalMap
     }
     -> NormalMapped
 normalMappedNonmetal { baseColor, roughness, normalMap } =
@@ -236,10 +236,10 @@ normalMappedNonmetal { baseColor, roughness, normalMap } =
 
 
 normalMappedPbr :
-    { baseColor : Channel Color
-    , roughness : Channel Float
-    , metallic : Channel Float
-    , normalMap : Channel NormalMap
+    { baseColor : Texture Color
+    , roughness : Texture Float
+    , metallic : Texture Float
+    , normalMap : Texture NormalMap
     }
     -> NormalMapped
 normalMappedPbr { baseColor, roughness, metallic, normalMap } =
@@ -327,14 +327,14 @@ anisotropic =
 coerce : Material a -> Material b
 coerce material =
     case material of
-        Types.UnlitMaterial colorChannel ->
-            Types.UnlitMaterial colorChannel
+        Types.UnlitMaterial colorTexture ->
+            Types.UnlitMaterial colorTexture
 
-        Types.EmissiveMaterial colorChannel brightness ->
-            Types.EmissiveMaterial colorChannel brightness
+        Types.EmissiveMaterial colorTexture brightness ->
+            Types.EmissiveMaterial colorTexture brightness
 
-        Types.LambertianMaterial colorChannel normalMapChannel ->
-            Types.LambertianMaterial colorChannel normalMapChannel
+        Types.LambertianMaterial colorTexture normalMapTexture ->
+            Types.LambertianMaterial colorTexture normalMapTexture
 
-        Types.PbrMaterial colorChannel roughnessChannel metallicChannel normalMapChannel ->
-            Types.PbrMaterial colorChannel roughnessChannel metallicChannel normalMapChannel
+        Types.PbrMaterial colorTexture roughnessTexture metallicTexture normalMapTexture ->
+            Types.PbrMaterial colorTexture roughnessTexture metallicTexture normalMapTexture

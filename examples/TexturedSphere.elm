@@ -41,14 +41,14 @@ type WorldCoordinates
 
 type Model
     = Loading
-        { colorTexture : Maybe (Material.Channel Color)
-        , roughnessTexture : Maybe (Material.Channel Float)
-        , normalMapTexture : Maybe (Material.Channel Material.NormalMap)
+        { colorTexture : Maybe (Material.Texture Color)
+        , roughnessTexture : Maybe (Material.Texture Float)
+        , normalMapTexture : Maybe (Material.Texture Material.NormalMap)
         }
     | Loaded
-        { colorTexture : Material.Channel Color
-        , roughnessTexture : Material.Channel Float
-        , normalMapTexture : Material.Channel Material.NormalMap
+        { colorTexture : Material.Texture Color
+        , roughnessTexture : Material.Texture Float
+        , normalMapTexture : Material.Texture Material.NormalMap
         , sphereFrame : Frame3d Meters WorldCoordinates { defines : SphereCoordinates }
         , orbiting : Bool
         }
@@ -56,9 +56,9 @@ type Model
 
 
 type Msg
-    = GotColorTexture (Result WebGL.Texture.Error (Material.Channel Color))
-    | GotRoughnessTexture (Result WebGL.Texture.Error (Material.Channel Float))
-    | GotNormalMapTexture (Result WebGL.Texture.Error (Material.Channel Material.NormalMap))
+    = GotColorTexture (Result WebGL.Texture.Error (Material.Texture Color))
+    | GotRoughnessTexture (Result WebGL.Texture.Error (Material.Texture Float))
+    | GotNormalMapTexture (Result WebGL.Texture.Error (Material.Texture Material.NormalMap))
     | MouseDown
     | MouseUp
     | MouseMove Float Float
@@ -89,14 +89,14 @@ update message model =
             case model of
                 Loading textures ->
                     case message of
-                        GotColorTexture (Ok colorChannel) ->
-                            checkIfLoaded { textures | colorTexture = Just colorChannel }
+                        GotColorTexture (Ok colorTexture) ->
+                            checkIfLoaded { textures | colorTexture = Just colorTexture }
 
-                        GotRoughnessTexture (Ok roughnessChannel) ->
-                            checkIfLoaded { textures | roughnessTexture = Just roughnessChannel }
+                        GotRoughnessTexture (Ok roughnessTexture) ->
+                            checkIfLoaded { textures | roughnessTexture = Just roughnessTexture }
 
-                        GotNormalMapTexture (Ok normalMapChannel) ->
-                            checkIfLoaded { textures | normalMapTexture = Just normalMapChannel }
+                        GotNormalMapTexture (Ok normalMapTexture) ->
+                            checkIfLoaded { textures | normalMapTexture = Just normalMapTexture }
 
                         GotColorTexture (Err error) ->
                             Errored "Error loading color texture"
@@ -168,9 +168,9 @@ update message model =
 
 
 checkIfLoaded :
-    { colorTexture : Maybe (Material.Channel Color)
-    , roughnessTexture : Maybe (Material.Channel Float)
-    , normalMapTexture : Maybe (Material.Channel Material.NormalMap)
+    { colorTexture : Maybe (Material.Texture Color)
+    , roughnessTexture : Maybe (Material.Texture Float)
+    , normalMapTexture : Maybe (Material.Texture Material.NormalMap)
     }
     -> Model
 checkIfLoaded textures =

@@ -50,12 +50,12 @@ import Scene3d.Types as Types
     exposing
         ( BackFaceSetting(..)
         , Bounds
-        , Channel(..)
         , LinearRgb(..)
         , Material(..)
         , Node(..)
         , NormalMap(..)
         , PlainVertex
+        , Texture(..)
         , VertexWithNormal
         , VertexWithUv
         )
@@ -66,7 +66,7 @@ import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
 import WebGL.Settings.StencilTest as StencilTest
-import WebGL.Texture exposing (Texture)
+import WebGL.Texture
 
 
 type alias Entity coordinates =
@@ -120,7 +120,7 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     constantPointMesh color radius webGLMesh
 
-        Types.UnlitMaterial (Types.Textured { data }) ->
+        Types.UnlitMaterial (Types.Texture { data }) ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -190,7 +190,7 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     emissivePointMesh emissiveColor radius webGLMesh
 
-        Types.EmissiveMaterial (Types.Textured { data }) backlight ->
+        Types.EmissiveMaterial (Types.Texture { data }) backlight ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -225,8 +225,8 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     empty
 
-        Types.LambertianMaterial materialColorChannel normalMapChannel ->
-            case resolveLambertian materialColorChannel normalMapChannel of
+        Types.LambertianMaterial materialColorTexture normalMapTexture ->
+            case resolveLambertian materialColorTexture normalMapTexture of
                 ConstantLambertianMaterial (LinearRgb materialColor) ->
                     case givenMesh of
                         Types.EmptyMesh ->
@@ -262,7 +262,7 @@ mesh givenMaterial givenMesh =
                         Types.Points _ _ _ _ ->
                             empty
 
-                TexturedLambertianMaterial ( materialColorTexture, constantMaterialColor ) ( normalMapTexture, useNormalMap ) ->
+                TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( normalMapData, useNormalMap ) ->
                     case givenMesh of
                         Types.EmptyMesh ->
                             empty
@@ -283,10 +283,10 @@ mesh givenMaterial givenMesh =
                             empty
 
                         Types.MeshWithNormalsAndUvs _ _ webGLMesh cullBackFaces ->
-                            texturedLambertianMesh materialColorTexture webGLMesh cullBackFaces
+                            texturedLambertianMesh materialColorData webGLMesh cullBackFaces
 
                         Types.MeshWithTangents _ _ webGLMesh cullBackFaces ->
-                            normalMappedLambertianMesh materialColorTexture normalMapTexture useNormalMap webGLMesh cullBackFaces
+                            normalMappedLambertianMesh materialColorData normalMapData useNormalMap webGLMesh cullBackFaces
 
                         Types.LineSegments _ _ _ ->
                             empty
@@ -297,8 +297,8 @@ mesh givenMaterial givenMesh =
                         Types.Points _ _ _ _ ->
                             empty
 
-        Types.PbrMaterial baseColorChannel roughnessChannel metallicChannel normalMapChannel ->
-            case resolvePbr baseColorChannel roughnessChannel metallicChannel normalMapChannel of
+        Types.PbrMaterial baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
+            case resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture of
                 ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
                     case givenMesh of
                         Types.EmptyMesh ->
@@ -354,7 +354,7 @@ mesh givenMaterial givenMesh =
                         Types.Points _ _ _ _ ->
                             empty
 
-                TexturedPbrMaterial ( baseColorTexture, constantBaseColor ) ( roughnessTexture, constantRoughness ) ( metallicTexture, constantMetallic ) ( normalMapTexture, useNormalMap ) ->
+                TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, constantRoughness ) ( metallicData, constantMetallic ) ( normalMapData, useNormalMap ) ->
                     case givenMesh of
                         Types.EmptyMesh ->
                             empty
@@ -376,24 +376,24 @@ mesh givenMaterial givenMesh =
 
                         Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
                             texturedPhysicalMesh
-                                baseColorTexture
+                                baseColorData
                                 constantBaseColor
-                                roughnessTexture
+                                roughnessData
                                 constantRoughness
-                                metallicTexture
+                                metallicData
                                 constantMetallic
                                 webGLMesh
                                 backFaceSetting
 
                         Types.MeshWithTangents _ _ webGLMesh backFaceSetting ->
                             normalMappedPhysicalMesh
-                                baseColorTexture
+                                baseColorData
                                 constantBaseColor
-                                roughnessTexture
+                                roughnessData
                                 constantRoughness
-                                metallicTexture
+                                metallicData
                                 constantMetallic
-                                normalMapTexture
+                                normalMapData
                                 useNormalMap
                                 webGLMesh
                                 backFaceSetting
@@ -410,12 +410,12 @@ mesh givenMaterial givenMesh =
 
 type ResolvedLambertianMaterial
     = ConstantLambertianMaterial LinearRgb
-    | TexturedLambertianMaterial ( Texture, Vec4 ) ( Texture, Float )
+    | TexturedLambertianMaterial ( WebGL.Texture.Texture, Vec4 ) ( WebGL.Texture.Texture, Float )
 
 
 type ResolvedPbrMaterial
     = ConstantPbrMaterial LinearRgb Float Float
-    | TexturedPbrMaterial ( Texture, Vec4 ) ( Texture, Vec2 ) ( Texture, Vec2 ) ( Texture, Float )
+    | TexturedPbrMaterial ( WebGL.Texture.Texture, Vec4 ) ( WebGL.Texture.Texture, Vec2 ) ( WebGL.Texture.Texture, Vec2 ) ( WebGL.Texture.Texture, Float )
 
 
 zeroVec2 : Vec2
@@ -442,33 +442,33 @@ enabledFloat givenValue =
     Math.Vector2.vec2 givenValue 1
 
 
-vec3Tuple : Texture -> Channel LinearRgb -> ( Texture, Vec4 )
-vec3Tuple fallbackTexture channel =
-    case channel of
+vec3Tuple : WebGL.Texture.Texture -> Texture LinearRgb -> ( WebGL.Texture.Texture, Vec4 )
+vec3Tuple fallbackData texture =
+    case texture of
         Types.Constant (LinearRgb baseColor) ->
-            ( fallbackTexture, enabledVec3 baseColor )
+            ( fallbackData, enabledVec3 baseColor )
 
-        Types.Textured { data } ->
+        Types.Texture { data } ->
             ( data, zeroVec4 )
 
 
-floatTuple : Texture -> Channel Float -> ( Texture, Vec2 )
-floatTuple fallbackTexture channel =
-    case channel of
+floatTuple : WebGL.Texture.Texture -> Texture Float -> ( WebGL.Texture.Texture, Vec2 )
+floatTuple fallbackData texture =
+    case texture of
         Types.Constant value ->
-            ( fallbackTexture, enabledFloat value )
+            ( fallbackData, enabledFloat value )
 
-        Types.Textured { data } ->
+        Types.Texture { data } ->
             ( data, zeroVec2 )
 
 
-normalMapTuple : Texture -> Channel NormalMap -> ( Texture, Float )
-normalMapTuple fallbackTexture channel =
+normalMapTuple : WebGL.Texture.Texture -> Texture NormalMap -> ( WebGL.Texture.Texture, Float )
+normalMapTuple fallbackData channel =
     case channel of
         Types.Constant Types.VerticalNormal ->
-            ( fallbackTexture, 0.0 )
+            ( fallbackData, 0.0 )
 
-        Types.Textured { data } ->
+        Types.Texture { data } ->
             ( data, 1.0 )
 
 
@@ -476,56 +476,56 @@ type Tuple4 a b c d
     = Tuple4 a b c d
 
 
-resolvePbr : Channel LinearRgb -> Channel Float -> Channel Float -> Channel NormalMap -> ResolvedPbrMaterial
-resolvePbr baseColorChannel roughnessChannel metallicChannel normalMapChannel =
-    case Tuple4 baseColorChannel roughnessChannel metallicChannel normalMapChannel of
+resolvePbr : Texture LinearRgb -> Texture Float -> Texture Float -> Texture NormalMap -> ResolvedPbrMaterial
+resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture =
+    case Tuple4 baseColorTexture roughnessTexture metallicTexture normalMapTexture of
         Tuple4 (Types.Constant baseColor) (Types.Constant roughness) (Types.Constant metallic) (Types.Constant Types.VerticalNormal) ->
             ConstantPbrMaterial baseColor roughness metallic
 
-        Tuple4 (Types.Textured { data }) _ _ _ ->
+        Tuple4 (Types.Texture { data }) _ _ _ ->
             TexturedPbrMaterial
                 ( data, zeroVec4 )
-                (floatTuple data roughnessChannel)
-                (floatTuple data metallicChannel)
-                (normalMapTuple data normalMapChannel)
+                (floatTuple data roughnessTexture)
+                (floatTuple data metallicTexture)
+                (normalMapTuple data normalMapTexture)
 
-        Tuple4 _ (Types.Textured { data }) _ _ ->
+        Tuple4 _ (Types.Texture { data }) _ _ ->
             TexturedPbrMaterial
-                (vec3Tuple data baseColorChannel)
+                (vec3Tuple data baseColorTexture)
                 ( data, zeroVec2 )
-                (floatTuple data metallicChannel)
-                (normalMapTuple data normalMapChannel)
+                (floatTuple data metallicTexture)
+                (normalMapTuple data normalMapTexture)
 
-        Tuple4 _ _ (Types.Textured { data }) _ ->
+        Tuple4 _ _ (Types.Texture { data }) _ ->
             TexturedPbrMaterial
-                (vec3Tuple data baseColorChannel)
-                (floatTuple data roughnessChannel)
+                (vec3Tuple data baseColorTexture)
+                (floatTuple data roughnessTexture)
                 ( data, zeroVec2 )
-                (normalMapTuple data normalMapChannel)
+                (normalMapTuple data normalMapTexture)
 
-        Tuple4 _ _ _ (Types.Textured { data }) ->
+        Tuple4 _ _ _ (Types.Texture { data }) ->
             TexturedPbrMaterial
-                (vec3Tuple data baseColorChannel)
-                (floatTuple data roughnessChannel)
-                (floatTuple data metallicChannel)
+                (vec3Tuple data baseColorTexture)
+                (floatTuple data roughnessTexture)
+                (floatTuple data metallicTexture)
                 ( data, 1.0 )
 
 
-resolveLambertian : Channel LinearRgb -> Channel NormalMap -> ResolvedLambertianMaterial
-resolveLambertian materialColorChannel normalMapChannel =
-    case ( materialColorChannel, normalMapChannel ) of
+resolveLambertian : Texture LinearRgb -> Texture NormalMap -> ResolvedLambertianMaterial
+resolveLambertian materialColorTexture normalMapTexture =
+    case ( materialColorTexture, normalMapTexture ) of
         ( Types.Constant materialColor, Types.Constant Types.VerticalNormal ) ->
             ConstantLambertianMaterial materialColor
 
-        ( Types.Textured { data }, _ ) ->
+        ( Types.Texture { data }, _ ) ->
             TexturedLambertianMaterial
                 ( data, zeroVec4 )
-                (normalMapTuple data normalMapChannel)
+                (normalMapTuple data normalMapTexture)
 
-        ( _, Types.Textured { data } ) ->
+        ( _, Types.Texture { data } ) ->
             TexturedLambertianMaterial
-                (vec3Tuple data materialColorChannel)
-                (normalMapTuple data normalMapChannel)
+                (vec3Tuple data materialColorTexture)
+                (normalMapTuple data normalMapTexture)
 
 
 quad :
@@ -624,7 +624,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.UnlitMaterial (Types.Textured { data }) ->
+                Types.UnlitMaterial (Types.Texture { data }) ->
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -655,7 +655,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.EmissiveMaterial (Types.Textured { data }) backlight ->
+                Types.EmissiveMaterial (Types.Texture { data }) backlight ->
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -671,8 +671,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.LambertianMaterial materialColorChannel normalMapChannel ->
-                    case resolveLambertian materialColorChannel normalMapChannel of
+                Types.LambertianMaterial materialColorTexture normalMapTexture ->
+                    case resolveLambertian materialColorTexture normalMapTexture of
                         ConstantLambertianMaterial (LinearRgb materialColor) ->
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
@@ -693,7 +693,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , viewMatrix = viewMatrix
                                     }
 
-                        TexturedLambertianMaterial ( materialColorTexture, constantMaterialColor ) ( normalMapTexture, useNormalMap ) ->
+                        TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( normalMapData, useNormalMap ) ->
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -701,8 +701,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     Shaders.lambertianTextureFragment
                                     quadVertices
                                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
-                                    , materialColorTexture = materialColorTexture
-                                    , normalMapTexture = normalMapTexture
+                                    , materialColorTexture = materialColorData
+                                    , normalMapTexture = normalMapData
                                     , useNormalMap = useNormalMap
                                     , environmentalLighting = environmentalLighting
                                     , lightSources12 = lightSources.lightSources12
@@ -715,8 +715,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , viewMatrix = viewMatrix
                                     }
 
-                Types.PbrMaterial baseColorChannel roughnessChannel metallicChannel normalMapChannel ->
-                    case resolvePbr baseColorChannel roughnessChannel metallicChannel normalMapChannel of
+                Types.PbrMaterial baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
+                    case resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture of
                         ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
@@ -739,7 +739,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , viewMatrix = viewMatrix
                                     }
 
-                        TexturedPbrMaterial ( baseColorTexture, constantBaseColor ) ( roughnessTexture, constantRoughness ) ( metallicTexture, constantMetallic ) ( normalMapTexture, useNormalMap ) ->
+                        TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, constantRoughness ) ( metallicData, constantMetallic ) ( normalMapData, useNormalMap ) ->
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -752,13 +752,13 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lightSources34 = lightSources.lightSources34
                                     , lightSources56 = lightSources.lightSources56
                                     , lightSources78 = lightSources.lightSources78
-                                    , baseColorTexture = baseColorTexture
+                                    , baseColorTexture = baseColorData
                                     , constantBaseColor = constantBaseColor
-                                    , roughnessTexture = roughnessTexture
+                                    , roughnessTexture = roughnessData
                                     , constantRoughness = constantRoughness
-                                    , metallicTexture = metallicTexture
+                                    , metallicTexture = metallicData
                                     , constantMetallic = constantMetallic
-                                    , normalMapTexture = normalMapTexture
+                                    , normalMapTexture = normalMapData
                                     , useNormalMap = useNormalMap
                                     , sceneProperties = sceneProperties
                                     , modelScale = modelScale
@@ -1072,8 +1072,8 @@ constantMesh color webGLMesh backFaceSetting =
             )
 
 
-colorTextureMesh : Texture -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
-colorTextureMesh texture webGLMesh backFaceSetting =
+colorTextureMesh : WebGL.Texture.Texture -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+colorTextureMesh data webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1082,7 +1082,7 @@ colorTextureMesh texture webGLMesh backFaceSetting =
                     Shaders.unlitVertex
                     Shaders.colorTextureFragment
                     webGLMesh
-                    { colorTexture = texture
+                    { colorTexture = data
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -1130,8 +1130,8 @@ emissiveMesh color webGLMesh backFaceSetting =
             )
 
 
-texturedEmissiveMesh : Texture -> Float -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
-texturedEmissiveMesh colorTexture backlight webGLMesh backFaceSetting =
+texturedEmissiveMesh : WebGL.Texture.Texture -> Float -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedEmissiveMesh colorData backlight webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1140,7 +1140,7 @@ texturedEmissiveMesh colorTexture backlight webGLMesh backFaceSetting =
                     Shaders.unlitVertex
                     Shaders.emissiveTextureFragment
                     webGLMesh
-                    { colorTexture = colorTexture
+                    { colorTexture = colorData
                     , backlight = backlight
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
@@ -1194,8 +1194,8 @@ lambertianMesh color webGLMesh backFaceSetting =
             )
 
 
-texturedLambertianMesh : Texture -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
-texturedLambertianMesh materialColorTexture webGLMesh backFaceSetting =
+texturedLambertianMesh : WebGL.Texture.Texture -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedLambertianMesh materialColorData webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1204,8 +1204,8 @@ texturedLambertianMesh materialColorTexture webGLMesh backFaceSetting =
                     Shaders.texturedVertex
                     Shaders.lambertianTextureFragment
                     webGLMesh
-                    { materialColorTexture = materialColorTexture
-                    , normalMapTexture = materialColorTexture
+                    { materialColorTexture = materialColorData
+                    , normalMapTexture = materialColorData
                     , useNormalMap = 0.0
                     , sceneProperties = sceneProperties
                     , environmentalLighting = environmentalLighting
@@ -1220,8 +1220,8 @@ texturedLambertianMesh materialColorTexture webGLMesh backFaceSetting =
             )
 
 
-normalMappedLambertianMesh : Texture -> Texture -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2, tangent : Vec3 } -> BackFaceSetting -> Entity coordinates
-normalMappedLambertianMesh materialColorTexture normalMapTexture useNormalMap webGLMesh backFaceSetting =
+normalMappedLambertianMesh : WebGL.Texture.Texture -> WebGL.Texture.Texture -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2, tangent : Vec3 } -> BackFaceSetting -> Entity coordinates
+normalMappedLambertianMesh materialColorData normalMapData useNormalMap webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1230,8 +1230,8 @@ normalMappedLambertianMesh materialColorTexture normalMapTexture useNormalMap we
                     Shaders.normalMappedVertex
                     Shaders.lambertianTextureFragment
                     webGLMesh
-                    { materialColorTexture = materialColorTexture
-                    , normalMapTexture = normalMapTexture
+                    { materialColorTexture = materialColorData
+                    , normalMapTexture = normalMapData
                     , useNormalMap = useNormalMap
                     , sceneProperties = sceneProperties
                     , environmentalLighting = environmentalLighting
@@ -1272,8 +1272,8 @@ physicalMesh color roughness metallic webGLMesh backFaceSetting =
             )
 
 
-texturedPhysicalMesh : Texture -> Vec4 -> Texture -> Vec2 -> Texture -> Vec2 -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
-texturedPhysicalMesh baseColorTexture constantBaseColor roughnessTexture constantRoughness metallicTexture constantMetallic webGLMesh backFaceSetting =
+texturedPhysicalMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughness metallicData constantMetallic webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1282,13 +1282,13 @@ texturedPhysicalMesh baseColorTexture constantBaseColor roughnessTexture constan
                     Shaders.texturedVertex
                     Shaders.physicalTexturesFragment
                     webGLMesh
-                    { baseColorTexture = baseColorTexture
+                    { baseColorTexture = baseColorData
                     , constantBaseColor = constantBaseColor
-                    , roughnessTexture = roughnessTexture
+                    , roughnessTexture = roughnessData
                     , constantRoughness = constantRoughness
-                    , metallicTexture = metallicTexture
+                    , metallicTexture = metallicData
                     , constantMetallic = constantMetallic
-                    , normalMapTexture = baseColorTexture
+                    , normalMapTexture = baseColorData
                     , useNormalMap = 0.0
                     , sceneProperties = sceneProperties
                     , environmentalLighting = environmentalLighting
@@ -1303,8 +1303,8 @@ texturedPhysicalMesh baseColorTexture constantBaseColor roughnessTexture constan
             )
 
 
-normalMappedPhysicalMesh : Texture -> Vec4 -> Texture -> Vec2 -> Texture -> Vec2 -> Texture -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2, tangent : Vec3 } -> BackFaceSetting -> Entity coordinates
-normalMappedPhysicalMesh baseColorTexture constantBaseColor roughnessTexture constantRoughness metallicTexture constantMetallic normalMapTexture useNormalMap webGLMesh backFaceSetting =
+normalMappedPhysicalMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Float -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2, tangent : Vec3 } -> BackFaceSetting -> Entity coordinates
+normalMappedPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughness metallicData constantMetallic normalMapData useNormalMap webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1313,13 +1313,13 @@ normalMappedPhysicalMesh baseColorTexture constantBaseColor roughnessTexture con
                     Shaders.normalMappedVertex
                     Shaders.physicalTexturesFragment
                     webGLMesh
-                    { baseColorTexture = baseColorTexture
+                    { baseColorTexture = baseColorData
                     , constantBaseColor = constantBaseColor
-                    , roughnessTexture = roughnessTexture
+                    , roughnessTexture = roughnessData
                     , constantRoughness = constantRoughness
-                    , metallicTexture = metallicTexture
+                    , metallicTexture = metallicData
                     , constantMetallic = constantMetallic
-                    , normalMapTexture = normalMapTexture
+                    , normalMapTexture = normalMapData
                     , useNormalMap = useNormalMap
                     , sceneProperties = sceneProperties
                     , environmentalLighting = environmentalLighting

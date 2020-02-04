@@ -86,19 +86,19 @@ type alias VertexWithTangent =
 
 
 type Material vertexAttributes
-    = UnlitMaterial (Channel Vec3)
-    | EmissiveMaterial (Channel LinearRgb) Float
-    | LambertianMaterial (Channel LinearRgb) (Channel NormalMap)
-    | PbrMaterial (Channel LinearRgb) (Channel Float) (Channel Float) (Channel NormalMap)
+    = UnlitMaterial (Texture Vec3)
+    | EmissiveMaterial (Texture LinearRgb) Float
+    | LambertianMaterial (Texture LinearRgb) (Texture NormalMap)
+    | PbrMaterial (Texture LinearRgb) (Texture Float) (Texture Float) (Texture NormalMap)
 
 
 type NormalMap
     = VerticalNormal
 
 
-type Channel value
+type Texture value
     = Constant value
-    | Textured
+    | Texture
         { url : String
         , options : WebGL.Texture.Options
         , data : WebGL.Texture.Texture

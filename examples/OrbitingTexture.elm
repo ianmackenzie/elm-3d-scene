@@ -35,7 +35,7 @@ type alias Model =
     { azimuth : Angle
     , elevation : Angle
     , orbiting : Bool
-    , texture : Maybe (Material.Channel Color)
+    , texture : Maybe (Material.Texture Color)
     }
 
 
@@ -43,7 +43,7 @@ type Msg
     = MouseDown
     | MouseUp
     | MouseMove Float Float
-    | GotTexture (Result Texture.Error (Material.Channel Color))
+    | GotTexture (Result Texture.Error (Material.Texture Color))
 
 
 init : () -> ( Model, Cmd Msg )
