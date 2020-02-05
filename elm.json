@@ -9,6 +9,7 @@
         "Scene3d.Chromaticity",
         "Scene3d.Exposure",
         "Scene3d.Material",
+        "Scene3d.Material.Channel",
         "Scene3d.Mesh"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",

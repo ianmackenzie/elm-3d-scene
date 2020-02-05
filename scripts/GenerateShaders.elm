@@ -130,9 +130,9 @@ roughnessTexture =
     Glsl.uniform Glsl.sampler2D "roughnessTexture"
 
 
-constantRoughness : Glsl.Uniform
-constantRoughness =
-    Glsl.uniform Glsl.vec2 "constantRoughness"
+roughnessChannel : Glsl.Uniform
+roughnessChannel =
+    Glsl.uniform Glsl.vec4 "roughnessChannel"
 
 
 metallic : Glsl.Uniform
@@ -145,9 +145,9 @@ metallicTexture =
     Glsl.uniform Glsl.sampler2D "metallicTexture"
 
 
-constantMetallic : Glsl.Uniform
-constantMetallic =
-    Glsl.uniform Glsl.vec2 "constantMetallic"
+metallicChannel : Glsl.Uniform
+metallicChannel =
+    Glsl.uniform Glsl.vec4 "metallicChannel"
 
 
 normalMapTexture : Glsl.Uniform
@@ -496,6 +496,20 @@ getDirectionToCamera =
             } else {
                 return sceneProperties[1].xyz;
             }
+        }
+        """
+
+
+getChannelValue : Glsl.Function
+getChannelValue =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float getChannelValue(sampler2D texture, vec2 uv, vec4 channel) {
+            float constantValue = channel.a;
+            float useConstant = float(channel.rgb == vec3(0.0, 0.0, 0.0));
+            float useTexture = 1.0 - useConstant;
+            float textureValue = dot(texture2D(texture, uv).rgb, channel.rgb);
+            return clamp(textureValue * useTexture + constantValue * useConstant, 0.0, 1.0);
         }
         """
 
@@ -1762,15 +1776,16 @@ physicalTexturesFragmentShader =
             , baseColorTexture
             , constantBaseColor
             , roughnessTexture
-            , constantRoughness
+            , roughnessChannel
             , metallicTexture
-            , constantMetallic
+            , metallicChannel
             , normalMapTexture
             , useNormalMap
             ]
         , varyings = varyings
         , functions =
-            [ getLocalNormal
+            [ getChannelValue
+            , getLocalNormal
             , getMappedNormal
             , getDirectionToCamera
             , physicalLighting
@@ -1782,8 +1797,8 @@ physicalTexturesFragmentShader =
         """
         void main() {
             vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
-            float roughness = texture2D(roughnessTexture, interpolatedUv).r * (1.0 - constantRoughness.y) + constantRoughness.x * constantRoughness.y;
-            float metallic = texture2D(metallicTexture, interpolatedUv).r * (1.0 - constantMetallic.y) + constantMetallic.x * constantMetallic.y;
+            float roughness = getChannelValue(roughnessTexture, interpolatedUv, roughnessChannel);
+            float metallic = getChannelValue(metallicTexture, interpolatedUv, metallicChannel);
 
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
             vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);

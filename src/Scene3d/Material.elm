@@ -1,7 +1,7 @@
 module Scene3d.Material exposing
     ( Material
     , color, emissive, matte, metal, nonmetal, pbr
-    , Texture, constant, load
+    , Texture, constant, load, loadWith, loadChannel, loadChannelWith
     , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
     , NormalMap
     , normalMappedMatte, normalMappedMetal, normalMappedNonmetal, normalMappedPbr
@@ -21,7 +21,7 @@ module Scene3d.Material exposing
 
 # Textured materials
 
-@docs Texture, constant, load
+@docs Texture, constant, load, loadWith, loadChannel, loadChannelWith
 
 @docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
 
@@ -46,6 +46,7 @@ import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
 import Scene3d.Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
+import Scene3d.Material.Channel as Channel exposing (Channel)
 import Scene3d.Mesh exposing (Attributes)
 import Scene3d.Types as Types exposing (LinearRgb(..))
 import Task exposing (Task)
@@ -105,13 +106,38 @@ constant givenValue =
 
 load : String -> Task WebGL.Texture.Error (Texture value)
 load url =
+    loadWith WebGL.Texture.defaultOptions url
+
+
+loadWith : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
+loadWith options url =
+    loadImpl options Channel.luminance url
+
+
+type alias Channel =
+    Channel.Channel
+
+
+loadChannel : Channel -> String -> Task WebGL.Texture.Error (Texture Float)
+loadChannel channel url =
+    loadChannelWith WebGL.Texture.defaultOptions channel url
+
+
+loadChannelWith : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture Float)
+loadChannelWith options channel url =
+    loadImpl options channel url
+
+
+loadImpl : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture value)
+loadImpl options (Types.Channel channel) url =
     WebGL.Texture.load url
         |> Task.map
             (\data ->
                 Types.Texture
                     { url = url
-                    , options = WebGL.Texture.defaultOptions
+                    , options = options
                     , data = data
+                    , channel = channel
                     }
             )
 

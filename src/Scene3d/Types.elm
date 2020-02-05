@@ -102,7 +102,12 @@ type Texture value
         { url : String
         , options : WebGL.Texture.Options
         , data : WebGL.Texture.Texture
+        , channel : Vec4
         }
+
+
+type Channel
+    = Channel Vec4
 
 
 type BackFaceSetting
