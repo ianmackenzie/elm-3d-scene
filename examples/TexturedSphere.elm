@@ -221,7 +221,7 @@ view model =
             let
                 material =
                     Material.normalMappedPbr
-                        { baseColor = Material.constant Tango.chocolate3
+                        { baseColor = colorTexture
                         , roughness = roughnessTexture
                         , metallic = Material.constant 0
                         , normalMap = normalMapTexture
