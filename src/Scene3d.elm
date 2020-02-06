@@ -9,7 +9,7 @@ module Scene3d exposing
     , LightSource, directionalLight, pointLight
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
-    , EnvironmentalLighting, noEnvironmentalLighting, softLighting
+    , EnvironmentalLighting, noEnvironmentalLighting, softLighting, fastSoftLighting
     , toWebGLEntities
     )
 
@@ -76,7 +76,7 @@ some soft indirect lighting.
 
 ## Environmental lighting
 
-@docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
+@docs EnvironmentalLighting, noEnvironmentalLighting, softLighting, fastSoftLighting
 
 
 # Advanced
@@ -693,6 +693,56 @@ softLighting { upDirection, above, below } =
             , m21 = y
             , m31 = z
             , m41 = 1
+            , m12 = aboveNits * Math.Vector3.getX aboveRgb
+            , m22 = aboveNits * Math.Vector3.getY aboveRgb
+            , m32 = aboveNits * Math.Vector3.getZ aboveRgb
+            , m42 = 0
+            , m13 = belowNits * Math.Vector3.getX belowRgb
+            , m23 = belowNits * Math.Vector3.getY belowRgb
+            , m33 = belowNits * Math.Vector3.getZ belowRgb
+            , m43 = 0
+            , m14 = 0
+            , m24 = 0
+            , m34 = 0
+            , m44 = 0
+            }
+
+
+fastSoftLighting :
+    { upDirection : Direction3d coordinates
+    , above : ( Luminance, Chromaticity )
+    , below : ( Luminance, Chromaticity )
+    }
+    -> EnvironmentalLighting coordinates
+fastSoftLighting { upDirection, above, below } =
+    let
+        { x, y, z } =
+            Direction3d.unwrap upDirection
+
+        ( aboveLuminance, aboveChromaticity ) =
+            above
+
+        ( belowLuminance, belowChromaticity ) =
+            below
+
+        aboveNits =
+            Luminance.inNits aboveLuminance
+
+        belowNits =
+            Luminance.inNits belowLuminance
+
+        (LinearRgb aboveRgb) =
+            ColorConversions.chromaticityToLinearRgb aboveChromaticity
+
+        (LinearRgb belowRgb) =
+            ColorConversions.chromaticityToLinearRgb belowChromaticity
+    in
+    Types.SoftLighting <|
+        Math.Matrix4.fromRecord
+            { m11 = x
+            , m21 = y
+            , m31 = z
+            , m41 = 2
             , m12 = aboveNits * Math.Vector3.getX aboveRgb
             , m22 = aboveNits * Math.Vector3.getY aboveRgb
             , m32 = aboveNits * Math.Vector3.getZ aboveRgb
