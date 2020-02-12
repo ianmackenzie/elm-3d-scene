@@ -78,7 +78,7 @@ main =
         , exposure =
             Exposure.fromMaxLuminance (Luminance.nits 5000)
         , whiteBalance = Scene3d.defaultWhiteBalance
-        , backgroundColor = Scene3d.transparentBackground
+        , background = Scene3d.transparentBackground
         }
         [ Scene3d.sphere Scene3d.doesNotCastShadows (Material.uniform material) <|
             Sphere3d.withRadius (Length.centimeters 5) Point3d.origin

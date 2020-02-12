@@ -5,7 +5,8 @@ module Scene3d exposing
     , shadow, withShadow
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
-    , transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
+    , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
+    , defaultExposure, defaultWhiteBalance
     , LightSource, directionalLight, pointLight
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
@@ -47,9 +48,14 @@ when setting up more complex scenes.
 @docs placeIn, relativeTo
 
 
-# Rendering options
+# Background
 
-@docs transparentBackground, whiteBackground, blackBackground, defaultExposure, defaultWhiteBalance
+@docs transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
+
+
+# Default rendering values
+
+@docs defaultExposure, defaultWhiteBalance
 
 
 # Lighting
@@ -759,37 +765,58 @@ fastSoftLighting { upDirection, above, below } =
 
 
 
------ DEFAULTS -----
+----- BACKGROUND -----
 
 
-transparentBackground : Color.Transparent.Color
+type Background
+    = BackgroundColor Color.Transparent.Color
+
+
+transparentBackground : Background
 transparentBackground =
-    Color.Transparent.fromRGBA
-        { red = 0
-        , green = 0
-        , blue = 0
-        , alpha = Color.Transparent.transparent
-        }
+    BackgroundColor <|
+        Color.Transparent.fromRGBA
+            { red = 0
+            , green = 0
+            , blue = 0
+            , alpha = Color.Transparent.transparent
+            }
 
 
-blackBackground : Color.Transparent.Color
+blackBackground : Background
 blackBackground =
-    Color.Transparent.fromRGBA
-        { red = 0
-        , green = 0
-        , blue = 0
-        , alpha = Color.Transparent.opaque
-        }
+    BackgroundColor <|
+        Color.Transparent.fromRGBA
+            { red = 0
+            , green = 0
+            , blue = 0
+            , alpha = Color.Transparent.opaque
+            }
 
 
-whiteBackground : Color.Transparent.Color
+whiteBackground : Background
 whiteBackground =
-    Color.Transparent.fromRGBA
-        { red = 255
-        , green = 255
-        , blue = 255
-        , alpha = Color.Transparent.opaque
-        }
+    BackgroundColor <|
+        Color.Transparent.fromRGBA
+            { red = 255
+            , green = 255
+            , blue = 255
+            , alpha = Color.Transparent.opaque
+            }
+
+
+backgroundColor : Color -> Background
+backgroundColor color =
+    BackgroundColor (Color.Transparent.fromColor Color.Transparent.opaque color)
+
+
+transparentBackgroundColor : Color.Transparent.Color -> Background
+transparentBackgroundColor transparentColor =
+    BackgroundColor transparentColor
+
+
+
+----- DEFAULTS -----
 
 
 defaultExposure : Exposure
@@ -957,7 +984,7 @@ toWebGLEntities :
     , whiteBalance : Chromaticity
     , width : Quantity Float Pixels
     , height : Quantity Float Pixels
-    , backgroundColor : Color.Transparent.Color
+    , background : Background
     }
     -> List (Entity coordinates)
     -> List WebGL.Entity
@@ -1069,7 +1096,7 @@ toHtml :
     , whiteBalance : Chromaticity
     , width : Quantity Float Pixels
     , height : Quantity Float Pixels
-    , backgroundColor : Color.Transparent.Color
+    , background : Background
     }
     -> List (Entity coordinates)
     -> Html msg
@@ -1081,8 +1108,11 @@ toHtml arguments drawables =
         heightInPixels =
             inPixels arguments.height
 
+        (BackgroundColor givenBackgroundColor) =
+            arguments.background
+
         backgroundColorString =
-            Color.Transparent.toRGBAString arguments.backgroundColor
+            Color.Transparent.toRGBAString givenBackgroundColor
 
         webGLOptions =
             [ WebGL.depth 1

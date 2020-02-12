@@ -241,7 +241,7 @@ view model =
                     Scene3d.oneLightSource sunlight
                 , exposure = Exposure.fromEv100 12
                 , whiteBalance = Scene3d.defaultWhiteBalance
-                , backgroundColor = Scene3d.transparentBackground
+                , background = Scene3d.transparentBackground
                 }
                 [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
                     |> Scene3d.sphere Scene3d.doesNotCastShadows material

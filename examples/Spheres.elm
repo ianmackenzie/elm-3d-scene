@@ -137,7 +137,7 @@ main =
                             , height = pixels 768
                             , exposure = Exposure.fromEv100 14
                             , whiteBalance = Chromaticity.d65
-                            , backgroundColor = Scene3d.transparentBackground
+                            , background = Scene3d.transparentBackground
                             }
                             [ goldSphere
                             , aluminumSphere

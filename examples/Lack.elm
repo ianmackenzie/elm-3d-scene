@@ -221,7 +221,7 @@ view { world, width, height } =
             , environmentalLighting = environmentalLighting
             , exposure = Scene3d.Exposure.fromMaxLuminance (Luminance.nits 10000)
             , whiteBalance = Scene3d.defaultWhiteBalance
-            , backgroundColor = Scene3d.transparentBackground
+            , background = Scene3d.transparentBackground
             }
             drawables
         ]

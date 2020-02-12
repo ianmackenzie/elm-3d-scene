@@ -137,7 +137,7 @@ view { world, screenWidth, screenHeight } =
             , environmentalLighting = environmentalLighting
             , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
             , whiteBalance = Chromaticity.d65
-            , backgroundColor = Scene3d.transparentBackground
+            , background = Scene3d.transparentBackground
             }
             drawables
         ]

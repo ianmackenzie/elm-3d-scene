@@ -50,7 +50,7 @@ main =
         , height = Pixels.pixels 600
         , directLighting = Scene3d.noDirectLighting
         , environmentalLighting = Scene3d.noEnvironmentalLighting
-        , backgroundColor = Scene3d.transparentBackground
+        , background = Scene3d.transparentBackground
         , exposure = Scene3d.defaultExposure
         , whiteBalance = Scene3d.defaultWhiteBalance
         }

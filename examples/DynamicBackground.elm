@@ -65,10 +65,9 @@ material =
         }
 
 
-backgroundColor : Duration -> Color.Transparent.Color
+backgroundColor : Duration -> Color
 backgroundColor elapsedTime =
-    Color.Transparent.fromColor Color.Transparent.opaque <|
-        Color.rotateHue (45 * Duration.inSeconds elapsedTime) Tango.skyBlue2
+    Color.rotateHue (45 * Duration.inSeconds elapsedTime) Tango.skyBlue2
 
 
 main : Program () Duration Duration
@@ -95,7 +94,7 @@ main =
                     , exposure =
                         Exposure.fromMaxLuminance (Luminance.nits 5000)
                     , whiteBalance = Scene3d.defaultWhiteBalance
-                    , backgroundColor = backgroundColor elapsedTime
+                    , background = Scene3d.backgroundColor (backgroundColor elapsedTime)
                     }
                     [ Scene3d.sphere Scene3d.doesNotCastShadows (Material.textured material) <|
                         Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
