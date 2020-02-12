@@ -22,7 +22,7 @@
         "ianmackenzie/elm-3d-camera": "2.0.0 <= v < 3.0.0",
         "ianmackenzie/elm-float-extra": "1.1.0 <= v < 2.0.0",
         "ianmackenzie/elm-geometry": "3.1.0 <= v < 4.0.0",
-        "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.0 <= v < 3.0.0",
+        "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.2 <= v < 3.0.0",
         "ianmackenzie/elm-triangular-mesh": "1.0.2 <= v < 2.0.0",
         "ianmackenzie/elm-units": "2.2.0 <= v < 3.0.0",
         "tesk9/palette": "2.0.0 <= v < 3.0.0"
