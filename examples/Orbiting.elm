@@ -31,8 +31,8 @@ type alias Model =
     { azimuth : Angle
     , elevation : Angle
     , orbiting : Bool
-    , mesh1 : Mesh World {}
-    , mesh2 : Mesh World {}
+    , mesh1 : Mesh.Plain World
+    , mesh2 : Mesh.Plain World
     }
 
 

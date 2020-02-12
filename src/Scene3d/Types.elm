@@ -85,7 +85,7 @@ type alias VertexWithTangent =
     }
 
 
-type Material vertexAttributes
+type Material attributes
     = UnlitMaterial (Texture Vec3)
     | EmissiveMaterial (Texture LinearRgb) Float
     | LambertianMaterial (Texture LinearRgb) (Texture NormalMap)
@@ -115,7 +115,7 @@ type BackFaceSetting
     | CullBackFaces
 
 
-type Mesh coordinates vertexAttributes
+type Mesh coordinates attributes
     = EmptyMesh
     | Triangles (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh PlainVertex) BackFaceSetting
     | Facets (BoundingBox3d Meters coordinates) (List (Triangle3d Meters coordinates)) (WebGL.Mesh VertexWithNormal) BackFaceSetting

@@ -47,7 +47,7 @@ import Math.Vector3 exposing (Vec3)
 import Scene3d.Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material.Channel as Channel exposing (Channel)
-import Scene3d.Mesh exposing (Attributes)
+import Scene3d.Mesh exposing (No, Yes)
 import Scene3d.Types as Types exposing (LinearRgb(..))
 import Task exposing (Task)
 import WebGL.Texture
@@ -62,7 +62,7 @@ color givenColor =
     Types.UnlitMaterial (Types.Constant (toVec3 givenColor))
 
 
-matte : Color -> Material { a | normal : Attributes }
+matte : Color -> Material { a | normals : Yes }
 matte materialColor =
     Types.LambertianMaterial
         (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
@@ -76,17 +76,17 @@ emissive givenColor brightness =
         (Luminance.inNits brightness)
 
 
-metal : { baseColor : Color, roughness : Float } -> Material { a | normal : Attributes }
+metal : { baseColor : Color, roughness : Float } -> Material { a | normals : Yes }
 metal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 1 }
 
 
-nonmetal : { baseColor : Color, roughness : Float } -> Material { a | normal : Attributes }
+nonmetal : { baseColor : Color, roughness : Float } -> Material { a | normals : Yes }
 nonmetal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 0 }
 
 
-pbr : { baseColor : Color, roughness : Float, metallic : Float } -> Material { a | normal : Attributes }
+pbr : { baseColor : Color, roughness : Float, metallic : Float } -> Material { a | normals : Yes }
 pbr { baseColor, roughness, metallic } =
     Types.PbrMaterial
         (Types.Constant (ColorConversions.colorToLinearRgb baseColor))
@@ -161,19 +161,19 @@ toVec3 givenColor =
     Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
-texturedColor : Texture Color -> Material { a | uv : Attributes }
+texturedColor : Texture Color -> Material { a | uvs : Yes }
 texturedColor colorTexture =
     Types.UnlitMaterial (map toVec3 colorTexture)
 
 
-texturedMatte : Texture Color -> Material { a | normal : Attributes, uv : Attributes }
+texturedMatte : Texture Color -> Material { a | normals : Yes, uvs : Yes }
 texturedMatte colorTexture =
     Types.LambertianMaterial
         (map ColorConversions.colorToLinearRgb colorTexture)
         (Types.Constant Types.VerticalNormal)
 
 
-texturedEmissive : Texture Color -> Luminance -> Material { a | uv : Attributes }
+texturedEmissive : Texture Color -> Luminance -> Material { a | uvs : Yes }
 texturedEmissive colorTexture brightness =
     Types.EmissiveMaterial
         (map ColorConversions.colorToLinearRgb colorTexture)
@@ -184,7 +184,7 @@ texturedMetal :
     { baseColor : Texture Color
     , roughness : Texture Float
     }
-    -> Material { a | normal : Attributes, uv : Attributes }
+    -> Material { a | normals : Yes, uvs : Yes }
 texturedMetal { baseColor, roughness } =
     texturedPbr
         { baseColor = baseColor
@@ -197,7 +197,7 @@ texturedNonmetal :
     { baseColor : Texture Color
     , roughness : Texture Float
     }
-    -> Material { a | normal : Attributes, uv : Attributes }
+    -> Material { a | normals : Yes, uvs : Yes }
 texturedNonmetal { baseColor, roughness } =
     texturedPbr
         { baseColor = baseColor
@@ -211,7 +211,7 @@ texturedPbr :
     , roughness : Texture Float
     , metallic : Texture Float
     }
-    -> Material { a | normal : Attributes, uv : Attributes }
+    -> Material { a | normals : Yes, uvs : Yes }
 texturedPbr { baseColor, roughness, metallic } =
     Types.PbrMaterial
         (map ColorConversions.colorToLinearRgb baseColor)
@@ -290,7 +290,7 @@ materials plus [`matte`](#matte), [`metal`](#metal), [`nonmetal`](#nonmetal) and
 [`pbr`](#pbr).
 -}
 type alias Uniform =
-    Material { normal : Attributes }
+    Material { normals : Yes, uvs : No, tangents : No }
 
 
 {-| A material that can be applied to an [`Unlit`](Scene3d-Mesh#Unlit) mesh that
@@ -299,7 +299,7 @@ plus their textured versions [`texturedColor`](#texturedColor) and
 [`texturedEmissive`](#texturedEmissive).
 -}
 type alias Unlit =
-    Material { uv : Attributes }
+    Material { normals : No, uvs : Yes, tangents : No }
 
 
 {-| A material that can be applied to a [`Textured`](Scene3d-Mesh#Textured) mesh
@@ -308,21 +308,21 @@ that has normal vectors and UV coordinates. This includes all the `Unlit` and
 ([`texturedMatte`](#texturedMatte), [`texturedMetal`](#texturedMetal) etc.)
 -}
 type alias Textured =
-    Material { normal : Attributes, uv : Attributes }
+    Material { normals : Yes, uvs : Yes, tangents : No }
 
 
 {-| A mesh with normal and tangent vectors but no UV coordinates, allowing for
 some specialized material models such as brushed metal but no texturing.
 -}
 type alias Anisotropic =
-    Material { normal : Attributes, tangent : Attributes }
+    Material { normals : Yes, uvs : No, tangents : Yes }
 
 
 {-| A mesh with normal vectors, UV coordinates and tangent vectors at each
 vertex, allowing for full texturing including normal maps.
 -}
 type alias NormalMapped =
-    Material { normal : Attributes, uv : Attributes, tangent : Attributes }
+    Material { normals : Yes, uvs : Yes, tangents : Yes }
 
 
 plain : Plain -> Material a
@@ -330,22 +330,22 @@ plain =
     coerce
 
 
-uniform : Uniform -> Material { a | normal : Attributes }
+uniform : Uniform -> Material { a | normals : Yes }
 uniform =
     coerce
 
 
-unlit : Unlit -> Material { a | uv : Attributes }
+unlit : Unlit -> Material { a | uvs : Yes }
 unlit =
     coerce
 
 
-textured : Textured -> Material { a | normal : Attributes, uv : Attributes }
+textured : Textured -> Material { a | normals : Yes, uvs : Yes }
 textured =
     coerce
 
 
-anisotropic : Anisotropic -> Material { a | normal : Attributes, tangent : Attributes }
+anisotropic : Anisotropic -> Material { a | normals : Yes, tangents : Yes }
 anisotropic =
     coerce
 

@@ -42,7 +42,7 @@ import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh exposing (Attributes, Mesh, Shadow)
+import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
 import Scene3d.Primitives as Primitives
 import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)

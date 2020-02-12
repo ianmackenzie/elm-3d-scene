@@ -1,5 +1,5 @@
 module Scene3d.Mesh exposing
-    ( Mesh, Attributes
+    ( Mesh, Yes, No
     , Plain, Uniform, Unlit, Textured, NormalMapped
     , points, lineSegments, polyline
     , triangles, facets
@@ -10,7 +10,7 @@ module Scene3d.Mesh exposing
 
 {-|
 
-@docs Mesh, Attributes
+@docs Mesh, Yes, No
 
 
 ## Specific mesh types
@@ -73,52 +73,53 @@ type alias Mesh coordinates attributes =
     Types.Mesh coordinates attributes
 
 
-{-| Phantom type used to help indicate which attributes are present in a given
-mesh.
--}
-type Attributes
-    = Attributes
+type Yes
+    = Yes
+
+
+type No
+    = No
 
 
 {-| A mesh containing vertex positions only.
 -}
 type alias Plain coordinates =
-    Mesh coordinates {}
+    Mesh coordinates { normals : No, uvs : No, tangents : No }
 
 
 {-| A mesh with normal vectors at each vertex but no UV (texture) coordinates,
 meaning that surface appearance will be uniform across the mesh.
 -}
 type alias Uniform coordinates =
-    Mesh coordinates { normal : Attributes }
+    Mesh coordinates { normals : Yes, uvs : No, tangents : No }
 
 
 {-| A mesh with UV coordinates at each vertex but no normal vectors (normal
 vectors are required for any kind of lighting calculation).
 -}
 type alias Unlit coordinates =
-    Mesh coordinates { uv : Attributes }
+    Mesh coordinates { normals : No, uvs : Yes, tangents : No }
 
 
 {-| A mesh with both normal vectors and UV coordinates at each vertex, allowing
 for general-purpose texturing of lit objects.
 -}
 type alias Textured coordinates =
-    Mesh coordinates { normal : Attributes, uv : Attributes }
+    Mesh coordinates { normals : Yes, uvs : Yes, tangents : No }
 
 
 {-| A mesh with normal vectors, UV coordinates and tangent vectors at each
 vertex, allowing for full texturing including normal maps.
 -}
 type alias NormalMapped coordinates =
-    Mesh coordinates { normal : Attributes, uv : Attributes, tangent : Attributes }
+    Mesh coordinates { normals : Yes, uvs : Yes, tangents : Yes }
 
 
 {-| A mesh with normal and tangent vectors but no UV coordinates, allowing for
 some specialized material models such as brushed metal but no texturing.
 -}
 type alias Anisotropic coordinates =
-    Mesh coordinates { normal : Attributes, tangent : Attributes }
+    Mesh coordinates { normals : Yes, uvs : No, tangents : Yes }
 
 
 type alias Shadow coordinates =

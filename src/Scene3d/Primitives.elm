@@ -15,7 +15,7 @@ import Length exposing (Length, Meters)
 import Parameter1d
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, zero)
-import Scene3d.Mesh as Mesh exposing (Attributes, Mesh)
+import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Types as Types exposing (Entity, Material)
 import SketchPlane3d
 import Triangle3d exposing (Triangle3d)
