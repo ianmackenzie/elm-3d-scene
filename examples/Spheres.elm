@@ -10,8 +10,10 @@ import Common.Materials as Materials
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events
 import Illuminance exposing (lux)
 import Json.Decode as Decode
+import Json.Encode as Encode
 import Length exposing (Meters, meters)
 import Luminance
 import LuminousFlux exposing (lumens)
@@ -111,18 +113,80 @@ environmentalLighting =
         }
 
 
-main : Program () Bool ()
+type alias Model =
+    { usePointLight : Bool
+    , ev100 : Float
+    , dynamicRange : Float
+    }
+
+
+type Msg
+    = ToggleLight
+    | SetEv100 Float
+    | SetDynamicRange Float
+
+
+update : Msg -> Model -> Model
+update message model =
+    case message of
+        ToggleLight ->
+            { model | usePointLight = not model.usePointLight }
+
+        SetEv100 value ->
+            { model | ev100 = value }
+
+        SetDynamicRange value ->
+            { model | dynamicRange = value }
+
+
+slider :
+    List (Html.Attribute Float)
+    -> { min : Float, max : Float }
+    -> Float
+    -> Html Float
+slider attributes { min, max } =
+    let
+        targetValueDecoder currentValue =
+            Decode.map (String.toFloat >> Maybe.withDefault currentValue)
+                Html.Events.targetValue
+
+        newValueDecoder currentValue =
+            targetValueDecoder currentValue
+                |> Decode.andThen
+                    (\newValue ->
+                        if newValue /= currentValue then
+                            Decode.succeed newValue
+
+                        else
+                            Decode.fail "value did not change"
+                    )
+
+        commonAttributes =
+            Html.Attributes.property "min" (Encode.float min)
+                :: Html.Attributes.property "max" (Encode.float max)
+                :: Html.Attributes.property "step" (Encode.string "any")
+                :: attributes
+    in
+    \currentValue ->
+        Html.input
+            (Html.Attributes.type_ "range"
+                :: Html.Attributes.property "value" (Encode.float currentValue)
+                :: Html.Events.on "input" (newValueDecoder currentValue)
+                :: Html.Events.on "change" (newValueDecoder currentValue)
+                :: commonAttributes
+            )
+            []
+
+
+main : Program () Model Msg
 main =
     Browser.element
-        { init = always ( True, Cmd.none )
-        , update =
-            \() usePointLight -> ( not usePointLight, Cmd.none )
+        { init = always ( { usePointLight = True, ev100 = 14, dynamicRange = 1 }, Cmd.none )
+        , update = \message model -> ( update message model, Cmd.none )
         , view =
-            \usePointLight ->
+            \{ usePointLight, ev100, dynamicRange } ->
                 Html.div []
-                    [ Html.span [ Html.Attributes.style "user-select" "none" ]
-                        [ Html.text "Click to toggle between point and directional light" ]
-                    , Html.div []
+                    [ Html.div []
                         [ Scene3d.toHtml
                             { environmentalLighting = environmentalLighting
                             , directLighting =
@@ -135,8 +199,8 @@ main =
                             , camera = camera
                             , width = pixels 1024
                             , height = pixels 768
-                            , exposure = Exposure.fromEv100 14
-                            , dynamicRange = 1
+                            , exposure = Exposure.fromEv100 ev100
+                            , dynamicRange = dynamicRange
                             , whiteBalance = Chromaticity.d65
                             , background = Scene3d.transparentBackground
                             }
@@ -153,6 +217,17 @@ main =
                                 (Point3d.meters 1 -1 0)
                             ]
                         ]
+                    , Html.div []
+                        [ Html.text "EV100:"
+                        , slider [] { min = 10, max = 18 } ev100
+                            |> Html.map SetEv100
+                        ]
+                    , Html.div []
+                        [ Html.text "Dynamic range:"
+                        , slider [] { min = 1, max = 10 } dynamicRange
+                            |> Html.map SetDynamicRange
+                        ]
+                    , Html.button [ Html.Events.onClick ToggleLight ] [ Html.text "Toggle point/directional light" ]
                     ]
-        , subscriptions = always (Browser.Events.onClick (Decode.succeed ()))
+        , subscriptions = always Sub.none
         }
