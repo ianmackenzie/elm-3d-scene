@@ -333,7 +333,7 @@ toneMap =
     Glsl.function { dependencies = [], constants = [] }
         """
         float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1 + y);
+            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
         }
         """
 
