@@ -564,7 +564,7 @@ lambertianEnvironmentalLighting : Glsl.Function
 lambertianEnvironmentalLighting =
     Glsl.function
         { dependencies = [ softLightingLuminance ]
-        , constants = [ kPerspectiveProjection, kNoEnvironmentalLighting, kSoftLighting ]
+        , constants = [ kPerspectiveProjection, kNoEnvironmentalLighting, kSoftLighting, kFastSoftLighting ]
         }
         """
         vec3 lambertianEnvironmentalLighting(
@@ -896,7 +896,7 @@ physicalEnvironmentalLighting =
             , softLightingSpecularSample
             , softLightingLuminance
             ]
-        , constants = [ kNoEnvironmentalLighting, kSoftLighting ]
+        , constants = [ kNoEnvironmentalLighting, kSoftLighting, kFastSoftLighting ]
         }
         """
         vec3 physicalEnvironmentalLighting(
