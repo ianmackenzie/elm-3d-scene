@@ -1,6 +1,6 @@
 module GenerateShaders exposing (main)
 
-import Common exposing (handleError)
+import Common
 import Glsl
 import Script exposing (Script)
 import Script.Directory as Directory
@@ -1895,7 +1895,7 @@ physicalTexturesFragmentShader =
 ---------- SCRIPT ----------
 
 
-script : Script.Init -> Script Int ()
+script : Script.Init -> Script String ()
 script { workingDirectory, userPrivileges } =
     let
         outputFile =
@@ -1929,7 +1929,6 @@ script { workingDirectory, userPrivileges } =
     in
     Script.printLine "Writing output file..."
         |> Script.andThen (File.write contents outputFile)
-        |> Script.onError (handleError .message)
         |> Script.andThen (Script.printLine "Formatting output file with elm-format...")
         |> Script.andThen
             (Script.executeWith userPrivileges
@@ -1938,7 +1937,7 @@ script { workingDirectory, userPrivileges } =
                 , workingDirectory = workingDirectory
                 }
                 |> Script.ignoreResult
-                |> Script.onError (\_ -> Script.fail 1)
+                |> Script.onError (\_ -> Script.fail "Error when running elm-format")
             )
         |> Script.andThen (Script.printLine "Test compiling output file...")
         |> Script.andThen
@@ -1948,7 +1947,7 @@ script { workingDirectory, userPrivileges } =
                 , workingDirectory = workingDirectory
                 }
                 |> Script.ignoreResult
-                |> Script.onError (\_ -> Script.fail 1)
+                |> Script.onError (\_ -> Script.fail "Error when running 'elm make'")
             )
         |> Script.andThen (Script.printLine "Success!")
 
