@@ -143,6 +143,7 @@ main =
                             , width = pixels 1024
                             , height = pixels 768
                             , exposure = Exposure.fromEv100 14
+                            , dynamicRange = 1
                             , whiteBalance = Chromaticity.d65
                             , background = Scene3d.transparentBackground
                             }

@@ -148,6 +148,7 @@ view model =
                     , environmentalLighting = Scene3d.noEnvironmentalLighting
                     , background = Scene3d.transparentBackground
                     , exposure = Scene3d.defaultExposure
+                    , dynamicRange = 1
                     , whiteBalance = Scene3d.defaultWhiteBalance
                     }
                     [ Scene3d.quad Scene3d.doesNotCastShadows

@@ -240,6 +240,7 @@ view model =
                 , directLighting =
                     Scene3d.oneLightSource sunlight
                 , exposure = Exposure.fromEv100 12
+                , dynamicRange = 1
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , background = Scene3d.transparentBackground
                 }

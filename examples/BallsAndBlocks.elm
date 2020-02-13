@@ -136,6 +136,7 @@ view { world, screenWidth, screenHeight } =
             , directLighting = Scene3d.oneLightSource sunlight
             , environmentalLighting = environmentalLighting
             , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
+            , dynamicRange = 1
             , whiteBalance = Chromaticity.d65
             , background = Scene3d.transparentBackground
             }

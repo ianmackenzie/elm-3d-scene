@@ -981,6 +981,7 @@ toWebGLEntities :
     , environmentalLighting : EnvironmentalLighting coordinates
     , camera : Camera3d Meters coordinates
     , exposure : Exposure
+    , dynamicRange : Float
     , whiteBalance : Chromaticity
     , width : Quantity Float Pixels
     , height : Quantity Float Pixels
@@ -1037,7 +1038,7 @@ toWebGLEntities arguments drawables =
                 , m13 = maxLuminance * Math.Vector3.getX linearRgb
                 , m23 = maxLuminance * Math.Vector3.getY linearRgb
                 , m33 = maxLuminance * Math.Vector3.getZ linearRgb
-                , m43 = 0
+                , m43 = arguments.dynamicRange
                 , m14 = 0
                 , m24 = 0
                 , m34 = 0
@@ -1093,6 +1094,7 @@ toHtml :
     , environmentalLighting : EnvironmentalLighting coordinates
     , camera : Camera3d Meters coordinates
     , exposure : Exposure
+    , dynamicRange : Float
     , whiteBalance : Chromaticity
     , width : Quantity Float Pixels
     , height : Quantity Float Pixels

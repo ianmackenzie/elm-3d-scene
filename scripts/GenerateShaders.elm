@@ -328,16 +328,32 @@ gammaCorrect =
         }
         """
 
+toneMap : Glsl.Function
+toneMap =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float toneMap(float y, float yMax) {
+            return y * (1.0 + (y / (yMax * yMax))) / (1 + y);
+        }
+        """
+
 
 toSrgb : Glsl.Function
 toSrgb =
-    Glsl.function { dependencies = [ gammaCorrect ], constants = [] }
+    Glsl.function { dependencies = [ toneMap, gammaCorrect], constants = [] }
         """
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float red = gammaCorrect(linearColor.r / referenceWhite.r);
-            float green = gammaCorrect(linearColor.g / referenceWhite.g);
-            float blue = gammaCorrect(linearColor.b / referenceWhite.b);
+            float linearR = linearColor.r / referenceWhite.r;
+            float linearG = linearColor.g / referenceWhite.g;
+            float linearB = linearColor.b / referenceWhite.b;
+            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
+            float dynamicRange = sceneProperties[2].a;
+            float toneMappedLuminance = toneMap(luminance, dynamicRange);
+            float toneMapScale = toneMappedLuminance / luminance;
+            float red = gammaCorrect(linearR * toneMapScale);
+            float green = gammaCorrect(linearG * toneMapScale);
+            float blue = gammaCorrect(linearB * toneMapScale);
             return vec4(red, green, blue, 1.0);
         }
         """

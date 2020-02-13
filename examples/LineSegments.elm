@@ -52,6 +52,7 @@ main =
         , environmentalLighting = Scene3d.noEnvironmentalLighting
         , background = Scene3d.transparentBackground
         , exposure = Scene3d.defaultExposure
+        , dynamicRange = 1
         , whiteBalance = Scene3d.defaultWhiteBalance
         }
         [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]

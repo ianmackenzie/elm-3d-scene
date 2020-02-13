@@ -115,6 +115,7 @@ view model =
                 , height = Pixels.pixels 800
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , exposure = Exposure.sunny16
+                , dynamicRange = 1
                 , directLighting = Scene3d.oneLightSource sunlight
                 , environmentalLighting = environmentalLighting
                 }

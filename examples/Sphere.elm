@@ -77,6 +77,7 @@ main =
             Scene3d.oneLightSource sunlight
         , exposure =
             Exposure.fromMaxLuminance (Luminance.nits 5000)
+        , dynamicRange = 1
         , whiteBalance = Scene3d.defaultWhiteBalance
         , background = Scene3d.transparentBackground
         }
