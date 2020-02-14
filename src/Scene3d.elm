@@ -1149,14 +1149,20 @@ toHtml options arguments drawables =
 
             else
                 "0"
+
+        widthCss =
+            Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
+
+        heightCss =
+            Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
     in
-    Html.Keyed.node "div" [] <|
+    Html.Keyed.node "div" [ Html.Attributes.style "padding" "0px", widthCss, heightCss ] <|
         [ ( key
           , WebGL.toHtmlWith webGLOptions
                 [ Html.Attributes.width (round (widthInPixels * optionValues.supersampling))
                 , Html.Attributes.height (round (heightInPixels * optionValues.supersampling))
-                , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
-                , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
+                , widthCss
+                , heightCss
                 , Html.Attributes.style "display" "block"
                 , Html.Attributes.style "background-color" backgroundColorString
                 ]
