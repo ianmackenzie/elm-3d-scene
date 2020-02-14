@@ -229,8 +229,7 @@ view model =
             in
             Scene3d.toHtml
                 { camera = camera
-                , width = Pixels.pixels 800
-                , height = Pixels.pixels 600
+                , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                 , environmentalLighting =
                     Scene3d.softLighting
                         { upDirection = Direction3d.positiveZ

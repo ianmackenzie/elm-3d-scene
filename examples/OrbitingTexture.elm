@@ -142,8 +142,7 @@ view model =
             Just texture ->
                 [ Scene3d.toHtml
                     { camera = camera
-                    , width = Pixels.pixels 800
-                    , height = Pixels.pixels 600
+                    , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                     , directLighting = Scene3d.noDirectLighting
                     , environmentalLighting = Scene3d.noEnvironmentalLighting
                     , background = Scene3d.transparentBackground

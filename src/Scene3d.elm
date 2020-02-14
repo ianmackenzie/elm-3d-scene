@@ -1092,19 +1092,21 @@ toHtml :
     , exposure : Exposure
     , dynamicRange : Float
     , whiteBalance : Chromaticity
-    , width : Quantity Float Pixels
-    , height : Quantity Float Pixels
+    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
     , background : Background
     }
     -> List (Entity coordinates)
     -> Html msg
 toHtml arguments drawables =
     let
+        ( width, height ) =
+            arguments.dimensions
+
         widthInPixels =
-            inPixels arguments.width
+            inPixels width
 
         heightInPixels =
-            inPixels arguments.height
+            inPixels height
 
         (BackgroundColor givenBackgroundColor) =
             arguments.background
@@ -1135,7 +1137,7 @@ toHtml arguments drawables =
             , exposure = arguments.exposure
             , dynamicRange = arguments.dynamicRange
             , whiteBalance = arguments.whiteBalance
-            , aspectRatio = Quantity.ratio arguments.width arguments.height
+            , aspectRatio = Quantity.ratio width height
             }
             drawables
         )

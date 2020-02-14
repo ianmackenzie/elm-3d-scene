@@ -111,8 +111,7 @@ view model =
             Scene3d.toHtml
                 { camera = camera
                 , background = Scene3d.transparentBackground
-                , width = Pixels.pixels 800
-                , height = Pixels.pixels 800
+                , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , exposure = Exposure.sunny16
                 , dynamicRange = 1

@@ -130,8 +130,7 @@ view { world, screenWidth, screenHeight } =
         , Html.Attributes.style "top" "0"
         ]
         [ Scene3d.toHtml
-            { width = pixels screenWidth
-            , height = pixels screenHeight
+            { dimensions = ( pixels screenWidth, pixels screenHeight )
             , camera = camera
             , directLighting = Scene3d.oneLightSource sunlight
             , environmentalLighting = environmentalLighting

@@ -214,8 +214,7 @@ view { world, width, height } =
         , Html.Events.onMouseUp MouseUp
         ]
         [ Scene3d.toHtml
-            { width = width
-            , height = height
+            { dimensions = ( width, height )
             , camera = camera
             , directLighting = Scene3d.oneLightSource sunlight
             , environmentalLighting = environmentalLighting

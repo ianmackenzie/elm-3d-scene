@@ -140,8 +140,7 @@ main =
                                     else
                                         sunlight
                             , camera = camera
-                            , width = pixels 1024
-                            , height = pixels 768
+                            , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Exposure.fromEv100 14
                             , dynamicRange = 1
                             , whiteBalance = Chromaticity.d65
