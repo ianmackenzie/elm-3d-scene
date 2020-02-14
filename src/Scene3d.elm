@@ -983,19 +983,15 @@ toWebGLEntities :
     , exposure : Exposure
     , dynamicRange : Float
     , whiteBalance : Chromaticity
-    , width : Quantity Float Pixels
-    , height : Quantity Float Pixels
-    , background : Background
+    , aspectRatio : Float
     }
     -> List (Entity coordinates)
     -> List WebGL.Entity
 toWebGLEntities arguments drawables =
     let
-        aspectRatio =
-            Quantity.ratio arguments.width arguments.height
-
         projectionParameters =
-            Camera3d.projectionParameters { screenAspectRatio = aspectRatio }
+            Camera3d.projectionParameters
+                { screenAspectRatio = arguments.aspectRatio }
                 arguments.camera
 
         clipDistance =
@@ -1028,7 +1024,7 @@ toWebGLEntities arguments drawables =
         sceneProperties =
             Math.Matrix4.fromRecord
                 { m11 = clipDistance
-                , m21 = aspectRatio
+                , m21 = arguments.aspectRatio
                 , m31 = kc
                 , m41 = kz
                 , m12 = eyePoint.x
@@ -1132,4 +1128,14 @@ toHtml arguments drawables =
         , Html.Attributes.style "display" "block"
         , Html.Attributes.style "background-color" backgroundColorString
         ]
-        (toWebGLEntities arguments drawables)
+        (toWebGLEntities
+            { directLighting = arguments.directLighting
+            , environmentalLighting = arguments.environmentalLighting
+            , camera = arguments.camera
+            , exposure = arguments.exposure
+            , dynamicRange = arguments.dynamicRange
+            , whiteBalance = arguments.whiteBalance
+            , aspectRatio = Quantity.ratio arguments.width arguments.height
+            }
+            drawables
+        )
