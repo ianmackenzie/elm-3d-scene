@@ -161,31 +161,31 @@ mesh givenMaterial givenMesh =
                     empty
 
                 Types.Triangles _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.Facets _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.Indexed _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.MeshWithUvs _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.MeshWithNormalsAndUvs _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.MeshWithTangents _ _ webGLMesh backFaceSetting ->
-                    emissiveMesh emissiveColor webGLMesh backFaceSetting
+                    emissiveMesh emissiveColor backlight webGLMesh backFaceSetting
 
                 Types.LineSegments _ _ webGLMesh ->
-                    emissiveMesh emissiveColor webGLMesh KeepBackFaces
+                    emissiveMesh emissiveColor backlight webGLMesh KeepBackFaces
 
                 Types.Polyline _ _ webGLMesh ->
-                    emissiveMesh emissiveColor webGLMesh KeepBackFaces
+                    emissiveMesh emissiveColor backlight webGLMesh KeepBackFaces
 
                 Types.Points _ radius _ webGLMesh ->
                     emissivePointMesh emissiveColor radius webGLMesh
@@ -1101,8 +1101,8 @@ constantPointMesh color radius webGLMesh =
             )
 
 
-emissiveMesh : Vec3 -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
-emissiveMesh color webGLMesh backFaceSetting =
+emissiveMesh : Vec3 -> Float -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
+emissiveMesh color backlight webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1111,7 +1111,7 @@ emissiveMesh color webGLMesh backFaceSetting =
                     Shaders.plainVertex
                     Shaders.emissiveFragment
                     webGLMesh
-                    { emissiveColor = color
+                    { emissiveColor = Math.Vector3.scale backlight color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
