@@ -108,13 +108,12 @@ view model =
                         (Point3d.meters -1 1 0)
                         (Point3d.meters -1 -1 0)
             in
-            Scene3d.toHtml
+            Scene3d.toHtml []
                 { camera = camera
                 , background = Scene3d.transparentBackground
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , exposure = Exposure.sunny16
-                , dynamicRange = 1
                 , directLighting = Scene3d.oneLightSource sunlight
                 , environmentalLighting = environmentalLighting
                 }

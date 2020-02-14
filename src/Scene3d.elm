@@ -1,5 +1,7 @@
 module Scene3d exposing
     ( toHtml
+    , Option
+    , multisampling, supersampling, dynamicRange
     , Entity
     , nothing, quad, block, sphere, cylinder, mesh, group
     , shadow, withShadow
@@ -17,6 +19,13 @@ module Scene3d exposing
 {-|
 
 @docs toHtml
+
+
+# Options
+
+@docs Option
+
+@docs multisampling, supersampling, dynamicRange
 
 
 # Entities
@@ -104,6 +113,7 @@ import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
+import Html.Keyed
 import Illuminance exposing (Illuminance)
 import Length exposing (Length, Meters)
 import Luminance exposing (Luminance)
@@ -1086,18 +1096,19 @@ toWebGLEntities arguments drawables =
 
 
 toHtml :
-    { directLighting : DirectLighting coordinates
-    , environmentalLighting : EnvironmentalLighting coordinates
-    , camera : Camera3d Meters coordinates
-    , exposure : Exposure
-    , dynamicRange : Float
-    , whiteBalance : Chromaticity
-    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-    , background : Background
-    }
+    List Option
+    ->
+        { directLighting : DirectLighting coordinates
+        , environmentalLighting : EnvironmentalLighting coordinates
+        , camera : Camera3d Meters coordinates
+        , exposure : Exposure
+        , whiteBalance : Chromaticity
+        , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+        , background : Background
+        }
     -> List (Entity coordinates)
     -> Html msg
-toHtml arguments drawables =
+toHtml options arguments drawables =
     let
         ( width, height ) =
             arguments.dimensions
@@ -1114,30 +1125,105 @@ toHtml arguments drawables =
         backgroundColorString =
             Color.Transparent.toRGBAString givenBackgroundColor
 
-        webGLOptions =
+        optionValues =
+            collectOptionValues options
+
+        commonWebGLOptions =
             [ WebGL.depth 1
             , WebGL.stencil 0
             , WebGL.alpha True
-            , WebGL.antialias
             , WebGL.clearColor 0 0 0 0
             ]
+
+        webGLOptions =
+            if optionValues.multisampling then
+                WebGL.antialias :: commonWebGLOptions
+
+            else
+                commonWebGLOptions
+
+        -- Force WebGL context to be recreated if multisampling option changes
+        key =
+            if optionValues.multisampling then
+                "1"
+
+            else
+                "0"
     in
-    WebGL.toHtmlWith webGLOptions
-        [ Html.Attributes.width (round widthInPixels)
-        , Html.Attributes.height (round heightInPixels)
-        , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
-        , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
-        , Html.Attributes.style "display" "block"
-        , Html.Attributes.style "background-color" backgroundColorString
+    Html.Keyed.node "div" [] <|
+        [ ( key
+          , WebGL.toHtmlWith webGLOptions
+                [ Html.Attributes.width (round (widthInPixels * optionValues.supersampling))
+                , Html.Attributes.height (round (heightInPixels * optionValues.supersampling))
+                , Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
+                , Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
+                , Html.Attributes.style "display" "block"
+                , Html.Attributes.style "background-color" backgroundColorString
+                ]
+                (toWebGLEntities
+                    { directLighting = arguments.directLighting
+                    , environmentalLighting = arguments.environmentalLighting
+                    , camera = arguments.camera
+                    , exposure = arguments.exposure
+                    , dynamicRange = optionValues.dynamicRange
+                    , whiteBalance = arguments.whiteBalance
+                    , aspectRatio = Quantity.ratio width height
+                    }
+                    drawables
+                )
+          )
         ]
-        (toWebGLEntities
-            { directLighting = arguments.directLighting
-            , environmentalLighting = arguments.environmentalLighting
-            , camera = arguments.camera
-            , exposure = arguments.exposure
-            , dynamicRange = arguments.dynamicRange
-            , whiteBalance = arguments.whiteBalance
-            , aspectRatio = Quantity.ratio width height
-            }
-            drawables
-        )
+
+
+type Option
+    = Multisampling Bool
+    | Supersampling Float
+    | DynamicRange Float
+
+
+multisampling : Bool -> Option
+multisampling =
+    Multisampling
+
+
+supersampling : Float -> Option
+supersampling =
+    Supersampling
+
+
+dynamicRange : Float -> Option
+dynamicRange =
+    DynamicRange
+
+
+type alias OptionValues =
+    { multisampling : Bool
+    , supersampling : Float
+    , dynamicRange : Float
+    }
+
+
+defaultOptionValues : OptionValues
+defaultOptionValues =
+    { multisampling = True
+    , supersampling = 1
+    , dynamicRange = 1
+    }
+
+
+collectOptionValues : List Option -> OptionValues
+collectOptionValues options =
+    List.foldl setOption defaultOptionValues options
+
+
+setOption : Option -> OptionValues -> OptionValues
+setOption option currentValues =
+    case option of
+        Multisampling value ->
+            { currentValues | multisampling = value }
+
+        Supersampling value ->
+            { currentValues | supersampling = value }
+
+        DynamicRange value ->
+            { currentValues | dynamicRange = value }

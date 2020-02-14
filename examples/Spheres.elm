@@ -113,15 +113,21 @@ environmentalLighting =
         }
 
 
+type Antialiasing
+    = NoAntialiasing
+    | Multisampling
+    | Supersampling
+
+
 type alias Model =
-    { usePointLight : Bool
+    { antialiasing : Antialiasing
     , ev100 : Float
     , dynamicRange : Float
     }
 
 
 type Msg
-    = ToggleLight
+    = ToggleAntialiasing
     | SetEv100 Float
     | SetDynamicRange Float
 
@@ -129,8 +135,19 @@ type Msg
 update : Msg -> Model -> Model
 update message model =
     case message of
-        ToggleLight ->
-            { model | usePointLight = not model.usePointLight }
+        ToggleAntialiasing ->
+            { model
+                | antialiasing =
+                    case model.antialiasing of
+                        NoAntialiasing ->
+                            Multisampling
+
+                        Multisampling ->
+                            Supersampling
+
+                        Supersampling ->
+                            NoAntialiasing
+            }
 
         SetEv100 value ->
             { model | ev100 = value }
@@ -178,28 +195,43 @@ slider attributes { min, max } =
             []
 
 
+antialiasString : Antialiasing -> String
+antialiasString antialiasing =
+    case antialiasing of
+        NoAntialiasing ->
+            "No antialiasing"
+
+        Multisampling ->
+            "Multisampling"
+
+        Supersampling ->
+            "Supersampling"
+
+
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always ( { usePointLight = True, ev100 = 14, dynamicRange = 1 }, Cmd.none )
+        { init = always ( { antialiasing = NoAntialiasing, ev100 = 14, dynamicRange = 1 }, Cmd.none )
         , update = \message model -> ( update message model, Cmd.none )
         , view =
-            \{ usePointLight, ev100, dynamicRange } ->
+            \{ antialiasing, ev100, dynamicRange } ->
                 Html.div []
                     [ Html.div []
                         [ Scene3d.toHtml
-                            { environmentalLighting = environmentalLighting
-                            , directLighting =
-                                Scene3d.oneLightSource <|
-                                    if usePointLight then
-                                        lightBulb
+                            [ Scene3d.dynamicRange dynamicRange
+                            , Scene3d.multisampling (antialiasing == Multisampling)
+                            , Scene3d.supersampling <|
+                                if antialiasing == Supersampling then
+                                    2
 
-                                    else
-                                        sunlight
+                                else
+                                    1
+                            ]
+                            { environmentalLighting = environmentalLighting
+                            , directLighting = Scene3d.oneLightSource lightBulb
                             , camera = camera
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Exposure.fromEv100 ev100
-                            , dynamicRange = dynamicRange
                             , whiteBalance = Chromaticity.d65
                             , background = Scene3d.transparentBackground
                             }
@@ -226,7 +258,7 @@ main =
                         , slider [] { min = 1, max = 10 } dynamicRange
                             |> Html.map SetDynamicRange
                         ]
-                    , Html.button [ Html.Events.onClick ToggleLight ] [ Html.text "Toggle point/directional light" ]
+                    , Html.button [ Html.Events.onClick ToggleAntialiasing ] [ Html.text (antialiasString antialiasing) ]
                     ]
         , subscriptions = always Sub.none
         }

@@ -130,7 +130,7 @@ main =
                     [ Html.span [ Html.Attributes.style "user-select" "none" ]
                         [ Html.text "Click to toggle between point and directional light" ]
                     , Html.div []
-                        [ Scene3d.toHtml
+                        [ Scene3d.toHtml []
                             { environmentalLighting = environmentalLighting
                             , directLighting =
                                 Scene3d.oneLightSource <|
@@ -142,7 +142,6 @@ main =
                             , camera = camera
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Exposure.fromEv100 14
-                            , dynamicRange = 1
                             , whiteBalance = Chromaticity.d65
                             , background = Scene3d.transparentBackground
                             }

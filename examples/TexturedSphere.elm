@@ -227,7 +227,7 @@ view model =
                         , normalMap = normalMapTexture
                         }
             in
-            Scene3d.toHtml
+            Scene3d.toHtml []
                 { camera = camera
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                 , environmentalLighting =
@@ -239,7 +239,6 @@ view model =
                 , directLighting =
                     Scene3d.oneLightSource sunlight
                 , exposure = Exposure.fromEv100 12
-                , dynamicRange = 1
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , background = Scene3d.transparentBackground
                 }

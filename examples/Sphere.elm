@@ -63,7 +63,7 @@ material =
 
 main : Html msg
 main =
-    Scene3d.toHtml
+    Scene3d.toHtml []
         { camera = camera
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , environmentalLighting =
@@ -76,7 +76,6 @@ main =
             Scene3d.oneLightSource sunlight
         , exposure =
             Exposure.fromMaxLuminance (Luminance.nits 5000)
-        , dynamicRange = 1
         , whiteBalance = Scene3d.defaultWhiteBalance
         , background = Scene3d.transparentBackground
         }

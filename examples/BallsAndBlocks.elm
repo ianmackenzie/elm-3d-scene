@@ -129,13 +129,12 @@ view { world, screenWidth, screenHeight } =
         , Html.Attributes.style "left" "0"
         , Html.Attributes.style "top" "0"
         ]
-        [ Scene3d.toHtml
+        [ Scene3d.toHtml []
             { dimensions = ( pixels screenWidth, pixels screenHeight )
             , camera = camera
             , directLighting = Scene3d.oneLightSource sunlight
             , environmentalLighting = environmentalLighting
             , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
-            , dynamicRange = 1
             , whiteBalance = Chromaticity.d65
             , background = Scene3d.transparentBackground
             }

@@ -52,14 +52,13 @@ main =
                 , clipDepth = Length.meters 0.1
                 }
     in
-    Scene3d.toHtml
+    Scene3d.toHtml []
         { camera = camera
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , directLighting = Scene3d.noDirectLighting
         , environmentalLighting = Scene3d.noEnvironmentalLighting
         , background = Scene3d.transparentBackground
         , exposure = Scene3d.defaultExposure
-        , dynamicRange = 1
         , whiteBalance = Scene3d.defaultWhiteBalance
         }
         [ Scene3d.mesh (Material.color Tango.orange2) mesh1
