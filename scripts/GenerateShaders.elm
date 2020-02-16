@@ -328,6 +328,7 @@ gammaCorrect =
         }
         """
 
+
 toneMap : Glsl.Function
 toneMap =
     Glsl.function { dependencies = [], constants = [] }
@@ -340,7 +341,7 @@ toneMap =
 
 toSrgb : Glsl.Function
 toSrgb =
-    Glsl.function { dependencies = [ toneMap, gammaCorrect], constants = [] }
+    Glsl.function { dependencies = [ toneMap, gammaCorrect ], constants = [] }
         """
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
