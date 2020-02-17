@@ -1115,10 +1115,26 @@ emissivePointFragment =
             return vec4(red, green, blue, 1.0);
         }
         
+        float pointAlpha(float pointRadius, vec2 pointCoord) {
+            float pointSize = 2.0 * pointRadius;
+            float x = (pointSize + 2.0) * (pointCoord.s - 0.5);
+            float y = (pointSize + 2.0) * (pointCoord.t - 0.5);
+            float r = sqrt(x * x + y * y);
+            float innerRadius = pointRadius;
+            float outerRadius = pointRadius + 1.0;
+            if (r > outerRadius) {
+                return 0.0;
+            } else if (r > innerRadius) {
+                return outerRadius - r;
+            } else {
+                return 1.0;
+            }
+        }
+        
         void main () {
-            vec3 color = toSrgb(emissiveColor, sceneProperties);
+            vec4 color = toSrgb(emissiveColor, sceneProperties);
             float alpha = pointAlpha(pointRadius, gl_PointCoord);
-            gl_FragColor = vec4(color, alpha);
+            gl_FragColor = vec4(color.rgb, alpha);
         }
     |]
 
