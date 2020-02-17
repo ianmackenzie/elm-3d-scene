@@ -279,10 +279,6 @@ kSoftLighting =
     Glsl.constant Glsl.float "kSoftLighting" "1.0"
 
 
-kFastSoftLighting : Glsl.Constant
-kFastSoftLighting =
-    Glsl.constant Glsl.float "kFastSoftLighting" "2.0"
-
 
 kPi : Glsl.Constant
 kPi =
@@ -577,7 +573,7 @@ lambertianEnvironmentalLighting : Glsl.Function
 lambertianEnvironmentalLighting =
     Glsl.function
         { dependencies = [ softLightingLuminance ]
-        , constants = [ kPerspectiveProjection, kNoEnvironmentalLighting, kSoftLighting, kFastSoftLighting ]
+        , constants = [ kPerspectiveProjection, kNoEnvironmentalLighting, kSoftLighting ]
         }
         """
         vec3 lambertianEnvironmentalLighting(
@@ -591,70 +587,6 @@ lambertianEnvironmentalLighting =
             if (environmentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
             } else if (environmentalLightingType == kSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-                
-                float numSamples = 13.0;
-                vec3 sum = vec3(0.0, 0.0, 0.0);
-
-                vec3 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-
-                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-
-                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return (2.0 * sum * materialColor) / numSamples;
-            } else if (environmentalLightingType == kFastSoftLighting) {
                 vec3 upDirection = environmentalLighting[0].xyz;
                 vec3 aboveLuminance = environmentalLighting[1].rgb;
                 vec3 belowLuminance = environmentalLighting[2].rgb;
@@ -909,7 +841,7 @@ physicalEnvironmentalLighting =
             , softLightingSpecularSample
             , softLightingLuminance
             ]
-        , constants = [ kNoEnvironmentalLighting, kSoftLighting, kFastSoftLighting ]
+        , constants = [ kNoEnvironmentalLighting, kSoftLighting ]
         }
         """
         vec3 physicalEnvironmentalLighting(
@@ -926,138 +858,7 @@ physicalEnvironmentalLighting =
 
             if (environmentalLightingType == kNoEnvironmentalLighting) {
                 return vec3(0.0, 0.0, 0.0);
-            }
-
-            if (environmentalLightingType == kSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localViewX = dot(directionToCamera, xDirection);
-                float localViewZ = dot(directionToCamera, normalDirection);
-                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-
-                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
-                vec3 vT1 = vec3(0.0, 1.0, 0.0);
-                vec3 vT2 = cross(vH, vT1);
-                float s = 0.5 * (1.0 + vH.z);
-                
-                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
-                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
-                float numSamples = 13.0;
-                
-                vec3 specularSum = vec3(0.0, 0.0, 0.0);
-
-                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.448762, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-
-                localHalfDirection = sampleFacetNormal(0.000000, 0.448762, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.448762, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.000000, -0.448762, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.748423, 0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.310007, 0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.310007, 0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.748423, 0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.748423, -0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.310007, -0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.310007, -0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.748423, -0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
-
-                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-
-                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-
-                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return (specularSum + 2.0 * diffuseSum * diffuseBaseColor) / numSamples;
-            } else if (environmentalLightingType == kFastSoftLighting) {
+            } else if (environmentalLightingType == kSoftLighting) {
                 vec3 upDirection = environmentalLighting[0].xyz;
                 vec3 aboveLuminance = environmentalLighting[1].rgb;
                 vec3 belowLuminance = environmentalLighting[2].rgb;
