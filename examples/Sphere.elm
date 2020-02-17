@@ -53,7 +53,7 @@ camera =
         }
 
 
-material : Material.Uniform
+material : Material.Uniform coordinates
 material =
     Material.nonmetal
         { baseColor = Tango.skyBlue2

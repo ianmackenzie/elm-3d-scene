@@ -53,40 +53,42 @@ import Task exposing (Task)
 import WebGL.Texture
 
 
-type alias Material attributes =
-    Types.Material attributes
+type alias Material coordinates attributes =
+    Types.Material coordinates attributes
 
 
-color : Color -> Material a
+color : Color -> Material coordinates attributes
 color givenColor =
     Types.UnlitMaterial (Types.Constant (toVec3 givenColor))
 
 
-matte : Color -> Material { a | normals : Yes }
+matte : Color -> Material coordinates { a | normals : Yes }
 matte materialColor =
     Types.LambertianMaterial
         (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
         (Types.Constant Types.VerticalNormal)
 
 
-emissive : Color -> Luminance -> Material a
+emissive : Color -> Luminance -> Material coordinates attributes
 emissive givenColor brightness =
     Types.EmissiveMaterial
         (Types.Constant (ColorConversions.colorToLinearRgb givenColor))
         (Luminance.inNits brightness)
 
 
-metal : { baseColor : Color, roughness : Float } -> Material { a | normals : Yes }
+metal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : Yes }
 metal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 1 }
 
 
-nonmetal : { baseColor : Color, roughness : Float } -> Material { a | normals : Yes }
+nonmetal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : Yes }
 nonmetal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 0 }
 
 
-pbr : { baseColor : Color, roughness : Float, metallic : Float } -> Material { a | normals : Yes }
+pbr :
+    { baseColor : Color, roughness : Float, metallic : Float }
+    -> Material coordinates { a | normals : Yes }
 pbr { baseColor, roughness, metallic } =
     Types.PbrMaterial
         (Types.Constant (ColorConversions.colorToLinearRgb baseColor))
@@ -161,19 +163,19 @@ toVec3 givenColor =
     Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
-texturedColor : Texture Color -> Material { a | uvs : Yes }
+texturedColor : Texture Color -> Material coordinates { a | uvs : Yes }
 texturedColor colorTexture =
     Types.UnlitMaterial (map toVec3 colorTexture)
 
 
-texturedMatte : Texture Color -> Material { a | normals : Yes, uvs : Yes }
+texturedMatte : Texture Color -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedMatte colorTexture =
     Types.LambertianMaterial
         (map ColorConversions.colorToLinearRgb colorTexture)
         (Types.Constant Types.VerticalNormal)
 
 
-texturedEmissive : Texture Color -> Luminance -> Material { a | uvs : Yes }
+texturedEmissive : Texture Color -> Luminance -> Material coordinates { a | uvs : Yes }
 texturedEmissive colorTexture brightness =
     Types.EmissiveMaterial
         (map ColorConversions.colorToLinearRgb colorTexture)
@@ -184,7 +186,7 @@ texturedMetal :
     { baseColor : Texture Color
     , roughness : Texture Float
     }
-    -> Material { a | normals : Yes, uvs : Yes }
+    -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedMetal { baseColor, roughness } =
     texturedPbr
         { baseColor = baseColor
@@ -197,7 +199,7 @@ texturedNonmetal :
     { baseColor : Texture Color
     , roughness : Texture Float
     }
-    -> Material { a | normals : Yes, uvs : Yes }
+    -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedNonmetal { baseColor, roughness } =
     texturedPbr
         { baseColor = baseColor
@@ -211,7 +213,7 @@ texturedPbr :
     , roughness : Texture Float
     , metallic : Texture Float
     }
-    -> Material { a | normals : Yes, uvs : Yes }
+    -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedPbr { baseColor, roughness, metallic } =
     Types.PbrMaterial
         (map ColorConversions.colorToLinearRgb baseColor)
@@ -224,7 +226,7 @@ type alias NormalMap =
     Types.NormalMap
 
 
-normalMappedMatte : Texture Color -> Texture NormalMap -> NormalMapped
+normalMappedMatte : Texture Color -> Texture NormalMap -> NormalMapped coordinates
 normalMappedMatte colorTexture normalMapTexture =
     Types.LambertianMaterial
         (map ColorConversions.colorToLinearRgb colorTexture)
@@ -236,7 +238,7 @@ normalMappedMetal :
     , roughness : Texture Float
     , normalMap : Texture NormalMap
     }
-    -> NormalMapped
+    -> NormalMapped coordinates
 normalMappedMetal { baseColor, roughness, normalMap } =
     normalMappedPbr
         { baseColor = baseColor
@@ -251,7 +253,7 @@ normalMappedNonmetal :
     , roughness : Texture Float
     , normalMap : Texture NormalMap
     }
-    -> NormalMapped
+    -> NormalMapped coordinates
 normalMappedNonmetal { baseColor, roughness, normalMap } =
     normalMappedPbr
         { baseColor = baseColor
@@ -267,7 +269,7 @@ normalMappedPbr :
     , metallic : Texture Float
     , normalMap : Texture NormalMap
     }
-    -> NormalMapped
+    -> NormalMapped coordinates
 normalMappedPbr { baseColor, roughness, metallic, normalMap } =
     Types.PbrMaterial
         (map ColorConversions.colorToLinearRgb baseColor)
@@ -280,8 +282,8 @@ normalMappedPbr { baseColor, roughness, metallic, normalMap } =
 be present and so can be applied to any mesh. The only possibilities here are
 [`color`](#color) and [`emissive`](#emissive).
 -}
-type alias Plain =
-    Material {}
+type alias Plain coordinates =
+    Material coordinates {}
 
 
 {-| A material that can be applied to an [`Uniform`](Scene3d-Mesh#Uniform) mesh
@@ -289,8 +291,8 @@ that has normal vectors but no UV coordinates. This includes the `Plain`
 materials plus [`matte`](#matte), [`metal`](#metal), [`nonmetal`](#nonmetal) and
 [`pbr`](#pbr).
 -}
-type alias Uniform =
-    Material { normals : Yes, uvs : No, tangents : No }
+type alias Uniform coordinates =
+    Material coordinates { normals : Yes, uvs : No, tangents : No }
 
 
 {-| A material that can be applied to an [`Unlit`](Scene3d-Mesh#Unlit) mesh that
@@ -298,8 +300,8 @@ has UV coordinates but no normal vectors. This includes the `Plain` materials
 plus their textured versions [`texturedColor`](#texturedColor) and
 [`texturedEmissive`](#texturedEmissive).
 -}
-type alias Unlit =
-    Material { normals : No, uvs : Yes, tangents : No }
+type alias Unlit coordinates =
+    Material coordinates { normals : No, uvs : Yes, tangents : No }
 
 
 {-| A material that can be applied to a [`Textured`](Scene3d-Mesh#Textured) mesh
@@ -307,50 +309,50 @@ that has normal vectors and UV coordinates. This includes all the `Unlit` and
 `Uniform` materials plus the textured versions of the `Uniform` materials
 ([`texturedMatte`](#texturedMatte), [`texturedMetal`](#texturedMetal) etc.)
 -}
-type alias Textured =
-    Material { normals : Yes, uvs : Yes, tangents : No }
+type alias Textured coordinates =
+    Material coordinates { normals : Yes, uvs : Yes, tangents : No }
 
 
 {-| A mesh with normal and tangent vectors but no UV coordinates, allowing for
 some specialized material models such as brushed metal but no texturing.
 -}
-type alias Anisotropic =
-    Material { normals : Yes, uvs : No, tangents : Yes }
+type alias Anisotropic coordinates =
+    Material coordinates { normals : Yes, uvs : No, tangents : Yes }
 
 
 {-| A mesh with normal vectors, UV coordinates and tangent vectors at each
 vertex, allowing for full texturing including normal maps.
 -}
-type alias NormalMapped =
-    Material { normals : Yes, uvs : Yes, tangents : Yes }
+type alias NormalMapped coordinates =
+    Material coordinates { normals : Yes, uvs : Yes, tangents : Yes }
 
 
-plain : Plain -> Material a
+plain : Plain coordinates -> Material coordinates attributes
 plain =
     coerce
 
 
-uniform : Uniform -> Material { a | normals : Yes }
+uniform : Uniform coordinates -> Material coordinates { a | normals : Yes }
 uniform =
     coerce
 
 
-unlit : Unlit -> Material { a | uvs : Yes }
+unlit : Unlit coordinates -> Material coordinates { a | uvs : Yes }
 unlit =
     coerce
 
 
-textured : Textured -> Material { a | normals : Yes, uvs : Yes }
+textured : Textured coordinates -> Material coordinates { a | normals : Yes, uvs : Yes }
 textured =
     coerce
 
 
-anisotropic : Anisotropic -> Material { a | normals : Yes, tangents : Yes }
+anisotropic : Anisotropic coordinates -> Material coordinates { a | normals : Yes, tangents : Yes }
 anisotropic =
     coerce
 
 
-coerce : Material a -> Material b
+coerce : Material coordinates a -> Material coordinates b
 coerce material =
     case material of
         Types.UnlitMaterial colorTexture ->

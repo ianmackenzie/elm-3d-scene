@@ -32,12 +32,12 @@ type World
     = World
 
 
-objectMaterial : Material.Uniform
+objectMaterial : Material.Uniform coordinates
 objectMaterial =
     Material.nonmetal { baseColor = Tango.skyBlue1, roughness = 0.4 }
 
 
-floorMaterial : Material.Uniform
+floorMaterial : Material.Uniform coordinates
 floorMaterial =
     Material.matte Tango.chameleon1
 

@@ -85,7 +85,7 @@ type alias VertexWithTangent =
     }
 
 
-type Material attributes
+type Material coordinates attributes
     = UnlitMaterial (Texture Vec3)
     | EmissiveMaterial (Texture LinearRgb) Float
     | LambertianMaterial (Texture LinearRgb) (Texture NormalMap)

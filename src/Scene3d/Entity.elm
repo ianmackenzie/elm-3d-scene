@@ -73,8 +73,8 @@ type alias Entity coordinates =
     Types.Entity coordinates
 
 
-type alias Material properties =
-    Types.Material properties
+type alias Material coordinates attributes =
+    Types.Material coordinates attributes
 
 
 empty : Entity coordinates
@@ -82,7 +82,7 @@ empty =
     Types.Entity EmptyNode
 
 
-mesh : Material properties -> Mesh coordinates properties -> Entity coordinates
+mesh : Material coordinates attributes -> Mesh coordinates attributes -> Entity coordinates
 mesh givenMaterial givenMesh =
     case givenMaterial of
         Types.UnlitMaterial (Types.Constant color) ->
@@ -520,7 +520,7 @@ resolveLambertian materialColorTexture normalMapTexture =
 
 quad :
     Bool
-    -> Material.NormalMapped
+    -> Material.NormalMapped coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -589,7 +589,7 @@ quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint =
 
 
 quadMesh :
-    Material.NormalMapped
+    Material.NormalMapped coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -757,7 +757,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
 
-sphere : Bool -> Material.NormalMapped -> Sphere3d Meters coordinates -> Entity coordinates
+sphere : Bool -> Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphere castsShadow givenMaterial givenSphere =
     let
         (Quantity r) =
@@ -831,7 +831,7 @@ buildSphereOutline index accumulated =
         buildSphereOutline (index - 1) updated
 
 
-block : Bool -> Material.Uniform -> Block3d Meters coordinates -> Entity coordinates
+block : Bool -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
 block castsShadow givenMaterial givenBlock =
     let
         ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
@@ -852,7 +852,7 @@ block castsShadow givenMaterial givenBlock =
         |> placeIn (Block3d.axes givenBlock)
 
 
-cylinder : Bool -> Material.Uniform -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder : Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder castsShadow givenMaterial givenCylinder =
     let
         (Quantity radius) =

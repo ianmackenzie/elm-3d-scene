@@ -163,7 +163,7 @@ nothing =
 
 quad :
     CastsShadows a
-    -> Material.NormalMapped
+    -> Material.NormalMapped coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -188,24 +188,24 @@ Note that this projection, while simple, maeans that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
-sphere : CastsShadows a -> Material.NormalMapped -> Sphere3d Meters coordinates -> Entity coordinates
+sphere : CastsShadows a -> Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
     Entity.sphere shadowFlag givenMaterial givenSphere
 
 
-block : CastsShadows a -> Material.Uniform -> Block3d Meters coordinates -> Entity coordinates
+block : CastsShadows a -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
 block (CastsShadows shadowFlag) givenMaterial givenBlock =
     Entity.block shadowFlag givenMaterial givenBlock
 
 
-cylinder : CastsShadows a -> Material.Uniform -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder : CastsShadows a -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
     Entity.cylinder shadowFlag givenMaterial givenCylinder
 
 
 {-| Draw the given mesh with the given material.
 -}
-mesh : Material properties -> Mesh coordinates properties -> Entity coordinates
+mesh : Material coordinates attributes -> Mesh coordinates attributes -> Entity coordinates
 mesh givenMaterial givenMesh =
     Entity.mesh givenMaterial givenMesh
 

@@ -57,7 +57,7 @@ camera =
         }
 
 
-material : Material.Textured
+material : Material.Textured coordinates
 material =
     Material.nonmetal
         { baseColor = Tango.skyBlue2

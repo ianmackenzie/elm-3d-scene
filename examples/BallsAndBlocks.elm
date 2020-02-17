@@ -154,7 +154,7 @@ initialWorld =
         |> addBoxes
 
 
-materials : Array Material.Uniform
+materials : Array (Material.Uniform coordinates)
 materials =
     Array.fromList
         [ Materials.aluminum
@@ -287,7 +287,7 @@ boxSize =
     Length.meters 0.9
 
 
-box : Material.Uniform -> Body (Scene3d.Entity BodyCoordinates)
+box : Material.Uniform BodyCoordinates -> Body (Scene3d.Entity BodyCoordinates)
 box material =
     let
         shape =
@@ -304,7 +304,7 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphere : Material.Textured -> Body (Scene3d.Entity BodyCoordinates)
+sphere : Material.Textured BodyCoordinates -> Body (Scene3d.Entity BodyCoordinates)
 sphere material =
     let
         shape =
