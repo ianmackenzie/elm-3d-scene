@@ -1,6 +1,5 @@
 module Scene3d.Entity exposing
     ( Entity
-    , Material
     , block
     , cylinder
     , empty
@@ -41,7 +40,7 @@ import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
-import Scene3d.Material as Material
+import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
 import Scene3d.Primitives as Primitives
 import Scene3d.Shaders as Shaders
@@ -71,10 +70,6 @@ import WebGL.Texture
 
 type alias Entity coordinates =
     Types.Entity coordinates
-
-
-type alias Material coordinates attributes =
-    Types.Material coordinates attributes
 
 
 empty : Entity coordinates
