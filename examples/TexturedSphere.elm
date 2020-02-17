@@ -43,12 +43,12 @@ type Model
     = Loading
         { colorTexture : Maybe (Material.Texture Color)
         , roughnessTexture : Maybe (Material.Texture Float)
-        , normalMapTexture : Maybe (Material.Texture Material.NormalMap)
+        , metallicTexture : Maybe (Material.Texture Float)
         }
     | Loaded
         { colorTexture : Material.Texture Color
         , roughnessTexture : Material.Texture Float
-        , normalMapTexture : Material.Texture Material.NormalMap
+        , metallicTexture : Material.Texture Float
         , sphereFrame : Frame3d Meters WorldCoordinates { defines : SphereCoordinates }
         , orbiting : Bool
         }
@@ -58,7 +58,7 @@ type Model
 type Msg
     = GotColorTexture (Result WebGL.Texture.Error (Material.Texture Color))
     | GotRoughnessTexture (Result WebGL.Texture.Error (Material.Texture Float))
-    | GotNormalMapTexture (Result WebGL.Texture.Error (Material.Texture Material.NormalMap))
+    | GotMetallicTexture (Result WebGL.Texture.Error (Material.Texture Float))
     | MouseDown
     | MouseUp
     | MouseMove Float Float
@@ -69,15 +69,15 @@ init =
     ( Loading
         { colorTexture = Nothing
         , roughnessTexture = Nothing
-        , normalMapTexture = Nothing
+        , metallicTexture = Nothing
         }
     , Cmd.batch
-        [ Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_col.jpg"
+        [ Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_col.jpg"
             |> Task.attempt GotColorTexture
-        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_rgh.jpg"
+        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_rgh.jpg"
             |> Task.attempt GotRoughnessTexture
-        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_nrm.jpg"
-            |> Task.attempt GotNormalMapTexture
+        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_met.jpg"
+            |> Task.attempt GotMetallicTexture
         ]
     )
 
@@ -95,8 +95,8 @@ update message model =
                         GotRoughnessTexture (Ok roughnessTexture) ->
                             checkIfLoaded { textures | roughnessTexture = Just roughnessTexture }
 
-                        GotNormalMapTexture (Ok normalMapTexture) ->
-                            checkIfLoaded { textures | normalMapTexture = Just normalMapTexture }
+                        GotMetallicTexture (Ok metallicTexture) ->
+                            checkIfLoaded { textures | metallicTexture = Just metallicTexture }
 
                         GotColorTexture (Err error) ->
                             Errored "Error loading color texture"
@@ -104,8 +104,8 @@ update message model =
                         GotRoughnessTexture (Err error) ->
                             Errored "Error loading roughness texture"
 
-                        GotNormalMapTexture (Err error) ->
-                            Errored "Error loading normal map texture"
+                        GotMetallicTexture (Err error) ->
+                            Errored "Error loading metallic texture"
 
                         MouseDown ->
                             model
@@ -124,7 +124,7 @@ update message model =
                         GotRoughnessTexture _ ->
                             model
 
-                        GotNormalMapTexture _ ->
+                        GotMetallicTexture _ ->
                             model
 
                         MouseDown ->
@@ -170,16 +170,16 @@ update message model =
 checkIfLoaded :
     { colorTexture : Maybe (Material.Texture Color)
     , roughnessTexture : Maybe (Material.Texture Float)
-    , normalMapTexture : Maybe (Material.Texture Material.NormalMap)
+    , metallicTexture : Maybe (Material.Texture Float)
     }
     -> Model
 checkIfLoaded textures =
-    case ( textures.colorTexture, textures.roughnessTexture, textures.normalMapTexture ) of
-        ( Just colorTexture, Just roughnessTexture, Just normalMapTexture ) ->
+    case ( textures.colorTexture, textures.roughnessTexture, textures.metallicTexture ) of
+        ( Just colorTexture, Just roughnessTexture, Just metallicTexture ) ->
             Loaded
                 { colorTexture = colorTexture
                 , roughnessTexture = roughnessTexture
-                , normalMapTexture = normalMapTexture
+                , metallicTexture = metallicTexture
                 , sphereFrame = Frame3d.atOrigin
                 , orbiting = False
                 }
@@ -217,28 +217,27 @@ camera =
 view : Model -> Html msg
 view model =
     case model of
-        Loaded { colorTexture, roughnessTexture, normalMapTexture, sphereFrame } ->
+        Loaded { colorTexture, roughnessTexture, metallicTexture, sphereFrame } ->
             let
                 material =
-                    Material.normalMappedPbr
+                    Material.texturedPbr
                         { baseColor = colorTexture
                         , roughness = roughnessTexture
-                        , metallic = Material.constant 0
-                        , normalMap = normalMapTexture
+                        , metallic = metallicTexture
                         }
             in
-            Scene3d.toHtml []
+            Scene3d.toHtml [ Scene3d.dynamicRange 2 ]
                 { camera = camera
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                 , environmentalLighting =
                     Scene3d.softLighting
                         { upDirection = Direction3d.positiveZ
                         , above = ( Luminance.nits 3000, Chromaticity.d65 )
-                        , below = ( Quantity.zero, Chromaticity.d65 )
+                        , below = ( Luminance.nits 300, Chromaticity.d65 )
                         }
                 , directLighting =
                     Scene3d.oneLightSource sunlight
-                , exposure = Exposure.fromEv100 12
+                , exposure = Exposure.fromEv100 11
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , background = Scene3d.transparentBackground
                 }

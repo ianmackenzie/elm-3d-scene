@@ -3,10 +3,8 @@ module Scene3d.Material exposing
     , color, emissive, matte, metal, nonmetal, pbr
     , Texture, constant, load, loadWith, loadChannel, loadChannelWith
     , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
-    , NormalMap
-    , normalMappedMatte, normalMappedMetal, normalMappedNonmetal, normalMappedPbr
-    , Plain, Unlit, Uniform, Textured, NormalMapped
-    , plain, unlit, uniform, textured
+    , Plain, Unlit, Uniform, Textured
+    , plain, unlit, uniform
     )
 
 {-|
@@ -26,18 +24,11 @@ module Scene3d.Material exposing
 @docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
 
 
-# Normal-mapped materials
-
-@docs NormalMap
-
-@docs normalMappedMatte, normalMappedMetal, normalMappedNonmetal, normalMappedPbr
-
-
 # Type annotations
 
-@docs Plain, Unlit, Uniform, Textured, NormalMapped
+@docs Plain, Unlit, Uniform, Textured
 
-@docs plain, unlit, uniform, textured
+@docs plain, unlit, uniform
 
 -}
 

@@ -515,7 +515,7 @@ resolveLambertian materialColorTexture normalMapTexture =
 
 quad :
     Bool
-    -> Material.NormalMapped coordinates
+    -> Material.Textured coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -584,7 +584,7 @@ quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint =
 
 
 quadMesh :
-    Material.NormalMapped coordinates
+    Material.Textured coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
@@ -752,7 +752,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
 
-sphere : Bool -> Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+sphere : Bool -> Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphere castsShadow givenMaterial givenSphere =
     let
         (Quantity r) =

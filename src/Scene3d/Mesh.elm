@@ -1,9 +1,9 @@
 module Scene3d.Mesh exposing
     ( Mesh, Yes, No
-    , Plain, Uniform, Unlit, Textured, NormalMapped
+    , Plain, Uniform, Unlit, Textured
     , points, lineSegments, polyline
     , triangles, facets
-    , plain, uniform, unlit, textured, normalMapped
+    , plain, uniform, unlit, textured
     , Shadow, shadow
     , cullBackFaces
     )
@@ -15,7 +15,7 @@ module Scene3d.Mesh exposing
 
 ## Specific mesh types
 
-@docs Plain, Uniform, Unlit, Textured, NormalMapped
+@docs Plain, Uniform, Unlit, Textured
 
 
 # Constructors
@@ -24,7 +24,7 @@ module Scene3d.Mesh exposing
 
 @docs triangles, facets
 
-@docs plain, uniform, unlit, textured, normalMapped
+@docs plain, uniform, unlit, textured
 
 
 # Shadows
