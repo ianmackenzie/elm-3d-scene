@@ -1167,6 +1167,10 @@ lambertianFragment =
         const float kPi = 3.14159265359;
         const float kDisabledLightSource = 0.0;
         
+        float getNormalSign() {
+            return 2.0 * float(gl_FrontFacing) - 1.0;
+        }
+        
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
             float projectionType = sceneProperties[1].w;
             if (projectionType == kPerspectiveProjection) {
@@ -1402,7 +1406,7 @@ lambertianFragment =
         }
         
         void main() {
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 normalDirection = normalize(interpolatedNormal) * getNormalSign();
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
             vec3 linearColor = lambertianLighting(
@@ -1479,8 +1483,12 @@ lambertianTextureFragment =
             return normalize(vec3(-x, -y, z));
         }
         
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent);
+        float getNormalSign() {
+            return 2.0 * float(gl_FrontFacing) - 1.0;
+        }
+        
+        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent) * normalSign;
             return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
         }
         
@@ -1705,7 +1713,9 @@ lambertianTextureFragment =
         
         void main() {
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
-            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
+            float normalSign = getNormalSign();
+            vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
+            vec3 normalDirection = getMappedNormal(originalNormal, normalize(interpolatedTangent), normalSign, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
         
@@ -1775,6 +1785,10 @@ physicalFragment =
         const float kPi = 3.14159265359;
         const float kMediumpFloatMax = 65504.0;
         const float kDisabledLightSource = 0.0;
+        
+        float getNormalSign() {
+            return 2.0 * float(gl_FrontFacing) - 1.0;
+        }
         
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
             float projectionType = sceneProperties[1].w;
@@ -2202,7 +2216,7 @@ physicalFragment =
         }
         
         void main() {
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 normalDirection = normalize(interpolatedNormal) * getNormalSign();
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
             vec3 linearColor = physicalLighting(
@@ -2300,8 +2314,12 @@ physicalTexturesFragment =
             return normalize(vec3(-x, -y, z));
         }
         
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent);
+        float getNormalSign() {
+            return 2.0 * float(gl_FrontFacing) - 1.0;
+        }
+        
+        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent) * normalSign;
             return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
         }
         
@@ -2752,7 +2770,9 @@ physicalTexturesFragment =
             float metallic = getChannelValue(metallicTexture, interpolatedUv, metallicChannel);
         
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
-            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
+            float normalSign = getNormalSign();
+            vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
+            vec3 normalDirection = getMappedNormal(originalNormal, normalize(interpolatedTangent), normalSign, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
             vec3 linearColor = physicalLighting(
