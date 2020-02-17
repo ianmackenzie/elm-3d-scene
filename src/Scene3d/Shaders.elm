@@ -147,7 +147,7 @@ unlitVertex =
         }
         
         void main() {
-            vec4 worldPosition = getWorldPosition(position, modelSale, modelMatrix);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
             interpolatedUv = uv;
