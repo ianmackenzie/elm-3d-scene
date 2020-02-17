@@ -1830,8 +1830,7 @@ lambertianTextureFragmentShader =
             , getNormalSign
             , getMappedNormal
             , getDirectionToCamera
-            , lambertianEnvironmentalLighting
-            , lambertianDirectLighting
+            , lambertianLighting
             , fromSrgb
             , toSrgb
             ]
