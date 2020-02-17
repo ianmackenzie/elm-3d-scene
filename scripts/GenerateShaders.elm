@@ -576,7 +576,7 @@ getMappedNormal =
         """
         vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
             vec3 bitangent = cross(normal, tangent) * normalSign;
-            return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
+            return normalize(localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal);
         }
         """
 
@@ -1840,7 +1840,7 @@ lambertianTextureFragmentShader =
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
             float normalSign = getNormalSign();
             vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
-            vec3 normalDirection = getMappedNormal(originalNormal, normalize(interpolatedTangent), normalSign, localNormal);
+            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, normalSign, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
 
@@ -1953,7 +1953,7 @@ physicalTexturesFragmentShader =
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
             float normalSign = getNormalSign();
             vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
-            vec3 normalDirection = getMappedNormal(originalNormal, normalize(interpolatedTangent), normalSign, localNormal);
+            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, normalSign, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
 
             vec3 linearColor = physicalLighting(
