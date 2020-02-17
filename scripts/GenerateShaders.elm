@@ -1756,9 +1756,9 @@ emissivePointFragmentShader =
         }
         """
         void main () {
-            vec3 color = toSrgb(emissiveColor, sceneProperties);
+            vec4 color = toSrgb(emissiveColor, sceneProperties);
             float alpha = pointAlpha(pointRadius, gl_PointCoord);
-            gl_FragColor = vec4(color, alpha);
+            gl_FragColor = vec4(color.rgb, alpha);
         }
         """
 
