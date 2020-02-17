@@ -13,15 +13,18 @@ module Scene3d.Shaders exposing
     , normalMappedVertex
     , physicalFragment
     , physicalTexturesFragment
+    , plainQuadVertex
     , plainVertex
     , pointVertex
     , quadShadowVertex
-    , quadVertex
     , shadowFragment
     , shadowVertex
+    , smoothQuadVertex
     , sphereShadowVertex
+    , texturedQuadVertex
     , texturedVertex
     , uniformVertex
+    , unlitQuadVertex
     , unlitVertex
     )
 
@@ -44,53 +47,10 @@ plainVertex :
             , viewMatrix : Mat4
             , sceneProperties : Mat4
         }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
-        }
+        {}
 plainVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = vec3(0.0, 0.0, 0.0);
-            interpolatedUv = vec2(0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
-        }
+        precision mediump float;attribute vec3 position;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;}
     |]
 
 
@@ -106,54 +66,11 @@ unlitVertex :
             , viewMatrix : Mat4
             , sceneProperties : Mat4
         }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        { interpolatedUv : Vec2
         }
 unlitVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec2 uv;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main() {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedUv = uv;
-            interpolatedNormal = vec3(0.0, 0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
-        }
+        precision mediump float;attribute vec3 position;attribute vec2 uv;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec2 interpolatedUv;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;interpolatedUv=uv;}
     |]
 
 
@@ -171,56 +88,10 @@ uniformVertex :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
         }
 uniformVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec3 normal;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
-            interpolatedUv = vec2(0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
-        }
+        precision mediump float;attribute vec3 position;attribute vec3 normal;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=(modelMatrix*f).xyz;}
     |]
 
 
@@ -244,52 +115,7 @@ texturedVertex :
         }
 texturedVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec2 uv;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
-            interpolatedUv = uv;
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
-        }
+        precision mediump float;attribute vec3 position;attribute vec3 normal;attribute vec2 uv;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=(modelMatrix*f).xyz;interpolatedUv=uv;interpolatedTangent=vec3(0.0,0.0,0.0);}
     |]
 
 
@@ -314,57 +140,71 @@ normalMappedVertex :
         }
 normalMappedVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec2 uv;
-        attribute vec3 tangent;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
-            interpolatedUv = uv;
-            interpolatedTangent = getWorldDirection(tangent, modelMatrix);
-        }
+        precision mediump float;attribute vec3 position;attribute vec3 normal;attribute vec2 uv;attribute vec3 tangent;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=(modelMatrix*f).xyz;interpolatedUv=uv;vec4 g;g.w=0.0;g.xyz=tangent;interpolatedTangent=(modelMatrix*g).xyz;}
     |]
 
 
-quadVertex :
+plainQuadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        {}
+plainQuadVertex =
+    [glsl|
+        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;void main(){highp int a;a=int(quadVertex.z);vec3 b;if((a==0)){b=quadVertexPositions[0].xyz;}else{if((a==1)){b=quadVertexPositions[1].xyz;}else{if((a==2)){b=quadVertexPositions[2].xyz;}else{b=quadVertexPositions[3].xyz;}}}vec4 c;c.w=1.0;c.xyz=(modelScale*b);vec4 d;d=(viewMatrix*(modelMatrix*c));vec4 e;e=sceneProperties[0];highp vec4 f;f.x=((e.z+(e.w*d.z))*(d.x/e.y));f.y=((e.z+(e.w*d.z))*d.y);f.z=(-(d.z)-(2.0*e.x));f.w=-(d.z);gl_Position=f;}
+    |]
+
+
+unlitQuadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        { interpolatedUv : Vec2
+        }
+unlitQuadVertex =
+    [glsl|
+        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec2 interpolatedUv;void main(){highp int a;a=int(quadVertex.z);vec3 b;if((a==0)){b=quadVertexPositions[0].xyz;}else{if((a==1)){b=quadVertexPositions[1].xyz;}else{if((a==2)){b=quadVertexPositions[2].xyz;}else{b=quadVertexPositions[3].xyz;}}}vec4 c;c.w=1.0;c.xyz=(modelScale*b);vec4 d;d=(viewMatrix*(modelMatrix*c));vec4 e;e=sceneProperties[0];highp vec4 f;f.x=((e.z+(e.w*d.z))*(d.x/e.y));f.y=((e.z+(e.w*d.z))*d.y);f.z=(-(d.z)-(2.0*e.x));f.w=-(d.z);gl_Position=f;interpolatedUv=quadVertex.xy;}
+    |]
+
+
+smoothQuadVertex :
+    WebGL.Shader
+        { attributes
+            | quadVertex : Vec3
+        }
+        { uniforms
+            | modelScale : Vec3
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , sceneProperties : Mat4
+            , quadVertexPositions : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        }
+smoothQuadVertex =
+    [glsl|
+        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){highp int a;a=int(quadVertex.z);vec3 b;vec3 c;vec3 d;d=vec3(0.0,0.0,0.0);c=vec3(0.0,0.0,0.0);if((a==0)){c=quadVertexPositions[3].xyz;b=quadVertexPositions[0].xyz;d=quadVertexPositions[1].xyz;}else{if((a==1)){c=quadVertexPositions[0].xyz;b=quadVertexPositions[1].xyz;d=quadVertexPositions[2].xyz;}else{if((a==2)){c=quadVertexPositions[1].xyz;b=quadVertexPositions[2].xyz;d=quadVertexPositions[3].xyz;}else{c=quadVertexPositions[2].xyz;b=quadVertexPositions[3].xyz;d=quadVertexPositions[0].xyz;}}}vec3 e;e=(d-b);vec3 f;f=(c-b);vec4 g;vec4 h;h.w=1.0;h.xyz=(modelScale*b);g=(modelMatrix*h);vec4 i;i=(viewMatrix*g);vec4 j;j=sceneProperties[0];highp vec4 k;k.x=((j.z+(j.w*i.z))*(i.x/j.y));k.y=((j.z+(j.w*i.z))*i.y);k.z=(-(i.z)-(2.0*j.x));k.w=-(i.z);gl_Position=k;interpolatedPosition=g.xyz;vec4 l;l.w=0.0;l.xyz=normalize(((e.yzx*f.zxy)-(e.zxy*f.yzx)));interpolatedNormal=(modelMatrix*l).xyz;}
+    |]
+
+
+texturedQuadVertex :
     WebGL.Shader
         { attributes
             | quadVertex : Vec3
@@ -381,84 +221,9 @@ quadVertex :
         , interpolatedUv : Vec2
         , interpolatedTangent : Vec3
         }
-quadVertex =
+texturedQuadVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 quadVertex;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
-            vec3 next = vec3(0.0, 0.0, 0.0);
-            vec3 prev = vec3(0.0, 0.0, 0.0);
-            if (quadVertexIndex == 0) {
-                prev = quadVertexPositions[3].xyz;
-                position = quadVertexPositions[0].xyz;
-                next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
-            } else if (quadVertexIndex == 1) {
-                prev = quadVertexPositions[0].xyz;
-                position = quadVertexPositions[1].xyz;
-                next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
-            } else if (quadVertexIndex == 2) {
-                prev = quadVertexPositions[1].xyz;
-                position = quadVertexPositions[2].xyz;
-                next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
-            } else {
-                prev = quadVertexPositions[2].xyz;
-                position = quadVertexPositions[3].xyz;
-                next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
-            }
-            normal = normalize(cross(next - position, prev - position));
-        }
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main() {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
-            interpolatedUv = quadVertex.xy;
-            interpolatedTangent = tangent;
-        }
+        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){highp int a;a=int(quadVertex.z);vec3 b;vec3 c;vec3 d;vec3 e;e=vec3(0.0,0.0,0.0);d=vec3(0.0,0.0,0.0);if((a==0)){d=quadVertexPositions[3].xyz;b=quadVertexPositions[0].xyz;e=quadVertexPositions[1].xyz;c=normalize((e-b));}else{if((a==1)){d=quadVertexPositions[0].xyz;b=quadVertexPositions[1].xyz;e=quadVertexPositions[2].xyz;c=normalize((b-d));}else{if((a==2)){d=quadVertexPositions[1].xyz;b=quadVertexPositions[2].xyz;e=quadVertexPositions[3].xyz;c=normalize((b-e));}else{d=quadVertexPositions[2].xyz;b=quadVertexPositions[3].xyz;e=quadVertexPositions[0].xyz;c=normalize((d-b));}}}vec3 f;f=(e-b);vec3 g;g=(d-b);vec4 h;vec4 i;i.w=1.0;i.xyz=(modelScale*b);h=(modelMatrix*i);vec4 j;j=(viewMatrix*h);vec4 k;k=sceneProperties[0];highp vec4 l;l.x=((k.z+(k.w*j.z))*(j.x/k.y));l.y=((k.z+(k.w*j.z))*j.y);l.z=(-(j.z)-(2.0*k.x));l.w=-(j.z);gl_Position=l;interpolatedPosition=h.xyz;vec4 m;m.w=0.0;m.xyz=normalize(((f.yzx*g.zxy)-(f.zxy*g.yzx)));interpolatedNormal=(modelMatrix*m).xyz;interpolatedUv=quadVertex.xy;interpolatedTangent=c;}
     |]
 
 
@@ -477,39 +242,7 @@ pointVertex :
         {}
 pointVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform float pointRadius;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            gl_PointSize = 2.0 * pointRadius + 2.0;
-        }
+        precision mediump float;attribute vec3 position;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform float pointRadius;uniform mat4 viewMatrix;uniform mat4 sceneProperties;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;gl_PointSize=((2.0*pointRadius)+2.0);}
     |]
 
 
@@ -529,77 +262,7 @@ shadowVertex :
         {}
 shadowVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec3 position;
-        attribute vec3 normal;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 shadowLightSource;
-        
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
-        }
-        
-        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                return xyz_type.xyz;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightPosition = xyz_type.xyz;
-                return normalize(lightPosition - surfacePosition);
-            }
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
-            vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
-            vec3 offset = vec3(0.0, 0.0, 0.0);
-            if (dot(directionToLight, worldNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
-            }
-            vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
-            return project(viewMatrix * offsetPosition, sceneProperties[0]);
-        }
-        
-        void main () {
-            gl_Position = shadowVertexPosition(
-                position,
-                normal,
-                shadowLightSource,
-                modelScale,
-                modelMatrix,
-                viewMatrix,
-                sceneProperties
-            );
-        }
+        precision mediump float;attribute vec3 position;attribute vec3 normal;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;void main(){vec3 a;vec3 b;vec4 c;vec4 d;d.w=1.0;d.xyz=(modelScale*position);c=(modelMatrix*d);vec4 e;e.w=0.0;e.xyz=normal;b=(modelMatrix*e).xyz;vec4 f;f=shadowLightSource[0];vec3 g;if((f.w==1.0)){g=f.xyz;}else{if((f.w==2.0)){g=normalize((f.xyz-c.xyz));}}a=vec3(0.0,0.0,0.0);float h;h=dot(g,b);if((h<=0.0)){a=(-1e+09*g);}vec4 i;i.w=0.0;i.xyz=a;vec4 j;j=(viewMatrix*(c+i));vec4 k;k=sceneProperties[0];highp vec4 l;l.x=((k.z+(k.w*j.z))*(j.x/k.y));l.y=((k.z+(k.w*j.z))*j.y);l.z=(-(j.z)-(2.0*k.x));l.w=-(j.z);gl_Position=l;}
     |]
 
 
@@ -619,109 +282,7 @@ quadShadowVertex :
         {}
 quadShadowVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute vec2 quadShadowVertex;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 shadowLightSource;
-        uniform mat4 quadVertexPositions;
-        
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
-            vec3 next = vec3(0.0, 0.0, 0.0);
-            vec3 prev = vec3(0.0, 0.0, 0.0);
-            if (quadVertexIndex == 0) {
-                prev = quadVertexPositions[3].xyz;
-                position = quadVertexPositions[0].xyz;
-                next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
-            } else if (quadVertexIndex == 1) {
-                prev = quadVertexPositions[0].xyz;
-                position = quadVertexPositions[1].xyz;
-                next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
-            } else if (quadVertexIndex == 2) {
-                prev = quadVertexPositions[1].xyz;
-                position = quadVertexPositions[2].xyz;
-                next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
-            } else {
-                prev = quadVertexPositions[2].xyz;
-                position = quadVertexPositions[3].xyz;
-                next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
-            }
-            normal = normalize(cross(next - position, prev - position));
-        }
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
-        }
-        
-        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                return xyz_type.xyz;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightPosition = xyz_type.xyz;
-                return normalize(lightPosition - surfacePosition);
-            }
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
-            vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
-            vec3 offset = vec3(0.0, 0.0, 0.0);
-            if (dot(directionToLight, worldNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
-            }
-            vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
-            return project(viewMatrix * offsetPosition, sceneProperties[0]);
-        }
-        
-        void main () {
-            vec3 position = vec3(0.0, 0.0, 0.0);
-            vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
-            getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal, tangent);
-            normal *= quadShadowVertex.y;
-            gl_Position = shadowVertexPosition(
-                position,
-                normal,
-                shadowLightSource,
-                modelScale,
-                modelMatrix,
-                viewMatrix,
-                sceneProperties
-            );
-        }
+        precision mediump float;attribute vec2 quadShadowVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;uniform mat4 quadVertexPositions;void main(){vec3 a;a=vec3(0.0,0.0,0.0);highp int b;b=int(quadShadowVertex.x);vec3 c;vec3 d;vec3 e;e=vec3(0.0,0.0,0.0);d=vec3(0.0,0.0,0.0);if((b==0)){d=quadVertexPositions[3].xyz;c=quadVertexPositions[0].xyz;e=quadVertexPositions[1].xyz;}else{if((b==1)){d=quadVertexPositions[0].xyz;c=quadVertexPositions[1].xyz;e=quadVertexPositions[2].xyz;}else{if((b==2)){d=quadVertexPositions[1].xyz;c=quadVertexPositions[2].xyz;e=quadVertexPositions[3].xyz;}else{d=quadVertexPositions[2].xyz;c=quadVertexPositions[3].xyz;e=quadVertexPositions[0].xyz;}}}vec3 f;f=(e-c);vec3 g;g=(d-c);a=(normalize(((f.yzx*g.zxy)-(f.zxy*g.yzx)))*quadShadowVertex.y);vec3 h;vec3 i;vec4 j;vec4 k;k.w=1.0;k.xyz=(modelScale*c);j=(modelMatrix*k);vec4 l;l.w=0.0;l.xyz=a;i=(modelMatrix*l).xyz;vec4 m;m=shadowLightSource[0];vec3 n;if((m.w==1.0)){n=m.xyz;}else{if((m.w==2.0)){n=normalize((m.xyz-j.xyz));}}h=vec3(0.0,0.0,0.0);float o;o=dot(n,i);if((o<=0.0)){h=(-1e+09*n);}vec4 p;p.w=0.0;p.xyz=h;vec4 q;q=(viewMatrix*(j+p));vec4 r;r=sceneProperties[0];highp vec4 s;s.x=((r.z+(r.w*q.z))*(q.x/r.y));s.y=((r.z+(r.w*q.z))*q.y);s.z=(-(q.z)-(2.0*r.x));s.w=-(q.z);gl_Position=s;}
     |]
 
 
@@ -741,110 +302,14 @@ sphereShadowVertex :
         {}
 sphereShadowVertex =
     [glsl|
-        precision mediump float;
-        
-        attribute float angle;
-        attribute float offsetScale;
-        
-        uniform vec3 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 shadowLightSource;
-        
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        const float kPerspectiveProjection = 0.0;
-        
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
-            return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                return xyz_type.xyz;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightPosition = xyz_type.xyz;
-                return normalize(lightPosition - surfacePosition);
-            }
-        }
-        
-        vec3 perpendicularTo(vec3 d) {
-            float absX = abs(d.x);
-            float absY = abs(d.y);
-            float absZ = abs(d.z);
-            if (absX <= absY) {
-                if (absX <= absZ) {
-                    float scale = 1.0 / length(d.zy);
-                    return vec3(0.0, -d.z * scale, d.y * scale);
-                } else {
-                    float scale = 1.0 / length(d.xy);
-                    return vec3(-d.y * scale, d.x * scale, 0.0);
-                }
-            } else {
-                if (absY <= absZ) {
-                    float scale = 1.0 / length(d.xz);
-                    return vec3(d.z * scale, 0.0, -d.x * scale);
-                } else {
-                    float scale = 1.0 / length(d.xy);
-                    return vec3(-d.y * scale, d.x * scale, 0.0);
-                }
-            }
-        }
-        
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        void main () {
-            vec4 worldCenter = getWorldPosition(vec3(0.0, 0.0, 0.0), modelScale, modelMatrix);
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
-            vec3 zDirection = getDirectionToLight(worldCenter.xyz, xyz_type, rgb_radius);
-            vec3 xDirection = perpendicularTo(zDirection);
-            vec3 yDirection = cross(zDirection, xDirection);
-            float r = modelScale.x;
-            float adjustedRadius = r;
-            float zOffset = 0.0;
-            if (xyz_type.w == kPointLightSource) {
-                float distanceToLight = length(xyz_type.xyz - worldCenter.xyz);
-                float rSquared = r * r;
-                zOffset = rSquared / distanceToLight;
-                float zSquared = zOffset * zOffset;
-                adjustedRadius = sqrt(rSquared - zSquared);
-            }
-            vec3 worldPosition =
-                worldCenter.xyz
-                    + zDirection * zOffset
-                    + xDirection * adjustedRadius * cos(angle)
-                    + yDirection * adjustedRadius * sin(angle);
-            vec3 directionToLight = getDirectionToLight(worldPosition, xyz_type, rgb_radius);
-            vec3 offset = -1.0e9 * offsetScale * directionToLight;
-            vec4 offsetPosition = vec4(worldPosition + offset, 1.0);
-            gl_Position = project(viewMatrix * offsetPosition, sceneProperties[0]);
-        }
+        precision mediump float;attribute float angle;attribute float offsetScale;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;void main(){float a;float b;vec4 c;c=(modelMatrix*vec4(0.0,0.0,0.0,1.0));vec4 d;d=shadowLightSource[0];vec3 e;if((d.w==1.0)){e=d.xyz;}else{if((d.w==2.0)){e=normalize((d.xyz-c.xyz));}}vec3 f;float g;g=abs(e.x);float h;h=abs(e.y);float i;i=abs(e.z);if((g<=h)){if((g<=i)){float j;j=inversesqrt(dot(e.zy,e.zy));vec3 k;k.x=0.0;k.y=(-(e.z)*j);k.z=(e.y*j);f=k;}else{float l;l=inversesqrt(dot(e.xy,e.xy));vec3 m;m.z=0.0;m.x=(-(e.y)*l);m.y=(e.x*l);f=m;}}else{if((h<=i)){float n;n=inversesqrt(dot(e.xz,e.xz));vec3 o;o.y=0.0;o.x=(e.z*n);o.z=(-(e.x)*n);f=o;}else{float p;p=inversesqrt(dot(e.xy,e.xy));vec3 q;q.z=0.0;q.x=(-(e.y)*p);q.y=(e.x*p);f=q;}}vec3 r;r=((e.yzx*f.zxy)-(e.zxy*f.yzx));b=modelScale.x;a=0.0;if((d.w==2.0)){vec3 s;s=(d.xyz-c.xyz);float t;t=(modelScale.x*modelScale.x);a=(t/sqrt(dot(s,s)));b=sqrt((t-(a*a)));}vec3 u;u=(((c.xyz+(e*a))+((f*b)*cos(angle)))+((r*b)*sin(angle)));vec3 v;if((d.w==1.0)){v=d.xyz;}else{if((d.w==2.0)){v=normalize((d.xyz-u));}}vec4 w;w.w=1.0;w.xyz=(u+((-1e+09*offsetScale)*v));vec4 x;x=(viewMatrix*w);vec4 y;y=sceneProperties[0];highp vec4 z;z.x=((y.z+(y.w*x.z))*(x.x/y.y));z.y=((y.z+(y.w*x.z))*x.y);z.z=(-(x.z)-(2.0*y.x));z.w=-(x.z);gl_Position=z;}
     |]
 
 
 shadowFragment : WebGL.Shader {} uniforms {}
 shadowFragment =
     [glsl|
-        precision mediump float;
-        
-        void main () {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-        }
+        precision mediump float;void main(){gl_FragColor=vec4(0.0,0.0,0.0,1.0);}
     |]
 
 
@@ -853,25 +318,10 @@ constantFragment :
         { uniforms
             | constantColor : Vec3
         }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
-        }
+        {}
 constantFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform vec3 constantColor;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        void main () {
-            gl_FragColor = vec4(constantColor, 1.0);
-        }
+        precision mediump float;uniform vec3 constantColor;void main(){mediump vec4 a;a.w=1.0;a.xyz=constantColor;gl_FragColor=a;}
     |]
 
 
@@ -880,25 +330,11 @@ colorTextureFragment :
         { uniforms
             | colorTexture : Texture
         }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        { interpolatedUv : Vec2
         }
 colorTextureFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform sampler2D colorTexture;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        void main () {
-            gl_FragColor = texture2D(colorTexture, interpolatedUv);
-        }
+        precision mediump float;uniform sampler2D colorTexture;varying vec2 interpolatedUv;void main(){lowp vec4 a;a=texture2D(colorTexture,interpolatedUv);gl_FragColor=a;}
     |]
 
 
@@ -912,32 +348,7 @@ constantPointFragment :
         {}
 constantPointFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform vec3 constantColor;
-        uniform float pointRadius;
-        uniform mat4 sceneProperties;
-        
-        float pointAlpha(float pointRadius, vec2 pointCoord) {
-            float pointSize = 2.0 * pointRadius;
-            float x = (pointSize + 2.0) * (pointCoord.s - 0.5);
-            float y = (pointSize + 2.0) * (pointCoord.t - 0.5);
-            float r = sqrt(x * x + y * y);
-            float innerRadius = pointRadius;
-            float outerRadius = pointRadius + 1.0;
-            if (r > outerRadius) {
-                return 0.0;
-            } else if (r > innerRadius) {
-                return outerRadius - r;
-            } else {
-                return 1.0;
-            }
-        }
-        
-        void main () {
-            float alpha = pointAlpha(pointRadius, gl_PointCoord);
-            gl_FragColor = vec4(constantColor, alpha);
-        }
+        precision mediump float;uniform vec3 constantColor;uniform float pointRadius;void main(){mediump float a;float b;b=(2.0*pointRadius);mediump float c;c=((b+2.0)*(gl_PointCoord.x-0.5));mediump float d;d=((b+2.0)*(gl_PointCoord.y-0.5));mediump float e;e=sqrt(((c*c)+(d*d)));float f;f=(pointRadius+1.0);if((e>f)){a=0.0;}else{if((e>pointRadius)){a=(f-e);}else{a=1.0;}}mediump vec4 g;g.xyz=constantColor;g.w=a;gl_FragColor=g;}
     |]
 
 
@@ -947,53 +358,10 @@ emissiveFragment :
             | emissiveColor : Vec3
             , sceneProperties : Mat4
         }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
-        }
+        {}
 emissiveFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform vec3 emissiveColor;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        void main () {
-            gl_FragColor = toSrgb(emissiveColor, sceneProperties);
-        }
+        precision mediump float;uniform vec3 emissiveColor;uniform mat4 sceneProperties;void main(){vec3 a;a=sceneProperties[2].xyz;float b;b=(emissiveColor.x/a.x);float c;c=(emissiveColor.y/a.y);float d;d=(emissiveColor.z/a.z);float e;e=(((0.2126*b)+(0.7152*c))+(0.0722*d));float f;f=sceneProperties[2].w;float g;g=(((e*(1.0+(e/(f*f))))/(1.0+e))/e);float h;h=(b*g);mediump float i;if((h<=0.0031308)){i=(12.92*h);}else{i=((1.055*pow(h,0.4166667))-0.055);}float j;j=(c*g);mediump float k;if((j<=0.0031308)){k=(12.92*j);}else{k=((1.055*pow(j,0.4166667))-0.055);}float l;l=(d*g);mediump float m;if((l<=0.0031308)){m=(12.92*l);}else{m=((1.055*pow(l,0.4166667))-0.055);}mediump vec4 n;n.w=1.0;n.x=i;n.y=k;n.z=m;gl_FragColor=n;}
     |]
 
 
@@ -1004,71 +372,11 @@ emissiveTextureFragment :
             , backlight : Float
             , sceneProperties : Mat4
         }
-        { interpolatedPosition : Vec3
-        , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        { interpolatedUv : Vec2
         }
 emissiveTextureFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform sampler2D colorTexture;
-        uniform float backlight;
-        uniform mat4 sceneProperties;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        float inverseGamma(float u) {
-            if (u <= 0.04045) {
-                return clamp(u / 12.92, 0.0, 1.0);
-            } else {
-                return clamp(pow((u + 0.055) / 1.055, 2.4), 0.0, 1.0);
-            }
-        }
-        
-        vec3 fromSrgb(vec3 srgbColor) {
-            return vec3(
-                inverseGamma(srgbColor.r),
-                inverseGamma(srgbColor.g),
-                inverseGamma(srgbColor.b)
-            );
-        }
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        void main () {
-            vec3 emissiveColor = fromSrgb(texture2D(colorTexture, interpolatedUv).rgb) * backlight;
-            gl_FragColor = toSrgb(emissiveColor, sceneProperties);
-        }
+        precision mediump float;uniform sampler2D colorTexture;uniform float backlight;uniform mat4 sceneProperties;varying vec2 interpolatedUv;void main(){lowp vec3 a;a=texture2D(colorTexture,interpolatedUv).xyz;lowp float b;if((a.x<=0.04045)){b=clamp((a.x/12.92),0.0,1.0);}else{b=clamp(pow(((a.x+0.055)/1.055),2.4),0.0,1.0);}lowp float c;if((a.y<=0.04045)){c=clamp((a.y/12.92),0.0,1.0);}else{c=clamp(pow(((a.y+0.055)/1.055),2.4),0.0,1.0);}lowp float d;if((a.z<=0.04045)){d=clamp((a.z/12.92),0.0,1.0);}else{d=clamp(pow(((a.z+0.055)/1.055),2.4),0.0,1.0);}lowp vec3 e;e.x=b;e.y=c;e.z=d;lowp vec3 f;f=(e*backlight);vec3 g;g=sceneProperties[2].xyz;lowp float h;h=(f.x/g.x);lowp float i;i=(f.y/g.y);lowp float j;j=(f.z/g.z);lowp float k;k=(((0.2126*h)+(0.7152*i))+(0.0722*j));float l;l=sceneProperties[2].w;lowp float m;m=(((k*(1.0+(k/(l*l))))/(1.0+k))/k);lowp float n;n=(h*m);mediump float o;if((n<=0.0031308)){o=(12.92*n);}else{o=((1.055*pow(n,0.4166667))-0.055);}lowp float p;p=(i*m);mediump float q;if((p<=0.0031308)){q=(12.92*p);}else{q=((1.055*pow(p,0.4166667))-0.055);}lowp float r;r=(j*m);mediump float s;if((r<=0.0031308)){s=(12.92*r);}else{s=((1.055*pow(r,0.4166667))-0.055);}mediump vec4 t;t.w=1.0;t.x=o;t.y=q;t.z=s;gl_FragColor=t;}
     |]
 
 
@@ -1082,60 +390,7 @@ emissivePointFragment :
         {}
 emissivePointFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform vec3 emissiveColor;
-        uniform float pointRadius;
-        uniform mat4 sceneProperties;
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        float pointAlpha(float pointRadius, vec2 pointCoord) {
-            float pointSize = 2.0 * pointRadius;
-            float x = (pointSize + 2.0) * (pointCoord.s - 0.5);
-            float y = (pointSize + 2.0) * (pointCoord.t - 0.5);
-            float r = sqrt(x * x + y * y);
-            float innerRadius = pointRadius;
-            float outerRadius = pointRadius + 1.0;
-            if (r > outerRadius) {
-                return 0.0;
-            } else if (r > innerRadius) {
-                return outerRadius - r;
-            } else {
-                return 1.0;
-            }
-        }
-        
-        void main () {
-            vec4 color = toSrgb(emissiveColor, sceneProperties);
-            float alpha = pointAlpha(pointRadius, gl_PointCoord);
-            gl_FragColor = vec4(color.rgb, alpha);
-        }
+        precision mediump float;uniform vec3 emissiveColor;uniform float pointRadius;uniform mat4 sceneProperties;void main(){vec3 a;a=sceneProperties[2].xyz;float b;b=(emissiveColor.x/a.x);float c;c=(emissiveColor.y/a.y);float d;d=(emissiveColor.z/a.z);float e;e=(((0.2126*b)+(0.7152*c))+(0.0722*d));float f;f=sceneProperties[2].w;float g;g=(((e*(1.0+(e/(f*f))))/(1.0+e))/e);float h;h=(b*g);float i;if((h<=0.0031308)){i=(12.92*h);}else{i=((1.055*pow(h,0.4166667))-0.055);}float j;j=(c*g);float k;if((j<=0.0031308)){k=(12.92*j);}else{k=((1.055*pow(j,0.4166667))-0.055);}float l;l=(d*g);float m;if((l<=0.0031308)){m=(12.92*l);}else{m=((1.055*pow(l,0.4166667))-0.055);}vec4 n;n.w=1.0;n.x=i;n.y=k;n.z=m;mediump float o;float p;p=(2.0*pointRadius);mediump float q;q=((p+2.0)*(gl_PointCoord.x-0.5));mediump float r;r=((p+2.0)*(gl_PointCoord.y-0.5));mediump float s;s=sqrt(((q*q)+(r*r)));float t;t=(pointRadius+1.0);if((s>t)){o=0.0;}else{if((s>pointRadius)){o=(t-s);}else{o=1.0;}}mediump vec4 u;u.xyz=n.xyz;u.w=o;gl_FragColor=u;}
     |]
 
 
@@ -1153,293 +408,10 @@ lambertianFragment :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
         }
 lambertianFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform mat4 sceneProperties;
-        uniform mat4 environmentalLighting;
-        uniform mat4 lightSources12;
-        uniform mat4 lightSources34;
-        uniform mat4 lightSources56;
-        uniform mat4 lightSources78;
-        uniform vec3 materialColor;
-        uniform mat4 viewMatrix;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        const float kPerspectiveProjection = 0.0;
-        const float kNoEnvironmentalLighting = 0.0;
-        const float kSoftLighting = 1.0;
-        const float kFastSoftLighting = 2.0;
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        const float kPi = 3.14159265359;
-        const float kDisabledLightSource = 0.0;
-        
-        float getNormalSign() {
-            return 2.0 * float(gl_FrontFacing) - 1.0;
-        }
-        
-        vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
-            float projectionType = sceneProperties[1].w;
-            if (projectionType == kPerspectiveProjection) {
-                vec3 cameraPoint = sceneProperties[1].xyz;
-                return normalize(cameraPoint - surfacePosition);
-            } else {
-                return sceneProperties[1].xyz;
-            }
-        }
-        
-        vec3 softLightingLuminance(
-            vec3 aboveLuminance,
-            vec3 belowLuminance,
-            vec3 localUpDirection,
-            vec3 localLightDirection
-        ) {
-            float sinElevation = dot(localLightDirection, localUpDirection);
-            float t = (sinElevation + 1.0) / 2.0;
-            return aboveLuminance * t + belowLuminance * (1.0 - t);
-        }
-        
-        vec3 lambertianEnvironmentalLighting(
-            vec3 normalDirection,
-            vec3 materialColor,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            mat4 environmentalLighting
-        ) {
-            float environmentalLightingType = environmentalLighting[0][3];
-            if (environmentalLightingType == kNoEnvironmentalLighting) {
-                return vec3(0.0, 0.0, 0.0);
-            } else if (environmentalLightingType == kSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-                
-                float numSamples = 13.0;
-                vec3 sum = vec3(0.0, 0.0, 0.0);
-        
-                vec3 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return (2.0 * sum * materialColor) / numSamples;
-            } else if (environmentalLightingType == kFastSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 luminance = softLightingLuminance(aboveLuminance, belowLuminance, upDirection, normalDirection);
-                return luminance * materialColor;
-            } else {
-                return vec3(0.0, 0.0, 0.0); 
-            }
-        }
-        
-        void getDirectionToLightAndNormalIlluminance(
-            vec4 xyz_type,
-            vec4 rgb_radius,
-            vec3 surfacePosition,
-            out vec3 directionToLight,
-            out vec3 normalIlluminance
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                directionToLight = xyz_type.xyz;
-                normalIlluminance = rgb_radius.rgb;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightSourcePosition = xyz_type.xyz;
-                vec3 displacement = lightSourcePosition - surfacePosition;
-                float distance = length(displacement);
-                directionToLight = displacement / distance;
-                normalIlluminance = rgb_radius.rgb / (4.0 * kPi * distance * distance);
-            }
-        }
-        
-        float positiveDotProduct(vec3 v1, vec3 v2) {
-            return clamp(dot(v1, v2), 0.0, 1.0);
-        }
-        
-        vec3 lambertianLightSource(
-            vec3 surfacePosition,
-            vec3 surfaceNormal,
-            vec3 materialColor,
-            vec4 xyz_type,
-            vec4 rgb_radius
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDisabledLightSource) {
-                return vec3(0.0, 0.0, 0.0);
-            } 
-        
-            vec3 directionToLight = vec3(0.0, 0.0, 0.0);
-            vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
-            getDirectionToLightAndNormalIlluminance(
-                xyz_type,
-                rgb_radius,
-                surfacePosition,
-                directionToLight,
-                normalIlluminance
-            );
-        
-            float dotNL = positiveDotProduct(directionToLight, surfaceNormal);
-            return (normalIlluminance * dotNL) * (materialColor / kPi);
-        }
-        
-        vec3 lambertianDirectLighting(
-            vec3 surfacePosition,
-            vec3 surfaceNormal,
-            vec3 materialColor,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            vec3 litColor1 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[0], lightSources12[1]);
-            vec3 litColor2 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[2], lightSources12[3]);
-            vec3 litColor3 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[0], lightSources34[1]);
-            vec3 litColor4 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[2], lightSources34[3]);
-            vec3 litColor5 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[0], lightSources56[1]);
-            vec3 litColor6 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[2], lightSources56[3]);
-            vec3 litColor7 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[0], lightSources78[1]);
-            vec3 litColor8 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[2], lightSources78[3]);
-            return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
-        }
-        
-        vec3 lambertianLighting(
-            vec3 position,
-            vec3 normalDirection,
-            vec3 materialColor,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            mat4 environmentalLighting,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            vec3 environmentalContribution = lambertianEnvironmentalLighting(
-                normalDirection,
-                materialColor,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting
-            );
-            vec3 directContribution = lambertianDirectLighting(
-                position,
-                normalDirection,
-                materialColor,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-            return environmentalContribution + directContribution;
-        }
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        void main() {
-            vec3 normalDirection = normalize(interpolatedNormal) * getNormalSign();
-            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-        
-            vec3 linearColor = lambertianLighting(
-                interpolatedPosition,
-                normalDirection,
-                materialColor,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-        
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
-        }
+        precision mediump float;uniform mat4 sceneProperties;uniform mat4 environmentalLighting;uniform mat4 lightSources12;uniform mat4 lightSources34;uniform mat4 lightSources56;uniform mat4 lightSources78;uniform vec3 materialColor;uniform mat4 viewMatrix;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){lowp vec3 a;a=(normalize(interpolatedNormal)*((2.0*float(gl_FrontFacing))-1.0));vec3 b;float c;c=sceneProperties[1].w;if((c==0.0)){b=normalize((sceneProperties[1].xyz-interpolatedPosition));}else{b=sceneProperties[1].xyz;}lowp vec3 d;lowp vec3 e;float f;f=environmentalLighting[0].w;if((f==0.0)){e=vec3(0.0,0.0,0.0);}else{if((f==1.0)){lowp vec3 g;lowp vec3 h;lowp vec3 i;vec3 j;j=environmentalLighting[0].xyz;vec3 k;k=environmentalLighting[1].xyz;vec3 l;l=environmentalLighting[2].xyz;lowp vec3 m;m=((a.yzx*b.zxy)-(a.zxy*b.yzx));lowp float n;n=sqrt(dot(m,m));i=vec3(0.0,0.0,0.0);h=vec3(0.0,0.0,0.0);if((n>1e-06)){h=((1.0/(n))*m);i=((h.yzx*a.zxy)-(h.zxy*a.yzx));}else{vec3 o;o.x=viewMatrix[0].y;o.y=viewMatrix[1].y;o.z=viewMatrix[2].y;lowp vec3 p;p=normalize(((o.yzx*a.zxy)-(o.zxy*a.yzx)));i=p;h=((a.yzx*p.zxy)-(a.zxy*p.yzx));}lowp vec3 q;q.x=dot(j,i);q.y=dot(j,h);q.z=dot(j,a);lowp float r;r=((q.z+1.0)/2.0);g=((k*r)+(l*(1.0-r)));lowp float s;s=((dot(vec3(0.606266,0.0,0.795262),q)+1.0)/2.0);g=(g+(((k*s)+(l*(1.0-s)))*0.795262));lowp float t;t=((dot(vec3(0.0,0.606266,0.795262),q)+1.0)/2.0);g=(g+(((k*t)+(l*(1.0-t)))*0.795262));lowp float u;u=((dot(vec3(-0.606266,0.0,0.795262),q)+1.0)/2.0);g=(g+(((k*u)+(l*(1.0-u)))*0.795262));lowp float v;v=((dot(vec3(0.0,-0.606266,0.795262),q)+1.0)/2.0);g=(g+(((k*v)+(l*(1.0-v)))*0.795262));lowp float w;w=((dot(vec3(0.873598,0.361856,0.325402),q)+1.0)/2.0);g=(g+(((k*w)+(l*(1.0-w)))*0.325402));lowp float x;x=((dot(vec3(0.361856,0.873598,0.325402),q)+1.0)/2.0);g=(g+(((k*x)+(l*(1.0-x)))*0.325402));lowp float y;y=((dot(vec3(-0.361856,0.873598,0.325402),q)+1.0)/2.0);g=(g+(((k*y)+(l*(1.0-y)))*0.325402));lowp float z;z=((dot(vec3(-0.873598,0.361856,0.325402),q)+1.0)/2.0);g=(g+(((k*z)+(l*(1.0-z)))*0.325402));lowp float A;A=((dot(vec3(-0.873598,-0.361856,0.325402),q)+1.0)/2.0);g=(g+(((k*A)+(l*(1.0-A)))*0.325402));lowp float B;B=((dot(vec3(-0.361856,-0.873598,0.325402),q)+1.0)/2.0);g=(g+(((k*B)+(l*(1.0-B)))*0.325402));lowp float C;C=((dot(vec3(0.361856,-0.873598,0.325402),q)+1.0)/2.0);g=(g+(((k*C)+(l*(1.0-C)))*0.325402));lowp float D;D=((dot(vec3(0.873598,-0.361856,0.325402),q)+1.0)/2.0);g=(g+(((k*D)+(l*(1.0-D)))*0.325402));e=(((2.0*g)*materialColor)/13.0);}else{if((f==2.0)){lowp float E;E=((dot(a,environmentalLighting[0].xyz)+1.0)/2.0);e=(((environmentalLighting[1].xyz*E)+(environmentalLighting[2].xyz*(1.0-E)))*materialColor);}else{e=vec3(0.0,0.0,0.0);}}}vec4 F;F=lightSources12[0];vec4 G;G=lightSources12[1];lowp vec3 H;if((F.w==0.0)){H=vec3(0.0,0.0,0.0);}else{vec3 I;vec3 J;if((F.w==1.0)){I=F.xyz;J=G.xyz;}else{if((F.w==2.0)){vec3 K;K=(F.xyz-interpolatedPosition);float L;L=sqrt(dot(K,K));I=(K/L);J=(G.xyz/((12.56637*L)*L));}}H=((J*clamp(dot(I,a),0.0,1.0))*(materialColor/3.141593));}vec4 M;M=lightSources12[2];vec4 N;N=lightSources12[3];lowp vec3 O;if((M.w==0.0)){O=vec3(0.0,0.0,0.0);}else{vec3 P;vec3 Q;if((M.w==1.0)){P=M.xyz;Q=N.xyz;}else{if((M.w==2.0)){vec3 R;R=(M.xyz-interpolatedPosition);float S;S=sqrt(dot(R,R));P=(R/S);Q=(N.xyz/((12.56637*S)*S));}}O=((Q*clamp(dot(P,a),0.0,1.0))*(materialColor/3.141593));}vec4 T;T=lightSources34[0];vec4 U;U=lightSources34[1];lowp vec3 V;if((T.w==0.0)){V=vec3(0.0,0.0,0.0);}else{vec3 W;vec3 X;if((T.w==1.0)){W=T.xyz;X=U.xyz;}else{if((T.w==2.0)){vec3 Y;Y=(T.xyz-interpolatedPosition);float Z;Z=sqrt(dot(Y,Y));W=(Y/Z);X=(U.xyz/((12.56637*Z)*Z));}}V=((X*clamp(dot(W,a),0.0,1.0))*(materialColor/3.141593));}vec4 ba;ba=lightSources34[2];vec4 bb;bb=lightSources34[3];lowp vec3 bc;if((ba.w==0.0)){bc=vec3(0.0,0.0,0.0);}else{vec3 bd;vec3 be;if((ba.w==1.0)){bd=ba.xyz;be=bb.xyz;}else{if((ba.w==2.0)){vec3 bf;bf=(ba.xyz-interpolatedPosition);float bg;bg=sqrt(dot(bf,bf));bd=(bf/bg);be=(bb.xyz/((12.56637*bg)*bg));}}bc=((be*clamp(dot(bd,a),0.0,1.0))*(materialColor/3.141593));}vec4 bh;bh=lightSources56[0];vec4 bi;bi=lightSources56[1];lowp vec3 bj;if((bh.w==0.0)){bj=vec3(0.0,0.0,0.0);}else{vec3 bk;vec3 bl;if((bh.w==1.0)){bk=bh.xyz;bl=bi.xyz;}else{if((bh.w==2.0)){vec3 bm;bm=(bh.xyz-interpolatedPosition);float bn;bn=sqrt(dot(bm,bm));bk=(bm/bn);bl=(bi.xyz/((12.56637*bn)*bn));}}bj=((bl*clamp(dot(bk,a),0.0,1.0))*(materialColor/3.141593));}vec4 bo;bo=lightSources56[2];vec4 bp;bp=lightSources56[3];lowp vec3 bq;if((bo.w==0.0)){bq=vec3(0.0,0.0,0.0);}else{vec3 br;vec3 bs;if((bo.w==1.0)){br=bo.xyz;bs=bp.xyz;}else{if((bo.w==2.0)){vec3 bt;bt=(bo.xyz-interpolatedPosition);float bu;bu=sqrt(dot(bt,bt));br=(bt/bu);bs=(bp.xyz/((12.56637*bu)*bu));}}bq=((bs*clamp(dot(br,a),0.0,1.0))*(materialColor/3.141593));}vec4 bv;bv=lightSources78[0];vec4 bw;bw=lightSources78[1];lowp vec3 bx;if((bv.w==0.0)){bx=vec3(0.0,0.0,0.0);}else{vec3 by;vec3 bz;if((bv.w==1.0)){by=bv.xyz;bz=bw.xyz;}else{if((bv.w==2.0)){vec3 bA;bA=(bv.xyz-interpolatedPosition);float bB;bB=sqrt(dot(bA,bA));by=(bA/bB);bz=(bw.xyz/((12.56637*bB)*bB));}}bx=((bz*clamp(dot(by,a),0.0,1.0))*(materialColor/3.141593));}vec4 bC;bC=lightSources78[2];vec4 bD;bD=lightSources78[3];lowp vec3 bE;if((bC.w==0.0)){bE=vec3(0.0,0.0,0.0);}else{vec3 bF;vec3 bG;if((bC.w==1.0)){bF=bC.xyz;bG=bD.xyz;}else{if((bC.w==2.0)){vec3 bH;bH=(bC.xyz-interpolatedPosition);float bI;bI=sqrt(dot(bH,bH));bF=(bH/bI);bG=(bD.xyz/((12.56637*bI)*bI));}}bE=((bG*clamp(dot(bF,a),0.0,1.0))*(materialColor/3.141593));}d=(((e+H)+(O+V))+((bc+bj)+((bq+bx)+bE)));vec3 bJ;bJ=sceneProperties[2].xyz;lowp float bK;bK=(d.x/bJ.x);lowp float bL;bL=(d.y/bJ.y);lowp float bM;bM=(d.z/bJ.z);lowp float bN;bN=(((0.2126*bK)+(0.7152*bL))+(0.0722*bM));float bO;bO=sceneProperties[2].w;lowp float bP;bP=(((bN*(1.0+(bN/(bO*bO))))/(1.0+bN))/bN);lowp float bQ;bQ=(bK*bP);mediump float bR;if((bQ<=0.0031308)){bR=(12.92*bQ);}else{bR=((1.055*pow(bQ,0.4166667))-0.055);}lowp float bS;bS=(bL*bP);mediump float bT;if((bS<=0.0031308)){bT=(12.92*bS);}else{bT=((1.055*pow(bS,0.4166667))-0.055);}lowp float bU;bU=(bM*bP);mediump float bV;if((bU<=0.0031308)){bV=(12.92*bU);}else{bV=((1.055*pow(bU,0.4166667))-0.055);}mediump vec4 bW;bW.w=1.0;bW.x=bR;bW.y=bT;bW.z=bV;gl_FragColor=bW;}
     |]
 
 
@@ -1464,323 +436,7 @@ lambertianTextureFragment :
         }
 lambertianTextureFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform mat4 sceneProperties;
-        uniform mat4 environmentalLighting;
-        uniform mat4 lightSources12;
-        uniform mat4 lightSources34;
-        uniform mat4 lightSources56;
-        uniform mat4 lightSources78;
-        uniform sampler2D materialColorTexture;
-        uniform sampler2D normalMapTexture;
-        uniform float useNormalMap;
-        uniform mat4 viewMatrix;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        const float kPerspectiveProjection = 0.0;
-        const float kNoEnvironmentalLighting = 0.0;
-        const float kSoftLighting = 1.0;
-        const float kFastSoftLighting = 2.0;
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        const float kPi = 3.14159265359;
-        const float kDisabledLightSource = 0.0;
-        
-        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
-            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
-            float x = 2.0 * (rgb.r - 0.5);
-            float y = 2.0 * (rgb.g - 0.5);
-            float z = 2.0 * (rgb.b - 0.5);
-            return normalize(vec3(-x, -y, z));
-        }
-        
-        float getNormalSign() {
-            return 2.0 * float(gl_FrontFacing) - 1.0;
-        }
-        
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent) * normalSign;
-            return normalize(localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal);
-        }
-        
-        vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
-            float projectionType = sceneProperties[1].w;
-            if (projectionType == kPerspectiveProjection) {
-                vec3 cameraPoint = sceneProperties[1].xyz;
-                return normalize(cameraPoint - surfacePosition);
-            } else {
-                return sceneProperties[1].xyz;
-            }
-        }
-        
-        vec3 softLightingLuminance(
-            vec3 aboveLuminance,
-            vec3 belowLuminance,
-            vec3 localUpDirection,
-            vec3 localLightDirection
-        ) {
-            float sinElevation = dot(localLightDirection, localUpDirection);
-            float t = (sinElevation + 1.0) / 2.0;
-            return aboveLuminance * t + belowLuminance * (1.0 - t);
-        }
-        
-        vec3 lambertianEnvironmentalLighting(
-            vec3 normalDirection,
-            vec3 materialColor,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            mat4 environmentalLighting
-        ) {
-            float environmentalLightingType = environmentalLighting[0][3];
-            if (environmentalLightingType == kNoEnvironmentalLighting) {
-                return vec3(0.0, 0.0, 0.0);
-            } else if (environmentalLightingType == kSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-                
-                float numSamples = 13.0;
-                vec3 sum = vec3(0.0, 0.0, 0.0);
-        
-                vec3 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
-                sum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return (2.0 * sum * materialColor) / numSamples;
-            } else if (environmentalLightingType == kFastSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 luminance = softLightingLuminance(aboveLuminance, belowLuminance, upDirection, normalDirection);
-                return luminance * materialColor;
-            } else {
-                return vec3(0.0, 0.0, 0.0); 
-            }
-        }
-        
-        void getDirectionToLightAndNormalIlluminance(
-            vec4 xyz_type,
-            vec4 rgb_radius,
-            vec3 surfacePosition,
-            out vec3 directionToLight,
-            out vec3 normalIlluminance
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                directionToLight = xyz_type.xyz;
-                normalIlluminance = rgb_radius.rgb;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightSourcePosition = xyz_type.xyz;
-                vec3 displacement = lightSourcePosition - surfacePosition;
-                float distance = length(displacement);
-                directionToLight = displacement / distance;
-                normalIlluminance = rgb_radius.rgb / (4.0 * kPi * distance * distance);
-            }
-        }
-        
-        float positiveDotProduct(vec3 v1, vec3 v2) {
-            return clamp(dot(v1, v2), 0.0, 1.0);
-        }
-        
-        vec3 lambertianLightSource(
-            vec3 surfacePosition,
-            vec3 surfaceNormal,
-            vec3 materialColor,
-            vec4 xyz_type,
-            vec4 rgb_radius
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDisabledLightSource) {
-                return vec3(0.0, 0.0, 0.0);
-            } 
-        
-            vec3 directionToLight = vec3(0.0, 0.0, 0.0);
-            vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
-            getDirectionToLightAndNormalIlluminance(
-                xyz_type,
-                rgb_radius,
-                surfacePosition,
-                directionToLight,
-                normalIlluminance
-            );
-        
-            float dotNL = positiveDotProduct(directionToLight, surfaceNormal);
-            return (normalIlluminance * dotNL) * (materialColor / kPi);
-        }
-        
-        vec3 lambertianDirectLighting(
-            vec3 surfacePosition,
-            vec3 surfaceNormal,
-            vec3 materialColor,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            vec3 litColor1 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[0], lightSources12[1]);
-            vec3 litColor2 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[2], lightSources12[3]);
-            vec3 litColor3 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[0], lightSources34[1]);
-            vec3 litColor4 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[2], lightSources34[3]);
-            vec3 litColor5 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[0], lightSources56[1]);
-            vec3 litColor6 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[2], lightSources56[3]);
-            vec3 litColor7 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[0], lightSources78[1]);
-            vec3 litColor8 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[2], lightSources78[3]);
-            return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
-        }
-        
-        vec3 lambertianLighting(
-            vec3 position,
-            vec3 normalDirection,
-            vec3 materialColor,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            mat4 environmentalLighting,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            vec3 environmentalContribution = lambertianEnvironmentalLighting(
-                normalDirection,
-                materialColor,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting
-            );
-            vec3 directContribution = lambertianDirectLighting(
-                position,
-                normalDirection,
-                materialColor,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-            return environmentalContribution + directContribution;
-        }
-        
-        float inverseGamma(float u) {
-            if (u <= 0.04045) {
-                return clamp(u / 12.92, 0.0, 1.0);
-            } else {
-                return clamp(pow((u + 0.055) / 1.055, 2.4), 0.0, 1.0);
-            }
-        }
-        
-        vec3 fromSrgb(vec3 srgbColor) {
-            return vec3(
-                inverseGamma(srgbColor.r),
-                inverseGamma(srgbColor.g),
-                inverseGamma(srgbColor.b)
-            );
-        }
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        void main() {
-            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
-            float normalSign = getNormalSign();
-            vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
-            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, normalSign, localNormal);
-            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-            vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
-        
-            vec3 linearColor = lambertianLighting(
-                interpolatedPosition,
-                normalDirection,
-                materialColor,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-        
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
-        }
+        precision mediump float;uniform mat4 sceneProperties;uniform mat4 environmentalLighting;uniform mat4 lightSources12;uniform mat4 lightSources34;uniform mat4 lightSources56;uniform mat4 lightSources78;uniform sampler2D materialColorTexture;uniform sampler2D normalMapTexture;uniform float useNormalMap;uniform mat4 viewMatrix;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){lowp vec3 a;lowp vec3 b;b=((useNormalMap*texture2D(normalMapTexture,interpolatedUv).xyz)+((1.0-useNormalMap)*vec3(0.5,0.5,1.0)));lowp vec3 c;c.xy=-((vec2(2.0,2.0)*(b.xy-vec2(0.5,0.5))));c.z=(2.0*(b.z-0.5));lowp vec3 d;d=normalize(c);lowp float e;e=((2.0*float(gl_FrontFacing))-1.0);lowp vec3 f;f=(normalize(interpolatedNormal)*e);a=normalize((((d.x*interpolatedTangent)+(d.y*(((f.yzx*interpolatedTangent.zxy)-(f.zxy*interpolatedTangent.yzx))*e)))+(d.z*f)));vec3 g;float h;h=sceneProperties[1].w;if((h==0.0)){g=normalize((sceneProperties[1].xyz-interpolatedPosition));}else{g=sceneProperties[1].xyz;}lowp vec3 i;i=texture2D(materialColorTexture,interpolatedUv).xyz;lowp float j;if((i.x<=0.04045)){j=clamp((i.x/12.92),0.0,1.0);}else{j=clamp(pow(((i.x+0.055)/1.055),2.4),0.0,1.0);}lowp float k;if((i.y<=0.04045)){k=clamp((i.y/12.92),0.0,1.0);}else{k=clamp(pow(((i.y+0.055)/1.055),2.4),0.0,1.0);}lowp float l;if((i.z<=0.04045)){l=clamp((i.z/12.92),0.0,1.0);}else{l=clamp(pow(((i.z+0.055)/1.055),2.4),0.0,1.0);}lowp vec3 m;m.x=j;m.y=k;m.z=l;lowp vec3 n;lowp vec3 o;float p;p=environmentalLighting[0].w;if((p==0.0)){o=vec3(0.0,0.0,0.0);}else{if((p==1.0)){lowp vec3 q;lowp vec3 r;lowp vec3 s;vec3 t;t=environmentalLighting[0].xyz;vec3 u;u=environmentalLighting[1].xyz;vec3 v;v=environmentalLighting[2].xyz;lowp vec3 w;w=((a.yzx*g.zxy)-(a.zxy*g.yzx));lowp float x;x=sqrt(dot(w,w));s=vec3(0.0,0.0,0.0);r=vec3(0.0,0.0,0.0);if((x>1e-06)){r=((1.0/(x))*w);s=((r.yzx*a.zxy)-(r.zxy*a.yzx));}else{vec3 y;y.x=viewMatrix[0].y;y.y=viewMatrix[1].y;y.z=viewMatrix[2].y;lowp vec3 z;z=normalize(((y.yzx*a.zxy)-(y.zxy*a.yzx)));s=z;r=((a.yzx*z.zxy)-(a.zxy*z.yzx));}lowp vec3 A;A.x=dot(t,s);A.y=dot(t,r);A.z=dot(t,a);lowp float B;B=((A.z+1.0)/2.0);q=((u*B)+(v*(1.0-B)));lowp float C;C=((dot(vec3(0.606266,0.0,0.795262),A)+1.0)/2.0);q=(q+(((u*C)+(v*(1.0-C)))*0.795262));lowp float D;D=((dot(vec3(0.0,0.606266,0.795262),A)+1.0)/2.0);q=(q+(((u*D)+(v*(1.0-D)))*0.795262));lowp float E;E=((dot(vec3(-0.606266,0.0,0.795262),A)+1.0)/2.0);q=(q+(((u*E)+(v*(1.0-E)))*0.795262));lowp float F;F=((dot(vec3(0.0,-0.606266,0.795262),A)+1.0)/2.0);q=(q+(((u*F)+(v*(1.0-F)))*0.795262));lowp float G;G=((dot(vec3(0.873598,0.361856,0.325402),A)+1.0)/2.0);q=(q+(((u*G)+(v*(1.0-G)))*0.325402));lowp float H;H=((dot(vec3(0.361856,0.873598,0.325402),A)+1.0)/2.0);q=(q+(((u*H)+(v*(1.0-H)))*0.325402));lowp float I;I=((dot(vec3(-0.361856,0.873598,0.325402),A)+1.0)/2.0);q=(q+(((u*I)+(v*(1.0-I)))*0.325402));lowp float J;J=((dot(vec3(-0.873598,0.361856,0.325402),A)+1.0)/2.0);q=(q+(((u*J)+(v*(1.0-J)))*0.325402));lowp float K;K=((dot(vec3(-0.873598,-0.361856,0.325402),A)+1.0)/2.0);q=(q+(((u*K)+(v*(1.0-K)))*0.325402));lowp float L;L=((dot(vec3(-0.361856,-0.873598,0.325402),A)+1.0)/2.0);q=(q+(((u*L)+(v*(1.0-L)))*0.325402));lowp float M;M=((dot(vec3(0.361856,-0.873598,0.325402),A)+1.0)/2.0);q=(q+(((u*M)+(v*(1.0-M)))*0.325402));lowp float N;N=((dot(vec3(0.873598,-0.361856,0.325402),A)+1.0)/2.0);q=(q+(((u*N)+(v*(1.0-N)))*0.325402));o=(((2.0*q)*m)/13.0);}else{if((p==2.0)){lowp float O;O=((dot(a,environmentalLighting[0].xyz)+1.0)/2.0);o=(((environmentalLighting[1].xyz*O)+(environmentalLighting[2].xyz*(1.0-O)))*m);}else{o=vec3(0.0,0.0,0.0);}}}vec4 P;P=lightSources12[0];vec4 Q;Q=lightSources12[1];lowp vec3 R;if((P.w==0.0)){R=vec3(0.0,0.0,0.0);}else{vec3 S;vec3 T;if((P.w==1.0)){S=P.xyz;T=Q.xyz;}else{if((P.w==2.0)){vec3 U;U=(P.xyz-interpolatedPosition);float V;V=sqrt(dot(U,U));S=(U/V);T=(Q.xyz/((12.56637*V)*V));}}R=((T*clamp(dot(S,a),0.0,1.0))*(m/3.141593));}vec4 W;W=lightSources12[2];vec4 X;X=lightSources12[3];lowp vec3 Y;if((W.w==0.0)){Y=vec3(0.0,0.0,0.0);}else{vec3 Z;vec3 ba;if((W.w==1.0)){Z=W.xyz;ba=X.xyz;}else{if((W.w==2.0)){vec3 bb;bb=(W.xyz-interpolatedPosition);float bc;bc=sqrt(dot(bb,bb));Z=(bb/bc);ba=(X.xyz/((12.56637*bc)*bc));}}Y=((ba*clamp(dot(Z,a),0.0,1.0))*(m/3.141593));}vec4 bd;bd=lightSources34[0];vec4 be;be=lightSources34[1];lowp vec3 bf;if((bd.w==0.0)){bf=vec3(0.0,0.0,0.0);}else{vec3 bg;vec3 bh;if((bd.w==1.0)){bg=bd.xyz;bh=be.xyz;}else{if((bd.w==2.0)){vec3 bi;bi=(bd.xyz-interpolatedPosition);float bj;bj=sqrt(dot(bi,bi));bg=(bi/bj);bh=(be.xyz/((12.56637*bj)*bj));}}bf=((bh*clamp(dot(bg,a),0.0,1.0))*(m/3.141593));}vec4 bk;bk=lightSources34[2];vec4 bl;bl=lightSources34[3];lowp vec3 bm;if((bk.w==0.0)){bm=vec3(0.0,0.0,0.0);}else{vec3 bn;vec3 bo;if((bk.w==1.0)){bn=bk.xyz;bo=bl.xyz;}else{if((bk.w==2.0)){vec3 bp;bp=(bk.xyz-interpolatedPosition);float bq;bq=sqrt(dot(bp,bp));bn=(bp/bq);bo=(bl.xyz/((12.56637*bq)*bq));}}bm=((bo*clamp(dot(bn,a),0.0,1.0))*(m/3.141593));}vec4 br;br=lightSources56[0];vec4 bs;bs=lightSources56[1];lowp vec3 bt;if((br.w==0.0)){bt=vec3(0.0,0.0,0.0);}else{vec3 bu;vec3 bv;if((br.w==1.0)){bu=br.xyz;bv=bs.xyz;}else{if((br.w==2.0)){vec3 bw;bw=(br.xyz-interpolatedPosition);float bx;bx=sqrt(dot(bw,bw));bu=(bw/bx);bv=(bs.xyz/((12.56637*bx)*bx));}}bt=((bv*clamp(dot(bu,a),0.0,1.0))*(m/3.141593));}vec4 by;by=lightSources56[2];vec4 bz;bz=lightSources56[3];lowp vec3 bA;if((by.w==0.0)){bA=vec3(0.0,0.0,0.0);}else{vec3 bB;vec3 bC;if((by.w==1.0)){bB=by.xyz;bC=bz.xyz;}else{if((by.w==2.0)){vec3 bD;bD=(by.xyz-interpolatedPosition);float bE;bE=sqrt(dot(bD,bD));bB=(bD/bE);bC=(bz.xyz/((12.56637*bE)*bE));}}bA=((bC*clamp(dot(bB,a),0.0,1.0))*(m/3.141593));}vec4 bF;bF=lightSources78[0];vec4 bG;bG=lightSources78[1];lowp vec3 bH;if((bF.w==0.0)){bH=vec3(0.0,0.0,0.0);}else{vec3 bI;vec3 bJ;if((bF.w==1.0)){bI=bF.xyz;bJ=bG.xyz;}else{if((bF.w==2.0)){vec3 bK;bK=(bF.xyz-interpolatedPosition);float bL;bL=sqrt(dot(bK,bK));bI=(bK/bL);bJ=(bG.xyz/((12.56637*bL)*bL));}}bH=((bJ*clamp(dot(bI,a),0.0,1.0))*(m/3.141593));}vec4 bM;bM=lightSources78[2];vec4 bN;bN=lightSources78[3];lowp vec3 bO;if((bM.w==0.0)){bO=vec3(0.0,0.0,0.0);}else{vec3 bP;vec3 bQ;if((bM.w==1.0)){bP=bM.xyz;bQ=bN.xyz;}else{if((bM.w==2.0)){vec3 bR;bR=(bM.xyz-interpolatedPosition);float bS;bS=sqrt(dot(bR,bR));bP=(bR/bS);bQ=(bN.xyz/((12.56637*bS)*bS));}}bO=((bQ*clamp(dot(bP,a),0.0,1.0))*(m/3.141593));}n=(((o+R)+(Y+bf))+((bm+bt)+((bA+bH)+bO)));vec3 bT;bT=sceneProperties[2].xyz;lowp float bU;bU=(n.x/bT.x);lowp float bV;bV=(n.y/bT.y);lowp float bW;bW=(n.z/bT.z);lowp float bX;bX=(((0.2126*bU)+(0.7152*bV))+(0.0722*bW));float bY;bY=sceneProperties[2].w;lowp float bZ;bZ=(((bX*(1.0+(bX/(bY*bY))))/(1.0+bX))/bX);lowp float ca;ca=(bU*bZ);mediump float cb;if((ca<=0.0031308)){cb=(12.92*ca);}else{cb=((1.055*pow(ca,0.4166667))-0.055);}lowp float cc;cc=(bV*bZ);mediump float cd;if((cc<=0.0031308)){cd=(12.92*cc);}else{cd=((1.055*pow(cc,0.4166667))-0.055);}lowp float ce;ce=(bW*bZ);mediump float cf;if((ce<=0.0031308)){cf=(12.92*ce);}else{cf=((1.055*pow(ce,0.4166667))-0.055);}mediump vec4 cg;cg.w=1.0;cg.x=cb;cg.y=cd;cg.z=cf;gl_FragColor=cg;}
     |]
 
 
@@ -1800,489 +456,10 @@ physicalFragment :
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
-        , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
         }
 physicalFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform mat4 sceneProperties;
-        uniform mat4 environmentalLighting;
-        uniform mat4 viewMatrix;
-        uniform mat4 lightSources12;
-        uniform mat4 lightSources34;
-        uniform mat4 lightSources56;
-        uniform mat4 lightSources78;
-        uniform vec3 baseColor;
-        uniform float roughness;
-        uniform float metallic;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        const float kPerspectiveProjection = 0.0;
-        const float kNoEnvironmentalLighting = 0.0;
-        const float kSoftLighting = 1.0;
-        const float kFastSoftLighting = 2.0;
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        const float kPi = 3.14159265359;
-        const float kMediumpFloatMax = 65504.0;
-        const float kDisabledLightSource = 0.0;
-        
-        float getNormalSign() {
-            return 2.0 * float(gl_FrontFacing) - 1.0;
-        }
-        
-        vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
-            float projectionType = sceneProperties[1].w;
-            if (projectionType == kPerspectiveProjection) {
-                vec3 cameraPoint = sceneProperties[1].xyz;
-                return normalize(cameraPoint - surfacePosition);
-            } else {
-                return sceneProperties[1].xyz;
-            }
-        }
-        
-        vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
-            t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
-            vec3 vNh = t1 * vT1 + t2 * vT2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * vH;
-            return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
-        }
-        
-        vec3 specularLightDirection(vec3 v, vec3 h) {
-            return (2.0 * dot(v, h)) * h - v;
-        }
-        
-        vec3 softLightingLuminance(
-            vec3 aboveLuminance,
-            vec3 belowLuminance,
-            vec3 localUpDirection,
-            vec3 localLightDirection
-        ) {
-            float sinElevation = dot(localLightDirection, localUpDirection);
-            float t = (sinElevation + 1.0) / 2.0;
-            return aboveLuminance * t + belowLuminance * (1.0 - t);
-        }
-        
-        float positiveDotProduct(vec3 v1, vec3 v2) {
-            return clamp(dot(v1, v2), 0.0, 1.0);
-        }
-        
-        vec3 fresnelColor(vec3 specularBaseColor, float dotVH) {
-            vec3 one = vec3(1.0, 1.0, 1.0);
-            float scale = exp2((-5.55473 * dotVH - 6.98316) * dotVH);
-            return specularBaseColor + (one - specularBaseColor) * scale;
-        }
-        
-        float safeQuotient(float numerator, float denominator) {
-            if (denominator == 0.0) {
-                return 0.0;
-            } else {
-                return numerator / denominator;
-            }
-        }
-        
-        float g1(float dotNV, float alphaSquared) {
-            return safeQuotient(2.0 * dotNV, dotNV + sqrt(alphaSquared + (1.0 - alphaSquared) * dotNV * dotNV));
-        }
-        
-        vec3 softLightingSpecularSample(
-            vec3 aboveLuminance,
-            vec3 belowLuminance,
-            vec3 localUpDirection,
-            vec3 localViewDirection,
-            vec3 localLightDirection,
-            vec3 localHalfDirection,
-            float alphaSquared,
-            vec3 specularBaseColor
-        ) {
-            vec3 luminance = softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection);
-            float dotVH = positiveDotProduct(localViewDirection, localHalfDirection);
-            float dotNL = localLightDirection.z;
-            return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
-        }
-        
-        vec3 physicalEnvironmentalLighting(
-            vec3 normalDirection,
-            vec3 diffuseBaseColor,
-            vec3 specularBaseColor,
-            float alpha,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            mat4 environmentalLighting
-        ) {
-            float environmentalLightingType = environmentalLighting[0].w;
-            float alphaSquared = alpha * alpha;
-        
-            if (environmentalLightingType == kNoEnvironmentalLighting) {
-                return vec3(0.0, 0.0, 0.0);
-            }
-        
-            if (environmentalLightingType == kSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localViewX = dot(directionToCamera, xDirection);
-                float localViewZ = dot(directionToCamera, normalDirection);
-                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-        
-                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
-                vec3 vT1 = vec3(0.0, 1.0, 0.0);
-                vec3 vT2 = cross(vH, vT1);
-                float s = 0.5 * (1.0 + vH.z);
-                
-                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
-                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
-                float numSamples = 13.0;
-                
-                vec3 specularSum = vec3(0.0, 0.0, 0.0);
-        
-                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.448762, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-        
-                localHalfDirection = sampleFacetNormal(0.000000, 0.448762, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.448762, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.000000, -0.448762, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.748423, 0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.310007, 0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.310007, 0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.748423, 0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.748423, -0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.310007, -0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.310007, -0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.748423, -0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
-        
-                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return (specularSum + 2.0 * diffuseSum * diffuseBaseColor) / numSamples;
-            } else if (environmentalLightingType == kFastSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localViewX = dot(directionToCamera, xDirection);
-                float localViewZ = dot(directionToCamera, normalDirection);
-                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-        
-                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
-                vec3 vT1 = vec3(0.0, 1.0, 0.0);
-                vec3 vT2 = cross(vH, vT1);
-                float s = 0.5 * (1.0 + vH.z);
-                
-                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
-                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
-                
-                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                vec3 specular = softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                vec3 diffuse = softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return specular + diffuse * diffuseBaseColor;
-            } else {
-                return vec3(0.0, 0.0, 0.0); 
-            }
-        }
-        
-        void getDirectionToLightAndNormalIlluminance(
-            vec4 xyz_type,
-            vec4 rgb_radius,
-            vec3 surfacePosition,
-            out vec3 directionToLight,
-            out vec3 normalIlluminance
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                directionToLight = xyz_type.xyz;
-                normalIlluminance = rgb_radius.rgb;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightSourcePosition = xyz_type.xyz;
-                vec3 displacement = lightSourcePosition - surfacePosition;
-                float distance = length(displacement);
-                directionToLight = displacement / distance;
-                normalIlluminance = rgb_radius.rgb / (4.0 * kPi * distance * distance);
-            }
-        }
-        
-        // Adapted from https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/normaldistributionfunction(speculard)
-        float specularD(float alpha, float dotNH, vec3 normalDirection, vec3 halfDirection) {
-            vec3 crossNH = cross(normalDirection, halfDirection);
-            float a = dotNH * alpha;
-            float k = alpha / (dot(crossNH, crossNH) + a * a);
-            float d = k * k * (1.0 / kPi);
-            return min(d, kMediumpFloatMax);
-        }
-        
-        float specularG(float dotNL, float dotNV, float alphaSquared) {
-            return g1(dotNV, alphaSquared) * g1(dotNL, alphaSquared);
-        }
-        
-        vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alpha, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
-            vec3 halfDirection = normalize(directionToCamera + directionToLight);
-            float dotVH = positiveDotProduct(directionToCamera, halfDirection);
-            float dotNH = positiveDotProduct(normalDirection, halfDirection);
-            float dotNHSquared = dotNH * dotNH;
-        
-            float d = specularD(alpha, dotNH, normalDirection, halfDirection);
-            float g = specularG(dotNL, dotNV, alpha * alpha);
-            vec3 f = fresnelColor(specularBaseColor, dotVH);
-            return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
-        }
-        
-        vec3 physicalLightSource(
-            vec4 xyz_type,
-            vec4 rgb_radius,
-            vec3 surfacePosition,
-            vec3 normalDirection,
-            vec3 directionToCamera,
-            float dotNV,
-            vec3 diffuseBaseColor,
-            vec3 specularBaseColor,
-            float alpha
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDisabledLightSource) {
-                return vec3(0.0, 0.0, 0.0);
-            }
-        
-            vec3 directionToLight = vec3(0.0, 0.0, 0.0);
-            vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
-            getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, surfacePosition, directionToLight, normalIlluminance);
-        
-            float dotNL = positiveDotProduct(normalDirection, directionToLight);
-            vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alpha, dotNV, dotNL, specularBaseColor, normalIlluminance);
-            return (normalIlluminance * dotNL) * ((diffuseBaseColor / kPi) + specularColor);
-        }
-        
-        vec3 physicalDirectLighting(
-            vec3 surfacePosition,
-            vec3 surfaceNormal,
-            vec3 directionToCamera,
-            vec3 diffuseBaseColor,
-            vec3 specularBaseColor,
-            float alpha,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
-            vec3 litColor1 = physicalLightSource(lightSources12[0], lightSources12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLightSource(lightSources12[2], lightSources12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLightSource(lightSources34[0], lightSources34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLightSource(lightSources34[2], lightSources34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalLightSource(lightSources56[0], lightSources56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalLightSource(lightSources56[2], lightSources56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalLightSource(lightSources78[0], lightSources78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalLightSource(lightSources78[2], lightSources78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
-        }
-        
-        vec3 physicalLighting(
-            vec3 position,
-            vec3 normalDirection,
-            vec3 baseColor,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            float roughness,
-            float metallic,
-            mat4 environmentalLighting,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            float alpha = roughness * roughness;
-            float nonmetallic = 1.0 - metallic;
-            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
-            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
-        
-            vec3 environmentalContribution = physicalEnvironmentalLighting(
-                normalDirection,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting
-            );
-        
-            vec3 directContribution = physicalDirectLighting(
-                interpolatedPosition,
-                normalDirection,
-                directionToCamera,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-        
-            return environmentalContribution + directContribution;
-        }
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        void main() {
-            vec3 normalDirection = normalize(interpolatedNormal) * getNormalSign();
-            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-        
-            vec3 linearColor = physicalLighting(
-                interpolatedPosition,
-                normalDirection,
-                baseColor,
-                directionToCamera,
-                viewMatrix,
-                roughness,
-                metallic,
-                environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-        
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
-        }
+        precision mediump float;uniform mat4 sceneProperties;uniform mat4 environmentalLighting;uniform mat4 viewMatrix;uniform mat4 lightSources12;uniform mat4 lightSources34;uniform mat4 lightSources56;uniform mat4 lightSources78;uniform vec3 baseColor;uniform float roughness;uniform float metallic;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){lowp vec3 a;a=(normalize(interpolatedNormal)*((2.0*float(gl_FrontFacing))-1.0));vec3 b;float c;c=sceneProperties[1].w;if((c==0.0)){b=normalize((sceneProperties[1].xyz-interpolatedPosition));}else{b=sceneProperties[1].xyz;}lowp vec3 d;float e;e=(roughness*roughness);float f;f=(1.0-metallic);vec3 g;g=((f*0.96)*baseColor);vec3 h;h=(vec3((f*0.04))+(metallic*baseColor));lowp vec3 i;float j;j=environmentalLighting[0].w;float k;k=(e*e);if((j==0.0)){i=vec3(0.0,0.0,0.0);}else{if((j==1.0)){lowp vec3 l;lowp vec3 m;lowp vec3 n;lowp vec3 o;vec3 p;p=environmentalLighting[0].xyz;vec3 q;q=environmentalLighting[1].xyz;vec3 r;r=environmentalLighting[2].xyz;lowp vec3 s;s=((a.yzx*b.zxy)-(a.zxy*b.yzx));lowp float t;t=sqrt(dot(s,s));o=vec3(0.0,0.0,0.0);n=vec3(0.0,0.0,0.0);if((t>1e-06)){n=((1.0/(t))*s);o=((n.yzx*a.zxy)-(n.zxy*a.yzx));}else{vec3 u;u.x=viewMatrix[0].y;u.y=viewMatrix[1].y;u.z=viewMatrix[2].y;lowp vec3 v;v=normalize(((u.yzx*a.zxy)-(u.zxy*a.yzx)));o=v;n=((a.yzx*v.zxy)-(a.zxy*v.yzx));}lowp float w;w=dot(b,o);lowp float x;x=dot(b,a);lowp vec3 y;y.y=0.0;y.x=w;y.z=x;lowp vec3 z;z.x=dot(p,o);z.y=dot(p,n);z.z=dot(p,a);lowp vec3 A;A.y=0.0;A.x=(e*w);A.z=x;lowp vec3 B;B=normalize(A);lowp vec3 C;C=((B.yzx*vec3(0.0,0.0,1.0))-(B.zxy*vec3(1.0,0.0,0.0)));lowp float D;D=(0.5*(1.0+B.z));m=vec3(0.0,0.0,0.0);lowp float E;E=(1.0-D);lowp vec3 F;F=((E*C)+(sqrt(max(0.0,(1.0-(E*E))))*B));lowp vec3 G;G.xy=(vec2(e)*F.xy);G.z=max(0.0,F.z);lowp vec3 H;H=normalize(G);lowp vec3 I;I=(((2.0*dot(y,H))*H)-y);lowp vec3 J;lowp float K;K=((dot(I,z)+1.0)/2.0);J=((q*K)+(r*(1.0-K)));lowp float L;L=clamp(dot(y,H),0.0,1.0);lowp vec3 M;M=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*L)-6.98316)*L))));lowp float N;N=(2.0*I.z);lowp float O;O=(I.z+sqrt((k+(((1.0-k)*I.z)*I.z))));lowp float P;if((O==0.0)){P=0.0;}else{P=(N/O);}m=(J*(M*P));lowp float Q;Q=((1.0-D)*0.8936513);lowp vec3 R;R=((vec3(0.0,0.448762,0.0)+(Q*C))+(sqrt(max(0.0,(0.7986127-(Q*Q))))*B));lowp vec3 S;S.xy=(vec2(e)*R.xy);S.z=max(0.0,R.z);lowp vec3 T;T=normalize(S);lowp vec3 U;U=(((2.0*dot(y,T))*T)-y);lowp vec3 V;lowp float W;W=((dot(U,z)+1.0)/2.0);V=((q*W)+(r*(1.0-W)));lowp float X;X=clamp(dot(y,T),0.0,1.0);lowp vec3 Y;Y=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*X)-6.98316)*X))));lowp float Z;Z=(2.0*U.z);lowp float ba;ba=(U.z+sqrt((k+(((1.0-k)*U.z)*U.z))));lowp float bb;if((ba==0.0)){bb=0.0;}else{bb=(Z/ba);}m=(m+(V*(Y*bb)));lowp float bc;bc=((1.0-D)+(D*0.448762));lowp vec3 bd;bd=((bc*C)+(sqrt(max(0.0,(1.0-(bc*bc))))*B));lowp vec3 be;be.xy=(vec2(e)*bd.xy);be.z=max(0.0,bd.z);lowp vec3 bf;bf=normalize(be);lowp vec3 bg;bg=(((2.0*dot(y,bf))*bf)-y);lowp vec3 bh;lowp float bi;bi=((dot(bg,z)+1.0)/2.0);bh=((q*bi)+(r*(1.0-bi)));lowp float bj;bj=clamp(dot(y,bf),0.0,1.0);lowp vec3 bk;bk=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*bj)-6.98316)*bj))));lowp float bl;bl=(2.0*bg.z);lowp float bm;bm=(bg.z+sqrt((k+(((1.0-k)*bg.z)*bg.z))));lowp float bn;if((bm==0.0)){bn=0.0;}else{bn=(bl/bm);}m=(m+(bh*(bk*bn)));lowp float bo;bo=((1.0-D)*0.8936513);lowp vec3 bp;bp=((vec3(-0.0,-0.448762,-0.0)+(bo*C))+(sqrt(max(0.0,(0.7986127-(bo*bo))))*B));lowp vec3 bq;bq.xy=(vec2(e)*bp.xy);bq.z=max(0.0,bp.z);lowp vec3 br;br=normalize(bq);lowp vec3 bs;bs=(((2.0*dot(y,br))*br)-y);lowp vec3 bt;lowp float bu;bu=((dot(bs,z)+1.0)/2.0);bt=((q*bu)+(r*(1.0-bu)));lowp float bv;bv=clamp(dot(y,br),0.0,1.0);lowp vec3 bw;bw=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*bv)-6.98316)*bv))));lowp float bx;bx=(2.0*bs.z);lowp float by;by=(bs.z+sqrt((k+(((1.0-k)*bs.z)*bs.z))));lowp float bz;if((by==0.0)){bz=0.0;}else{bz=(bx/by);}m=(m+(bt*(bw*bz)));lowp float bA;bA=((1.0-D)+(D*-0.448762));lowp vec3 bB;bB=((bA*C)+(sqrt(max(0.0,(1.0-(bA*bA))))*B));lowp vec3 bC;bC.xy=(vec2(e)*bB.xy);bC.z=max(0.0,bB.z);lowp vec3 bD;bD=normalize(bC);lowp vec3 bE;bE=(((2.0*dot(y,bD))*bD)-y);lowp vec3 bF;lowp float bG;bG=((dot(bE,z)+1.0)/2.0);bF=((q*bG)+(r*(1.0-bG)));lowp float bH;bH=clamp(dot(y,bD),0.0,1.0);lowp vec3 bI;bI=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*bH)-6.98316)*bH))));lowp float bJ;bJ=(2.0*bE.z);lowp float bK;bK=(bE.z+sqrt((k+(((1.0-k)*bE.z)*bE.z))));lowp float bL;if((bK==0.0)){bL=0.0;}else{bL=(bJ/bK);}m=(m+(bF*(bI*bL)));lowp float bM;bM=(((1.0-D)*0.6632217)+(D*0.310007));lowp vec3 bN;bN=((vec3(0.0,0.748423,0.0)+(bM*C))+(sqrt(max(0.0,(0.439863-(bM*bM))))*B));lowp vec3 bO;bO.xy=(vec2(e)*bN.xy);bO.z=max(0.0,bN.z);lowp vec3 bP;bP=normalize(bO);lowp vec3 bQ;bQ=(((2.0*dot(y,bP))*bP)-y);lowp vec3 bR;lowp float bS;bS=((dot(bQ,z)+1.0)/2.0);bR=((q*bS)+(r*(1.0-bS)));lowp float bT;bT=clamp(dot(y,bP),0.0,1.0);lowp vec3 bU;bU=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*bT)-6.98316)*bT))));lowp float bV;bV=(2.0*bQ.z);lowp float bW;bW=(bQ.z+sqrt((k+(((1.0-k)*bQ.z)*bQ.z))));lowp float bX;if((bW==0.0)){bX=0.0;}else{bX=(bV/bW);}m=(m+(bR*(bU*bX)));lowp float bY;bY=(((1.0-D)*0.9507343)+(D*0.748423));lowp vec3 bZ;bZ=((vec3(0.0,0.310007,0.0)+(bY*C))+(sqrt(max(0.0,(0.9038957-(bY*bY))))*B));lowp vec3 ca;ca.xy=(vec2(e)*bZ.xy);ca.z=max(0.0,bZ.z);lowp vec3 cb;cb=normalize(ca);lowp vec3 cc;cc=(((2.0*dot(y,cb))*cb)-y);lowp vec3 cd;lowp float ce;ce=((dot(cc,z)+1.0)/2.0);cd=((q*ce)+(r*(1.0-ce)));lowp float cf;cf=clamp(dot(y,cb),0.0,1.0);lowp vec3 cg;cg=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*cf)-6.98316)*cf))));lowp float ch;ch=(2.0*cc.z);lowp float ci;ci=(cc.z+sqrt((k+(((1.0-k)*cc.z)*cc.z))));lowp float cj;if((ci==0.0)){cj=0.0;}else{cj=(ch/ci);}m=(m+(cd*(cg*cj)));lowp float ck;ck=(((1.0-D)*0.9507343)+(D*0.748423));lowp vec3 cl;cl=((vec3(-0.0,-0.310007,-0.0)+(ck*C))+(sqrt(max(0.0,(0.9038957-(ck*ck))))*B));lowp vec3 cm;cm.xy=(vec2(e)*cl.xy);cm.z=max(0.0,cl.z);lowp vec3 cn;cn=normalize(cm);lowp vec3 co;co=(((2.0*dot(y,cn))*cn)-y);lowp vec3 cp;lowp float cq;cq=((dot(co,z)+1.0)/2.0);cp=((q*cq)+(r*(1.0-cq)));lowp float cr;cr=clamp(dot(y,cn),0.0,1.0);lowp vec3 cs;cs=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*cr)-6.98316)*cr))));lowp float ct;ct=(2.0*co.z);lowp float cu;cu=(co.z+sqrt((k+(((1.0-k)*co.z)*co.z))));lowp float cv;if((cu==0.0)){cv=0.0;}else{cv=(ct/cu);}m=(m+(cp*(cs*cv)));lowp float cw;cw=(((1.0-D)*0.6632217)+(D*0.310007));lowp vec3 cx;cx=((vec3(-0.0,-0.748423,-0.0)+(cw*C))+(sqrt(max(0.0,(0.439863-(cw*cw))))*B));lowp vec3 cy;cy.xy=(vec2(e)*cx.xy);cy.z=max(0.0,cx.z);lowp vec3 cz;cz=normalize(cy);lowp vec3 cA;cA=(((2.0*dot(y,cz))*cz)-y);lowp vec3 cB;lowp float cC;cC=((dot(cA,z)+1.0)/2.0);cB=((q*cC)+(r*(1.0-cC)));lowp float cD;cD=clamp(dot(y,cz),0.0,1.0);lowp vec3 cE;cE=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*cD)-6.98316)*cD))));lowp float cF;cF=(2.0*cA.z);lowp float cG;cG=(cA.z+sqrt((k+(((1.0-k)*cA.z)*cA.z))));lowp float cH;if((cG==0.0)){cH=0.0;}else{cH=(cF/cG);}m=(m+(cB*(cE*cH)));lowp float cI;cI=(((1.0-D)*0.6632217)+(D*-0.310007));lowp vec3 cJ;cJ=((vec3(-0.0,-0.748423,-0.0)+(cI*C))+(sqrt(max(0.0,(0.439863-(cI*cI))))*B));lowp vec3 cK;cK.xy=(vec2(e)*cJ.xy);cK.z=max(0.0,cJ.z);lowp vec3 cL;cL=normalize(cK);lowp vec3 cM;cM=(((2.0*dot(y,cL))*cL)-y);lowp vec3 cN;lowp float cO;cO=((dot(cM,z)+1.0)/2.0);cN=((q*cO)+(r*(1.0-cO)));lowp float cP;cP=clamp(dot(y,cL),0.0,1.0);lowp vec3 cQ;cQ=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*cP)-6.98316)*cP))));lowp float cR;cR=(2.0*cM.z);lowp float cS;cS=(cM.z+sqrt((k+(((1.0-k)*cM.z)*cM.z))));lowp float cT;if((cS==0.0)){cT=0.0;}else{cT=(cR/cS);}m=(m+(cN*(cQ*cT)));lowp float cU;cU=(((1.0-D)*0.9507343)+(D*-0.748423));lowp vec3 cV;cV=((vec3(-0.0,-0.310007,-0.0)+(cU*C))+(sqrt(max(0.0,(0.9038957-(cU*cU))))*B));lowp vec3 cW;cW.xy=(vec2(e)*cV.xy);cW.z=max(0.0,cV.z);lowp vec3 cX;cX=normalize(cW);lowp vec3 cY;cY=(((2.0*dot(y,cX))*cX)-y);lowp vec3 cZ;lowp float da;da=((dot(cY,z)+1.0)/2.0);cZ=((q*da)+(r*(1.0-da)));lowp float db;db=clamp(dot(y,cX),0.0,1.0);lowp vec3 dc;dc=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*db)-6.98316)*db))));lowp float dd;dd=(2.0*cY.z);lowp float de;de=(cY.z+sqrt((k+(((1.0-k)*cY.z)*cY.z))));lowp float df;if((de==0.0)){df=0.0;}else{df=(dd/de);}m=(m+(cZ*(dc*df)));lowp float dg;dg=(((1.0-D)*0.9507343)+(D*-0.748423));lowp vec3 dh;dh=((vec3(0.0,0.310007,0.0)+(dg*C))+(sqrt(max(0.0,(0.9038957-(dg*dg))))*B));lowp vec3 di;di.xy=(vec2(e)*dh.xy);di.z=max(0.0,dh.z);lowp vec3 dj;dj=normalize(di);lowp vec3 dk;dk=(((2.0*dot(y,dj))*dj)-y);lowp vec3 dl;lowp float dm;dm=((dot(dk,z)+1.0)/2.0);dl=((q*dm)+(r*(1.0-dm)));lowp float dn;dn=clamp(dot(y,dj),0.0,1.0);lowp vec3 do_;do_=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*dn)-6.98316)*dn))));lowp float dp;dp=(2.0*dk.z);lowp float dq;dq=(dk.z+sqrt((k+(((1.0-k)*dk.z)*dk.z))));lowp float dr;if((dq==0.0)){dr=0.0;}else{dr=(dp/dq);}m=(m+(dl*(do_*dr)));lowp float ds;ds=(((1.0-D)*0.6632217)+(D*-0.310007));lowp vec3 dt;dt=((vec3(0.0,0.748423,0.0)+(ds*C))+(sqrt(max(0.0,(0.439863-(ds*ds))))*B));lowp vec3 du;du.xy=(vec2(e)*dt.xy);du.z=max(0.0,dt.z);lowp vec3 dv;dv=normalize(du);lowp vec3 dw;dw=(((2.0*dot(y,dv))*dv)-y);lowp vec3 dx;lowp float dy;dy=((dot(dw,z)+1.0)/2.0);dx=((q*dy)+(r*(1.0-dy)));lowp float dz;dz=clamp(dot(y,dv),0.0,1.0);lowp vec3 dA;dA=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*dz)-6.98316)*dz))));lowp float dB;dB=(2.0*dw.z);lowp float dC;dC=(dw.z+sqrt((k+(((1.0-k)*dw.z)*dw.z))));lowp float dD;if((dC==0.0)){dD=0.0;}else{dD=(dB/dC);}m=(m+(dx*(dA*dD)));lowp float dE;dE=((z.z+1.0)/2.0);l=((q*dE)+(r*(1.0-dE)));lowp float dF;dF=((dot(vec3(0.606266,0.0,0.795262),z)+1.0)/2.0);l=(l+(((q*dF)+(r*(1.0-dF)))*0.795262));lowp float dG;dG=((dot(vec3(0.0,0.606266,0.795262),z)+1.0)/2.0);l=(l+(((q*dG)+(r*(1.0-dG)))*0.795262));lowp float dH;dH=((dot(vec3(-0.606266,0.0,0.795262),z)+1.0)/2.0);l=(l+(((q*dH)+(r*(1.0-dH)))*0.795262));lowp float dI;dI=((dot(vec3(0.0,-0.606266,0.795262),z)+1.0)/2.0);l=(l+(((q*dI)+(r*(1.0-dI)))*0.795262));lowp float dJ;dJ=((dot(vec3(0.873598,0.361856,0.325402),z)+1.0)/2.0);l=(l+(((q*dJ)+(r*(1.0-dJ)))*0.325402));lowp float dK;dK=((dot(vec3(0.361856,0.873598,0.325402),z)+1.0)/2.0);l=(l+(((q*dK)+(r*(1.0-dK)))*0.325402));lowp float dL;dL=((dot(vec3(-0.361856,0.873598,0.325402),z)+1.0)/2.0);l=(l+(((q*dL)+(r*(1.0-dL)))*0.325402));lowp float dM;dM=((dot(vec3(-0.873598,0.361856,0.325402),z)+1.0)/2.0);l=(l+(((q*dM)+(r*(1.0-dM)))*0.325402));lowp float dN;dN=((dot(vec3(-0.873598,-0.361856,0.325402),z)+1.0)/2.0);l=(l+(((q*dN)+(r*(1.0-dN)))*0.325402));lowp float dO;dO=((dot(vec3(-0.361856,-0.873598,0.325402),z)+1.0)/2.0);l=(l+(((q*dO)+(r*(1.0-dO)))*0.325402));lowp float dP;dP=((dot(vec3(0.361856,-0.873598,0.325402),z)+1.0)/2.0);l=(l+(((q*dP)+(r*(1.0-dP)))*0.325402));lowp float dQ;dQ=((dot(vec3(0.873598,-0.361856,0.325402),z)+1.0)/2.0);l=(l+(((q*dQ)+(r*(1.0-dQ)))*0.325402));i=((m+((2.0*l)*g))/13.0);}else{if((j==2.0)){lowp vec3 dR;lowp vec3 dS;vec3 dT;dT=environmentalLighting[0].xyz;vec3 dU;dU=environmentalLighting[1].xyz;vec3 dV;dV=environmentalLighting[2].xyz;lowp vec3 dW;dW=((a.yzx*b.zxy)-(a.zxy*b.yzx));lowp float dX;dX=sqrt(dot(dW,dW));dS=vec3(0.0,0.0,0.0);dR=vec3(0.0,0.0,0.0);if((dX>1e-06)){dR=((1.0/(dX))*dW);dS=((dR.yzx*a.zxy)-(dR.zxy*a.yzx));}else{vec3 dY;dY.x=viewMatrix[0].y;dY.y=viewMatrix[1].y;dY.z=viewMatrix[2].y;lowp vec3 dZ;dZ=normalize(((dY.yzx*a.zxy)-(dY.zxy*a.yzx)));dS=dZ;dR=((a.yzx*dZ.zxy)-(a.zxy*dZ.yzx));}lowp float ea;ea=dot(b,dS);lowp float eb;eb=dot(b,a);lowp vec3 ec;ec.y=0.0;ec.x=ea;ec.z=eb;lowp vec3 ed;ed.x=dot(dT,dS);ed.y=dot(dT,dR);ed.z=dot(dT,a);lowp vec3 ee;ee.y=0.0;ee.x=(e*ea);ee.z=eb;lowp vec3 ef;ef=normalize(ee);lowp float eg;eg=(1.0-(0.5*(1.0+ef.z)));lowp vec3 eh;eh=((eg*((ef.yzx*vec3(0.0,0.0,1.0))-(ef.zxy*vec3(1.0,0.0,0.0))))+(sqrt(max(0.0,(1.0-(eg*eg))))*ef));lowp vec3 ei;ei.xy=(vec2(e)*eh.xy);ei.z=max(0.0,eh.z);lowp vec3 ej;ej=normalize(ei);lowp vec3 ek;ek=(((2.0*dot(ec,ej))*ej)-ec);lowp vec3 el;lowp float em;em=((dot(ek,ed)+1.0)/2.0);el=((dU*em)+(dV*(1.0-em)));lowp float en;en=clamp(dot(ec,ej),0.0,1.0);lowp vec3 eo;eo=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*en)-6.98316)*en))));lowp float ep;ep=(2.0*ek.z);lowp float eq;eq=(ek.z+sqrt((k+(((1.0-k)*ek.z)*ek.z))));lowp float er;if((eq==0.0)){er=0.0;}else{er=(ep/eq);}lowp float es;es=((ed.z+1.0)/2.0);i=((el*(eo*er))+(((dU*es)+(dV*(1.0-es)))*g));}else{i=vec3(0.0,0.0,0.0);}}}lowp float et;et=clamp(dot(a,b),0.0,1.0);vec4 eu;eu=lightSources12[0];vec4 ev;ev=lightSources12[1];lowp vec3 ew;if((eu.w==0.0)){ew=vec3(0.0,0.0,0.0);}else{vec3 ex;vec3 ey;if((eu.w==1.0)){ex=eu.xyz;ey=ev.xyz;}else{if((eu.w==2.0)){vec3 ez;ez=(eu.xyz-interpolatedPosition);float eA;eA=sqrt(dot(ez,ez));ex=(ez/eA);ey=(ev.xyz/((12.56637*eA)*eA));}}lowp float eB;eB=clamp(dot(a,ex),0.0,1.0);vec3 eC;lowp float eD;float eE;vec3 eF;eF=normalize((b+ex));eE=clamp(dot(b,eF),0.0,1.0);lowp vec3 eG;eG=((a.yzx*eF.zxy)-(a.zxy*eF.yzx));lowp float eH;eH=(clamp(dot(a,eF),0.0,1.0)*e);lowp float eI;eI=(e/(dot(eG,eG)+(eH*eH)));eD=min(((eI*eI)*0.3183099),65504.0);float eJ;eJ=(e*e);lowp float eK;eK=(2.0*et);lowp float eL;eL=(et+sqrt((eJ+(((1.0-eJ)*et)*et))));lowp float eM;if((eL==0.0)){eM=0.0;}else{eM=(eK/eL);}lowp float eN;eN=(2.0*eB);lowp float eO;eO=(eB+sqrt((eJ+(((1.0-eJ)*eB)*eB))));lowp float eP;if((eO==0.0)){eP=0.0;}else{eP=(eN/eO);}eC=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*eE)-6.98316)*eE))));lowp float eQ;eQ=(eD*(eM*eP));lowp float eR;eR=((4.0*eB)*et);lowp float eS;if((eR==0.0)){eS=0.0;}else{eS=(eQ/eR);}ew=((ey*eB)*((g/3.141593)+(eS*eC)));}vec4 eT;eT=lightSources12[2];vec4 eU;eU=lightSources12[3];lowp vec3 eV;if((eT.w==0.0)){eV=vec3(0.0,0.0,0.0);}else{vec3 eW;vec3 eX;if((eT.w==1.0)){eW=eT.xyz;eX=eU.xyz;}else{if((eT.w==2.0)){vec3 eY;eY=(eT.xyz-interpolatedPosition);float eZ;eZ=sqrt(dot(eY,eY));eW=(eY/eZ);eX=(eU.xyz/((12.56637*eZ)*eZ));}}lowp float fa;fa=clamp(dot(a,eW),0.0,1.0);vec3 fb;lowp float fc;float fd;vec3 fe;fe=normalize((b+eW));fd=clamp(dot(b,fe),0.0,1.0);lowp vec3 ff;ff=((a.yzx*fe.zxy)-(a.zxy*fe.yzx));lowp float fg;fg=(clamp(dot(a,fe),0.0,1.0)*e);lowp float fh;fh=(e/(dot(ff,ff)+(fg*fg)));fc=min(((fh*fh)*0.3183099),65504.0);float fi;fi=(e*e);lowp float fj;fj=(2.0*et);lowp float fk;fk=(et+sqrt((fi+(((1.0-fi)*et)*et))));lowp float fl;if((fk==0.0)){fl=0.0;}else{fl=(fj/fk);}lowp float fm;fm=(2.0*fa);lowp float fn;fn=(fa+sqrt((fi+(((1.0-fi)*fa)*fa))));lowp float fo;if((fn==0.0)){fo=0.0;}else{fo=(fm/fn);}fb=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*fd)-6.98316)*fd))));lowp float fp;fp=(fc*(fl*fo));lowp float fq;fq=((4.0*fa)*et);lowp float fr;if((fq==0.0)){fr=0.0;}else{fr=(fp/fq);}eV=((eX*fa)*((g/3.141593)+(fr*fb)));}vec4 fs;fs=lightSources34[0];vec4 ft;ft=lightSources34[1];lowp vec3 fu;if((fs.w==0.0)){fu=vec3(0.0,0.0,0.0);}else{vec3 fv;vec3 fw;if((fs.w==1.0)){fv=fs.xyz;fw=ft.xyz;}else{if((fs.w==2.0)){vec3 fx;fx=(fs.xyz-interpolatedPosition);float fy;fy=sqrt(dot(fx,fx));fv=(fx/fy);fw=(ft.xyz/((12.56637*fy)*fy));}}lowp float fz;fz=clamp(dot(a,fv),0.0,1.0);vec3 fA;lowp float fB;float fC;vec3 fD;fD=normalize((b+fv));fC=clamp(dot(b,fD),0.0,1.0);lowp vec3 fE;fE=((a.yzx*fD.zxy)-(a.zxy*fD.yzx));lowp float fF;fF=(clamp(dot(a,fD),0.0,1.0)*e);lowp float fG;fG=(e/(dot(fE,fE)+(fF*fF)));fB=min(((fG*fG)*0.3183099),65504.0);float fH;fH=(e*e);lowp float fI;fI=(2.0*et);lowp float fJ;fJ=(et+sqrt((fH+(((1.0-fH)*et)*et))));lowp float fK;if((fJ==0.0)){fK=0.0;}else{fK=(fI/fJ);}lowp float fL;fL=(2.0*fz);lowp float fM;fM=(fz+sqrt((fH+(((1.0-fH)*fz)*fz))));lowp float fN;if((fM==0.0)){fN=0.0;}else{fN=(fL/fM);}fA=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*fC)-6.98316)*fC))));lowp float fO;fO=(fB*(fK*fN));lowp float fP;fP=((4.0*fz)*et);lowp float fQ;if((fP==0.0)){fQ=0.0;}else{fQ=(fO/fP);}fu=((fw*fz)*((g/3.141593)+(fQ*fA)));}vec4 fR;fR=lightSources34[2];vec4 fS;fS=lightSources34[3];lowp vec3 fT;if((fR.w==0.0)){fT=vec3(0.0,0.0,0.0);}else{vec3 fU;vec3 fV;if((fR.w==1.0)){fU=fR.xyz;fV=fS.xyz;}else{if((fR.w==2.0)){vec3 fW;fW=(fR.xyz-interpolatedPosition);float fX;fX=sqrt(dot(fW,fW));fU=(fW/fX);fV=(fS.xyz/((12.56637*fX)*fX));}}lowp float fY;fY=clamp(dot(a,fU),0.0,1.0);vec3 fZ;lowp float ga;float gb;vec3 gc;gc=normalize((b+fU));gb=clamp(dot(b,gc),0.0,1.0);lowp vec3 gd;gd=((a.yzx*gc.zxy)-(a.zxy*gc.yzx));lowp float ge;ge=(clamp(dot(a,gc),0.0,1.0)*e);lowp float gf;gf=(e/(dot(gd,gd)+(ge*ge)));ga=min(((gf*gf)*0.3183099),65504.0);float gg;gg=(e*e);lowp float gh;gh=(2.0*et);lowp float gi;gi=(et+sqrt((gg+(((1.0-gg)*et)*et))));lowp float gj;if((gi==0.0)){gj=0.0;}else{gj=(gh/gi);}lowp float gk;gk=(2.0*fY);lowp float gl;gl=(fY+sqrt((gg+(((1.0-gg)*fY)*fY))));lowp float gm;if((gl==0.0)){gm=0.0;}else{gm=(gk/gl);}fZ=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*gb)-6.98316)*gb))));lowp float gn;gn=(ga*(gj*gm));lowp float go;go=((4.0*fY)*et);lowp float gp;if((go==0.0)){gp=0.0;}else{gp=(gn/go);}fT=((fV*fY)*((g/3.141593)+(gp*fZ)));}vec4 gq;gq=lightSources56[0];vec4 gr;gr=lightSources56[1];lowp vec3 gs;if((gq.w==0.0)){gs=vec3(0.0,0.0,0.0);}else{vec3 gt;vec3 gu;if((gq.w==1.0)){gt=gq.xyz;gu=gr.xyz;}else{if((gq.w==2.0)){vec3 gv;gv=(gq.xyz-interpolatedPosition);float gw;gw=sqrt(dot(gv,gv));gt=(gv/gw);gu=(gr.xyz/((12.56637*gw)*gw));}}lowp float gx;gx=clamp(dot(a,gt),0.0,1.0);vec3 gy;lowp float gz;float gA;vec3 gB;gB=normalize((b+gt));gA=clamp(dot(b,gB),0.0,1.0);lowp vec3 gC;gC=((a.yzx*gB.zxy)-(a.zxy*gB.yzx));lowp float gD;gD=(clamp(dot(a,gB),0.0,1.0)*e);lowp float gE;gE=(e/(dot(gC,gC)+(gD*gD)));gz=min(((gE*gE)*0.3183099),65504.0);float gF;gF=(e*e);lowp float gG;gG=(2.0*et);lowp float gH;gH=(et+sqrt((gF+(((1.0-gF)*et)*et))));lowp float gI;if((gH==0.0)){gI=0.0;}else{gI=(gG/gH);}lowp float gJ;gJ=(2.0*gx);lowp float gK;gK=(gx+sqrt((gF+(((1.0-gF)*gx)*gx))));lowp float gL;if((gK==0.0)){gL=0.0;}else{gL=(gJ/gK);}gy=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*gA)-6.98316)*gA))));lowp float gM;gM=(gz*(gI*gL));lowp float gN;gN=((4.0*gx)*et);lowp float gO;if((gN==0.0)){gO=0.0;}else{gO=(gM/gN);}gs=((gu*gx)*((g/3.141593)+(gO*gy)));}vec4 gP;gP=lightSources56[2];vec4 gQ;gQ=lightSources56[3];lowp vec3 gR;if((gP.w==0.0)){gR=vec3(0.0,0.0,0.0);}else{vec3 gS;vec3 gT;if((gP.w==1.0)){gS=gP.xyz;gT=gQ.xyz;}else{if((gP.w==2.0)){vec3 gU;gU=(gP.xyz-interpolatedPosition);float gV;gV=sqrt(dot(gU,gU));gS=(gU/gV);gT=(gQ.xyz/((12.56637*gV)*gV));}}lowp float gW;gW=clamp(dot(a,gS),0.0,1.0);vec3 gX;lowp float gY;float gZ;vec3 ha;ha=normalize((b+gS));gZ=clamp(dot(b,ha),0.0,1.0);lowp vec3 hb;hb=((a.yzx*ha.zxy)-(a.zxy*ha.yzx));lowp float hc;hc=(clamp(dot(a,ha),0.0,1.0)*e);lowp float hd;hd=(e/(dot(hb,hb)+(hc*hc)));gY=min(((hd*hd)*0.3183099),65504.0);float he;he=(e*e);lowp float hf;hf=(2.0*et);lowp float hg;hg=(et+sqrt((he+(((1.0-he)*et)*et))));lowp float hh;if((hg==0.0)){hh=0.0;}else{hh=(hf/hg);}lowp float hi;hi=(2.0*gW);lowp float hj;hj=(gW+sqrt((he+(((1.0-he)*gW)*gW))));lowp float hk;if((hj==0.0)){hk=0.0;}else{hk=(hi/hj);}gX=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*gZ)-6.98316)*gZ))));lowp float hl;hl=(gY*(hh*hk));lowp float hm;hm=((4.0*gW)*et);lowp float hn;if((hm==0.0)){hn=0.0;}else{hn=(hl/hm);}gR=((gT*gW)*((g/3.141593)+(hn*gX)));}vec4 ho;ho=lightSources78[0];vec4 hp;hp=lightSources78[1];lowp vec3 hq;if((ho.w==0.0)){hq=vec3(0.0,0.0,0.0);}else{vec3 hr;vec3 hs;if((ho.w==1.0)){hr=ho.xyz;hs=hp.xyz;}else{if((ho.w==2.0)){vec3 ht;ht=(ho.xyz-interpolatedPosition);float hu;hu=sqrt(dot(ht,ht));hr=(ht/hu);hs=(hp.xyz/((12.56637*hu)*hu));}}lowp float hv;hv=clamp(dot(a,hr),0.0,1.0);vec3 hw;lowp float hx;float hy;vec3 hz;hz=normalize((b+hr));hy=clamp(dot(b,hz),0.0,1.0);lowp vec3 hA;hA=((a.yzx*hz.zxy)-(a.zxy*hz.yzx));lowp float hB;hB=(clamp(dot(a,hz),0.0,1.0)*e);lowp float hC;hC=(e/(dot(hA,hA)+(hB*hB)));hx=min(((hC*hC)*0.3183099),65504.0);float hD;hD=(e*e);lowp float hE;hE=(2.0*et);lowp float hF;hF=(et+sqrt((hD+(((1.0-hD)*et)*et))));lowp float hG;if((hF==0.0)){hG=0.0;}else{hG=(hE/hF);}lowp float hH;hH=(2.0*hv);lowp float hI;hI=(hv+sqrt((hD+(((1.0-hD)*hv)*hv))));lowp float hJ;if((hI==0.0)){hJ=0.0;}else{hJ=(hH/hI);}hw=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*hy)-6.98316)*hy))));lowp float hK;hK=(hx*(hG*hJ));lowp float hL;hL=((4.0*hv)*et);lowp float hM;if((hL==0.0)){hM=0.0;}else{hM=(hK/hL);}hq=((hs*hv)*((g/3.141593)+(hM*hw)));}vec4 hN;hN=lightSources78[2];vec4 hO;hO=lightSources78[3];lowp vec3 hP;if((hN.w==0.0)){hP=vec3(0.0,0.0,0.0);}else{vec3 hQ;vec3 hR;if((hN.w==1.0)){hQ=hN.xyz;hR=hO.xyz;}else{if((hN.w==2.0)){vec3 hS;hS=(hN.xyz-interpolatedPosition);float hT;hT=sqrt(dot(hS,hS));hQ=(hS/hT);hR=(hO.xyz/((12.56637*hT)*hT));}}lowp float hU;hU=clamp(dot(a,hQ),0.0,1.0);vec3 hV;lowp float hW;float hX;vec3 hY;hY=normalize((b+hQ));hX=clamp(dot(b,hY),0.0,1.0);lowp vec3 hZ;hZ=((a.yzx*hY.zxy)-(a.zxy*hY.yzx));lowp float ia;ia=(clamp(dot(a,hY),0.0,1.0)*e);lowp float ib;ib=(e/(dot(hZ,hZ)+(ia*ia)));hW=min(((ib*ib)*0.3183099),65504.0);float ic;ic=(e*e);lowp float id;id=(2.0*et);lowp float ie;ie=(et+sqrt((ic+(((1.0-ic)*et)*et))));lowp float if_;if((ie==0.0)){if_=0.0;}else{if_=(id/ie);}lowp float ig;ig=(2.0*hU);lowp float ih;ih=(hU+sqrt((ic+(((1.0-ic)*hU)*hU))));lowp float ii;if((ih==0.0)){ii=0.0;}else{ii=(ig/ih);}hV=(h+((vec3(1.0,1.0,1.0)-h)*exp2((((-5.55473*hX)-6.98316)*hX))));lowp float ij;ij=(hW*(if_*ii));lowp float ik;ik=((4.0*hU)*et);lowp float il;if((ik==0.0)){il=0.0;}else{il=(ij/ik);}hP=((hR*hU)*((g/3.141593)+(il*hV)));}d=(((i+ew)+(eV+fu))+((fT+gs)+((gR+hq)+hP)));vec3 im;im=sceneProperties[2].xyz;lowp float in_;in_=(d.x/im.x);lowp float io;io=(d.y/im.y);lowp float ip;ip=(d.z/im.z);lowp float iq;iq=(((0.2126*in_)+(0.7152*io))+(0.0722*ip));float ir;ir=sceneProperties[2].w;lowp float is;is=(((iq*(1.0+(iq/(ir*ir))))/(1.0+iq))/iq);lowp float it;it=(in_*is);mediump float iu;if((it<=0.0031308)){iu=(12.92*it);}else{iu=((1.055*pow(it,0.4166667))-0.055);}lowp float iv;iv=(io*is);mediump float iw;if((iv<=0.0031308)){iw=(12.92*iv);}else{iw=((1.055*pow(iv,0.4166667))-0.055);}lowp float ix;ix=(ip*is);mediump float iy;if((ix<=0.0031308)){iy=(12.92*ix);}else{iy=((1.055*pow(ix,0.4166667))-0.055);}mediump vec4 iz;iz.w=1.0;iz.x=iu;iz.y=iw;iz.z=iy;gl_FragColor=iz;}
     |]
 
 
@@ -2312,531 +489,5 @@ physicalTexturesFragment :
         }
 physicalTexturesFragment =
     [glsl|
-        precision mediump float;
-        
-        uniform mat4 sceneProperties;
-        uniform mat4 environmentalLighting;
-        uniform mat4 viewMatrix;
-        uniform mat4 lightSources12;
-        uniform mat4 lightSources34;
-        uniform mat4 lightSources56;
-        uniform mat4 lightSources78;
-        uniform sampler2D baseColorTexture;
-        uniform vec4 constantBaseColor;
-        uniform sampler2D roughnessTexture;
-        uniform vec4 roughnessChannel;
-        uniform sampler2D metallicTexture;
-        uniform vec4 metallicChannel;
-        uniform sampler2D normalMapTexture;
-        uniform float useNormalMap;
-        
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
-        
-        const float kPerspectiveProjection = 0.0;
-        const float kNoEnvironmentalLighting = 0.0;
-        const float kSoftLighting = 1.0;
-        const float kFastSoftLighting = 2.0;
-        const float kDirectionalLightSource = 1.0;
-        const float kPointLightSource = 2.0;
-        const float kPi = 3.14159265359;
-        const float kMediumpFloatMax = 65504.0;
-        const float kDisabledLightSource = 0.0;
-        
-        float getChannelValue(sampler2D texture, vec2 uv, vec4 channel) {
-            float constantValue = channel.a;
-            float useConstant = float(channel.rgb == vec3(0.0, 0.0, 0.0));
-            float useTexture = 1.0 - useConstant;
-            float textureValue = dot(texture2D(texture, uv).rgb, channel.rgb);
-            return clamp(textureValue * useTexture + constantValue * useConstant, 0.0, 1.0);
-        }
-        
-        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
-            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
-            float x = 2.0 * (rgb.r - 0.5);
-            float y = 2.0 * (rgb.g - 0.5);
-            float z = 2.0 * (rgb.b - 0.5);
-            return normalize(vec3(-x, -y, z));
-        }
-        
-        float getNormalSign() {
-            return 2.0 * float(gl_FrontFacing) - 1.0;
-        }
-        
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent) * normalSign;
-            return normalize(localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal);
-        }
-        
-        vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
-            float projectionType = sceneProperties[1].w;
-            if (projectionType == kPerspectiveProjection) {
-                vec3 cameraPoint = sceneProperties[1].xyz;
-                return normalize(cameraPoint - surfacePosition);
-            } else {
-                return sceneProperties[1].xyz;
-            }
-        }
-        
-        vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
-            t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
-            vec3 vNh = t1 * vT1 + t2 * vT2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * vH;
-            return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
-        }
-        
-        vec3 specularLightDirection(vec3 v, vec3 h) {
-            return (2.0 * dot(v, h)) * h - v;
-        }
-        
-        vec3 softLightingLuminance(
-            vec3 aboveLuminance,
-            vec3 belowLuminance,
-            vec3 localUpDirection,
-            vec3 localLightDirection
-        ) {
-            float sinElevation = dot(localLightDirection, localUpDirection);
-            float t = (sinElevation + 1.0) / 2.0;
-            return aboveLuminance * t + belowLuminance * (1.0 - t);
-        }
-        
-        float positiveDotProduct(vec3 v1, vec3 v2) {
-            return clamp(dot(v1, v2), 0.0, 1.0);
-        }
-        
-        vec3 fresnelColor(vec3 specularBaseColor, float dotVH) {
-            vec3 one = vec3(1.0, 1.0, 1.0);
-            float scale = exp2((-5.55473 * dotVH - 6.98316) * dotVH);
-            return specularBaseColor + (one - specularBaseColor) * scale;
-        }
-        
-        float safeQuotient(float numerator, float denominator) {
-            if (denominator == 0.0) {
-                return 0.0;
-            } else {
-                return numerator / denominator;
-            }
-        }
-        
-        float g1(float dotNV, float alphaSquared) {
-            return safeQuotient(2.0 * dotNV, dotNV + sqrt(alphaSquared + (1.0 - alphaSquared) * dotNV * dotNV));
-        }
-        
-        vec3 softLightingSpecularSample(
-            vec3 aboveLuminance,
-            vec3 belowLuminance,
-            vec3 localUpDirection,
-            vec3 localViewDirection,
-            vec3 localLightDirection,
-            vec3 localHalfDirection,
-            float alphaSquared,
-            vec3 specularBaseColor
-        ) {
-            vec3 luminance = softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection);
-            float dotVH = positiveDotProduct(localViewDirection, localHalfDirection);
-            float dotNL = localLightDirection.z;
-            return luminance * (fresnelColor(specularBaseColor, dotVH) * g1(dotNL, alphaSquared));
-        }
-        
-        vec3 physicalEnvironmentalLighting(
-            vec3 normalDirection,
-            vec3 diffuseBaseColor,
-            vec3 specularBaseColor,
-            float alpha,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            mat4 environmentalLighting
-        ) {
-            float environmentalLightingType = environmentalLighting[0].w;
-            float alphaSquared = alpha * alpha;
-        
-            if (environmentalLightingType == kNoEnvironmentalLighting) {
-                return vec3(0.0, 0.0, 0.0);
-            }
-        
-            if (environmentalLightingType == kSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localViewX = dot(directionToCamera, xDirection);
-                float localViewZ = dot(directionToCamera, normalDirection);
-                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-        
-                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
-                vec3 vT1 = vec3(0.0, 1.0, 0.0);
-                vec3 vT2 = cross(vH, vT1);
-                float s = 0.5 * (1.0 + vH.z);
-                
-                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
-                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
-                float numSamples = 13.0;
-                
-                vec3 specularSum = vec3(0.0, 0.0, 0.0);
-        
-                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.448762, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-        
-                localHalfDirection = sampleFacetNormal(0.000000, 0.448762, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.448762, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.000000, -0.448762, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.748423, 0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.310007, 0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.310007, 0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.748423, 0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.748423, -0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(-0.310007, -0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.310007, -0.748423, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localHalfDirection = sampleFacetNormal(0.748423, -0.310007, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                specularSum += softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
-        
-                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.606266, 0.000000, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, 0.606266, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.606266, 0.000000, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.000000, -0.606266, 0.795262);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.873598, 0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, 0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, 0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, 0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.873598, -0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(-0.361856, -0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                localLightDirection = vec3(0.361856, -0.873598, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-        
-                localLightDirection = vec3(0.873598, -0.361856, 0.325402);
-                diffuseSum += softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return (specularSum + 2.0 * diffuseSum * diffuseBaseColor) / numSamples;
-            } else if (environmentalLightingType == kFastSoftLighting) {
-                vec3 upDirection = environmentalLighting[0].xyz;
-                vec3 aboveLuminance = environmentalLighting[1].rgb;
-                vec3 belowLuminance = environmentalLighting[2].rgb;
-                vec3 crossProduct = cross(normalDirection, directionToCamera);
-                float crossMagnitude = length(crossProduct);
-                vec3 xDirection = vec3(0.0, 0.0, 0.0);
-                vec3 yDirection = vec3(0.0, 0.0, 0.0);
-                if (crossMagnitude > 1.0e-6) {
-                    yDirection = (1.0 / crossMagnitude) * crossProduct;
-                    xDirection = cross(yDirection, normalDirection);
-                } else {
-                    vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-                    xDirection = normalize(cross(viewY, normalDirection));
-                    yDirection = cross(normalDirection, xDirection);
-                }
-                float localViewX = dot(directionToCamera, xDirection);
-                float localViewZ = dot(directionToCamera, normalDirection);
-                vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
-                float localUpX = dot(upDirection, xDirection);
-                float localUpY = dot(upDirection, yDirection);
-                float localUpZ = dot(upDirection, normalDirection);
-                vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
-        
-                vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
-                vec3 vT1 = vec3(0.0, 1.0, 0.0);
-                vec3 vT2 = cross(vH, vT1);
-                float s = 0.5 * (1.0 + vH.z);
-                
-                vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
-                vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
-                
-                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
-                vec3 specular = softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-                
-                localLightDirection = vec3(0.000000, 0.000000, 1.000000);
-                vec3 diffuse = softLightingLuminance(aboveLuminance, belowLuminance, localUpDirection, localLightDirection) * localLightDirection.z;
-                
-                return specular + diffuse * diffuseBaseColor;
-            } else {
-                return vec3(0.0, 0.0, 0.0); 
-            }
-        }
-        
-        void getDirectionToLightAndNormalIlluminance(
-            vec4 xyz_type,
-            vec4 rgb_radius,
-            vec3 surfacePosition,
-            out vec3 directionToLight,
-            out vec3 normalIlluminance
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
-                directionToLight = xyz_type.xyz;
-                normalIlluminance = rgb_radius.rgb;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightSourcePosition = xyz_type.xyz;
-                vec3 displacement = lightSourcePosition - surfacePosition;
-                float distance = length(displacement);
-                directionToLight = displacement / distance;
-                normalIlluminance = rgb_radius.rgb / (4.0 * kPi * distance * distance);
-            }
-        }
-        
-        // Adapted from https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/normaldistributionfunction(speculard)
-        float specularD(float alpha, float dotNH, vec3 normalDirection, vec3 halfDirection) {
-            vec3 crossNH = cross(normalDirection, halfDirection);
-            float a = dotNH * alpha;
-            float k = alpha / (dot(crossNH, crossNH) + a * a);
-            float d = k * k * (1.0 / kPi);
-            return min(d, kMediumpFloatMax);
-        }
-        
-        float specularG(float dotNL, float dotNV, float alphaSquared) {
-            return g1(dotNV, alphaSquared) * g1(dotNL, alphaSquared);
-        }
-        
-        vec3 brdf(vec3 normalDirection, vec3 directionToCamera, vec3 directionToLight, float alpha, float dotNV, float dotNL, vec3 specularBaseColor, vec3 normalIlluminance) {
-            vec3 halfDirection = normalize(directionToCamera + directionToLight);
-            float dotVH = positiveDotProduct(directionToCamera, halfDirection);
-            float dotNH = positiveDotProduct(normalDirection, halfDirection);
-            float dotNHSquared = dotNH * dotNH;
-        
-            float d = specularD(alpha, dotNH, normalDirection, halfDirection);
-            float g = specularG(dotNL, dotNV, alpha * alpha);
-            vec3 f = fresnelColor(specularBaseColor, dotVH);
-            return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
-        }
-        
-        vec3 physicalLightSource(
-            vec4 xyz_type,
-            vec4 rgb_radius,
-            vec3 surfacePosition,
-            vec3 normalDirection,
-            vec3 directionToCamera,
-            float dotNV,
-            vec3 diffuseBaseColor,
-            vec3 specularBaseColor,
-            float alpha
-        ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDisabledLightSource) {
-                return vec3(0.0, 0.0, 0.0);
-            }
-        
-            vec3 directionToLight = vec3(0.0, 0.0, 0.0);
-            vec3 normalIlluminance = vec3(0.0, 0.0, 0.0);
-            getDirectionToLightAndNormalIlluminance(xyz_type, rgb_radius, surfacePosition, directionToLight, normalIlluminance);
-        
-            float dotNL = positiveDotProduct(normalDirection, directionToLight);
-            vec3 specularColor = brdf(normalDirection, directionToCamera, directionToLight, alpha, dotNV, dotNL, specularBaseColor, normalIlluminance);
-            return (normalIlluminance * dotNL) * ((diffuseBaseColor / kPi) + specularColor);
-        }
-        
-        vec3 physicalDirectLighting(
-            vec3 surfacePosition,
-            vec3 surfaceNormal,
-            vec3 directionToCamera,
-            vec3 diffuseBaseColor,
-            vec3 specularBaseColor,
-            float alpha,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
-            vec3 litColor1 = physicalLightSource(lightSources12[0], lightSources12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLightSource(lightSources12[2], lightSources12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLightSource(lightSources34[0], lightSources34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLightSource(lightSources34[2], lightSources34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalLightSource(lightSources56[0], lightSources56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalLightSource(lightSources56[2], lightSources56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalLightSource(lightSources78[0], lightSources78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalLightSource(lightSources78[2], lightSources78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
-        }
-        
-        vec3 physicalLighting(
-            vec3 position,
-            vec3 normalDirection,
-            vec3 baseColor,
-            vec3 directionToCamera,
-            mat4 viewMatrix,
-            float roughness,
-            float metallic,
-            mat4 environmentalLighting,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
-        ) {
-            float alpha = roughness * roughness;
-            float nonmetallic = 1.0 - metallic;
-            vec3 diffuseBaseColor = nonmetallic * 0.96 * baseColor;
-            vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
-        
-            vec3 environmentalContribution = physicalEnvironmentalLighting(
-                normalDirection,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
-                directionToCamera,
-                viewMatrix,
-                environmentalLighting
-            );
-        
-            vec3 directContribution = physicalDirectLighting(
-                interpolatedPosition,
-                normalDirection,
-                directionToCamera,
-                diffuseBaseColor,
-                specularBaseColor,
-                alpha,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-        
-            return environmentalContribution + directContribution;
-        }
-        
-        float inverseGamma(float u) {
-            if (u <= 0.04045) {
-                return clamp(u / 12.92, 0.0, 1.0);
-            } else {
-                return clamp(pow((u + 0.055) / 1.055, 2.4), 0.0, 1.0);
-            }
-        }
-        
-        vec3 fromSrgb(vec3 srgbColor) {
-            return vec3(
-                inverseGamma(srgbColor.r),
-                inverseGamma(srgbColor.g),
-                inverseGamma(srgbColor.b)
-            );
-        }
-        
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
-        float gammaCorrect(float u) {
-            if (u <= 0.0031308) {
-                return 12.92 * u;
-            } else {
-                return 1.055 * pow(u, 1.0 / 2.4) - 0.055;
-            }
-        }
-        
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
-            vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
-        }
-        
-        void main() {
-            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
-            float roughness = getChannelValue(roughnessTexture, interpolatedUv, roughnessChannel);
-            float metallic = getChannelValue(metallicTexture, interpolatedUv, metallicChannel);
-        
-            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
-            float normalSign = getNormalSign();
-            vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
-            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, normalSign, localNormal);
-            vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
-        
-            vec3 linearColor = physicalLighting(
-                interpolatedPosition,
-                normalDirection,
-                baseColor,
-                directionToCamera,
-                viewMatrix,
-                roughness,
-                metallic,
-                environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
-            );
-        
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
-        }
+        precision mediump float;uniform mat4 sceneProperties;uniform mat4 environmentalLighting;uniform mat4 viewMatrix;uniform mat4 lightSources12;uniform mat4 lightSources34;uniform mat4 lightSources56;uniform mat4 lightSources78;uniform sampler2D baseColorTexture;uniform vec4 constantBaseColor;uniform sampler2D roughnessTexture;uniform vec4 roughnessChannel;uniform sampler2D metallicTexture;uniform vec4 metallicChannel;uniform sampler2D normalMapTexture;uniform float useNormalMap;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){lowp vec3 a;lowp float b;lowp float c;lowp vec3 d;lowp vec3 e;e=texture2D(baseColorTexture,interpolatedUv).xyz;lowp float f;if((e.x<=0.04045)){f=clamp((e.x/12.92),0.0,1.0);}else{f=clamp(pow(((e.x+0.055)/1.055),2.4),0.0,1.0);}lowp float g;if((e.y<=0.04045)){g=clamp((e.y/12.92),0.0,1.0);}else{g=clamp(pow(((e.y+0.055)/1.055),2.4),0.0,1.0);}lowp float h;if((e.z<=0.04045)){h=clamp((e.z/12.92),0.0,1.0);}else{h=clamp(pow(((e.z+0.055)/1.055),2.4),0.0,1.0);}lowp vec3 i;i.x=f;i.y=g;i.z=h;d=((i*(1.0-constantBaseColor.w))+(constantBaseColor.xyz*constantBaseColor.w));float j;j=float((roughnessChannel.xyz==vec3(0.0,0.0,0.0)));c=clamp(((dot(texture2D(roughnessTexture,interpolatedUv).xyz,roughnessChannel.xyz)*(1.0-j))+(roughnessChannel.w*j)),0.0,1.0);float k;k=float((metallicChannel.xyz==vec3(0.0,0.0,0.0)));b=clamp(((dot(texture2D(metallicTexture,interpolatedUv).xyz,metallicChannel.xyz)*(1.0-k))+(metallicChannel.w*k)),0.0,1.0);lowp vec3 l;l=((useNormalMap*texture2D(normalMapTexture,interpolatedUv).xyz)+((1.0-useNormalMap)*vec3(0.5,0.5,1.0)));lowp vec3 m;m.xy=-((vec2(2.0,2.0)*(l.xy-vec2(0.5,0.5))));m.z=(2.0*(l.z-0.5));lowp vec3 n;n=normalize(m);lowp float o;o=((2.0*float(gl_FrontFacing))-1.0);lowp vec3 p;p=(normalize(interpolatedNormal)*o);a=normalize((((n.x*interpolatedTangent)+(n.y*(((p.yzx*interpolatedTangent.zxy)-(p.zxy*interpolatedTangent.yzx))*o)))+(n.z*p)));vec3 q;float r;r=sceneProperties[1].w;if((r==0.0)){q=normalize((sceneProperties[1].xyz-interpolatedPosition));}else{q=sceneProperties[1].xyz;}lowp vec3 s;lowp float t;t=(c*c);lowp float u;u=(1.0-b);lowp vec3 v;v=((u*0.96)*d);lowp vec3 w;w=(vec3((u*0.04))+(b*d));lowp vec3 x;float y;y=environmentalLighting[0].w;lowp float z;z=(t*t);if((y==0.0)){x=vec3(0.0,0.0,0.0);}else{if((y==1.0)){lowp vec3 A;lowp vec3 B;lowp vec3 C;lowp vec3 D;vec3 E;E=environmentalLighting[0].xyz;vec3 F;F=environmentalLighting[1].xyz;vec3 G;G=environmentalLighting[2].xyz;lowp vec3 H;H=((a.yzx*q.zxy)-(a.zxy*q.yzx));lowp float I;I=sqrt(dot(H,H));D=vec3(0.0,0.0,0.0);C=vec3(0.0,0.0,0.0);if((I>1e-06)){C=((1.0/(I))*H);D=((C.yzx*a.zxy)-(C.zxy*a.yzx));}else{vec3 J;J.x=viewMatrix[0].y;J.y=viewMatrix[1].y;J.z=viewMatrix[2].y;lowp vec3 K;K=normalize(((J.yzx*a.zxy)-(J.zxy*a.yzx)));D=K;C=((a.yzx*K.zxy)-(a.zxy*K.yzx));}lowp float L;L=dot(q,D);lowp float M;M=dot(q,a);lowp vec3 N;N.y=0.0;N.x=L;N.z=M;lowp vec3 O;O.x=dot(E,D);O.y=dot(E,C);O.z=dot(E,a);lowp vec3 P;P.y=0.0;P.x=(t*L);P.z=M;lowp vec3 Q;Q=normalize(P);lowp vec3 R;R=((Q.yzx*vec3(0.0,0.0,1.0))-(Q.zxy*vec3(1.0,0.0,0.0)));lowp float S;S=(0.5*(1.0+Q.z));B=vec3(0.0,0.0,0.0);lowp float T;T=(1.0-S);lowp vec3 U;U=((T*R)+(sqrt(max(0.0,(1.0-(T*T))))*Q));lowp vec3 V;V.xy=(vec2(t)*U.xy);V.z=max(0.0,U.z);lowp vec3 W;W=normalize(V);lowp vec3 X;X=(((2.0*dot(N,W))*W)-N);lowp vec3 Y;lowp float Z;Z=((dot(X,O)+1.0)/2.0);Y=((F*Z)+(G*(1.0-Z)));lowp float ba;ba=clamp(dot(N,W),0.0,1.0);lowp vec3 bb;bb=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*ba)-6.98316)*ba))));lowp float bc;bc=(2.0*X.z);lowp float bd;bd=(X.z+sqrt((z+(((1.0-z)*X.z)*X.z))));lowp float be;if((bd==0.0)){be=0.0;}else{be=(bc/bd);}B=(Y*(bb*be));lowp float bf;bf=((1.0-S)*0.8936513);lowp vec3 bg;bg=((vec3(0.0,0.448762,0.0)+(bf*R))+(sqrt(max(0.0,(0.7986127-(bf*bf))))*Q));lowp vec3 bh;bh.xy=(vec2(t)*bg.xy);bh.z=max(0.0,bg.z);lowp vec3 bi;bi=normalize(bh);lowp vec3 bj;bj=(((2.0*dot(N,bi))*bi)-N);lowp vec3 bk;lowp float bl;bl=((dot(bj,O)+1.0)/2.0);bk=((F*bl)+(G*(1.0-bl)));lowp float bm;bm=clamp(dot(N,bi),0.0,1.0);lowp vec3 bn;bn=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*bm)-6.98316)*bm))));lowp float bo;bo=(2.0*bj.z);lowp float bp;bp=(bj.z+sqrt((z+(((1.0-z)*bj.z)*bj.z))));lowp float bq;if((bp==0.0)){bq=0.0;}else{bq=(bo/bp);}B=(B+(bk*(bn*bq)));lowp float br;br=((1.0-S)+(S*0.448762));lowp vec3 bs;bs=((br*R)+(sqrt(max(0.0,(1.0-(br*br))))*Q));lowp vec3 bt;bt.xy=(vec2(t)*bs.xy);bt.z=max(0.0,bs.z);lowp vec3 bu;bu=normalize(bt);lowp vec3 bv;bv=(((2.0*dot(N,bu))*bu)-N);lowp vec3 bw;lowp float bx;bx=((dot(bv,O)+1.0)/2.0);bw=((F*bx)+(G*(1.0-bx)));lowp float by;by=clamp(dot(N,bu),0.0,1.0);lowp vec3 bz;bz=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*by)-6.98316)*by))));lowp float bA;bA=(2.0*bv.z);lowp float bB;bB=(bv.z+sqrt((z+(((1.0-z)*bv.z)*bv.z))));lowp float bC;if((bB==0.0)){bC=0.0;}else{bC=(bA/bB);}B=(B+(bw*(bz*bC)));lowp float bD;bD=((1.0-S)*0.8936513);lowp vec3 bE;bE=((vec3(-0.0,-0.448762,-0.0)+(bD*R))+(sqrt(max(0.0,(0.7986127-(bD*bD))))*Q));lowp vec3 bF;bF.xy=(vec2(t)*bE.xy);bF.z=max(0.0,bE.z);lowp vec3 bG;bG=normalize(bF);lowp vec3 bH;bH=(((2.0*dot(N,bG))*bG)-N);lowp vec3 bI;lowp float bJ;bJ=((dot(bH,O)+1.0)/2.0);bI=((F*bJ)+(G*(1.0-bJ)));lowp float bK;bK=clamp(dot(N,bG),0.0,1.0);lowp vec3 bL;bL=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*bK)-6.98316)*bK))));lowp float bM;bM=(2.0*bH.z);lowp float bN;bN=(bH.z+sqrt((z+(((1.0-z)*bH.z)*bH.z))));lowp float bO;if((bN==0.0)){bO=0.0;}else{bO=(bM/bN);}B=(B+(bI*(bL*bO)));lowp float bP;bP=((1.0-S)+(S*-0.448762));lowp vec3 bQ;bQ=((bP*R)+(sqrt(max(0.0,(1.0-(bP*bP))))*Q));lowp vec3 bR;bR.xy=(vec2(t)*bQ.xy);bR.z=max(0.0,bQ.z);lowp vec3 bS;bS=normalize(bR);lowp vec3 bT;bT=(((2.0*dot(N,bS))*bS)-N);lowp vec3 bU;lowp float bV;bV=((dot(bT,O)+1.0)/2.0);bU=((F*bV)+(G*(1.0-bV)));lowp float bW;bW=clamp(dot(N,bS),0.0,1.0);lowp vec3 bX;bX=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*bW)-6.98316)*bW))));lowp float bY;bY=(2.0*bT.z);lowp float bZ;bZ=(bT.z+sqrt((z+(((1.0-z)*bT.z)*bT.z))));lowp float ca;if((bZ==0.0)){ca=0.0;}else{ca=(bY/bZ);}B=(B+(bU*(bX*ca)));lowp float cb;cb=(((1.0-S)*0.6632217)+(S*0.310007));lowp vec3 cc;cc=((vec3(0.0,0.748423,0.0)+(cb*R))+(sqrt(max(0.0,(0.439863-(cb*cb))))*Q));lowp vec3 cd;cd.xy=(vec2(t)*cc.xy);cd.z=max(0.0,cc.z);lowp vec3 ce;ce=normalize(cd);lowp vec3 cf;cf=(((2.0*dot(N,ce))*ce)-N);lowp vec3 cg;lowp float ch;ch=((dot(cf,O)+1.0)/2.0);cg=((F*ch)+(G*(1.0-ch)));lowp float ci;ci=clamp(dot(N,ce),0.0,1.0);lowp vec3 cj;cj=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*ci)-6.98316)*ci))));lowp float ck;ck=(2.0*cf.z);lowp float cl;cl=(cf.z+sqrt((z+(((1.0-z)*cf.z)*cf.z))));lowp float cm;if((cl==0.0)){cm=0.0;}else{cm=(ck/cl);}B=(B+(cg*(cj*cm)));lowp float cn;cn=(((1.0-S)*0.9507343)+(S*0.748423));lowp vec3 co;co=((vec3(0.0,0.310007,0.0)+(cn*R))+(sqrt(max(0.0,(0.9038957-(cn*cn))))*Q));lowp vec3 cp;cp.xy=(vec2(t)*co.xy);cp.z=max(0.0,co.z);lowp vec3 cq;cq=normalize(cp);lowp vec3 cr;cr=(((2.0*dot(N,cq))*cq)-N);lowp vec3 cs;lowp float ct;ct=((dot(cr,O)+1.0)/2.0);cs=((F*ct)+(G*(1.0-ct)));lowp float cu;cu=clamp(dot(N,cq),0.0,1.0);lowp vec3 cv;cv=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*cu)-6.98316)*cu))));lowp float cw;cw=(2.0*cr.z);lowp float cx;cx=(cr.z+sqrt((z+(((1.0-z)*cr.z)*cr.z))));lowp float cy;if((cx==0.0)){cy=0.0;}else{cy=(cw/cx);}B=(B+(cs*(cv*cy)));lowp float cz;cz=(((1.0-S)*0.9507343)+(S*0.748423));lowp vec3 cA;cA=((vec3(-0.0,-0.310007,-0.0)+(cz*R))+(sqrt(max(0.0,(0.9038957-(cz*cz))))*Q));lowp vec3 cB;cB.xy=(vec2(t)*cA.xy);cB.z=max(0.0,cA.z);lowp vec3 cC;cC=normalize(cB);lowp vec3 cD;cD=(((2.0*dot(N,cC))*cC)-N);lowp vec3 cE;lowp float cF;cF=((dot(cD,O)+1.0)/2.0);cE=((F*cF)+(G*(1.0-cF)));lowp float cG;cG=clamp(dot(N,cC),0.0,1.0);lowp vec3 cH;cH=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*cG)-6.98316)*cG))));lowp float cI;cI=(2.0*cD.z);lowp float cJ;cJ=(cD.z+sqrt((z+(((1.0-z)*cD.z)*cD.z))));lowp float cK;if((cJ==0.0)){cK=0.0;}else{cK=(cI/cJ);}B=(B+(cE*(cH*cK)));lowp float cL;cL=(((1.0-S)*0.6632217)+(S*0.310007));lowp vec3 cM;cM=((vec3(-0.0,-0.748423,-0.0)+(cL*R))+(sqrt(max(0.0,(0.439863-(cL*cL))))*Q));lowp vec3 cN;cN.xy=(vec2(t)*cM.xy);cN.z=max(0.0,cM.z);lowp vec3 cO;cO=normalize(cN);lowp vec3 cP;cP=(((2.0*dot(N,cO))*cO)-N);lowp vec3 cQ;lowp float cR;cR=((dot(cP,O)+1.0)/2.0);cQ=((F*cR)+(G*(1.0-cR)));lowp float cS;cS=clamp(dot(N,cO),0.0,1.0);lowp vec3 cT;cT=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*cS)-6.98316)*cS))));lowp float cU;cU=(2.0*cP.z);lowp float cV;cV=(cP.z+sqrt((z+(((1.0-z)*cP.z)*cP.z))));lowp float cW;if((cV==0.0)){cW=0.0;}else{cW=(cU/cV);}B=(B+(cQ*(cT*cW)));lowp float cX;cX=(((1.0-S)*0.6632217)+(S*-0.310007));lowp vec3 cY;cY=((vec3(-0.0,-0.748423,-0.0)+(cX*R))+(sqrt(max(0.0,(0.439863-(cX*cX))))*Q));lowp vec3 cZ;cZ.xy=(vec2(t)*cY.xy);cZ.z=max(0.0,cY.z);lowp vec3 da;da=normalize(cZ);lowp vec3 db;db=(((2.0*dot(N,da))*da)-N);lowp vec3 dc;lowp float dd;dd=((dot(db,O)+1.0)/2.0);dc=((F*dd)+(G*(1.0-dd)));lowp float de;de=clamp(dot(N,da),0.0,1.0);lowp vec3 df;df=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*de)-6.98316)*de))));lowp float dg;dg=(2.0*db.z);lowp float dh;dh=(db.z+sqrt((z+(((1.0-z)*db.z)*db.z))));lowp float di;if((dh==0.0)){di=0.0;}else{di=(dg/dh);}B=(B+(dc*(df*di)));lowp float dj;dj=(((1.0-S)*0.9507343)+(S*-0.748423));lowp vec3 dk;dk=((vec3(-0.0,-0.310007,-0.0)+(dj*R))+(sqrt(max(0.0,(0.9038957-(dj*dj))))*Q));lowp vec3 dl;dl.xy=(vec2(t)*dk.xy);dl.z=max(0.0,dk.z);lowp vec3 dm;dm=normalize(dl);lowp vec3 dn;dn=(((2.0*dot(N,dm))*dm)-N);lowp vec3 do_;lowp float dp;dp=((dot(dn,O)+1.0)/2.0);do_=((F*dp)+(G*(1.0-dp)));lowp float dq;dq=clamp(dot(N,dm),0.0,1.0);lowp vec3 dr;dr=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*dq)-6.98316)*dq))));lowp float ds;ds=(2.0*dn.z);lowp float dt;dt=(dn.z+sqrt((z+(((1.0-z)*dn.z)*dn.z))));lowp float du;if((dt==0.0)){du=0.0;}else{du=(ds/dt);}B=(B+(do_*(dr*du)));lowp float dv;dv=(((1.0-S)*0.9507343)+(S*-0.748423));lowp vec3 dw;dw=((vec3(0.0,0.310007,0.0)+(dv*R))+(sqrt(max(0.0,(0.9038957-(dv*dv))))*Q));lowp vec3 dx;dx.xy=(vec2(t)*dw.xy);dx.z=max(0.0,dw.z);lowp vec3 dy;dy=normalize(dx);lowp vec3 dz;dz=(((2.0*dot(N,dy))*dy)-N);lowp vec3 dA;lowp float dB;dB=((dot(dz,O)+1.0)/2.0);dA=((F*dB)+(G*(1.0-dB)));lowp float dC;dC=clamp(dot(N,dy),0.0,1.0);lowp vec3 dD;dD=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*dC)-6.98316)*dC))));lowp float dE;dE=(2.0*dz.z);lowp float dF;dF=(dz.z+sqrt((z+(((1.0-z)*dz.z)*dz.z))));lowp float dG;if((dF==0.0)){dG=0.0;}else{dG=(dE/dF);}B=(B+(dA*(dD*dG)));lowp float dH;dH=(((1.0-S)*0.6632217)+(S*-0.310007));lowp vec3 dI;dI=((vec3(0.0,0.748423,0.0)+(dH*R))+(sqrt(max(0.0,(0.439863-(dH*dH))))*Q));lowp vec3 dJ;dJ.xy=(vec2(t)*dI.xy);dJ.z=max(0.0,dI.z);lowp vec3 dK;dK=normalize(dJ);lowp vec3 dL;dL=(((2.0*dot(N,dK))*dK)-N);lowp vec3 dM;lowp float dN;dN=((dot(dL,O)+1.0)/2.0);dM=((F*dN)+(G*(1.0-dN)));lowp float dO;dO=clamp(dot(N,dK),0.0,1.0);lowp vec3 dP;dP=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*dO)-6.98316)*dO))));lowp float dQ;dQ=(2.0*dL.z);lowp float dR;dR=(dL.z+sqrt((z+(((1.0-z)*dL.z)*dL.z))));lowp float dS;if((dR==0.0)){dS=0.0;}else{dS=(dQ/dR);}B=(B+(dM*(dP*dS)));lowp float dT;dT=((O.z+1.0)/2.0);A=((F*dT)+(G*(1.0-dT)));lowp float dU;dU=((dot(vec3(0.606266,0.0,0.795262),O)+1.0)/2.0);A=(A+(((F*dU)+(G*(1.0-dU)))*0.795262));lowp float dV;dV=((dot(vec3(0.0,0.606266,0.795262),O)+1.0)/2.0);A=(A+(((F*dV)+(G*(1.0-dV)))*0.795262));lowp float dW;dW=((dot(vec3(-0.606266,0.0,0.795262),O)+1.0)/2.0);A=(A+(((F*dW)+(G*(1.0-dW)))*0.795262));lowp float dX;dX=((dot(vec3(0.0,-0.606266,0.795262),O)+1.0)/2.0);A=(A+(((F*dX)+(G*(1.0-dX)))*0.795262));lowp float dY;dY=((dot(vec3(0.873598,0.361856,0.325402),O)+1.0)/2.0);A=(A+(((F*dY)+(G*(1.0-dY)))*0.325402));lowp float dZ;dZ=((dot(vec3(0.361856,0.873598,0.325402),O)+1.0)/2.0);A=(A+(((F*dZ)+(G*(1.0-dZ)))*0.325402));lowp float ea;ea=((dot(vec3(-0.361856,0.873598,0.325402),O)+1.0)/2.0);A=(A+(((F*ea)+(G*(1.0-ea)))*0.325402));lowp float eb;eb=((dot(vec3(-0.873598,0.361856,0.325402),O)+1.0)/2.0);A=(A+(((F*eb)+(G*(1.0-eb)))*0.325402));lowp float ec;ec=((dot(vec3(-0.873598,-0.361856,0.325402),O)+1.0)/2.0);A=(A+(((F*ec)+(G*(1.0-ec)))*0.325402));lowp float ed;ed=((dot(vec3(-0.361856,-0.873598,0.325402),O)+1.0)/2.0);A=(A+(((F*ed)+(G*(1.0-ed)))*0.325402));lowp float ee;ee=((dot(vec3(0.361856,-0.873598,0.325402),O)+1.0)/2.0);A=(A+(((F*ee)+(G*(1.0-ee)))*0.325402));lowp float ef;ef=((dot(vec3(0.873598,-0.361856,0.325402),O)+1.0)/2.0);A=(A+(((F*ef)+(G*(1.0-ef)))*0.325402));x=((B+((2.0*A)*v))/13.0);}else{if((y==2.0)){lowp vec3 eg;lowp vec3 eh;vec3 ei;ei=environmentalLighting[0].xyz;vec3 ej;ej=environmentalLighting[1].xyz;vec3 ek;ek=environmentalLighting[2].xyz;lowp vec3 el;el=((a.yzx*q.zxy)-(a.zxy*q.yzx));lowp float em;em=sqrt(dot(el,el));eh=vec3(0.0,0.0,0.0);eg=vec3(0.0,0.0,0.0);if((em>1e-06)){eg=((1.0/(em))*el);eh=((eg.yzx*a.zxy)-(eg.zxy*a.yzx));}else{vec3 en;en.x=viewMatrix[0].y;en.y=viewMatrix[1].y;en.z=viewMatrix[2].y;lowp vec3 eo;eo=normalize(((en.yzx*a.zxy)-(en.zxy*a.yzx)));eh=eo;eg=((a.yzx*eo.zxy)-(a.zxy*eo.yzx));}lowp float ep;ep=dot(q,eh);lowp float eq;eq=dot(q,a);lowp vec3 er;er.y=0.0;er.x=ep;er.z=eq;lowp vec3 es;es.x=dot(ei,eh);es.y=dot(ei,eg);es.z=dot(ei,a);lowp vec3 et;et.y=0.0;et.x=(t*ep);et.z=eq;lowp vec3 eu;eu=normalize(et);lowp float ev;ev=(1.0-(0.5*(1.0+eu.z)));lowp vec3 ew;ew=((ev*((eu.yzx*vec3(0.0,0.0,1.0))-(eu.zxy*vec3(1.0,0.0,0.0))))+(sqrt(max(0.0,(1.0-(ev*ev))))*eu));lowp vec3 ex;ex.xy=(vec2(t)*ew.xy);ex.z=max(0.0,ew.z);lowp vec3 ey;ey=normalize(ex);lowp vec3 ez;ez=(((2.0*dot(er,ey))*ey)-er);lowp vec3 eA;lowp float eB;eB=((dot(ez,es)+1.0)/2.0);eA=((ej*eB)+(ek*(1.0-eB)));lowp float eC;eC=clamp(dot(er,ey),0.0,1.0);lowp vec3 eD;eD=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*eC)-6.98316)*eC))));lowp float eE;eE=(2.0*ez.z);lowp float eF;eF=(ez.z+sqrt((z+(((1.0-z)*ez.z)*ez.z))));lowp float eG;if((eF==0.0)){eG=0.0;}else{eG=(eE/eF);}lowp float eH;eH=((es.z+1.0)/2.0);x=((eA*(eD*eG))+(((ej*eH)+(ek*(1.0-eH)))*v));}else{x=vec3(0.0,0.0,0.0);}}}lowp float eI;eI=clamp(dot(a,q),0.0,1.0);vec4 eJ;eJ=lightSources12[0];vec4 eK;eK=lightSources12[1];lowp vec3 eL;if((eJ.w==0.0)){eL=vec3(0.0,0.0,0.0);}else{vec3 eM;vec3 eN;if((eJ.w==1.0)){eM=eJ.xyz;eN=eK.xyz;}else{if((eJ.w==2.0)){vec3 eO;eO=(eJ.xyz-interpolatedPosition);float eP;eP=sqrt(dot(eO,eO));eM=(eO/eP);eN=(eK.xyz/((12.56637*eP)*eP));}}lowp float eQ;eQ=clamp(dot(a,eM),0.0,1.0);lowp vec3 eR;lowp float eS;float eT;vec3 eU;eU=normalize((q+eM));eT=clamp(dot(q,eU),0.0,1.0);lowp vec3 eV;eV=((a.yzx*eU.zxy)-(a.zxy*eU.yzx));lowp float eW;eW=(clamp(dot(a,eU),0.0,1.0)*t);lowp float eX;eX=(t/(dot(eV,eV)+(eW*eW)));eS=min(((eX*eX)*0.3183099),65504.0);lowp float eY;eY=(t*t);lowp float eZ;eZ=(2.0*eI);lowp float fa;fa=(eI+sqrt((eY+(((1.0-eY)*eI)*eI))));lowp float fb;if((fa==0.0)){fb=0.0;}else{fb=(eZ/fa);}lowp float fc;fc=(2.0*eQ);lowp float fd;fd=(eQ+sqrt((eY+(((1.0-eY)*eQ)*eQ))));lowp float fe;if((fd==0.0)){fe=0.0;}else{fe=(fc/fd);}eR=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*eT)-6.98316)*eT))));lowp float ff;ff=(eS*(fb*fe));lowp float fg;fg=((4.0*eQ)*eI);lowp float fh;if((fg==0.0)){fh=0.0;}else{fh=(ff/fg);}eL=((eN*eQ)*((v/3.141593)+(fh*eR)));}vec4 fi;fi=lightSources12[2];vec4 fj;fj=lightSources12[3];lowp vec3 fk;if((fi.w==0.0)){fk=vec3(0.0,0.0,0.0);}else{vec3 fl;vec3 fm;if((fi.w==1.0)){fl=fi.xyz;fm=fj.xyz;}else{if((fi.w==2.0)){vec3 fn;fn=(fi.xyz-interpolatedPosition);float fo;fo=sqrt(dot(fn,fn));fl=(fn/fo);fm=(fj.xyz/((12.56637*fo)*fo));}}lowp float fp;fp=clamp(dot(a,fl),0.0,1.0);lowp vec3 fq;lowp float fr;float fs;vec3 ft;ft=normalize((q+fl));fs=clamp(dot(q,ft),0.0,1.0);lowp vec3 fu;fu=((a.yzx*ft.zxy)-(a.zxy*ft.yzx));lowp float fv;fv=(clamp(dot(a,ft),0.0,1.0)*t);lowp float fw;fw=(t/(dot(fu,fu)+(fv*fv)));fr=min(((fw*fw)*0.3183099),65504.0);lowp float fx;fx=(t*t);lowp float fy;fy=(2.0*eI);lowp float fz;fz=(eI+sqrt((fx+(((1.0-fx)*eI)*eI))));lowp float fA;if((fz==0.0)){fA=0.0;}else{fA=(fy/fz);}lowp float fB;fB=(2.0*fp);lowp float fC;fC=(fp+sqrt((fx+(((1.0-fx)*fp)*fp))));lowp float fD;if((fC==0.0)){fD=0.0;}else{fD=(fB/fC);}fq=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*fs)-6.98316)*fs))));lowp float fE;fE=(fr*(fA*fD));lowp float fF;fF=((4.0*fp)*eI);lowp float fG;if((fF==0.0)){fG=0.0;}else{fG=(fE/fF);}fk=((fm*fp)*((v/3.141593)+(fG*fq)));}vec4 fH;fH=lightSources34[0];vec4 fI;fI=lightSources34[1];lowp vec3 fJ;if((fH.w==0.0)){fJ=vec3(0.0,0.0,0.0);}else{vec3 fK;vec3 fL;if((fH.w==1.0)){fK=fH.xyz;fL=fI.xyz;}else{if((fH.w==2.0)){vec3 fM;fM=(fH.xyz-interpolatedPosition);float fN;fN=sqrt(dot(fM,fM));fK=(fM/fN);fL=(fI.xyz/((12.56637*fN)*fN));}}lowp float fO;fO=clamp(dot(a,fK),0.0,1.0);lowp vec3 fP;lowp float fQ;float fR;vec3 fS;fS=normalize((q+fK));fR=clamp(dot(q,fS),0.0,1.0);lowp vec3 fT;fT=((a.yzx*fS.zxy)-(a.zxy*fS.yzx));lowp float fU;fU=(clamp(dot(a,fS),0.0,1.0)*t);lowp float fV;fV=(t/(dot(fT,fT)+(fU*fU)));fQ=min(((fV*fV)*0.3183099),65504.0);lowp float fW;fW=(t*t);lowp float fX;fX=(2.0*eI);lowp float fY;fY=(eI+sqrt((fW+(((1.0-fW)*eI)*eI))));lowp float fZ;if((fY==0.0)){fZ=0.0;}else{fZ=(fX/fY);}lowp float ga;ga=(2.0*fO);lowp float gb;gb=(fO+sqrt((fW+(((1.0-fW)*fO)*fO))));lowp float gc;if((gb==0.0)){gc=0.0;}else{gc=(ga/gb);}fP=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*fR)-6.98316)*fR))));lowp float gd;gd=(fQ*(fZ*gc));lowp float ge;ge=((4.0*fO)*eI);lowp float gf;if((ge==0.0)){gf=0.0;}else{gf=(gd/ge);}fJ=((fL*fO)*((v/3.141593)+(gf*fP)));}vec4 gg;gg=lightSources34[2];vec4 gh;gh=lightSources34[3];lowp vec3 gi;if((gg.w==0.0)){gi=vec3(0.0,0.0,0.0);}else{vec3 gj;vec3 gk;if((gg.w==1.0)){gj=gg.xyz;gk=gh.xyz;}else{if((gg.w==2.0)){vec3 gl;gl=(gg.xyz-interpolatedPosition);float gm;gm=sqrt(dot(gl,gl));gj=(gl/gm);gk=(gh.xyz/((12.56637*gm)*gm));}}lowp float gn;gn=clamp(dot(a,gj),0.0,1.0);lowp vec3 go;lowp float gp;float gq;vec3 gr;gr=normalize((q+gj));gq=clamp(dot(q,gr),0.0,1.0);lowp vec3 gs;gs=((a.yzx*gr.zxy)-(a.zxy*gr.yzx));lowp float gt;gt=(clamp(dot(a,gr),0.0,1.0)*t);lowp float gu;gu=(t/(dot(gs,gs)+(gt*gt)));gp=min(((gu*gu)*0.3183099),65504.0);lowp float gv;gv=(t*t);lowp float gw;gw=(2.0*eI);lowp float gx;gx=(eI+sqrt((gv+(((1.0-gv)*eI)*eI))));lowp float gy;if((gx==0.0)){gy=0.0;}else{gy=(gw/gx);}lowp float gz;gz=(2.0*gn);lowp float gA;gA=(gn+sqrt((gv+(((1.0-gv)*gn)*gn))));lowp float gB;if((gA==0.0)){gB=0.0;}else{gB=(gz/gA);}go=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*gq)-6.98316)*gq))));lowp float gC;gC=(gp*(gy*gB));lowp float gD;gD=((4.0*gn)*eI);lowp float gE;if((gD==0.0)){gE=0.0;}else{gE=(gC/gD);}gi=((gk*gn)*((v/3.141593)+(gE*go)));}vec4 gF;gF=lightSources56[0];vec4 gG;gG=lightSources56[1];lowp vec3 gH;if((gF.w==0.0)){gH=vec3(0.0,0.0,0.0);}else{vec3 gI;vec3 gJ;if((gF.w==1.0)){gI=gF.xyz;gJ=gG.xyz;}else{if((gF.w==2.0)){vec3 gK;gK=(gF.xyz-interpolatedPosition);float gL;gL=sqrt(dot(gK,gK));gI=(gK/gL);gJ=(gG.xyz/((12.56637*gL)*gL));}}lowp float gM;gM=clamp(dot(a,gI),0.0,1.0);lowp vec3 gN;lowp float gO;float gP;vec3 gQ;gQ=normalize((q+gI));gP=clamp(dot(q,gQ),0.0,1.0);lowp vec3 gR;gR=((a.yzx*gQ.zxy)-(a.zxy*gQ.yzx));lowp float gS;gS=(clamp(dot(a,gQ),0.0,1.0)*t);lowp float gT;gT=(t/(dot(gR,gR)+(gS*gS)));gO=min(((gT*gT)*0.3183099),65504.0);lowp float gU;gU=(t*t);lowp float gV;gV=(2.0*eI);lowp float gW;gW=(eI+sqrt((gU+(((1.0-gU)*eI)*eI))));lowp float gX;if((gW==0.0)){gX=0.0;}else{gX=(gV/gW);}lowp float gY;gY=(2.0*gM);lowp float gZ;gZ=(gM+sqrt((gU+(((1.0-gU)*gM)*gM))));lowp float ha;if((gZ==0.0)){ha=0.0;}else{ha=(gY/gZ);}gN=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*gP)-6.98316)*gP))));lowp float hb;hb=(gO*(gX*ha));lowp float hc;hc=((4.0*gM)*eI);lowp float hd;if((hc==0.0)){hd=0.0;}else{hd=(hb/hc);}gH=((gJ*gM)*((v/3.141593)+(hd*gN)));}vec4 he;he=lightSources56[2];vec4 hf;hf=lightSources56[3];lowp vec3 hg;if((he.w==0.0)){hg=vec3(0.0,0.0,0.0);}else{vec3 hh;vec3 hi;if((he.w==1.0)){hh=he.xyz;hi=hf.xyz;}else{if((he.w==2.0)){vec3 hj;hj=(he.xyz-interpolatedPosition);float hk;hk=sqrt(dot(hj,hj));hh=(hj/hk);hi=(hf.xyz/((12.56637*hk)*hk));}}lowp float hl;hl=clamp(dot(a,hh),0.0,1.0);lowp vec3 hm;lowp float hn;float ho;vec3 hp;hp=normalize((q+hh));ho=clamp(dot(q,hp),0.0,1.0);lowp vec3 hq;hq=((a.yzx*hp.zxy)-(a.zxy*hp.yzx));lowp float hr;hr=(clamp(dot(a,hp),0.0,1.0)*t);lowp float hs;hs=(t/(dot(hq,hq)+(hr*hr)));hn=min(((hs*hs)*0.3183099),65504.0);lowp float ht;ht=(t*t);lowp float hu;hu=(2.0*eI);lowp float hv;hv=(eI+sqrt((ht+(((1.0-ht)*eI)*eI))));lowp float hw;if((hv==0.0)){hw=0.0;}else{hw=(hu/hv);}lowp float hx;hx=(2.0*hl);lowp float hy;hy=(hl+sqrt((ht+(((1.0-ht)*hl)*hl))));lowp float hz;if((hy==0.0)){hz=0.0;}else{hz=(hx/hy);}hm=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*ho)-6.98316)*ho))));lowp float hA;hA=(hn*(hw*hz));lowp float hB;hB=((4.0*hl)*eI);lowp float hC;if((hB==0.0)){hC=0.0;}else{hC=(hA/hB);}hg=((hi*hl)*((v/3.141593)+(hC*hm)));}vec4 hD;hD=lightSources78[0];vec4 hE;hE=lightSources78[1];lowp vec3 hF;if((hD.w==0.0)){hF=vec3(0.0,0.0,0.0);}else{vec3 hG;vec3 hH;if((hD.w==1.0)){hG=hD.xyz;hH=hE.xyz;}else{if((hD.w==2.0)){vec3 hI;hI=(hD.xyz-interpolatedPosition);float hJ;hJ=sqrt(dot(hI,hI));hG=(hI/hJ);hH=(hE.xyz/((12.56637*hJ)*hJ));}}lowp float hK;hK=clamp(dot(a,hG),0.0,1.0);lowp vec3 hL;lowp float hM;float hN;vec3 hO;hO=normalize((q+hG));hN=clamp(dot(q,hO),0.0,1.0);lowp vec3 hP;hP=((a.yzx*hO.zxy)-(a.zxy*hO.yzx));lowp float hQ;hQ=(clamp(dot(a,hO),0.0,1.0)*t);lowp float hR;hR=(t/(dot(hP,hP)+(hQ*hQ)));hM=min(((hR*hR)*0.3183099),65504.0);lowp float hS;hS=(t*t);lowp float hT;hT=(2.0*eI);lowp float hU;hU=(eI+sqrt((hS+(((1.0-hS)*eI)*eI))));lowp float hV;if((hU==0.0)){hV=0.0;}else{hV=(hT/hU);}lowp float hW;hW=(2.0*hK);lowp float hX;hX=(hK+sqrt((hS+(((1.0-hS)*hK)*hK))));lowp float hY;if((hX==0.0)){hY=0.0;}else{hY=(hW/hX);}hL=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*hN)-6.98316)*hN))));lowp float hZ;hZ=(hM*(hV*hY));lowp float ia;ia=((4.0*hK)*eI);lowp float ib;if((ia==0.0)){ib=0.0;}else{ib=(hZ/ia);}hF=((hH*hK)*((v/3.141593)+(ib*hL)));}vec4 ic;ic=lightSources78[2];vec4 id;id=lightSources78[3];lowp vec3 ie;if((ic.w==0.0)){ie=vec3(0.0,0.0,0.0);}else{vec3 if_;vec3 ig;if((ic.w==1.0)){if_=ic.xyz;ig=id.xyz;}else{if((ic.w==2.0)){vec3 ih;ih=(ic.xyz-interpolatedPosition);float ii;ii=sqrt(dot(ih,ih));if_=(ih/ii);ig=(id.xyz/((12.56637*ii)*ii));}}lowp float ij;ij=clamp(dot(a,if_),0.0,1.0);lowp vec3 ik;lowp float il;float im;vec3 in_;in_=normalize((q+if_));im=clamp(dot(q,in_),0.0,1.0);lowp vec3 io;io=((a.yzx*in_.zxy)-(a.zxy*in_.yzx));lowp float ip;ip=(clamp(dot(a,in_),0.0,1.0)*t);lowp float iq;iq=(t/(dot(io,io)+(ip*ip)));il=min(((iq*iq)*0.3183099),65504.0);lowp float ir;ir=(t*t);lowp float is;is=(2.0*eI);lowp float it;it=(eI+sqrt((ir+(((1.0-ir)*eI)*eI))));lowp float iu;if((it==0.0)){iu=0.0;}else{iu=(is/it);}lowp float iv;iv=(2.0*ij);lowp float iw;iw=(ij+sqrt((ir+(((1.0-ir)*ij)*ij))));lowp float ix;if((iw==0.0)){ix=0.0;}else{ix=(iv/iw);}ik=(w+((vec3(1.0,1.0,1.0)-w)*exp2((((-5.55473*im)-6.98316)*im))));lowp float iy;iy=(il*(iu*ix));lowp float iz;iz=((4.0*ij)*eI);lowp float iA;if((iz==0.0)){iA=0.0;}else{iA=(iy/iz);}ie=((ig*ij)*((v/3.141593)+(iA*ik)));}s=(((x+eL)+(fk+fJ))+((gi+gH)+((hg+hF)+ie)));vec3 iB;iB=sceneProperties[2].xyz;lowp float iC;iC=(s.x/iB.x);lowp float iD;iD=(s.y/iB.y);lowp float iE;iE=(s.z/iB.z);lowp float iF;iF=(((0.2126*iC)+(0.7152*iD))+(0.0722*iE));float iG;iG=sceneProperties[2].w;lowp float iH;iH=(((iF*(1.0+(iF/(iG*iG))))/(1.0+iF))/iF);lowp float iI;iI=(iC*iH);mediump float iJ;if((iI<=0.0031308)){iJ=(12.92*iI);}else{iJ=((1.055*pow(iI,0.4166667))-0.055);}lowp float iK;iK=(iD*iH);mediump float iL;if((iK<=0.0031308)){iL=(12.92*iK);}else{iL=((1.055*pow(iK,0.4166667))-0.055);}lowp float iM;iM=(iE*iH);mediump float iN;if((iM<=0.0031308)){iN=(12.92*iM);}else{iN=((1.055*pow(iM,0.4166667))-0.055);}mediump vec4 iO;iO.w=1.0;iO.x=iJ;iO.y=iL;iO.z=iN;gl_FragColor=iO;}
     |]

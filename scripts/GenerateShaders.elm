@@ -2,6 +2,7 @@ module GenerateShaders exposing (main)
 
 import Common
 import Glsl
+import Regex
 import Script exposing (Script)
 import Script.Directory as Directory
 import Script.File as File
@@ -237,15 +238,6 @@ interpolatedUv =
 interpolatedTangent : Glsl.Varying
 interpolatedTangent =
     Glsl.varying Glsl.vec3 "interpolatedTangent"
-
-
-varyings : List Glsl.Varying
-varyings =
-    [ interpolatedPosition
-    , interpolatedNormal
-    , interpolatedUv
-    , interpolatedTangent
-    ]
 
 
 
@@ -1348,7 +1340,7 @@ plainVertexShader =
     Glsl.vertexShader "plainVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = varyings
+        , varyings = []
         , constants = []
         , functions = [ getWorldPosition, project ]
         }
@@ -1356,10 +1348,6 @@ plainVertexShader =
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = vec3(0.0, 0.0, 0.0);
-            interpolatedUv = vec2(0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
         """
 
@@ -1369,7 +1357,7 @@ unlitVertexShader =
     Glsl.vertexShader "unlitVertex"
         { attributes = [ position, uv ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = varyings
+        , varyings = [ interpolatedUv ]
         , constants = []
         , functions = [ getWorldPosition, project ]
         }
@@ -1377,10 +1365,7 @@ unlitVertexShader =
         void main() {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            interpolatedPosition = worldPosition.xyz;
             interpolatedUv = uv;
-            interpolatedNormal = vec3(0.0, 0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
         """
 
@@ -1390,7 +1375,7 @@ planarMappedUnlitVertexShader =
     Glsl.vertexShader "planarMappedUnlitVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, planarMap ]
-        , varyings = varyings
+        , varyings = [ interpolatedPosition, interpolatedUv ]
         , constants = []
         , functions = [ getWorldPosition, project ]
         }
@@ -1400,8 +1385,6 @@ planarMappedUnlitVertexShader =
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
             interpolatedUv = planarMap * vec4(position, 1.0);
-            interpolatedNormal = vec3(0.0, 0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
         """
 
@@ -1411,7 +1394,7 @@ sphericalMappedUnlitVertexShader =
     Glsl.vertexShader "sphericalMappedUnlitVertex"
         { attributes = [ position ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, sphericalMap ]
-        , varyings = varyings
+        , varyings = [ interpolatedPosition, interpolatedUv ]
         , constants = []
         , functions = [ getWorldPosition, project, getSphericalUv ]
         }
@@ -1421,8 +1404,6 @@ sphericalMappedUnlitVertexShader =
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
             interpolatedUv = getSphericalUv(position, sphericalMap);
-            interpolatedNormal = vec3(0.0, 0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
         """
 
@@ -1432,7 +1413,7 @@ uniformVertexShader =
     Glsl.vertexShader "uniformVertex"
         { attributes = [ position, normal ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = varyings
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
         , constants = []
         , functions = [ getWorldPosition, getWorldDirection, project ]
         }
@@ -1442,8 +1423,6 @@ uniformVertexShader =
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldDirection(normal, modelMatrix);
-            interpolatedUv = vec2(0.0, 0.0);
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
         """
 
@@ -1453,7 +1432,12 @@ texturedVertexShader =
     Glsl.vertexShader "texturedVertex"
         { attributes = [ position, normal, uv ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = varyings
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            , interpolatedUv
+            , interpolatedTangent
+            ]
         , constants = []
         , functions = [ getWorldPosition, getWorldDirection, project ]
         }
@@ -1474,7 +1458,12 @@ normalMappedVertexShader =
     Glsl.vertexShader "normalMappedVertex"
         { attributes = [ position, normal, uv, tangent ]
         , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties ]
-        , varyings = varyings
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            , interpolatedUv
+            , interpolatedTangent
+            ]
         , constants = []
         , functions = [ getWorldPosition, getWorldDirection, project ]
         }
@@ -1490,9 +1479,9 @@ normalMappedVertexShader =
         """
 
 
-quadVertexShader : Glsl.Shader
-quadVertexShader =
-    Glsl.vertexShader "quadVertex"
+plainQuadVertexShader : Glsl.Shader
+plainQuadVertexShader =
+    Glsl.vertexShader "plainQuadVertex"
         { attributes = [ quadVertex ]
         , uniforms =
             [ modelScale
@@ -1501,7 +1490,91 @@ quadVertexShader =
             , sceneProperties
             , quadVertexPositions
             ]
-        , varyings = varyings
+        , varyings = []
+        , constants = []
+        , functions = [ getQuadVertex, getWorldPosition, getWorldDirection, project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+        }
+        """
+
+
+unlitQuadVertexShader : Glsl.Shader
+unlitQuadVertexShader =
+    Glsl.vertexShader "unlitQuadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            ]
+        , varyings = [ interpolatedUv ]
+        , constants = []
+        , functions = [ getQuadVertex, getWorldPosition, getWorldDirection, project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedUv = quadVertex.xy;
+        }
+        """
+
+
+smoothQuadVertexShader : Glsl.Shader
+smoothQuadVertexShader =
+    Glsl.vertexShader "smoothQuadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
+        , constants = []
+        , functions = [ getQuadVertex, getWorldPosition, getWorldDirection, project ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+        }
+        """
+
+
+texturedQuadVertexShader : Glsl.Shader
+texturedQuadVertexShader =
+    Glsl.vertexShader "texturedQuadVertex"
+        { attributes = [ quadVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , sceneProperties
+            , quadVertexPositions
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv, interpolatedTangent ]
         , constants = []
         , functions = [ getQuadVertex, getWorldPosition, getWorldDirection, project ]
         }
@@ -1673,8 +1746,8 @@ constantFragmentShader : Glsl.Shader
 constantFragmentShader =
     Glsl.fragmentShader "constantFragment"
         { uniforms = [ constantColor ]
-        , varyings = varyings
         , constants = []
+        , varyings = []
         , functions = []
         }
         """
@@ -1688,8 +1761,8 @@ colorTextureFragmentShader : Glsl.Shader
 colorTextureFragmentShader =
     Glsl.fragmentShader "colorTextureFragment"
         { uniforms = [ colorTexture ]
-        , varyings = varyings
         , constants = []
+        , varyings = [ interpolatedUv ]
         , functions = []
         }
         """
@@ -1703,8 +1776,8 @@ constantPointFragmentShader : Glsl.Shader
 constantPointFragmentShader =
     Glsl.fragmentShader "constantPointFragment"
         { uniforms = [ constantColor, pointRadius, sceneProperties ]
-        , varyings = []
         , constants = []
+        , varyings = []
         , functions = [ pointAlpha ]
         }
         """
@@ -1719,8 +1792,8 @@ emissiveFragmentShader : Glsl.Shader
 emissiveFragmentShader =
     Glsl.fragmentShader "emissiveFragment"
         { uniforms = [ emissiveColor, sceneProperties ]
-        , varyings = varyings
         , constants = []
+        , varyings = []
         , functions = [ toSrgb ]
         }
         """
@@ -1734,7 +1807,7 @@ emissiveTextureFragmentShader : Glsl.Shader
 emissiveTextureFragmentShader =
     Glsl.fragmentShader "emissiveTextureFragment"
         { uniforms = [ colorTexture, backlight, sceneProperties ]
-        , varyings = varyings
+        , varyings = [ interpolatedUv ]
         , constants = []
         , functions = [ fromSrgb, toSrgb ]
         }
@@ -1776,7 +1849,7 @@ lambertianFragmentShader =
             , materialColor
             , viewMatrix
             ]
-        , varyings = varyings
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
         , constants = []
         , functions =
             [ getNormalSign
@@ -1823,7 +1896,7 @@ lambertianTextureFragmentShader =
             , useNormalMap
             , viewMatrix
             ]
-        , varyings = varyings
+        , varyings = [ interpolatedPosition, interpolatedNormal, interpolatedUv, interpolatedTangent ]
         , constants = []
         , functions =
             [ getLocalNormal
@@ -1877,7 +1950,7 @@ physicalFragmentShader =
             , roughness
             , metallic
             ]
-        , varyings = varyings
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
         , functions =
             [ getNormalSign
             , getDirectionToCamera
@@ -1931,7 +2004,12 @@ physicalTexturesFragmentShader =
             , normalMapTexture
             , useNormalMap
             ]
-        , varyings = varyings
+        , varyings =
+            [ interpolatedPosition
+            , interpolatedNormal
+            , interpolatedUv
+            , interpolatedTangent
+            ]
         , functions =
             [ getChannelValue
             , getLocalNormal
@@ -1980,61 +2058,142 @@ physicalTexturesFragmentShader =
 ---------- SCRIPT ----------
 
 
+fixSource : String -> String
+fixSource input =
+    let
+        doRegex =
+            Regex.fromString "\\bdo\\b"
+                |> Maybe.withDefault Regex.never
+
+        ifRegex =
+            Regex.fromString "\\bif\\b(?!\\()"
+                |> Maybe.withDefault Regex.never
+
+        inRegex =
+            Regex.fromString "\\bin\\b"
+                |> Maybe.withDefault Regex.never
+    in
+    input
+        |> Regex.replace doRegex (always "do_")
+        |> Regex.replace ifRegex (always "if_")
+        |> Regex.replace inRegex (always "in_")
+
+
+optimizeShader : Script.UserPrivileges -> Glsl.Shader -> Script String Glsl.Shader
+optimizeShader userPrivileges givenShader =
+    Directory.createTemporary
+        |> Script.thenWith
+            (\tempDirectory ->
+                let
+                    inputFile =
+                        File.in_ tempDirectory "input.glsl"
+
+                    outputFile =
+                        File.in_ tempDirectory "output.glsl"
+
+                    shaderTypeString =
+                        case Glsl.shaderType givenShader of
+                            Glsl.VertexShader ->
+                                "vertex"
+
+                            Glsl.FragmentShader ->
+                                "fragment"
+                in
+                Script.printLine ("Optimizing " ++ Glsl.shaderName givenShader)
+                    |> Script.andThen (File.writeTo inputFile (Glsl.shaderSource givenShader))
+                    |> Script.andThen
+                        (Script.executeWith userPrivileges
+                            { command = "glsl-minifier.cmd"
+                            , arguments =
+                                [ "-i"
+                                , File.name inputFile
+                                , "-o"
+                                , File.name outputFile
+                                , "-sT"
+                                , shaderTypeString
+                                , "-sV"
+                                , "2" -- WebGL 1
+                                ]
+                            , workingDirectory = tempDirectory
+                            }
+                            |> Script.ignoreResult
+                        )
+                    |> Script.andThen (File.read outputFile)
+                    |> Script.map fixSource
+                    |> Script.thenWith
+                        (\optimizedSource ->
+                            Script.succeed (givenShader |> Glsl.setShaderSource optimizedSource)
+                        )
+            )
+
+
 script : Script.Init -> Script String ()
 script { workingDirectory, userPrivileges } =
     let
         outputFile =
             File.writable userPrivileges "../src/Scene3d/Shaders.elm"
 
-        contents =
-            "-- Generated by scripts/GenerateShaders.elm, please do not edit by hand\n"
-                ++ Glsl.generateModule "Scene3d.Shaders"
-                    [ plainVertexShader
-                    , unlitVertexShader
-                    , uniformVertexShader
-                    , texturedVertexShader
-                    , normalMappedVertexShader
-                    , quadVertexShader
-                    , pointVertexShader
-                    , shadowVertexShader
-                    , quadShadowVertexShader
-                    , sphereShadowVertexShader
-                    , shadowFragmentShader
-                    , constantFragmentShader
-                    , colorTextureFragmentShader
-                    , constantPointFragmentShader
-                    , emissiveFragmentShader
-                    , emissiveTextureFragmentShader
-                    , emissivePointFragmentShader
-                    , lambertianFragmentShader
-                    , lambertianTextureFragmentShader
-                    , physicalFragmentShader
-                    , physicalTexturesFragmentShader
-                    ]
+        shaders =
+            [ plainVertexShader
+            , unlitVertexShader
+            , uniformVertexShader
+            , texturedVertexShader
+            , normalMappedVertexShader
+            , plainQuadVertexShader
+            , unlitQuadVertexShader
+            , smoothQuadVertexShader
+            , texturedQuadVertexShader
+            , pointVertexShader
+            , shadowVertexShader
+            , quadShadowVertexShader
+            , sphereShadowVertexShader
+            , shadowFragmentShader
+            , constantFragmentShader
+            , colorTextureFragmentShader
+            , constantPointFragmentShader
+            , emissiveFragmentShader
+            , emissiveTextureFragmentShader
+            , emissivePointFragmentShader
+            , lambertianFragmentShader
+            , lambertianTextureFragmentShader
+            , physicalFragmentShader
+            , physicalTexturesFragmentShader
+            ]
     in
-    Script.printLine "Writing output file..."
-        |> Script.andThen (File.write contents outputFile)
-        |> Script.andThen (Script.printLine "Formatting output file with elm-format...")
-        |> Script.andThen
-            (Script.executeWith userPrivileges
-                { command = "elm-format"
-                , arguments = [ "--yes", File.path outputFile ]
-                , workingDirectory = workingDirectory
-                }
-                |> Script.ignoreResult
-                |> Script.onError (\_ -> Script.fail "Error when running elm-format")
+    Script.printLine "Optimizing shaders..."
+        |> Script.andThen (Script.collect (optimizeShader userPrivileges) shaders)
+        --(Script.succeed shaders)
+        |> Script.thenWith
+            (\optimizedShaders ->
+                let
+                    contents =
+                        "-- Generated by scripts/GenerateShaders.elm, please do not edit by hand\n"
+                            ++ Glsl.generateModule "Scene3d.Shaders" optimizedShaders
+                in
+                Script.printLine "Writing output file..."
+                    |> Script.andThen (File.write contents outputFile)
+                    |> Script.andThen (Script.printLine "Formatting output file with elm-format...")
+                    |> Script.andThen
+                        (Script.executeWith userPrivileges
+                            { command = "elm-format"
+                            , arguments = [ "--yes", File.path outputFile ]
+                            , workingDirectory = workingDirectory
+                            }
+                            |> Script.ignoreResult
+                            |> Script.onError (\_ -> Script.fail "Error when running elm-format")
+                        )
+                    |> Script.andThen (Script.printLine "Test compiling output file...")
+                    |> Script.andThen
+                        (Script.executeWith userPrivileges
+                            { command = "elm"
+                            , arguments = [ "make", "--output=/dev/null", File.path outputFile ]
+                            , workingDirectory = workingDirectory
+                            }
+                            |> Script.ignoreResult
+                            |> Script.onError (\_ -> Script.fail "Error when running 'elm make'")
+                        )
+                    |> Script.andThen (Script.printLine "Success!")
             )
-        |> Script.andThen (Script.printLine "Test compiling output file...")
-        |> Script.andThen
-            (Script.executeWith userPrivileges
-                { command = "elm"
-                , arguments = [ "make", "--output=/dev/null", File.path outputFile ]
-                , workingDirectory = workingDirectory
-                }
-                |> Script.ignoreResult
-                |> Script.onError (\_ -> Script.fail "Error when running 'elm make'")
-            )
-        |> Script.andThen (Script.printLine "Success!")
 
 
 main : Script.Program

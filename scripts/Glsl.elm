@@ -3,6 +3,7 @@ module Glsl exposing
     , Attribute, Uniform, Varying, Constant, Function, Type, Shader
     , float, vec2, vec3, vec4, mat4, sampler2D
     , attribute, uniform, varying, constant
+    , ShaderType(..), shaderName, shaderType, shaderSource, setShaderSource
     )
 
 {-|
@@ -14,6 +15,8 @@ module Glsl exposing
 @docs float, vec2, vec3, vec4, mat4, sampler2D
 
 @docs attribute, uniform, varying, constant
+
+@docs ShaderType, shaderName, shaderType, shaderSource, setShaderSource
 
 -}
 
@@ -72,13 +75,24 @@ type Constant
     = Constant Type String String
 
 
-type ShaderType
+type InternalShaderType
     = Vertex (List Attribute)
     | Fragment
 
 
+type ShaderType
+    = VertexShader
+    | FragmentShader
+
+
 type Shader
-    = Shader String String
+    = Shader
+        { name : String
+        , type_ : InternalShaderType
+        , uniforms : List Uniform
+        , varyings : List Varying
+        , source : String
+        }
 
 
 attribute : Type -> String -> Attribute
@@ -195,7 +209,7 @@ fragmentShader name properties source =
 
 shader :
     String
-    -> ShaderType
+    -> InternalShaderType
     ->
         { uniforms : List Uniform
         , varyings : List Varying
@@ -204,7 +218,7 @@ shader :
         }
     -> String
     -> Shader
-shader name shaderType { uniforms, varyings, constants, functions } source =
+shader name type_ { uniforms, varyings, constants, functions } source =
     let
         allFunctions =
             String.join "\n\n" (collectFunctionSources functions [])
@@ -217,28 +231,36 @@ shader name shaderType { uniforms, varyings, constants, functions } source =
             String.join "\n\n" <|
                 List.filter (not << String.isEmpty) <|
                     [ "precision mediump float;"
-                    , attributesBlock shaderType
+                    , attributesBlock type_
                     , uniformsBlock uniforms
                     , varyingsBlock varyings
                     , allConstants
                     , allFunctions
                     , stripExtraWhitespace source
                     ]
-
-        elmSource =
-            String.join "\n"
-                [ name ++ " :"
-                , indent 1 "WebGL.Shader"
-                , indent 2 (attributesSignature shaderType)
-                , indent 2 (uniformsSignature uniforms)
-                , indent 2 (varyingsSignature varyings)
-                , name ++ " ="
-                , indent 1 "[glsl|"
-                , indent 2 glslSource
-                , indent 1 "|]"
-                ]
     in
-    Shader name elmSource
+    Shader
+        { name = name
+        , type_ = type_
+        , uniforms = uniforms
+        , varyings = varyings
+        , source = glslSource
+        }
+
+
+elmSource : Shader -> String
+elmSource (Shader { name, type_, uniforms, varyings, source }) =
+    String.join "\n"
+        [ name ++ " :"
+        , indent 1 "WebGL.Shader"
+        , indent 2 (attributesSignature type_)
+        , indent 2 (uniformsSignature uniforms)
+        , indent 2 (varyingsSignature varyings)
+        , name ++ " ="
+        , indent 1 "[glsl|"
+        , indent 2 source
+        , indent 1 "|]"
+        ]
 
 
 capitalize : String -> String
@@ -299,9 +321,9 @@ uniformField (Uniform fieldType fieldName) =
     "    , " ++ elmField fieldType fieldName
 
 
-attributesSignature : ShaderType -> String
-attributesSignature shaderType =
-    case shaderType of
+attributesSignature : InternalShaderType -> String
+attributesSignature type_ =
+    case type_ of
         Vertex attributes ->
             case attributes of
                 [] ->
@@ -335,9 +357,9 @@ indent count text =
         |> String.join "\n"
 
 
-attributesBlock : ShaderType -> String
-attributesBlock shaderType =
-    case shaderType of
+attributesBlock : InternalShaderType -> String
+attributesBlock type_ =
+    case type_ of
         Vertex attributes ->
             String.join "\n" (List.map attributeLine attributes)
 
@@ -398,10 +420,10 @@ generateModule moduleName shaders =
         [] ->
             ""
 
-        (Shader firstName firstSource) :: rest ->
+        (Shader first) :: rest ->
             String.join "\n"
                 [ "module " ++ moduleName ++ " exposing"
-                , "    ( " ++ firstName
+                , "    ( " ++ first.name
                 , String.join "\n" (List.map exposeLine rest)
                 , "    )"
                 , ""
@@ -412,8 +434,13 @@ generateModule moduleName shaders =
                 , "import WebGL"
                 , "import WebGL.Texture exposing (Texture)"
                 , ""
-                , String.join "\n" (List.map shaderSource shaders)
+                , String.join "\n" (List.map elmSource shaders)
                 ]
+
+
+shaderName : Shader -> String
+shaderName (Shader { name }) =
+    name
 
 
 exposeLine : Shader -> String
@@ -421,10 +448,21 @@ exposeLine givenShader =
     "    , " ++ shaderName givenShader
 
 
-shaderName : Shader -> String
-shaderName (Shader name _) =
-    name
+shaderType : Shader -> ShaderType
+shaderType (Shader { type_ }) =
+    case type_ of
+        Vertex _ ->
+            VertexShader
+
+        Fragment ->
+            FragmentShader
 
 
-shaderSource (Shader _ source) =
+shaderSource : Shader -> String
+shaderSource (Shader { source }) =
     source
+
+
+setShaderSource : String -> Shader -> Shader
+setShaderSource newSource (Shader givenShader) =
+    Shader { givenShader | source = newSource }

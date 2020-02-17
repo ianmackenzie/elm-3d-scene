@@ -598,7 +598,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
-                            Shaders.quadVertex
+                            Shaders.plainQuadVertex
                             Shaders.constantFragment
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -613,7 +613,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
-                            Shaders.quadVertex
+                            Shaders.unlitQuadVertex
                             Shaders.colorTextureFragment
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -628,7 +628,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
-                            Shaders.quadVertex
+                            Shaders.plainQuadVertex
                             Shaders.emissiveFragment
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -644,7 +644,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
-                            Shaders.quadVertex
+                            Shaders.unlitQuadVertex
                             Shaders.emissiveTextureFragment
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -662,7 +662,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
-                                    Shaders.quadVertex
+                                    Shaders.smoothQuadVertex
                                     Shaders.lambertianFragment
                                     quadVertices
                                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -682,7 +682,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
-                                    Shaders.quadVertex
+                                    Shaders.texturedQuadVertex
                                     Shaders.lambertianTextureFragment
                                     quadVertices
                                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -706,7 +706,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
-                                    Shaders.quadVertex
+                                    Shaders.smoothQuadVertex
                                     Shaders.physicalFragment
                                     quadVertices
                                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
@@ -728,7 +728,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
-                                    Shaders.quadVertex
+                                    Shaders.texturedQuadVertex
                                     Shaders.physicalTexturesFragment
                                     quadVertices
                                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
