@@ -15,6 +15,7 @@ import Math.Vector4 exposing (Vec4)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity, Unitless)
+import Rectangle3d exposing (Rectangle3d)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
@@ -86,10 +87,10 @@ type alias VertexWithTangent =
 
 
 type Material coordinates attributes
-    = UnlitMaterial (Texture Vec3)
-    | EmissiveMaterial (Texture LinearRgb) Float
-    | LambertianMaterial (Texture LinearRgb) (Texture NormalMap)
-    | PbrMaterial (Texture LinearRgb) (Texture Float) (Texture Float) (Texture NormalMap)
+    = UnlitMaterial TextureMap (Texture Vec3)
+    | EmissiveMaterial TextureMap (Texture LinearRgb) Float
+    | LambertianMaterial TextureMap (Texture LinearRgb) (Texture NormalMap)
+    | PbrMaterial TextureMap (Texture LinearRgb) (Texture Float) (Texture Float) (Texture NormalMap)
 
 
 type NormalMap
@@ -104,6 +105,10 @@ type Texture value
         , data : WebGL.Texture.Texture
         , channel : Vec4
         }
+
+
+type TextureMap
+    = UseMeshUvs
 
 
 type Channel

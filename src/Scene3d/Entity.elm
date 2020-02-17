@@ -85,7 +85,7 @@ empty =
 mesh : Material coordinates attributes -> Mesh coordinates attributes -> Entity coordinates
 mesh givenMaterial givenMesh =
     case givenMaterial of
-        Types.UnlitMaterial (Types.Constant color) ->
+        Types.UnlitMaterial _ (Types.Constant color) ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -120,7 +120,7 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     constantPointMesh color radius webGLMesh
 
-        Types.UnlitMaterial (Types.Texture { data }) ->
+        Types.UnlitMaterial Types.UseMeshUvs (Types.Texture { data }) ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -155,7 +155,7 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     empty
 
-        Types.EmissiveMaterial (Types.Constant (LinearRgb emissiveColor)) backlight ->
+        Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -190,7 +190,7 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     emissivePointMesh emissiveColor radius webGLMesh
 
-        Types.EmissiveMaterial (Types.Texture { data }) backlight ->
+        Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
             case givenMesh of
                 Types.EmptyMesh ->
                     empty
@@ -225,7 +225,7 @@ mesh givenMaterial givenMesh =
                 Types.Points _ radius _ webGLMesh ->
                     empty
 
-        Types.LambertianMaterial materialColorTexture normalMapTexture ->
+        Types.LambertianMaterial Types.UseMeshUvs materialColorTexture normalMapTexture ->
             case resolveLambertian materialColorTexture normalMapTexture of
                 ConstantLambertianMaterial (LinearRgb materialColor) ->
                     case givenMesh of
@@ -297,7 +297,7 @@ mesh givenMaterial givenMesh =
                         Types.Points _ _ _ _ ->
                             empty
 
-        Types.PbrMaterial baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
+        Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
             case resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture of
                 ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
                     case givenMesh of
@@ -599,7 +599,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
     Types.Entity <|
         MeshNode <|
             case givenMaterial of
-                Types.UnlitMaterial (Types.Constant color) ->
+                Types.UnlitMaterial _ (Types.Constant color) ->
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -614,7 +614,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.UnlitMaterial (Types.Texture { data }) ->
+                Types.UnlitMaterial Types.UseMeshUvs (Types.Texture { data }) ->
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -629,7 +629,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.EmissiveMaterial (Types.Constant (LinearRgb emissiveColor)) backlight ->
+                Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -645,7 +645,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.EmissiveMaterial (Types.Texture { data }) backlight ->
+                Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -661,7 +661,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , viewMatrix = viewMatrix
                             }
 
-                Types.LambertianMaterial materialColorTexture normalMapTexture ->
+                Types.LambertianMaterial Types.UseMeshUvs materialColorTexture normalMapTexture ->
                     case resolveLambertian materialColorTexture normalMapTexture of
                         ConstantLambertianMaterial (LinearRgb materialColor) ->
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -705,7 +705,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , viewMatrix = viewMatrix
                                     }
 
-                Types.PbrMaterial baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
+                Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
                     case resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture of
                         ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->

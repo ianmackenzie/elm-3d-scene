@@ -59,19 +59,19 @@ type alias Material coordinates attributes =
 
 color : Color -> Material coordinates attributes
 color givenColor =
-    Types.UnlitMaterial (Types.Constant (toVec3 givenColor))
+    Types.UnlitMaterial Types.UseMeshUvs (Types.Constant (toVec3 givenColor))
 
 
 matte : Color -> Material coordinates { a | normals : Yes }
 matte materialColor =
-    Types.LambertianMaterial
+    Types.LambertianMaterial Types.UseMeshUvs
         (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
         (Types.Constant Types.VerticalNormal)
 
 
 emissive : Color -> Luminance -> Material coordinates attributes
 emissive givenColor brightness =
-    Types.EmissiveMaterial
+    Types.EmissiveMaterial Types.UseMeshUvs
         (Types.Constant (ColorConversions.colorToLinearRgb givenColor))
         (Luminance.inNits brightness)
 
@@ -90,7 +90,7 @@ pbr :
     { baseColor : Color, roughness : Float, metallic : Float }
     -> Material coordinates { a | normals : Yes }
 pbr { baseColor, roughness, metallic } =
-    Types.PbrMaterial
+    Types.PbrMaterial Types.UseMeshUvs
         (Types.Constant (ColorConversions.colorToLinearRgb baseColor))
         (Types.Constant (clamp 0 1 roughness))
         (Types.Constant (clamp 0 1 metallic))
@@ -165,19 +165,19 @@ toVec3 givenColor =
 
 texturedColor : Texture Color -> Material coordinates { a | uvs : Yes }
 texturedColor colorTexture =
-    Types.UnlitMaterial (map toVec3 colorTexture)
+    Types.UnlitMaterial Types.UseMeshUvs (map toVec3 colorTexture)
 
 
 texturedMatte : Texture Color -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedMatte colorTexture =
-    Types.LambertianMaterial
+    Types.LambertianMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb colorTexture)
         (Types.Constant Types.VerticalNormal)
 
 
 texturedEmissive : Texture Color -> Luminance -> Material coordinates { a | uvs : Yes }
 texturedEmissive colorTexture brightness =
-    Types.EmissiveMaterial
+    Types.EmissiveMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb colorTexture)
         (Luminance.inNits brightness)
 
@@ -215,7 +215,7 @@ texturedPbr :
     }
     -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedPbr { baseColor, roughness, metallic } =
-    Types.PbrMaterial
+    Types.PbrMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb baseColor)
         (map (clamp 0 1) roughness)
         (map (clamp 0 1) metallic)
@@ -228,7 +228,7 @@ type alias NormalMap =
 
 normalMappedMatte : Texture Color -> Texture NormalMap -> NormalMapped coordinates
 normalMappedMatte colorTexture normalMapTexture =
-    Types.LambertianMaterial
+    Types.LambertianMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb colorTexture)
         normalMapTexture
 
@@ -271,7 +271,7 @@ normalMappedPbr :
     }
     -> NormalMapped coordinates
 normalMappedPbr { baseColor, roughness, metallic, normalMap } =
-    Types.PbrMaterial
+    Types.PbrMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb baseColor)
         (map (clamp 0 1) roughness)
         (map (clamp 0 1) metallic)
@@ -355,14 +355,14 @@ anisotropic =
 coerce : Material coordinates a -> Material coordinates b
 coerce material =
     case material of
-        Types.UnlitMaterial colorTexture ->
-            Types.UnlitMaterial colorTexture
+        Types.UnlitMaterial textureMap colorTexture ->
+            Types.UnlitMaterial textureMap colorTexture
 
-        Types.EmissiveMaterial colorTexture brightness ->
-            Types.EmissiveMaterial colorTexture brightness
+        Types.EmissiveMaterial textureMap colorTexture brightness ->
+            Types.EmissiveMaterial textureMap colorTexture brightness
 
-        Types.LambertianMaterial colorTexture normalMapTexture ->
-            Types.LambertianMaterial colorTexture normalMapTexture
+        Types.LambertianMaterial textureMap colorTexture normalMapTexture ->
+            Types.LambertianMaterial textureMap colorTexture normalMapTexture
 
-        Types.PbrMaterial colorTexture roughnessTexture metallicTexture normalMapTexture ->
-            Types.PbrMaterial colorTexture roughnessTexture metallicTexture normalMapTexture
+        Types.PbrMaterial textureMap colorTexture roughnessTexture metallicTexture normalMapTexture ->
+            Types.PbrMaterial textureMap colorTexture roughnessTexture metallicTexture normalMapTexture
