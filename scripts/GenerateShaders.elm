@@ -1751,7 +1751,7 @@ emissivePointFragmentShader =
     Glsl.fragmentShader "emissivePointFragment"
         { uniforms = [ emissiveColor, pointRadius, sceneProperties ]
         , varyings = []
-        , functions = [ toSrgb ]
+        , functions = [ toSrgb, pointAlpha ]
         , constants = []
         }
         """
