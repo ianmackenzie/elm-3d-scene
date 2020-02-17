@@ -550,12 +550,22 @@ getLocalNormal =
         """
 
 
+getNormalSign : Glsl.Function
+getNormalSign =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        float getNormalSign() {
+            return 2.0 * float(gl_FrontFacing) - 1.0;
+        }
+        """
+
+
 getMappedNormal : Glsl.Function
 getMappedNormal =
     Glsl.function { dependencies = [], constants = [] }
         """
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent);
+        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent) * normalSign;
             return localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal;
         }
         """
@@ -1702,14 +1712,15 @@ lambertianFragmentShader =
         , varyings = varyings
         , constants = []
         , functions =
-            [ getDirectionToCamera
+            [ getNormalSign
+            , getDirectionToCamera
             , lambertianLighting
             , toSrgb
             ]
         }
         """
         void main() {
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 normalDirection = normalize(interpolatedNormal) * getNormalSign();
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
 
             vec3 linearColor = lambertianLighting(
@@ -1749,6 +1760,7 @@ lambertianTextureFragmentShader =
         , constants = []
         , functions =
             [ getLocalNormal
+            , getNormalSign
             , getMappedNormal
             , getDirectionToCamera
             , lambertianEnvironmentalLighting
@@ -1760,7 +1772,9 @@ lambertianTextureFragmentShader =
         """
         void main() {
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
-            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
+            float normalSign = getNormalSign();
+            vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
+            vec3 normalDirection = getMappedNormal(originalNormal, normalize(interpolatedTangent), normalSign, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
 
@@ -1799,7 +1813,8 @@ physicalFragmentShader =
             ]
         , varyings = varyings
         , functions =
-            [ getDirectionToCamera
+            [ getNormalSign
+            , getDirectionToCamera
             , physicalLighting
             , toSrgb
             ]
@@ -1807,7 +1822,7 @@ physicalFragmentShader =
         }
         """
         void main() {
-            vec3 normalDirection = normalize(interpolatedNormal);
+            vec3 normalDirection = normalize(interpolatedNormal) * getNormalSign();
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
 
             vec3 linearColor = physicalLighting(
@@ -1854,6 +1869,7 @@ physicalTexturesFragmentShader =
         , functions =
             [ getChannelValue
             , getLocalNormal
+            , getNormalSign
             , getMappedNormal
             , getDirectionToCamera
             , physicalLighting
@@ -1869,7 +1885,9 @@ physicalTexturesFragmentShader =
             float metallic = getChannelValue(metallicTexture, interpolatedUv, metallicChannel);
 
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
-            vec3 normalDirection = getMappedNormal(normalize(interpolatedNormal), normalize(interpolatedTangent), localNormal);
+            float normalSign = getNormalSign();
+            vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
+            vec3 normalDirection = getMappedNormal(originalNormal, normalize(interpolatedTangent), normalSign, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
 
             vec3 linearColor = physicalLighting(
