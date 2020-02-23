@@ -27,7 +27,7 @@
             "mdgriffith/elm-ui": "1.1.2",
             "myrho/elm-round": "1.0.4",
             "tesk9/palette": "2.0.0",
-            "w0rm/elm-physics": "4.0.0"
+            "w0rm/elm-physics": "5.0.0"
         },
         "indirect": {
             "elm/url": "1.0.0",

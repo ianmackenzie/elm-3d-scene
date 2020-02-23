@@ -8,7 +8,6 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Camera3d
-import Color
 import Common.Materials as Materials
 import Direction3d
 import Duration
@@ -29,8 +28,7 @@ import Random
 import Scene3d
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
-import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh as Mesh exposing (Mesh)
+import Scene3d.Material as Material
 import Sphere3d
 import Task
 import Viewpoint3d
@@ -108,7 +106,7 @@ view { world, screenWidth, screenHeight } =
                 }
 
         drawables =
-            List.map getTransformedDrawable (World.getBodies world)
+            List.map getTransformedDrawable (World.bodies world)
 
         sunlight =
             Scene3d.directionalLight Scene3d.castsShadows
@@ -149,7 +147,7 @@ initialWorld =
             Acceleration.metersPerSecondSquared 1.62
     in
     World.empty
-        |> World.setGravity moonGravity Direction3d.negativeZ
+        |> World.withGravity moonGravity Direction3d.negativeZ
         |> World.add floor
         |> addBoxes
 
@@ -296,7 +294,7 @@ box material =
     in
     Scene3d.block Scene3d.castsShadows material shape
         |> Body.block shape
-        |> Body.setBehavior (Body.dynamic (Mass.kilograms 5))
+        |> Body.withBehavior (Body.dynamic (Mass.kilograms 5))
 
 
 sphereRadius : Length
@@ -312,9 +310,9 @@ sphere material =
     in
     Scene3d.sphere Scene3d.castsShadows material shape
         |> Body.sphere shape
-        |> Body.setBehavior (Body.dynamic (Mass.kilograms 2.5))
+        |> Body.withBehavior (Body.dynamic (Mass.kilograms 2.5))
 
 
 getTransformedDrawable : Body (Scene3d.Entity BodyCoordinates) -> Scene3d.Entity WorldCoordinates
 getTransformedDrawable body =
-    Scene3d.placeIn (Body.getFrame3d body) (Body.getData body)
+    Scene3d.placeIn (Body.frame body) (Body.data body)
