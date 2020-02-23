@@ -35,8 +35,7 @@ import Rectangle2d
 import Scene3d
 import Scene3d.Chromaticity
 import Scene3d.Exposure
-import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh
+import Scene3d.Material as Material
 import Sphere3d
 import Task
 import Vector3d
@@ -99,7 +98,7 @@ init _ =
 initialWorld : World Data
 initialWorld =
     World.empty
-        |> World.setGravity
+        |> World.withGravity
             (Acceleration.metersPerSecondSquared 9.80665)
             Direction3d.negativeZ
         |> World.add table
@@ -162,7 +161,7 @@ table =
         { id = Table
         , entity = Scene3d.group entities
         }
-        |> Body.setBehavior (Body.dynamic (kilograms 3.58))
+        |> Body.withBehavior (Body.dynamic (kilograms 3.58))
 
 
 camera : Camera3d Meters WorldCoordinates
@@ -200,10 +199,10 @@ view { world, width, height } =
             List.map
                 (\body ->
                     Scene3d.placeIn
-                        (Body.getFrame3d body)
-                        (Body.getData body).entity
+                        (Body.frame body)
+                        (Body.data body).entity
                 )
-                (World.getBodies world)
+                (World.bodies world)
     in
     Html.div
         [ Html.Attributes.style "position" "absolute"
@@ -251,7 +250,7 @@ update msg model =
                 maybeRaycastResult =
                     model.world
                         |> World.keepIf
-                            (\body -> (Body.getData body).id == Table)
+                            (\body -> (Body.data body).id == Table)
                         |> World.raycast mouseRay
             in
             case maybeRaycastResult of
@@ -259,11 +258,11 @@ update msg model =
                     let
                         worldPoint =
                             Point3d.placeIn
-                                (Body.getFrame3d raycastResult.body)
+                                (Body.frame raycastResult.body)
                                 raycastResult.point
 
                         selectedId =
-                            (Body.getData raycastResult.body).id
+                            (Body.data raycastResult.body).id
                     in
                     { model
                         | maybeRaycastResult = Just raycastResult
@@ -273,8 +272,8 @@ update msg model =
                                 |> World.constrain
                                     (\b1 b2 ->
                                         if
-                                            ((Body.getData b1).id == Mouse)
-                                                && ((Body.getData b2).id == selectedId)
+                                            ((Body.data b1).id == Mouse)
+                                                && ((Body.data b2).id == selectedId)
                                         then
                                             [ Physics.Constraint.pointToPoint
                                                 Point3d.origin
@@ -295,7 +294,7 @@ update msg model =
                     let
                         worldPoint =
                             Point3d.placeIn
-                                (Body.getFrame3d raycastResult.body)
+                                (Body.frame raycastResult.body)
                                 raycastResult.point
 
                         plane =
@@ -307,7 +306,7 @@ update msg model =
                         | world =
                             World.update
                                 (\body ->
-                                    if (Body.getData body).id == Mouse then
+                                    if (Body.data body).id == Mouse then
                                         case Axis3d.intersectionWithPlane plane mouseRay of
                                             Just intersection ->
                                                 Body.moveTo intersection body
@@ -329,7 +328,7 @@ update msg model =
                 | maybeRaycastResult = Nothing
                 , world =
                     World.keepIf
-                        (\body -> (Body.getData body).id /= Mouse)
+                        (\body -> (Body.data body).id /= Mouse)
                         model.world
             }
 
