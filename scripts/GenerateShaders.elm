@@ -279,7 +279,6 @@ kSoftLighting =
     Glsl.constant Glsl.float "kSoftLighting" "1.0"
 
 
-
 kPi : Glsl.Constant
 kPi =
     Glsl.constant Glsl.float "kPi" "3.14159265359"
