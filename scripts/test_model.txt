@@ -1,12 +1,12 @@
-Mesh: points, lineSegments, polyline, triangles, facets, plain, uniform, unlit, textured, quad, block, sphere, cylinder
-Shadow: castsShadows, doesNotCastShadows
-Transformation: translateBy, rotateAround, scaleAbout, mirrorAcross
-Material: color, emissive, matte, pbr, texturedColor, texturedEmissive, texturedMatte, texturedPbr
-Antialiasing: multisampling, supersampling, noAntialiasing
-Dynamic range: 1, 2, 5, 10
-Light sources: noLightSources, directionalLight, pointLight, twoLightSources
-Environmental lighting: noEnvironmentalLighting, softLighting
+Mesh: Points, LineSegments, Polyline, Triangles, Facets, Plain, Uniform, Unlit, Textured, Quad, Block, Sphere, Cylinder
+Material: Color, Emissive, Matte, Pbr, TexturedColor, TexturedEmissive, TexturedMatte, TexturedPbr
+Shadows: NoShadow, Shadow
+Transformation: NoTransformation, Translation, Rotation, Scale, Mirror
+LightSources: NoLightSources, PointLight, DirectionalLight, TwoLightSources
+EnvironmentalLighting: NoEnvironmentalLighting, SoftLighting
+DynamicRange: 1, 2, 5, 10
+Antialiasing: NoAntialiasing, Multisampling, Supersampling
 
-IF [Mesh] IN {"points", "lineSegments", "polyline", "triangles", "plain"} THEN [Material] IN {"color", "emissive"};
-IF [Mesh] IN {"facets", "uniform", "block", "cylinder"} THEN [Material] IN {"color", "emissive", "matte", "pbr"};
-IF [Mesh] IN {"unlit"} then [Material] IN {"color", "emissive", "texturedColor", "texturedEmissive"};
+IF [Mesh] IN {"Points", "LineSegments", "Polyline", "Triangles", "Plain"} THEN [Material] IN {"Color", "Emissive"};
+IF [Mesh] IN {"Facets", "Uniform", "Block", "Cylinder"} THEN [Material] IN {"Color", "Emissive", "Matte", "Pbr"};
+IF [Mesh] IN {"Unlit"} then [Material] IN {"Color", "Emissive", "TexturedColor", "TexturedEmissive"};
