@@ -43,7 +43,6 @@ import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
 import Scene3d.Primitives as Primitives
-import Scene3d.Shaders as Shaders
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types
     exposing
@@ -58,6 +57,7 @@ import Scene3d.Types as Types
         , VertexWithNormal
         , VertexWithUv
         )
+import Scene3d.UnoptimizedShaders as Shaders
 import Sphere3d exposing (Sphere3d)
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
