@@ -791,9 +791,9 @@ sampleFacetNormal : Glsl.Function
 sampleFacetNormal =
     Glsl.function { dependencies = [], constants = [] }
         """
-        vec3 sampleFacetNormal(float t1, float t2, vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
-            t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
-            vec3 vNh = t1 * vT1 + t2 * vT2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * vH;
+        vec3 sampleFacetNormal(vec3 vH, vec3 vT1, vec3 vT2, float s, float alpha) {
+            float t2 = (1.0 - s);
+            vec3 vNh = t2 * vT2 + sqrt(max(0.0, 1.0 - t2 * t2)) * vH;
             return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
         }
         """
@@ -892,7 +892,7 @@ physicalEnvironmentalLighting =
                 vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
                 vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
                 
-                localHalfDirection = sampleFacetNormal(0.000000, 0.000000, vH, vT1, vT2, s, alpha);
+                localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
                 localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
                 vec3 specular = softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
                 
