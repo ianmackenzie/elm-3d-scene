@@ -443,6 +443,8 @@ getDirectionToLight =
             } else if (lightSourceType == kPointLightSource) {
                 vec3 lightPosition = xyz_type.xyz;
                 return normalize(lightPosition - surfacePosition);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
             }
         }
         """
