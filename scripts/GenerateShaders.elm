@@ -1411,7 +1411,7 @@ pointVertexShader =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             float supersampling = sceneProperties[3][0];
-            gl_PointSize = 2.0 * pointRadius * superSampling + 2.0;
+            gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
         }
         """
 
