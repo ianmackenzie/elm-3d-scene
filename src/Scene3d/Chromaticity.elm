@@ -1,7 +1,7 @@
 module Scene3d.Chromaticity exposing
     ( Chromaticity
     , sunlight, incandescent, fluorescent, d65
-    , xy, fromTemperature, fromColor
+    , xy, kelvins, fromTemperature, fromColor
     )
 
 {-|
