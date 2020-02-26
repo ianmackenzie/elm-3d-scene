@@ -9,4 +9,4 @@ Antialiasing: NoAntialiasing, Multisampling, Supersampling
 
 IF [Mesh] IN {"Points", "LineSegments", "Polyline", "Triangles", "Plain"} THEN [Material] IN {"Color", "Emissive"};
 IF [Mesh] IN {"Facets", "Uniform", "Block", "Cylinder"} THEN [Material] IN {"Color", "Emissive", "Matte", "Pbr"};
-IF [Mesh] IN {"Unlit"} then [Material] IN {"Color", "Emissive", "TexturedColor", "TexturedEmissive"};
+IF [Mesh] IN {"Unlit"} THEN [Material] IN {"Color", "Emissive", "TexturedColor", "TexturedEmissive"};
