@@ -10,3 +10,11 @@ Antialiasing: NoAntialiasing, Multisampling, Supersampling
 IF [Mesh] IN {"Points", "LineSegments", "Polyline", "Triangles", "Plain"} THEN [Material] IN {"Color", "Emissive"};
 IF [Mesh] IN {"Facets", "Uniform", "Block", "Cylinder"} THEN [Material] IN {"Color", "Emissive", "Matte", "Pbr"};
 IF [Mesh] IN {"Unlit"} THEN [Material] IN {"Color", "Emissive", "TexturedColor", "TexturedEmissive"};
+
+# Don't bother testing shadows without direct lighting
+IF [Shadows] = "Shadow" THEN [LightSources] <> "NoLightSources";
+# Don't bother testing shadows with points, lines and polylines
+IF [Shadows] = "Shadow" THEN [Mesh] IN {"Triangles", "Facets", "Plain", "Uniform", "Unlit", "Textured", "Quad", "Block", "Sphere", "Cylinder"};
+
+# Make sure there's some kind of light in the scene
+IF [LightSources] = "NoLightSources" THEN [EnvironmentalLighting] = "SoftLighting";
