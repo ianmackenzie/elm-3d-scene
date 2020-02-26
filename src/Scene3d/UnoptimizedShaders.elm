@@ -749,7 +749,8 @@ pointVertex =
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
-            gl_PointSize = 2.0 * pointRadius + 2.0;
+            float supersampling = sceneProperties[3][0];
+            gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
         }
     |]
 
@@ -1167,7 +1168,8 @@ constantPointFragment =
         }
         
         void main () {
-            float alpha = pointAlpha(pointRadius, gl_PointCoord);
+            float supersampling = sceneProperties[3][0];
+            float alpha = pointAlpha(pointRadius * supersampling, gl_PointCoord);
             gl_FragColor = vec4(constantColor, alpha);
         }
     |]
@@ -1350,7 +1352,8 @@ emissivePointFragment =
         
         void main () {
             vec4 color = toSrgb(emissiveColor, sceneProperties);
-            float alpha = pointAlpha(pointRadius, gl_PointCoord);
+            float supersampling = sceneProperties[3][0];
+            float alpha = pointAlpha(pointRadius * supersampling, gl_PointCoord);
             gl_FragColor = vec4(color.rgb, alpha);
         }
     |]

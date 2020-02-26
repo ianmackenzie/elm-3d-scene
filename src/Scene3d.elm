@@ -878,10 +878,10 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
 --   0: perspective (camera XYZ is eye position)
 --   1: orthographic (camera XYZ is direction to screen)
 --
--- [ clipDistance  cameraX         whiteR  * ]
--- [ aspectRatio   cameraY         whiteG  * ]
--- [ kc            cameraZ         whiteB  * ]
--- [ kz            projectionType  *       * ]
+-- [ clipDistance  cameraX         whiteR        supersampling ]
+-- [ aspectRatio   cameraY         whiteG        *             ]
+-- [ kc            cameraZ         whiteB        *             ]
+-- [ kz            projectionType  dynamicRange  *             ]
 
 
 depthTestDefault : List WebGL.Settings.Setting
@@ -944,6 +944,7 @@ toWebGLEntities :
     , dynamicRange : Float
     , whiteBalance : Chromaticity
     , aspectRatio : Float
+    , supersampling : Float
     }
     -> List (Entity coordinates)
     -> List WebGL.Entity
@@ -995,7 +996,7 @@ toWebGLEntities arguments drawables =
                 , m23 = maxLuminance * Math.Vector3.getY linearRgb
                 , m33 = maxLuminance * Math.Vector3.getZ linearRgb
                 , m43 = arguments.dynamicRange
-                , m14 = 0
+                , m14 = arguments.supersampling
                 , m24 = 0
                 , m34 = 0
                 , m44 = 0
