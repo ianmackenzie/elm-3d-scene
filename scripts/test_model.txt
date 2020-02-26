@@ -7,6 +7,7 @@ EnvironmentalLighting: NoEnvironmentalLighting, SoftLighting
 DynamicRange: 1, 2, 5, 10
 Antialiasing: NoAntialiasing, Multisampling, Supersampling
 
+# Constrain meshes to have valid materials (e.g. can't have textured material on mesh without UVs)
 IF [Mesh] IN {"Points", "LineSegments", "Polyline", "Triangles", "Plain"} THEN [Material] IN {"Color", "Emissive"};
 IF [Mesh] IN {"Facets", "Uniform", "Block", "Cylinder"} THEN [Material] IN {"Color", "Emissive", "Matte", "Pbr"};
 IF [Mesh] IN {"Unlit"} THEN [Material] IN {"Color", "Emissive", "TexturedColor", "TexturedEmissive"};
