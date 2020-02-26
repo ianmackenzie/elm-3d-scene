@@ -1125,6 +1125,7 @@ toHtml options arguments drawables =
                     , dynamicRange = optionValues.dynamicRange
                     , whiteBalance = arguments.whiteBalance
                     , aspectRatio = Quantity.ratio width height
+                    , supersampling = optionValues.supersampling
                     }
                     drawables
                 )
