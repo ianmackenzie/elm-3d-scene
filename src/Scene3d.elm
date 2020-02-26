@@ -800,6 +800,7 @@ type alias RenderPass =
 type alias RenderPasses =
     { meshes : List RenderPass
     , shadows : List RenderPass
+    , points : List RenderPass
     }
 
 
@@ -842,6 +843,23 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
             in
             { meshes = updatedMeshes
             , shadows = accumulated.shadows
+            , points = accumulated.points
+            }
+
+        PointNode pointDrawFunction ->
+            let
+                updatedPoints =
+                    createRenderPass
+                        sceneProperties
+                        viewMatrix
+                        ambientLightingMatrix
+                        currentTransformation
+                        pointDrawFunction
+                        :: accumulated.points
+            in
+            { meshes = accumulated.meshes
+            , shadows = accumulated.shadows
+            , points = updatedPoints
             }
 
         ShadowNode shadowDrawFunction ->
@@ -857,6 +875,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
             in
             { meshes = accumulated.meshes
             , shadows = updatedShadows
+            , points = accumulated.points
             }
 
         Group childNodes ->
@@ -1025,17 +1044,22 @@ toWebGLEntities arguments drawables =
                 rootNode
                 { meshes = []
                 , shadows = []
+                , points = []
                 }
     in
     case arguments.directLighting of
         SingleUnshadowedPass lightMatrices ->
-            call renderPasses.meshes lightMatrices depthTestDefault
+            List.concat
+                [ call renderPasses.meshes lightMatrices depthTestDefault
+                , call renderPasses.points lightingDisabled depthTestDefault
+                ]
 
         SingleShadowedPass lightMatrices ->
             List.concat
                 [ call renderPasses.meshes lightingDisabled depthTestDefault
                 , call renderPasses.shadows lightMatrices createShadowStencil
                 , call renderPasses.meshes lightMatrices outsideStencil
+                , call renderPasses.points lightingDisabled depthTestDefault
                 ]
 
         TwoPasses allLightMatrices unshadowedLightMatrices ->
@@ -1043,6 +1067,7 @@ toWebGLEntities arguments drawables =
                 [ call renderPasses.meshes allLightMatrices depthTestDefault
                 , call renderPasses.shadows allLightMatrices createShadowStencil
                 , call renderPasses.meshes unshadowedLightMatrices insideStencil
+                , call renderPasses.points lightingDisabled depthTestDefault
                 ]
 
 

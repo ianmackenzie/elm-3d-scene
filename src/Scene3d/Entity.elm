@@ -64,6 +64,7 @@ import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
+import WebGL.Settings.Blend as Blend
 import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture
 
@@ -967,6 +968,23 @@ quadShadow firstPoint secondPoint thirdPoint fourthPoint =
                     }
 
 
+blendPointOver : WebGL.Settings.Setting
+blendPointOver =
+    Blend.custom
+        { r = 0
+        , g = 0
+        , b = 0
+        , a = 0
+        , color = Blend.customAdd Blend.srcAlpha Blend.oneMinusSrcAlpha
+        , alpha = Blend.customAdd Blend.one Blend.oneMinusSrcAlpha
+        }
+
+
+pointSettings : List WebGL.Settings.Setting -> List WebGL.Settings.Setting
+pointSettings settings =
+    blendPointOver :: settings
+
+
 cullBackFaceSetting : WebGL.Settings.Setting
 cullBackFaceSetting =
     WebGL.Settings.cullFace WebGL.Settings.back
@@ -1079,10 +1097,10 @@ colorTextureMesh data webGLMesh backFaceSetting =
 constantPointMesh : Vec3 -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
 constantPointMesh color radius webGLMesh =
     Types.Entity <|
-        MeshNode
+        PointNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
-                    (WebGL.Settings.sampleAlphaToCoverage :: settings)
+                    (pointSettings settings)
                     Shaders.pointVertex
                     Shaders.constantPointFragment
                     webGLMesh
@@ -1138,10 +1156,10 @@ texturedEmissiveMesh colorData backlight webGLMesh backFaceSetting =
 emissivePointMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
 emissivePointMesh color backlight radius webGLMesh =
     Types.Entity <|
-        MeshNode
+        PointNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
                 WebGL.entityWith
-                    (WebGL.Settings.sampleAlphaToCoverage :: settings)
+                    (pointSettings settings)
                     Shaders.pointVertex
                     Shaders.emissivePointFragment
                     webGLMesh
@@ -1348,6 +1366,9 @@ transformBy transformation (Types.Entity node) =
             Types.Entity (Transformed compositeTransformation underlyingNode)
 
         MeshNode _ ->
+            Types.Entity (Transformed transformation node)
+
+        PointNode _ ->
             Types.Entity (Transformed transformation node)
 
         ShadowNode _ ->

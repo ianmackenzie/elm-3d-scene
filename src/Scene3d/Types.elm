@@ -171,6 +171,7 @@ type Node
     = EmptyNode
     | MeshNode DrawFunction
     | ShadowNode DrawFunction
+    | PointNode DrawFunction
     | Group (List Node)
     | Transformed Transformation Node
 
