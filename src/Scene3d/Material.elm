@@ -274,7 +274,7 @@ be present and so can be applied to any mesh. The only possibilities here are
 [`color`](#color) and [`emissive`](#emissive).
 -}
 type alias Plain coordinates =
-    Material coordinates {}
+    Material coordinates { normals : No, uvs : No, tangents : No }
 
 
 {-| A material that can be applied to an [`Uniform`](Scene3d-Mesh#Uniform) mesh
