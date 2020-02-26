@@ -183,7 +183,7 @@ mesh givenMaterial givenMesh =
                     emissiveMesh emissiveColor backlight webGLMesh KeepBackFaces
 
                 Types.Points _ radius _ webGLMesh ->
-                    emissivePointMesh emissiveColor radius webGLMesh
+                    emissivePointMesh emissiveColor backlight radius webGLMesh
 
         Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
             case givenMesh of
@@ -1135,8 +1135,8 @@ texturedEmissiveMesh colorData backlight webGLMesh backFaceSetting =
             )
 
 
-emissivePointMesh : Vec3 -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
-emissivePointMesh color radius webGLMesh =
+emissivePointMesh : Vec3 -> Float -> Float -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
+emissivePointMesh color backlight radius webGLMesh =
     Types.Entity <|
         MeshNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lightSources settings ->
@@ -1145,7 +1145,7 @@ emissivePointMesh color radius webGLMesh =
                     Shaders.pointVertex
                     Shaders.emissivePointFragment
                     webGLMesh
-                    { emissiveColor = color
+                    { emissiveColor = Math.Vector3.scale backlight color
                     , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
