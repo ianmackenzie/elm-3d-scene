@@ -634,7 +634,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
                             , backlight = backlight
-                            , emissiveColor = emissiveColor
+                            , emissiveColor = Math.Vector3.scale backlight emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
