@@ -42,7 +42,7 @@ plainVertex :
             | position : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -54,13 +54,13 @@ plainVertex =
         
         attribute vec3 position;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
@@ -91,7 +91,7 @@ unlitVertex :
             , uv : Vec2
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -105,15 +105,15 @@ unlitVertex =
         attribute vec3 position;
         attribute vec2 uv;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
         
         varying vec2 interpolatedUv;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
@@ -145,7 +145,7 @@ uniformVertex :
             , normal : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -160,7 +160,7 @@ uniformVertex =
         attribute vec3 position;
         attribute vec3 normal;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -168,13 +168,13 @@ uniformVertex =
         varying vec3 interpolatedPosition;
         varying vec3 interpolatedNormal;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -194,7 +194,7 @@ uniformVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
         }
     |]
 
@@ -207,7 +207,7 @@ texturedVertex :
             , uv : Vec2
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -225,7 +225,7 @@ texturedVertex =
         attribute vec3 normal;
         attribute vec2 uv;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -235,13 +235,13 @@ texturedVertex =
         varying vec2 interpolatedUv;
         varying vec3 interpolatedTangent;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -261,7 +261,7 @@ texturedVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
             interpolatedUv = uv;
             interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
@@ -277,7 +277,7 @@ normalMappedVertex :
             , tangent : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -296,7 +296,7 @@ normalMappedVertex =
         attribute vec2 uv;
         attribute vec3 tangent;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -306,13 +306,17 @@ normalMappedVertex =
         varying vec2 interpolatedUv;
         varying vec3 interpolatedTangent;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        }
+        
+        vec3 getWorldTangent(vec3 modelTangent, mat4 modelMatrix) {
+            return (modelMatrix * vec4(modelTangent, 0.0)).xyz;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -332,9 +336,9 @@ normalMappedVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
             interpolatedUv = uv;
-            interpolatedTangent = getWorldDirection(tangent, modelMatrix);
+            interpolatedTangent = getWorldTangent(tangent, modelMatrix);
         }
     |]
 
@@ -345,7 +349,7 @@ plainQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -358,7 +362,7 @@ plainQuadVertex =
         
         attribute vec3 quadVertex;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -391,13 +395,9 @@ plainQuadVertex =
             normal = normalize(cross(next - position, prev - position));
         }
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -430,7 +430,7 @@ unlitQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -444,7 +444,7 @@ unlitQuadVertex =
         
         attribute vec3 quadVertex;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -479,13 +479,9 @@ unlitQuadVertex =
             normal = normalize(cross(next - position, prev - position));
         }
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
-        }
-        
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -519,7 +515,7 @@ smoothQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -534,7 +530,7 @@ smoothQuadVertex =
         
         attribute vec3 quadVertex;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -570,13 +566,13 @@ smoothQuadVertex =
             normal = normalize(cross(next - position, prev - position));
         }
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -600,7 +596,7 @@ smoothQuadVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
         }
     |]
 
@@ -611,7 +607,7 @@ texturedQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -628,7 +624,7 @@ texturedQuadVertex =
         
         attribute vec3 quadVertex;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -666,13 +662,13 @@ texturedQuadVertex =
             normal = normalize(cross(next - position, prev - position));
         }
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
         vec4 project(vec4 position, vec4 projectionProperties) {
@@ -696,7 +692,7 @@ texturedQuadVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldDirection(normal, modelMatrix);
+            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
             interpolatedUv = quadVertex.xy;
             interpolatedTangent = tangent;
         }
@@ -709,7 +705,7 @@ pointVertex :
             | position : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , pointRadius : Float
             , viewMatrix : Mat4
@@ -722,14 +718,14 @@ pointVertex =
         
         attribute vec3 position;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform float pointRadius;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
@@ -762,7 +758,7 @@ shadowVertex :
             , normal : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -776,7 +772,7 @@ shadowVertex =
         attribute vec3 position;
         attribute vec3 normal;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -785,13 +781,13 @@ shadowVertex =
         const float kDirectionalLightSource = 1.0;
         const float kPointLightSource = 2.0;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
@@ -819,9 +815,9 @@ shadowVertex =
             );
         }
         
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
+            vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
             vec4 xyz_type = shadowLightSource[0];
             vec4 rgb_radius = shadowLightSource[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
@@ -853,7 +849,7 @@ quadShadowVertex :
             | quadShadowVertex : Vec2
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -867,7 +863,7 @@ quadShadowVertex =
         
         attribute vec2 quadShadowVertex;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -904,13 +900,13 @@ quadShadowVertex =
             normal = normalize(cross(next - position, prev - position));
         }
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldDirection(vec3 modelDirection, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelDirection, 0.0)).xyz;
+        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
+            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
@@ -938,9 +934,9 @@ quadShadowVertex =
             );
         }
         
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec3 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldDirection(normal, modelMatrix);
+            vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
             vec4 xyz_type = shadowLightSource[0];
             vec4 rgb_radius = shadowLightSource[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
@@ -978,7 +974,7 @@ sphereShadowVertex :
             , offsetScale : Float
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -992,7 +988,7 @@ sphereShadowVertex =
         attribute float angle;
         attribute float offsetScale;
         
-        uniform vec3 modelScale;
+        uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
         uniform mat4 sceneProperties;
@@ -1002,8 +998,8 @@ sphereShadowVertex =
         const float kPointLightSource = 2.0;
         const float kPerspectiveProjection = 0.0;
         
-        vec4 getWorldPosition(vec3 modelPosition, vec3 modelScale, mat4 modelMatrix) {
-            vec4 scaledPosition = vec4(modelScale * modelPosition, 1.0);
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
             return modelMatrix * scaledPosition;
         }
         

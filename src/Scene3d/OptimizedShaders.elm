@@ -42,7 +42,7 @@ plainVertex :
             | position : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -50,7 +50,7 @@ plainVertex :
         {}
 plainVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;}
+        precision mediump float;attribute vec3 position;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale.xyz*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;}
     |]
 
 
@@ -61,7 +61,7 @@ unlitVertex :
             , uv : Vec2
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -70,7 +70,7 @@ unlitVertex :
         }
 unlitVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;attribute vec2 uv;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec2 interpolatedUv;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;interpolatedUv=uv;}
+        precision mediump float;attribute vec3 position;attribute vec2 uv;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec2 interpolatedUv;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale.xyz*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;interpolatedUv=uv;}
     |]
 
 
@@ -81,7 +81,7 @@ uniformVertex :
             , normal : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -91,7 +91,7 @@ uniformVertex :
         }
 uniformVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;attribute vec3 normal;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=(modelMatrix*f).xyz;}
+        precision mediump float;attribute vec3 position;attribute vec3 normal;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale.xyz*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=((modelMatrix*f).xyz*modelScale.w);}
     |]
 
 
@@ -103,7 +103,7 @@ texturedVertex :
             , uv : Vec2
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -115,7 +115,7 @@ texturedVertex :
         }
 texturedVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;attribute vec3 normal;attribute vec2 uv;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=(modelMatrix*f).xyz;interpolatedUv=uv;interpolatedTangent=vec3(0.0,0.0,0.0);}
+        precision mediump float;attribute vec3 position;attribute vec3 normal;attribute vec2 uv;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale.xyz*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=((modelMatrix*f).xyz*modelScale.w);interpolatedUv=uv;interpolatedTangent=vec3(0.0,0.0,0.0);}
     |]
 
 
@@ -128,7 +128,7 @@ normalMappedVertex :
             , tangent : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -140,7 +140,7 @@ normalMappedVertex :
         }
 normalMappedVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;attribute vec3 normal;attribute vec2 uv;attribute vec3 tangent;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=(modelMatrix*f).xyz;interpolatedUv=uv;vec4 g;g.w=0.0;g.xyz=tangent;interpolatedTangent=(modelMatrix*g).xyz;}
+        precision mediump float;attribute vec3 position;attribute vec3 normal;attribute vec2 uv;attribute vec3 tangent;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){vec4 a;vec4 b;b.w=1.0;b.xyz=(modelScale.xyz*position);a=(modelMatrix*b);vec4 c;c=(viewMatrix*a);vec4 d;d=sceneProperties[0];highp vec4 e;e.x=((d.z+(d.w*c.z))*(c.x/d.y));e.y=((d.z+(d.w*c.z))*c.y);e.z=(-(c.z)-(2.0*d.x));e.w=-(c.z);gl_Position=e;interpolatedPosition=a.xyz;vec4 f;f.w=0.0;f.xyz=normal;interpolatedNormal=((modelMatrix*f).xyz*modelScale.w);interpolatedUv=uv;vec4 g;g.w=0.0;g.xyz=tangent;interpolatedTangent=(modelMatrix*g).xyz;}
     |]
 
 
@@ -150,7 +150,7 @@ plainQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -159,7 +159,7 @@ plainQuadVertex :
         {}
 plainQuadVertex =
     [glsl|
-        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;void main(){highp int a;a=int(quadVertex.z);vec3 b;if((a==0)){b=quadVertexPositions[0].xyz;}else{if((a==1)){b=quadVertexPositions[1].xyz;}else{if((a==2)){b=quadVertexPositions[2].xyz;}else{b=quadVertexPositions[3].xyz;}}}vec4 c;c.w=1.0;c.xyz=(modelScale*b);vec4 d;d=(viewMatrix*(modelMatrix*c));vec4 e;e=sceneProperties[0];highp vec4 f;f.x=((e.z+(e.w*d.z))*(d.x/e.y));f.y=((e.z+(e.w*d.z))*d.y);f.z=(-(d.z)-(2.0*e.x));f.w=-(d.z);gl_Position=f;}
+        precision mediump float;attribute vec3 quadVertex;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;void main(){highp int a;a=int(quadVertex.z);vec3 b;if((a==0)){b=quadVertexPositions[0].xyz;}else{if((a==1)){b=quadVertexPositions[1].xyz;}else{if((a==2)){b=quadVertexPositions[2].xyz;}else{b=quadVertexPositions[3].xyz;}}}vec4 c;c.w=1.0;c.xyz=(modelScale.xyz*b);vec4 d;d=(viewMatrix*(modelMatrix*c));vec4 e;e=sceneProperties[0];highp vec4 f;f.x=((e.z+(e.w*d.z))*(d.x/e.y));f.y=((e.z+(e.w*d.z))*d.y);f.z=(-(d.z)-(2.0*e.x));f.w=-(d.z);gl_Position=f;}
     |]
 
 
@@ -169,7 +169,7 @@ unlitQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -179,7 +179,7 @@ unlitQuadVertex :
         }
 unlitQuadVertex =
     [glsl|
-        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec2 interpolatedUv;void main(){highp int a;a=int(quadVertex.z);vec3 b;if((a==0)){b=quadVertexPositions[0].xyz;}else{if((a==1)){b=quadVertexPositions[1].xyz;}else{if((a==2)){b=quadVertexPositions[2].xyz;}else{b=quadVertexPositions[3].xyz;}}}vec4 c;c.w=1.0;c.xyz=(modelScale*b);vec4 d;d=(viewMatrix*(modelMatrix*c));vec4 e;e=sceneProperties[0];highp vec4 f;f.x=((e.z+(e.w*d.z))*(d.x/e.y));f.y=((e.z+(e.w*d.z))*d.y);f.z=(-(d.z)-(2.0*e.x));f.w=-(d.z);gl_Position=f;interpolatedUv=quadVertex.xy;}
+        precision mediump float;attribute vec3 quadVertex;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec2 interpolatedUv;void main(){highp int a;a=int(quadVertex.z);vec3 b;if((a==0)){b=quadVertexPositions[0].xyz;}else{if((a==1)){b=quadVertexPositions[1].xyz;}else{if((a==2)){b=quadVertexPositions[2].xyz;}else{b=quadVertexPositions[3].xyz;}}}vec4 c;c.w=1.0;c.xyz=(modelScale.xyz*b);vec4 d;d=(viewMatrix*(modelMatrix*c));vec4 e;e=sceneProperties[0];highp vec4 f;f.x=((e.z+(e.w*d.z))*(d.x/e.y));f.y=((e.z+(e.w*d.z))*d.y);f.z=(-(d.z)-(2.0*e.x));f.w=-(d.z);gl_Position=f;interpolatedUv=quadVertex.xy;}
     |]
 
 
@@ -189,7 +189,7 @@ smoothQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -200,7 +200,7 @@ smoothQuadVertex :
         }
 smoothQuadVertex =
     [glsl|
-        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){highp int a;a=int(quadVertex.z);vec3 b;vec3 c;vec3 d;d=vec3(0.0,0.0,0.0);c=vec3(0.0,0.0,0.0);if((a==0)){c=quadVertexPositions[3].xyz;b=quadVertexPositions[0].xyz;d=quadVertexPositions[1].xyz;}else{if((a==1)){c=quadVertexPositions[0].xyz;b=quadVertexPositions[1].xyz;d=quadVertexPositions[2].xyz;}else{if((a==2)){c=quadVertexPositions[1].xyz;b=quadVertexPositions[2].xyz;d=quadVertexPositions[3].xyz;}else{c=quadVertexPositions[2].xyz;b=quadVertexPositions[3].xyz;d=quadVertexPositions[0].xyz;}}}vec3 e;e=(d-b);vec3 f;f=(c-b);vec4 g;vec4 h;h.w=1.0;h.xyz=(modelScale*b);g=(modelMatrix*h);vec4 i;i=(viewMatrix*g);vec4 j;j=sceneProperties[0];highp vec4 k;k.x=((j.z+(j.w*i.z))*(i.x/j.y));k.y=((j.z+(j.w*i.z))*i.y);k.z=(-(i.z)-(2.0*j.x));k.w=-(i.z);gl_Position=k;interpolatedPosition=g.xyz;vec4 l;l.w=0.0;l.xyz=normalize(((e.yzx*f.zxy)-(e.zxy*f.yzx)));interpolatedNormal=(modelMatrix*l).xyz;}
+        precision mediump float;attribute vec3 quadVertex;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;void main(){highp int a;a=int(quadVertex.z);vec3 b;vec3 c;vec3 d;d=vec3(0.0,0.0,0.0);c=vec3(0.0,0.0,0.0);if((a==0)){c=quadVertexPositions[3].xyz;b=quadVertexPositions[0].xyz;d=quadVertexPositions[1].xyz;}else{if((a==1)){c=quadVertexPositions[0].xyz;b=quadVertexPositions[1].xyz;d=quadVertexPositions[2].xyz;}else{if((a==2)){c=quadVertexPositions[1].xyz;b=quadVertexPositions[2].xyz;d=quadVertexPositions[3].xyz;}else{c=quadVertexPositions[2].xyz;b=quadVertexPositions[3].xyz;d=quadVertexPositions[0].xyz;}}}vec3 e;e=(d-b);vec3 f;f=(c-b);vec4 g;vec4 h;h.w=1.0;h.xyz=(modelScale.xyz*b);g=(modelMatrix*h);vec4 i;i=(viewMatrix*g);vec4 j;j=sceneProperties[0];highp vec4 k;k.x=((j.z+(j.w*i.z))*(i.x/j.y));k.y=((j.z+(j.w*i.z))*i.y);k.z=(-(i.z)-(2.0*j.x));k.w=-(i.z);gl_Position=k;interpolatedPosition=g.xyz;vec4 l;l.w=0.0;l.xyz=normalize(((e.yzx*f.zxy)-(e.zxy*f.yzx)));interpolatedNormal=((modelMatrix*l).xyz*modelScale.w);}
     |]
 
 
@@ -210,7 +210,7 @@ texturedQuadVertex :
             | quadVertex : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -223,7 +223,7 @@ texturedQuadVertex :
         }
 texturedQuadVertex =
     [glsl|
-        precision mediump float;attribute vec3 quadVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){highp int a;a=int(quadVertex.z);vec3 b;vec3 c;vec3 d;vec3 e;e=vec3(0.0,0.0,0.0);d=vec3(0.0,0.0,0.0);if((a==0)){d=quadVertexPositions[3].xyz;b=quadVertexPositions[0].xyz;e=quadVertexPositions[1].xyz;c=normalize((e-b));}else{if((a==1)){d=quadVertexPositions[0].xyz;b=quadVertexPositions[1].xyz;e=quadVertexPositions[2].xyz;c=normalize((b-d));}else{if((a==2)){d=quadVertexPositions[1].xyz;b=quadVertexPositions[2].xyz;e=quadVertexPositions[3].xyz;c=normalize((b-e));}else{d=quadVertexPositions[2].xyz;b=quadVertexPositions[3].xyz;e=quadVertexPositions[0].xyz;c=normalize((d-b));}}}vec3 f;f=(e-b);vec3 g;g=(d-b);vec4 h;vec4 i;i.w=1.0;i.xyz=(modelScale*b);h=(modelMatrix*i);vec4 j;j=(viewMatrix*h);vec4 k;k=sceneProperties[0];highp vec4 l;l.x=((k.z+(k.w*j.z))*(j.x/k.y));l.y=((k.z+(k.w*j.z))*j.y);l.z=(-(j.z)-(2.0*k.x));l.w=-(j.z);gl_Position=l;interpolatedPosition=h.xyz;vec4 m;m.w=0.0;m.xyz=normalize(((f.yzx*g.zxy)-(f.zxy*g.yzx)));interpolatedNormal=(modelMatrix*m).xyz;interpolatedUv=quadVertex.xy;interpolatedTangent=c;}
+        precision mediump float;attribute vec3 quadVertex;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 quadVertexPositions;varying vec3 interpolatedPosition;varying vec3 interpolatedNormal;varying vec2 interpolatedUv;varying vec3 interpolatedTangent;void main(){highp int a;a=int(quadVertex.z);vec3 b;vec3 c;vec3 d;vec3 e;e=vec3(0.0,0.0,0.0);d=vec3(0.0,0.0,0.0);if((a==0)){d=quadVertexPositions[3].xyz;b=quadVertexPositions[0].xyz;e=quadVertexPositions[1].xyz;c=normalize((e-b));}else{if((a==1)){d=quadVertexPositions[0].xyz;b=quadVertexPositions[1].xyz;e=quadVertexPositions[2].xyz;c=normalize((b-d));}else{if((a==2)){d=quadVertexPositions[1].xyz;b=quadVertexPositions[2].xyz;e=quadVertexPositions[3].xyz;c=normalize((b-e));}else{d=quadVertexPositions[2].xyz;b=quadVertexPositions[3].xyz;e=quadVertexPositions[0].xyz;c=normalize((d-b));}}}vec3 f;f=(e-b);vec3 g;g=(d-b);vec4 h;vec4 i;i.w=1.0;i.xyz=(modelScale.xyz*b);h=(modelMatrix*i);vec4 j;j=(viewMatrix*h);vec4 k;k=sceneProperties[0];highp vec4 l;l.x=((k.z+(k.w*j.z))*(j.x/k.y));l.y=((k.z+(k.w*j.z))*j.y);l.z=(-(j.z)-(2.0*k.x));l.w=-(j.z);gl_Position=l;interpolatedPosition=h.xyz;vec4 m;m.w=0.0;m.xyz=normalize(((f.yzx*g.zxy)-(f.zxy*g.yzx)));interpolatedNormal=((modelMatrix*m).xyz*modelScale.w);interpolatedUv=quadVertex.xy;interpolatedTangent=c;}
     |]
 
 
@@ -233,7 +233,7 @@ pointVertex :
             | position : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , pointRadius : Float
             , viewMatrix : Mat4
@@ -242,7 +242,7 @@ pointVertex :
         {}
 pointVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform float pointRadius;uniform mat4 viewMatrix;uniform mat4 sceneProperties;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;gl_PointSize=((2.0*pointRadius)+2.0);}
+        precision mediump float;attribute vec3 position;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform float pointRadius;uniform mat4 viewMatrix;uniform mat4 sceneProperties;void main(){vec4 a;a.w=1.0;a.xyz=(modelScale.xyz*position);vec4 b;b=(viewMatrix*(modelMatrix*a));vec4 c;c=sceneProperties[0];highp vec4 d;d.x=((c.z+(c.w*b.z))*(b.x/c.y));d.y=((c.z+(c.w*b.z))*b.y);d.z=(-(b.z)-(2.0*c.x));d.w=-(b.z);gl_Position=d;gl_PointSize=(((2.0*pointRadius)*sceneProperties[3].x)+2.0);}
     |]
 
 
@@ -253,7 +253,7 @@ shadowVertex :
             , normal : Vec3
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -262,7 +262,7 @@ shadowVertex :
         {}
 shadowVertex =
     [glsl|
-        precision mediump float;attribute vec3 position;attribute vec3 normal;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;void main(){vec3 a;vec3 b;vec4 c;vec4 d;d.w=1.0;d.xyz=(modelScale*position);c=(modelMatrix*d);vec4 e;e.w=0.0;e.xyz=normal;b=(modelMatrix*e).xyz;vec4 f;f=shadowLightSource[0];vec3 g;if((f.w==1.0)){g=f.xyz;}else{if((f.w==2.0)){g=normalize((f.xyz-c.xyz));}else{g=vec3(0.0,0.0,0.0);}}a=vec3(0.0,0.0,0.0);float h;h=dot(g,b);if((h<=0.0)){a=(-1e+09*g);}vec4 i;i.w=0.0;i.xyz=a;vec4 j;j=(viewMatrix*(c+i));vec4 k;k=sceneProperties[0];highp vec4 l;l.x=((k.z+(k.w*j.z))*(j.x/k.y));l.y=((k.z+(k.w*j.z))*j.y);l.z=(-(j.z)-(2.0*k.x));l.w=-(j.z);gl_Position=l;}
+        precision mediump float;attribute vec3 position;attribute vec3 normal;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;void main(){vec3 a;vec3 b;vec4 c;vec4 d;d.w=1.0;d.xyz=(modelScale.xyz*position);c=(modelMatrix*d);vec4 e;e.w=0.0;e.xyz=normal;b=(modelMatrix*e).xyz;vec4 f;f=shadowLightSource[0];vec3 g;if((f.w==1.0)){g=f.xyz;}else{if((f.w==2.0)){g=normalize((f.xyz-c.xyz));}else{g=vec3(0.0,0.0,0.0);}}a=vec3(0.0,0.0,0.0);float h;h=dot(g,b);if((h<=0.0)){a=(-1e+09*g);}vec4 i;i.w=0.0;i.xyz=a;vec4 j;j=(viewMatrix*(c+i));vec4 k;k=sceneProperties[0];highp vec4 l;l.x=((k.z+(k.w*j.z))*(j.x/k.y));l.y=((k.z+(k.w*j.z))*j.y);l.z=(-(j.z)-(2.0*k.x));l.w=-(j.z);gl_Position=l;}
     |]
 
 
@@ -272,7 +272,7 @@ quadShadowVertex :
             | quadShadowVertex : Vec2
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -282,7 +282,7 @@ quadShadowVertex :
         {}
 quadShadowVertex =
     [glsl|
-        precision mediump float;attribute vec2 quadShadowVertex;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;uniform mat4 quadVertexPositions;void main(){vec3 a;a=vec3(0.0,0.0,0.0);highp int b;b=int(quadShadowVertex.x);vec3 c;vec3 d;vec3 e;e=vec3(0.0,0.0,0.0);d=vec3(0.0,0.0,0.0);if((b==0)){d=quadVertexPositions[3].xyz;c=quadVertexPositions[0].xyz;e=quadVertexPositions[1].xyz;}else{if((b==1)){d=quadVertexPositions[0].xyz;c=quadVertexPositions[1].xyz;e=quadVertexPositions[2].xyz;}else{if((b==2)){d=quadVertexPositions[1].xyz;c=quadVertexPositions[2].xyz;e=quadVertexPositions[3].xyz;}else{d=quadVertexPositions[2].xyz;c=quadVertexPositions[3].xyz;e=quadVertexPositions[0].xyz;}}}vec3 f;f=(e-c);vec3 g;g=(d-c);a=(normalize(((f.yzx*g.zxy)-(f.zxy*g.yzx)))*quadShadowVertex.y);vec3 h;vec3 i;vec4 j;vec4 k;k.w=1.0;k.xyz=(modelScale*c);j=(modelMatrix*k);vec4 l;l.w=0.0;l.xyz=a;i=(modelMatrix*l).xyz;vec4 m;m=shadowLightSource[0];vec3 n;if((m.w==1.0)){n=m.xyz;}else{if((m.w==2.0)){n=normalize((m.xyz-j.xyz));}else{n=vec3(0.0,0.0,0.0);}}h=vec3(0.0,0.0,0.0);float o;o=dot(n,i);if((o<=0.0)){h=(-1e+09*n);}vec4 p;p.w=0.0;p.xyz=h;vec4 q;q=(viewMatrix*(j+p));vec4 r;r=sceneProperties[0];highp vec4 s;s.x=((r.z+(r.w*q.z))*(q.x/r.y));s.y=((r.z+(r.w*q.z))*q.y);s.z=(-(q.z)-(2.0*r.x));s.w=-(q.z);gl_Position=s;}
+        precision mediump float;attribute vec2 quadShadowVertex;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;uniform mat4 quadVertexPositions;void main(){vec3 a;a=vec3(0.0,0.0,0.0);highp int b;b=int(quadShadowVertex.x);vec3 c;vec3 d;vec3 e;e=vec3(0.0,0.0,0.0);d=vec3(0.0,0.0,0.0);if((b==0)){d=quadVertexPositions[3].xyz;c=quadVertexPositions[0].xyz;e=quadVertexPositions[1].xyz;}else{if((b==1)){d=quadVertexPositions[0].xyz;c=quadVertexPositions[1].xyz;e=quadVertexPositions[2].xyz;}else{if((b==2)){d=quadVertexPositions[1].xyz;c=quadVertexPositions[2].xyz;e=quadVertexPositions[3].xyz;}else{d=quadVertexPositions[2].xyz;c=quadVertexPositions[3].xyz;e=quadVertexPositions[0].xyz;}}}vec3 f;f=(e-c);vec3 g;g=(d-c);a=(normalize(((f.yzx*g.zxy)-(f.zxy*g.yzx)))*quadShadowVertex.y);vec3 h;vec3 i;vec4 j;vec4 k;k.w=1.0;k.xyz=(modelScale.xyz*c);j=(modelMatrix*k);vec4 l;l.w=0.0;l.xyz=a;i=(modelMatrix*l).xyz;vec4 m;m=shadowLightSource[0];vec3 n;if((m.w==1.0)){n=m.xyz;}else{if((m.w==2.0)){n=normalize((m.xyz-j.xyz));}else{n=vec3(0.0,0.0,0.0);}}h=vec3(0.0,0.0,0.0);float o;o=dot(n,i);if((o<=0.0)){h=(-1e+09*n);}vec4 p;p.w=0.0;p.xyz=h;vec4 q;q=(viewMatrix*(j+p));vec4 r;r=sceneProperties[0];highp vec4 s;s.x=((r.z+(r.w*q.z))*(q.x/r.y));s.y=((r.z+(r.w*q.z))*q.y);s.z=(-(q.z)-(2.0*r.x));s.w=-(q.z);gl_Position=s;}
     |]
 
 
@@ -293,7 +293,7 @@ sphereShadowVertex :
             , offsetScale : Float
         }
         { uniforms
-            | modelScale : Vec3
+            | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
             , sceneProperties : Mat4
@@ -302,7 +302,7 @@ sphereShadowVertex :
         {}
 sphereShadowVertex =
     [glsl|
-        precision mediump float;attribute float angle;attribute float offsetScale;uniform vec3 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;void main(){float a;float b;vec4 c;c=(modelMatrix*vec4(0.0,0.0,0.0,1.0));vec4 d;d=shadowLightSource[0];vec3 e;if((d.w==1.0)){e=d.xyz;}else{if((d.w==2.0)){e=normalize((d.xyz-c.xyz));}else{e=vec3(0.0,0.0,0.0);}}vec3 f;float g;g=abs(e.x);float h;h=abs(e.y);float i;i=abs(e.z);if((g<=h)){if((g<=i)){float j;j=inversesqrt(dot(e.zy,e.zy));vec3 k;k.x=0.0;k.y=(-(e.z)*j);k.z=(e.y*j);f=k;}else{float l;l=inversesqrt(dot(e.xy,e.xy));vec3 m;m.z=0.0;m.x=(-(e.y)*l);m.y=(e.x*l);f=m;}}else{if((h<=i)){float n;n=inversesqrt(dot(e.xz,e.xz));vec3 o;o.y=0.0;o.x=(e.z*n);o.z=(-(e.x)*n);f=o;}else{float p;p=inversesqrt(dot(e.xy,e.xy));vec3 q;q.z=0.0;q.x=(-(e.y)*p);q.y=(e.x*p);f=q;}}vec3 r;r=((e.yzx*f.zxy)-(e.zxy*f.yzx));b=modelScale.x;a=0.0;if((d.w==2.0)){vec3 s;s=(d.xyz-c.xyz);float t;t=(modelScale.x*modelScale.x);a=(t/sqrt(dot(s,s)));b=sqrt((t-(a*a)));}vec3 u;u=(((c.xyz+(e*a))+((f*b)*cos(angle)))+((r*b)*sin(angle)));vec3 v;if((d.w==1.0)){v=d.xyz;}else{if((d.w==2.0)){v=normalize((d.xyz-u));}else{v=vec3(0.0,0.0,0.0);}}vec4 w;w.w=1.0;w.xyz=(u+((-1e+09*offsetScale)*v));vec4 x;x=(viewMatrix*w);vec4 y;y=sceneProperties[0];highp vec4 z;z.x=((y.z+(y.w*x.z))*(x.x/y.y));z.y=((y.z+(y.w*x.z))*x.y);z.z=(-(x.z)-(2.0*y.x));z.w=-(x.z);gl_Position=z;}
+        precision mediump float;attribute float angle;attribute float offsetScale;uniform vec4 modelScale;uniform mat4 modelMatrix;uniform mat4 viewMatrix;uniform mat4 sceneProperties;uniform mat4 shadowLightSource;void main(){float a;float b;vec4 c;c=(modelMatrix*vec4(0.0,0.0,0.0,1.0));vec4 d;d=shadowLightSource[0];vec3 e;if((d.w==1.0)){e=d.xyz;}else{if((d.w==2.0)){e=normalize((d.xyz-c.xyz));}else{e=vec3(0.0,0.0,0.0);}}vec3 f;float g;g=abs(e.x);float h;h=abs(e.y);float i;i=abs(e.z);if((g<=h)){if((g<=i)){float j;j=inversesqrt(dot(e.zy,e.zy));vec3 k;k.x=0.0;k.y=(-(e.z)*j);k.z=(e.y*j);f=k;}else{float l;l=inversesqrt(dot(e.xy,e.xy));vec3 m;m.z=0.0;m.x=(-(e.y)*l);m.y=(e.x*l);f=m;}}else{if((h<=i)){float n;n=inversesqrt(dot(e.xz,e.xz));vec3 o;o.y=0.0;o.x=(e.z*n);o.z=(-(e.x)*n);f=o;}else{float p;p=inversesqrt(dot(e.xy,e.xy));vec3 q;q.z=0.0;q.x=(-(e.y)*p);q.y=(e.x*p);f=q;}}vec3 r;r=((e.yzx*f.zxy)-(e.zxy*f.yzx));b=modelScale.x;a=0.0;if((d.w==2.0)){vec3 s;s=(d.xyz-c.xyz);float t;t=(modelScale.x*modelScale.x);a=(t/sqrt(dot(s,s)));b=sqrt((t-(a*a)));}vec3 u;u=(((c.xyz+(e*a))+((f*b)*cos(angle)))+((r*b)*sin(angle)));vec3 v;if((d.w==1.0)){v=d.xyz;}else{if((d.w==2.0)){v=normalize((d.xyz-u));}else{v=vec3(0.0,0.0,0.0);}}vec4 w;w.w=1.0;w.xyz=(u+((-1e+09*offsetScale)*v));vec4 x;x=(viewMatrix*w);vec4 y;y=sceneProperties[0];highp vec4 z;z.x=((y.z+(y.w*x.z))*(x.x/y.y));z.y=((y.z+(y.w*x.z))*x.y);z.z=(-(x.z)-(2.0*y.x));z.w=-(x.z);gl_Position=z;}
     |]
 
 
@@ -348,7 +348,7 @@ constantPointFragment :
         {}
 constantPointFragment =
     [glsl|
-        precision mediump float;uniform vec3 constantColor;uniform float pointRadius;void main(){mediump float a;float b;b=(2.0*pointRadius);mediump float c;c=((b+2.0)*(gl_PointCoord.x-0.5));mediump float d;d=((b+2.0)*(gl_PointCoord.y-0.5));mediump float e;e=sqrt(((c*c)+(d*d)));float f;f=(pointRadius+1.0);if((e>f)){a=0.0;}else{if((e>pointRadius)){a=(f-e);}else{a=1.0;}}mediump vec4 g;g.xyz=constantColor;g.w=a;gl_FragColor=g;}
+        precision mediump float;uniform vec3 constantColor;uniform float pointRadius;uniform mat4 sceneProperties;void main(){float a;a=(pointRadius*sceneProperties[3].x);mediump float b;float c;c=(2.0*a);mediump float d;d=((c+2.0)*(gl_PointCoord.x-0.5));mediump float e;e=((c+2.0)*(gl_PointCoord.y-0.5));mediump float f;f=sqrt(((d*d)+(e*e)));float g;g=(a+1.0);if((f>g)){b=0.0;}else{if((f>a)){b=(g-f);}else{b=1.0;}}mediump vec4 h;h.xyz=constantColor;h.w=b;gl_FragColor=h;}
     |]
 
 
@@ -390,7 +390,7 @@ emissivePointFragment :
         {}
 emissivePointFragment =
     [glsl|
-        precision mediump float;uniform vec3 emissiveColor;uniform float pointRadius;uniform mat4 sceneProperties;void main(){vec3 a;a=sceneProperties[2].xyz;float b;b=(emissiveColor.x/a.x);float c;c=(emissiveColor.y/a.y);float d;d=(emissiveColor.z/a.z);float e;e=(((0.2126*b)+(0.7152*c))+(0.0722*d));float f;f=sceneProperties[2].w;float g;g=(((e*(1.0+(e/(f*f))))/(1.0+e))/e);float h;h=(b*g);float i;if((h<=0.0031308)){i=(12.92*h);}else{i=((1.055*pow(h,0.4166667))-0.055);}float j;j=(c*g);float k;if((j<=0.0031308)){k=(12.92*j);}else{k=((1.055*pow(j,0.4166667))-0.055);}float l;l=(d*g);float m;if((l<=0.0031308)){m=(12.92*l);}else{m=((1.055*pow(l,0.4166667))-0.055);}vec4 n;n.w=1.0;n.x=i;n.y=k;n.z=m;mediump float o;float p;p=(2.0*pointRadius);mediump float q;q=((p+2.0)*(gl_PointCoord.x-0.5));mediump float r;r=((p+2.0)*(gl_PointCoord.y-0.5));mediump float s;s=sqrt(((q*q)+(r*r)));float t;t=(pointRadius+1.0);if((s>t)){o=0.0;}else{if((s>pointRadius)){o=(t-s);}else{o=1.0;}}mediump vec4 u;u.xyz=n.xyz;u.w=o;gl_FragColor=u;}
+        precision mediump float;uniform vec3 emissiveColor;uniform float pointRadius;uniform mat4 sceneProperties;void main(){vec3 a;a=sceneProperties[2].xyz;float b;b=(emissiveColor.x/a.x);float c;c=(emissiveColor.y/a.y);float d;d=(emissiveColor.z/a.z);float e;e=(((0.2126*b)+(0.7152*c))+(0.0722*d));float f;f=sceneProperties[2].w;float g;g=(((e*(1.0+(e/(f*f))))/(1.0+e))/e);float h;h=(b*g);float i;if((h<=0.0031308)){i=(12.92*h);}else{i=((1.055*pow(h,0.4166667))-0.055);}float j;j=(c*g);float k;if((j<=0.0031308)){k=(12.92*j);}else{k=((1.055*pow(j,0.4166667))-0.055);}float l;l=(d*g);float m;if((l<=0.0031308)){m=(12.92*l);}else{m=((1.055*pow(l,0.4166667))-0.055);}vec4 n;n.w=1.0;n.x=i;n.y=k;n.z=m;float o;o=(pointRadius*sceneProperties[3].x);mediump float p;float q;q=(2.0*o);mediump float r;r=((q+2.0)*(gl_PointCoord.x-0.5));mediump float s;s=((q+2.0)*(gl_PointCoord.y-0.5));mediump float t;t=sqrt(((r*r)+(s*s)));float u;u=(o+1.0);if((t>u)){p=0.0;}else{if((t>o)){p=(u-t);}else{p=1.0;}}mediump vec4 v;v.xyz=n.xyz;v.w=p;gl_FragColor=v;}
     |]
 
 
