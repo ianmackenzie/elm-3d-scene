@@ -1,6 +1,6 @@
 module Scene3d.Chromaticity exposing
     ( Chromaticity
-    , sunlight, incandescent, fluorescent, d65
+    , sunlight, incandescent, tungsten, fluorescent, d65
     , xy, kelvins, fromTemperature, fromColor
     )
 
@@ -11,7 +11,7 @@ module Scene3d.Chromaticity exposing
 
 ## Constants
 
-@docs sunlight, incandescent, fluorescent, d65
+@docs sunlight, incandescent, tungsten, fluorescent, d65
 
 
 ## Constructors
@@ -37,6 +37,13 @@ type alias Chromaticity =
 incandescent : Chromaticity
 incandescent =
     xy 0.44757 0.40745
+
+
+{-| Synonym for `incandescent`.
+-}
+tungsten : Chromaticity
+tungsten =
+    incandescent
 
 
 {-| Illuminant D65, "Noon Daylight"
