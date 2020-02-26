@@ -1290,22 +1290,22 @@ axes =
         xAxisMesh =
             Mesh.lineSegments
                 [ LineSegment3d.from
-                    (Point3d.meters 0 0 0.1)
-                    (Point3d.meters 3 0 0.1)
+                    (Point3d.meters 0 0 0.01)
+                    (Point3d.meters 3 0 0.01)
                 ]
 
         yAxisMesh =
             Mesh.lineSegments
                 [ LineSegment3d.from
-                    (Point3d.meters 0 0 0.1)
-                    (Point3d.meters 0 3 0.1)
+                    (Point3d.meters 0 0 0.01)
+                    (Point3d.meters 0 3 0.01)
                 ]
 
         zAxisMesh =
             Mesh.lineSegments
                 [ LineSegment3d.from
-                    (Point3d.meters 0 0 0.1)
-                    (Point3d.meters 0 0 3.1)
+                    (Point3d.meters 0 0 0.01)
+                    (Point3d.meters 0 0 3.01)
                 ]
     in
     Scene3d.group
