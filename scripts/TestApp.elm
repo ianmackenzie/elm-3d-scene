@@ -784,6 +784,11 @@ view model =
                 Element.column []
                     (List.map (viewTestCase loadedModel)
                         (loadedModel.testCases
+                            |> List.filter
+                                (\testCase ->
+                                    List.all ((==) True)
+                                        []
+                                )
                             |> List.take 12
                         )
                     )
