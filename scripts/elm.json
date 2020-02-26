@@ -26,6 +26,7 @@
             "ianmackenzie/elm-triangular-mesh": "1.0.4",
             "ianmackenzie/elm-units": "2.2.0",
             "ianmackenzie/elm-units-interval": "1.1.0",
+            "mdgriffith/elm-ui": "1.1.5",
             "tesk9/palette": "2.0.0"
         },
         "indirect": {
