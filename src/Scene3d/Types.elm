@@ -157,7 +157,7 @@ type alias LightMatrices =
 
 type alias DrawFunction =
     Mat4 -- scene properties
-    -> Vec3 -- model scale
+    -> Vec4 -- model scale
     -> Mat4 -- model matrix
     -> Bool -- model matrix is right-handed
     -> Mat4 -- view matrix

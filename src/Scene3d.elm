@@ -806,9 +806,24 @@ type alias RenderPasses =
 
 createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
 createRenderPass sceneProperties viewMatrix ambientLightingMatrix transformation drawFunction =
+    let
+        normalSign =
+            if transformation.isRightHanded then
+                1
+
+            else
+                -1
+
+        modelScale =
+            Math.Vector4.vec4
+                transformation.scaleX
+                transformation.scaleY
+                transformation.scaleZ
+                normalSign
+    in
     drawFunction
         sceneProperties
-        (Math.Vector3.vec3 transformation.scaleX transformation.scaleY transformation.scaleZ)
+        modelScale
         (Transformation.modelMatrix transformation)
         transformation.isRightHanded
         viewMatrix
