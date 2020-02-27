@@ -8,6 +8,7 @@ import Browser
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Cylinder3d exposing (Cylinder3d)
+import Dict
 import Direction3d exposing (Direction3d)
 import Element exposing (Element)
 import Element.Font
@@ -26,11 +27,12 @@ import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity, Unitless)
 import Quantity.Interval as Interval exposing (Interval)
 import Result.Extra
-import Scene3d
+import Scene3d exposing (Entity)
 import Scene3d.Chromaticity as Chromaticity
 import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
+import Set
 import Sphere3d exposing (Sphere3d)
 import Task
 import Triangle3d exposing (Triangle3d)
@@ -312,11 +314,11 @@ type WorldCoordinates
 
 type alias Scene =
     { testCase : TestCase
-    , entity : Scene3d.Entity WorldCoordinates
+    , entity : Entity WorldCoordinates
     }
 
 
-addShadowIf : Bool -> Mesh.Shadow WorldCoordinates -> Scene3d.Entity WorldCoordinates -> Scene3d.Entity WorldCoordinates
+addShadowIf : Bool -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates -> Entity WorldCoordinates
 addShadowIf enabled shadow givenEntity =
     if enabled then
         givenEntity |> Scene3d.withShadow shadow
@@ -346,7 +348,7 @@ pointsShadow =
     Mesh.shadow pointsMesh
 
 
-pointsEntity : Bool -> Material.Plain WorldCoordinates -> Scene3d.Entity WorldCoordinates
+pointsEntity : Bool -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
 pointsEntity castsShadows material =
     Scene3d.mesh material pointsMesh |> addShadowIf castsShadows pointsShadow
 
@@ -361,7 +363,7 @@ lineSegmentsShadow =
     Mesh.shadow lineSegmentsMesh
 
 
-lineSegmentsEntity : Bool -> Material.Plain WorldCoordinates -> Scene3d.Entity WorldCoordinates
+lineSegmentsEntity : Bool -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
 lineSegmentsEntity castsShadows material =
     Scene3d.mesh material lineSegmentsMesh |> addShadowIf castsShadows lineSegmentsShadow
 
@@ -376,64 +378,9 @@ polylineShadow =
     Mesh.shadow polylineMesh
 
 
-polylineEntity : Bool -> Material.Plain WorldCoordinates -> Scene3d.Entity WorldCoordinates
+polylineEntity : Bool -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
 polylineEntity castsShadows material =
     Scene3d.mesh material polylineMesh |> addShadowIf castsShadows polylineShadow
-
-
-pyramidTriangles : List (Triangle3d Meters WorldCoordinates)
-pyramidTriangles =
-    let
-        p0 =
-            Point3d.meters 0 0 2
-
-        p1 =
-            Point3d.meters 1 0 1
-
-        p2 =
-            Point3d.meters 0 1 1
-
-        p3 =
-            Point3d.meters -1 0 1
-
-        p4 =
-            Point3d.meters 0 -1 1
-    in
-    [ Triangle3d.from p1 p2 p0
-    , Triangle3d.from p2 p3 p0
-    , Triangle3d.from p3 p4 p0
-    , Triangle3d.from p4 p1 p0
-    ]
-
-
-trianglesMesh : Mesh.Plain WorldCoordinates
-trianglesMesh =
-    Mesh.triangles pyramidTriangles
-
-
-trianglesShadow : Mesh.Shadow WorldCoordinates
-trianglesShadow =
-    Mesh.shadow trianglesMesh
-
-
-trianglesEntity : Bool -> Material.Plain WorldCoordinates -> Scene3d.Entity WorldCoordinates
-trianglesEntity castsShadows material =
-    Scene3d.mesh material trianglesMesh |> addShadowIf castsShadows trianglesShadow
-
-
-facetsMesh : Mesh.Uniform WorldCoordinates
-facetsMesh =
-    Mesh.facets pyramidTriangles
-
-
-facetsShadow : Mesh.Shadow WorldCoordinates
-facetsShadow =
-    Mesh.shadow facetsMesh
-
-
-facetsEntity : Bool -> Material.Uniform WorldCoordinates -> Scene3d.Entity WorldCoordinates
-facetsEntity castsShadows material =
-    Scene3d.mesh material facetsMesh |> addShadowIf castsShadows facetsShadow
 
 
 type alias Vertex =
@@ -443,125 +390,54 @@ type alias Vertex =
     }
 
 
-baseMesh : TriangularMesh Vertex
-baseMesh =
-    let
-        v0 =
-            { position = Point3d.meters 0 0 2
-            , normal = Vector3d.unitless 0 0 1
-            , uv = ( 0.5, 0.5 )
-            }
-
-        v1 =
-            { position = Point3d.meters 1 0 1
-            , normal = Vector3d.unitless 1 0 0
-            , uv = ( 0, 0 )
-            }
-
-        v2 =
-            { position = Point3d.meters 0 1 1
-            , normal = Vector3d.unitless 0 1 0
-            , uv = ( 1, 0 )
-            }
-
-        v3 =
-            { position = Point3d.meters -1 0 1
-            , normal = Vector3d.unitless -1 0 0
-            , uv = ( 1, 1 )
-            }
-
-        v4 =
-            { position = Point3d.meters 0 -1 1
-            , normal = Vector3d.unitless 0 -1 0
-            , uv = ( 0, 1 )
-            }
-    in
-    TriangularMesh.indexed
-        (Array.fromList [ v0, v1, v2, v3, v4 ])
-        [ ( 1, 2, 0 )
-        , ( 2, 3, 0 )
-        , ( 3, 4, 0 )
-        , ( 4, 1, 0 )
-        ]
+suzanneTransform : Entity WorldCoordinates -> Entity WorldCoordinates
+suzanneTransform =
+    Scene3d.rotateAround Axis3d.z (Angle.degrees 90)
+        >> Scene3d.rotateAround
+            (Axis3d.through (Point3d.meters 0 0 1) Direction3d.y)
+            (Angle.degrees 90)
+        >> Scene3d.translateBy (Vector3d.meters 1 0 1)
 
 
-plainMesh : Mesh.Plain WorldCoordinates
-plainMesh =
-    Mesh.plain
-        (baseMesh
-            |> TriangularMesh.mapVertices
-                (\{ position } -> position)
-        )
+plainEntity :
+    Bool
+    -> Material.Plain WorldCoordinates
+    -> Mesh.Plain WorldCoordinates
+    -> Mesh.Shadow WorldCoordinates
+    -> Entity WorldCoordinates
+plainEntity castsShadows material plainMesh plainShadow =
+    Scene3d.mesh material plainMesh
+        |> addShadowIf castsShadows plainShadow
+        |> suzanneTransform
 
 
-plainShadow : Mesh.Shadow WorldCoordinates
-plainShadow =
-    Mesh.shadow plainMesh
+uniformEntity :
+    Bool
+    -> Material.Uniform WorldCoordinates
+    -> Mesh.Uniform WorldCoordinates
+    -> Mesh.Shadow WorldCoordinates
+    -> Entity WorldCoordinates
+uniformEntity castsShadows material uniformMesh uniformShadow =
+    Scene3d.mesh material uniformMesh
+        |> addShadowIf castsShadows uniformShadow
+        |> suzanneTransform
 
 
-plainEntity : Bool -> Material.Plain WorldCoordinates -> Scene3d.Entity WorldCoordinates
-plainEntity castsShadows material =
-    Scene3d.mesh material plainMesh |> addShadowIf castsShadows plainShadow
+unlitEntity : Bool -> Material.Unlit WorldCoordinates -> Mesh.Unlit WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
+unlitEntity castsShadows material unlitMesh unlitShadow =
+    Scene3d.mesh material unlitMesh
+        |> addShadowIf castsShadows unlitShadow
+        |> suzanneTransform
 
 
-uniformMesh : Mesh.Uniform WorldCoordinates
-uniformMesh =
-    Mesh.uniform
-        (baseMesh
-            |> TriangularMesh.mapVertices
-                (\{ position, normal } ->
-                    { position = position, normal = normal }
-                )
-        )
+texturedEntity : Bool -> Material.Textured WorldCoordinates -> Mesh.Textured WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
+texturedEntity castsShadows material texturedMesh texturedShadow =
+    Scene3d.mesh material texturedMesh
+        |> addShadowIf castsShadows texturedShadow
+        |> suzanneTransform
 
 
-uniformShadow : Mesh.Shadow WorldCoordinates
-uniformShadow =
-    Mesh.shadow uniformMesh
-
-
-uniformEntity : Bool -> Material.Uniform WorldCoordinates -> Scene3d.Entity WorldCoordinates
-uniformEntity castsShadows material =
-    Scene3d.mesh material uniformMesh |> addShadowIf castsShadows uniformShadow
-
-
-unlitMesh : Mesh.Unlit WorldCoordinates
-unlitMesh =
-    Mesh.unlit
-        (baseMesh
-            |> TriangularMesh.mapVertices
-                (\{ position, uv } ->
-                    { position = position, uv = uv }
-                )
-        )
-
-
-unlitShadow : Mesh.Shadow WorldCoordinates
-unlitShadow =
-    Mesh.shadow unlitMesh
-
-
-unlitEntity : Bool -> Material.Unlit WorldCoordinates -> Scene3d.Entity WorldCoordinates
-unlitEntity castsShadows material =
-    Scene3d.mesh material unlitMesh |> addShadowIf castsShadows unlitShadow
-
-
-texturedMesh : Mesh.Textured WorldCoordinates
-texturedMesh =
-    Mesh.textured baseMesh
-
-
-texturedShadow : Mesh.Shadow WorldCoordinates
-texturedShadow =
-    Mesh.shadow texturedMesh
-
-
-texturedEntity : Bool -> Material.Textured WorldCoordinates -> Scene3d.Entity WorldCoordinates
-texturedEntity castsShadows material =
-    Scene3d.mesh material texturedMesh |> addShadowIf castsShadows texturedShadow
-
-
-quadEntity : Bool -> Material.Textured WorldCoordinates -> Scene3d.Entity WorldCoordinates
+quadEntity : Bool -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
 quadEntity castsShadows material =
     let
         p1 =
@@ -583,7 +459,7 @@ quadEntity castsShadows material =
         Scene3d.quad Scene3d.doesNotCastShadows material p1 p2 p3 p4
 
 
-blockEntity : Bool -> Material.Uniform WorldCoordinates -> Scene3d.Entity WorldCoordinates
+blockEntity : Bool -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
 blockEntity castsShadows material =
     let
         block =
@@ -598,7 +474,7 @@ blockEntity castsShadows material =
         Scene3d.block Scene3d.doesNotCastShadows material block
 
 
-sphereEntity : Bool -> Material.Textured WorldCoordinates -> Scene3d.Entity WorldCoordinates
+sphereEntity : Bool -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
 sphereEntity castsShadows material =
     let
         sphere =
@@ -611,7 +487,7 @@ sphereEntity castsShadows material =
         Scene3d.sphere Scene3d.doesNotCastShadows material sphere
 
 
-cylinderEntity : Bool -> Material.Uniform WorldCoordinates -> Scene3d.Entity WorldCoordinates
+cylinderEntity : Bool -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
 cylinderEntity castsShadows material =
     let
         cylinder =
@@ -643,6 +519,7 @@ type alias LoadingModel =
     , colorTexture : Maybe (Material.Texture Color)
     , roughnessTexture : Maybe (Material.Texture Float)
     , metallicTexture : Maybe (Material.Texture Float)
+    , suzanneMesh : Maybe (TriangularMesh Vertex)
     }
 
 
@@ -651,6 +528,18 @@ type alias LoadedModel =
     , colorTexture : Material.Texture Color
     , roughnessTexture : Material.Texture Float
     , metallicTexture : Material.Texture Float
+    , trianglesMesh : Mesh.Plain WorldCoordinates
+    , trianglesShadow : Mesh.Shadow WorldCoordinates
+    , facetsMesh : Mesh.Uniform WorldCoordinates
+    , facetsShadow : Mesh.Shadow WorldCoordinates
+    , plainMesh : Mesh.Plain WorldCoordinates
+    , plainShadow : Mesh.Shadow WorldCoordinates
+    , uniformMesh : Mesh.Uniform WorldCoordinates
+    , uniformShadow : Mesh.Shadow WorldCoordinates
+    , unlitMesh : Mesh.Unlit WorldCoordinates
+    , unlitShadow : Mesh.Shadow WorldCoordinates
+    , texturedMesh : Mesh.Textured WorldCoordinates
+    , texturedShadow : Mesh.Shadow WorldCoordinates
     }
 
 
@@ -667,6 +556,7 @@ init flags =
         , colorTexture = Nothing
         , roughnessTexture = Nothing
         , metallicTexture = Nothing
+        , suzanneMesh = Nothing
         }
     , Cmd.batch
         [ Http.get
@@ -679,6 +569,10 @@ init flags =
             |> Task.attempt RoughnessTextureResponse
         , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_met.jpg"
             |> Task.attempt MetallicTextureResponse
+        , Http.get
+            { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/suzanne.obj"
+            , expect = Http.expectString SuzanneMeshResponse
+            }
         ]
     )
 
@@ -694,6 +588,7 @@ type Msg
     | ColorTextureResponse (Result WebGL.Texture.Error (Material.Texture Color))
     | RoughnessTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
     | MetallicTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
+    | SuzanneMeshResponse (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -756,14 +651,229 @@ update msg model =
         MetallicTextureResponse (Err _) ->
             ( Error "Error loading metallic texture", Cmd.none )
 
+        SuzanneMeshResponse (Ok fileContents) ->
+            case model of
+                Loading loadingModel ->
+                    ( checkIfLoaded { loadingModel | suzanneMesh = Just (parseObj fileContents) }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SuzanneMeshResponse (Err _) ->
+            ( Error "Error loading Suzanne mesh", Cmd.none )
+
+
+parseObj : String -> TriangularMesh Vertex
+parseObj fileContents =
+    let
+        lines =
+            String.lines fileContents
+
+        positionLines =
+            lines |> List.filter (String.startsWith "v ")
+
+        uvLines =
+            lines |> List.filter (String.startsWith "vt ")
+
+        normalLines =
+            lines |> List.filter (String.startsWith "vn ")
+
+        faceLines =
+            lines |> List.filter (String.startsWith "f ")
+
+        positions =
+            Array.fromList (List.filterMap parsePosition positionLines)
+
+        uvs =
+            Array.fromList (List.filterMap parseUv uvLines)
+
+        normals =
+            Array.fromList (List.filterMap parseNormal normalLines)
+
+        faceVertexIndices =
+            List.filterMap parseFace faceLines
+
+        uniqueVertices =
+            faceVertexIndices
+                |> List.concatMap (\( v1, v2, v3 ) -> [ v1, v2, v3 ])
+                |> Set.fromList
+                |> Set.toList
+                |> List.filterMap
+                    (\(( positionIndex, uvIndex, normalIndex ) as vertexIndices) ->
+                        Maybe.map3
+                            (\position uv normal ->
+                                ( vertexIndices
+                                , { position = position, uv = uv, normal = normal }
+                                )
+                            )
+                            (Array.get positionIndex positions)
+                            (Array.get uvIndex uvs)
+                            (Array.get normalIndex normals)
+                    )
+
+        vertexArray =
+            uniqueVertices |> List.map Tuple.second |> Array.fromList
+
+        vertexIndexDict =
+            uniqueVertices
+                |> List.indexedMap (\index ( vertexIndices, _ ) -> ( vertexIndices, index ))
+                |> Dict.fromList
+
+        faceIndices =
+            faceVertexIndices
+                |> List.filterMap
+                    (\( v1, v2, v3 ) ->
+                        Maybe.map3
+                            (\i j k -> ( i, j, k ))
+                            (Dict.get v1 vertexIndexDict)
+                            (Dict.get v2 vertexIndexDict)
+                            (Dict.get v3 vertexIndexDict)
+                    )
+    in
+    TriangularMesh.indexed vertexArray faceIndices
+
+
+parsePosition : String -> Maybe (Point3d Meters WorldCoordinates)
+parsePosition line =
+    let
+        coordinates =
+            line
+                |> String.dropLeft 2
+                |> String.words
+                |> List.filterMap String.toFloat
+    in
+    case coordinates of
+        [ x, y, z ] ->
+            Just (Point3d.meters x y z)
+
+        _ ->
+            Nothing
+
+
+parseNormal : String -> Maybe (Vector3d Unitless WorldCoordinates)
+parseNormal line =
+    let
+        coordinates =
+            line
+                |> String.dropLeft 3
+                |> String.words
+                |> List.filterMap String.toFloat
+    in
+    case coordinates of
+        [ x, y, z ] ->
+            Just (Vector3d.unitless x y z)
+
+        _ ->
+            Nothing
+
+
+parseUv : String -> Maybe ( Float, Float )
+parseUv line =
+    let
+        coordinates =
+            line
+                |> String.dropLeft 3
+                |> String.words
+                |> List.filterMap String.toFloat
+    in
+    case coordinates of
+        [ u, v ] ->
+            Just ( u, v )
+
+        _ ->
+            Nothing
+
+
+parseFace : String -> Maybe ( ( Int, Int, Int ), ( Int, Int, Int ), ( Int, Int, Int ) )
+parseFace line =
+    let
+        vertices =
+            line
+                |> String.dropLeft 2
+                |> String.words
+                |> List.filterMap parseFaceVertex
+    in
+    case vertices of
+        [ v1, v2, v3 ] ->
+            Just ( v1, v2, v3 )
+
+        _ ->
+            Nothing
+
+
+parseFaceVertex : String -> Maybe ( Int, Int, Int )
+parseFaceVertex string =
+    case String.split "/" string |> List.filterMap String.toInt of
+        [ positionIndex, uvIndex, normalIndex ] ->
+            Just ( positionIndex - 1, uvIndex - 1, normalIndex - 1 )
+
+        _ ->
+            Nothing
+
 
 checkIfLoaded : LoadingModel -> Model
 checkIfLoaded loadingModel =
-    Maybe.map4 LoadedModel
+    Maybe.map5
+        (\testCases colorTexture roughnessTexture metallicTexture suzanneMesh ->
+            let
+                plainTriangularMesh =
+                    TriangularMesh.mapVertices .position suzanneMesh
+
+                triangles =
+                    List.map Triangle3d.fromVertices
+                        (TriangularMesh.faceVertices plainTriangularMesh)
+
+                trianglesMesh =
+                    Mesh.triangles triangles
+
+                facetsMesh =
+                    Mesh.facets triangles
+
+                plainMesh =
+                    Mesh.plain plainTriangularMesh
+
+                uniformMesh =
+                    Mesh.uniform
+                        (TriangularMesh.mapVertices
+                            (\{ position, normal } -> { position = position, normal = normal })
+                            suzanneMesh
+                        )
+
+                unlitMesh =
+                    Mesh.unlit
+                        (TriangularMesh.mapVertices
+                            (\{ position, uv } -> { position = position, uv = uv })
+                            suzanneMesh
+                        )
+
+                texturedMesh =
+                    Mesh.textured suzanneMesh
+            in
+            { testCases = testCases
+            , colorTexture = colorTexture
+            , roughnessTexture = roughnessTexture
+            , metallicTexture = metallicTexture
+            , trianglesMesh = trianglesMesh
+            , trianglesShadow = Mesh.shadow trianglesMesh
+            , facetsMesh = facetsMesh
+            , facetsShadow = Mesh.shadow facetsMesh
+            , plainMesh = plainMesh
+            , plainShadow = Mesh.shadow plainMesh
+            , uniformMesh = uniformMesh
+            , uniformShadow = Mesh.shadow uniformMesh
+            , unlitMesh = unlitMesh
+            , unlitShadow = Mesh.shadow unlitMesh
+            , texturedMesh = texturedMesh
+            , texturedShadow = Mesh.shadow texturedMesh
+            }
+        )
         loadingModel.testCases
         loadingModel.colorTexture
         loadingModel.roughnessTexture
         loadingModel.metallicTexture
+        loadingModel.suzanneMesh
         |> Maybe.map Loaded
         |> Maybe.withDefault (Loading loadingModel)
 
@@ -787,7 +897,11 @@ view model =
                             |> List.filter
                                 (\testCase ->
                                     List.all ((==) True)
-                                        []
+                                        [ testCase.mesh == Uniform || testCase.mesh == Textured || testCase.mesh == Facets
+                                        , testCase.material == Matte || testCase.material == Pbr || testCase.material == TexturedMatte || testCase.material == TexturedPbr
+                                        , testCase.antialiasing /= NoAntialiasing
+                                        , testCase.shadow
+                                        ]
                                 )
                             |> List.take 12
                         )
@@ -797,8 +911,8 @@ view model =
             Html.text message
 
 
-entity : LoadedModel -> TestCase -> Maybe (Scene3d.Entity WorldCoordinates)
-entity { colorTexture, roughnessTexture, metallicTexture } testCase =
+entity : LoadedModel -> TestCase -> Maybe (Entity WorldCoordinates)
+entity model testCase =
     case testCase.material of
         Color ->
             let
@@ -816,22 +930,22 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Just (polylineEntity testCase.shadow material)
 
                 Triangles ->
-                    Just (trianglesEntity testCase.shadow material)
+                    Just (plainEntity testCase.shadow material model.trianglesMesh model.trianglesShadow)
 
                 Facets ->
-                    Just (facetsEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
 
                 Plain ->
-                    Just (plainEntity testCase.shadow material)
+                    Just (plainEntity testCase.shadow material model.plainMesh model.plainShadow)
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material)
+                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -861,22 +975,22 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Just (polylineEntity testCase.shadow material)
 
                 Triangles ->
-                    Just (trianglesEntity testCase.shadow material)
+                    Just (plainEntity testCase.shadow material model.trianglesMesh model.trianglesShadow)
 
                 Facets ->
-                    Just (facetsEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
 
                 Plain ->
-                    Just (plainEntity testCase.shadow material)
+                    Just (plainEntity testCase.shadow material model.plainMesh model.plainShadow)
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material)
+                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -909,19 +1023,19 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
                 Facets ->
-                    Just (facetsEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
 
                 Plain ->
                     Nothing
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -957,19 +1071,19 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
                 Facets ->
-                    Just (facetsEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
 
                 Plain ->
                     Nothing
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material)
+                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -986,7 +1100,7 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
         TexturedColor ->
             let
                 material =
-                    Material.texturedColor colorTexture
+                    Material.texturedColor model.colorTexture
             in
             case testCase.mesh of
                 Points ->
@@ -1011,10 +1125,10 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material)
+                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -1031,7 +1145,7 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
         TexturedEmissive ->
             let
                 material =
-                    Material.texturedEmissive colorTexture (Luminance.nits 250)
+                    Material.texturedEmissive model.colorTexture (Luminance.nits 250)
             in
             case testCase.mesh of
                 Points ->
@@ -1056,10 +1170,10 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material)
+                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -1076,7 +1190,7 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
         TexturedMatte ->
             let
                 material =
-                    Material.texturedMatte colorTexture
+                    Material.texturedMatte model.colorTexture
             in
             case testCase.mesh of
                 Points ->
@@ -1104,7 +1218,7 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -1122,9 +1236,9 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
             let
                 material =
                     Material.texturedPbr
-                        { baseColor = colorTexture
-                        , roughness = roughnessTexture
-                        , metallic = metallicTexture
+                        { baseColor = model.colorTexture
+                        , roughness = model.roughnessTexture
+                        , metallic = model.metallicTexture
                         }
             in
             case testCase.mesh of
@@ -1153,7 +1267,7 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material)
+                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
 
                 Quad ->
                     Just (quadEntity testCase.shadow material)
@@ -1168,7 +1282,7 @@ entity { colorTexture, roughnessTexture, metallicTexture } testCase =
                     Nothing
 
 
-transformation : TestCase -> Scene3d.Entity WorldCoordinates -> Scene3d.Entity WorldCoordinates
+transformation : TestCase -> Entity WorldCoordinates -> Entity WorldCoordinates
 transformation testCase =
     case testCase.transformation of
         NoTransformation ->
@@ -1289,7 +1403,7 @@ viewTestCaseProperties testCase =
         }
 
 
-axes : Scene3d.Entity WorldCoordinates
+axes : Entity WorldCoordinates
 axes =
     let
         xAxisMesh =
