@@ -566,7 +566,7 @@ init flags =
         }
     , Cmd.batch
         [ Http.get
-            { url = "test_cases.txt"
+            { url = "test_cases_2.txt"
             , expect = Http.expectString TestCasesResponse
             }
         , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_col.jpg"
