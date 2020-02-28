@@ -1,20 +1,25 @@
 module TestApp exposing (main)
 
 import Angle exposing (Angle)
-import Array
+import Array exposing (Array)
 import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
 import Browser
+import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Cylinder3d exposing (Cylinder3d)
 import Dict
 import Direction3d exposing (Direction3d)
 import Element exposing (Element)
+import Element.Background
+import Element.Border
 import Element.Font
+import Element.Input as Input
 import Html exposing (Html)
 import Http
 import Illuminance
+import Json.Decode as Decode
 import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance
@@ -524,7 +529,8 @@ type alias LoadingModel =
 
 
 type alias LoadedModel =
-    { testCases : List TestCase
+    { testCases : Array TestCase
+    , testCaseIndex : Int
     , colorTexture : Material.Texture Color
     , roughnessTexture : Material.Texture Float
     , metallicTexture : Material.Texture Float
@@ -589,6 +595,10 @@ type Msg
     | RoughnessTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
     | MetallicTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
     | SuzanneMeshResponse (Result Http.Error String)
+    | Next
+    | Previous
+    | First
+    | Last
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -663,6 +673,52 @@ update msg model =
 
         SuzanneMeshResponse (Err _) ->
             ( Error "Error loading Suzanne mesh", Cmd.none )
+
+        Previous ->
+            case model of
+                Loaded loadedModel ->
+                    ( Loaded
+                        { loadedModel
+                            | testCaseIndex = max 0 (loadedModel.testCaseIndex - 1)
+                        }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        Next ->
+            case model of
+                Loaded loadedModel ->
+                    ( Loaded
+                        { loadedModel
+                            | testCaseIndex = min (loadedModel.testCaseIndex + 1) (Array.length loadedModel.testCases - 1)
+                        }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        First ->
+            case model of
+                Loaded loadedModel ->
+                    ( Loaded { loadedModel | testCaseIndex = 0 }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        Last ->
+            case model of
+                Loaded loadedModel ->
+                    ( Loaded { loadedModel | testCaseIndex = Array.length loadedModel.testCases - 1 }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 parseObj : String -> TriangularMesh Vertex
@@ -813,6 +869,15 @@ parseFaceVertex string =
             Nothing
 
 
+testCaseArray : List TestCase -> Array TestCase
+testCaseArray testCases =
+    let
+        ( firstGroup, secondGroup ) =
+            List.partition (.antialiasing >> (==) Multisampling) testCases
+    in
+    Array.fromList (firstGroup ++ secondGroup)
+
+
 checkIfLoaded : LoadingModel -> Model
 checkIfLoaded loadingModel =
     Maybe.map5
@@ -851,7 +916,8 @@ checkIfLoaded loadingModel =
                 texturedMesh =
                     Mesh.textured suzanneMesh
             in
-            { testCases = testCases
+            { testCases = testCaseArray testCases
+            , testCaseIndex = 0
             , colorTexture = colorTexture
             , roughnessTexture = roughnessTexture
             , metallicTexture = metallicTexture
@@ -880,7 +946,33 @@ checkIfLoaded loadingModel =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Browser.Events.onKeyDown
+        (Decode.field "key" Decode.string
+            |> Decode.andThen
+                (\key ->
+                    case key of
+                        "ArrowLeft" ->
+                            Decode.succeed Previous
+
+                        "ArrowRight" ->
+                            Decode.succeed Next
+
+                        "ArrowUp" ->
+                            Decode.succeed Previous
+
+                        "ArrowDown" ->
+                            Decode.succeed Next
+
+                        "Home" ->
+                            Decode.succeed First
+
+                        "End" ->
+                            Decode.succeed Last
+
+                        _ ->
+                            Decode.fail "Unrecognized key"
+                )
+        )
 
 
 view : Model -> Html Msg
@@ -890,22 +982,23 @@ view model =
             Html.text "Loading..."
 
         Loaded loadedModel ->
-            Element.layout [] <|
-                Element.column []
-                    (List.map (viewTestCase loadedModel)
-                        (loadedModel.testCases
-                            |> List.filter
-                                (\testCase ->
-                                    List.all ((==) True)
-                                        [ testCase.mesh == Uniform || testCase.mesh == Textured || testCase.mesh == Facets
-                                        , testCase.material == Matte || testCase.material == Pbr || testCase.material == TexturedMatte || testCase.material == TexturedPbr
-                                        , testCase.antialiasing /= NoAntialiasing
-                                        , testCase.shadow
-                                        ]
-                                )
-                            |> List.take 12
-                        )
-                    )
+            case Array.get loadedModel.testCaseIndex loadedModel.testCases of
+                Just currentTestCase ->
+                    let
+                        buttonAttributes =
+                            [ Element.paddingXY 10 0
+                            , Element.Border.rounded 5
+                            , Element.Border.solid
+                            , Element.Border.width 1
+                            ]
+                    in
+                    Element.layout [] <|
+                        Element.column []
+                            [ viewTestCase loadedModel currentTestCase
+                            ]
+
+                Nothing ->
+                    Html.text ""
 
         Error message ->
             Html.text message
@@ -1383,11 +1476,12 @@ options testCase =
            )
 
 
-viewTestCaseProperties : TestCase -> Element Msg
-viewTestCaseProperties testCase =
+viewTestCaseProperties : Int -> TestCase -> Element Msg
+viewTestCaseProperties testCaseIndex testCase =
     Element.table [ Element.Font.size 14, Element.spacingXY 10 0 ]
         { data =
-            [ ( "Mesh:", Debug.toString testCase.mesh )
+            [ ( "Test case:", String.fromInt (testCaseIndex + 1) )
+            , ( "Mesh:", Debug.toString testCase.mesh )
             , ( "Material:", Debug.toString testCase.material )
             , ( "Shadow:", Debug.toString testCase.shadow )
             , ( "Transformation:", Debug.toString testCase.transformation )
@@ -1456,7 +1550,7 @@ viewTestCase model testCase =
                                     , clipDepth = Length.meters 1
                                     , verticalFieldOfView = Angle.degrees 30
                                     }
-                            , dimensions = ( Pixels.pixels 400, Pixels.pixels 400 )
+                            , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                             , exposure = Exposure.fromEv100 4
                             , whiteBalance = Chromaticity.tungsten
                             }
@@ -1469,7 +1563,7 @@ viewTestCase model testCase =
                             , axes
                             , validEntity |> transformation testCase
                             ]
-                , viewTestCaseProperties testCase
+                , viewTestCaseProperties model.testCaseIndex testCase
                 ]
 
         Nothing ->
