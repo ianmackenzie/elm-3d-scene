@@ -1238,7 +1238,7 @@ entity model testCase =
         TexturedEmissive ->
             let
                 material =
-                    Material.texturedEmissive model.colorTexture (Luminance.nits 250)
+                    Material.texturedEmissive model.colorTexture (Luminance.nits 10)
             in
             case testCase.mesh of
                 Points ->
