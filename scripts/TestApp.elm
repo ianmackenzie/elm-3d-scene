@@ -1552,14 +1552,14 @@ viewTestCase model testCase =
                                 Camera3d.perspective
                                     { viewpoint =
                                         Viewpoint3d.lookAt
-                                            { focalPoint = Point3d.meters 0 0 1
+                                            { focalPoint = Point3d.meters 0 0 0.5
                                             , eyePoint = Point3d.meters 10 5 7
                                             , upDirection = Direction3d.z
                                             }
                                     , clipDepth = Length.meters 1
                                     , verticalFieldOfView = Angle.degrees 30
                                     }
-                            , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
+                            , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                             , exposure = Exposure.fromEv100 4
                             , whiteBalance = Chromaticity.tungsten
                             }
