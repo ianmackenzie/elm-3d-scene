@@ -3,7 +3,9 @@ module Scene3d exposing
     , Option
     , multisampling, supersampling, dynamicRange
     , Entity
-    , nothing, quad, block, sphere, cylinder, mesh, group
+    , quad, block, sphere, cylinder
+    , mesh
+    , group, nothing
     , shadow, withShadow
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
@@ -16,7 +18,16 @@ module Scene3d exposing
     , toWebGLEntities
     )
 
-{-|
+{-| Top-level functionality for rendering a 3D scene.
+
+Note that the way `elm-3d-scene` is designed, functions in this module are
+generally 'cheap' and can safely be used in your `view` function directly. For
+example, you can safely have logic in your `view` function that enables and
+disables lights, moves objects around by translating/rotating/mirroring them,
+or even changes the material used to render a particular object with. In
+contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
+module is 'expensive'; meshes should generally be created once and then stored
+in your model.
 
 @docs toHtml
 
@@ -32,7 +43,28 @@ module Scene3d exposing
 
 @docs Entity
 
-@docs nothing, quad, block, sphere, cylinder, mesh, group
+
+## Basic shapes
+
+`elm-3d-scene` includes a handful of basic shapes which you can draw directly
+without having to create and store a separate [`Mesh`](Scene3d-Mesh). In
+general, for all of the basic shapes you can specify whether or not it should
+cast a shadow (assuming there is shadow-casting light in the scene!) and can
+specify a material to use. However, different shapes support different kinds of
+materials; `quad`s and `sphere`s support all materials, while `block`s and
+`cylinder`s only support uniform (non-textured) materials.
+
+@docs quad, block, sphere, cylinder
+
+
+## Meshes
+
+@docs mesh
+
+
+## Grouping and toggling
+
+@docs group, nothing
 
 
 # Shadows
@@ -161,6 +193,18 @@ nothing =
     Entity.empty
 
 
+{-| Draw a 'quad' such as a rectangle, rhombus or parallelogram by providing its
+four vertices in counterclockwise order.
+
+Normal vectors will be automatically computed at each vertex which are
+perpendicular to the two adjoining edges. (The four vertices should usually
+be coplanar, in which case all normal vectors will be the same.) The four
+vertices will also be given the UV (texture) coordinates (0,0), (1,0), (1,1)
+and (0,1) respectively; this means that if you specify vertices counterclockwise
+from the bottom left corner of a rectangle, a texture will map onto the
+rectangle basically the way you would expect.
+
+-}
 quad :
     CastsShadows a
     -> Material.Textured coordinates
@@ -174,7 +218,7 @@ quad (CastsShadows shadowFlag) givenMaterial p1 p2 p3 p4 =
 
 
 {-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
-type from `elmm-geometry`.
+type from `elm-geometry`.
 
 The sphere will have texture (UV) coordinates based on an [equirectangular
 projection](https://wiki.panotools.org/Equirectangular_Projection) where
@@ -184,7 +228,7 @@ the diagrams shown [here](https://en.wikipedia.org/wiki/Spherical_coordinate_sys
 except that V is measured up from the bottom (negative Z) instead of down from
 the top (positive Z).
 
-Note that this projection, while simple, maeans that the texture used will get
+Note that this projection, while simple, means that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
@@ -193,25 +237,39 @@ sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
     Entity.sphere shadowFlag givenMaterial givenSphere
 
 
+{-| Draw a rectangular block using the [`Block3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Block3d)
+type from `elm-geometry`.
+-}
 block : CastsShadows a -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
 block (CastsShadows shadowFlag) givenMaterial givenBlock =
     Entity.block shadowFlag givenMaterial givenBlock
 
 
+{-| Draw a cylinder using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cylinder3d)
+type from `elm-geometry`.
+-}
 cylinder : CastsShadows a -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
     Entity.cylinder shadowFlag givenMaterial givenCylinder
 
 
-{-| Draw the given mesh with the given material.
+{-| Draw the given mesh (shape) with the given material. Check out the [`Mesh`](Scene3d-Mesh)
+and [`Material`](Scene3d-Material) modules for how to define meshes and
+materials. Note that the mesh and material types must line up, and this is
+checked by the compiler; for example, a textured material that requires UV
+coordinates can only be used on a mesh that includes UV coordinates!
+
+If you want to also draw the shadow of a given object, you'll need to use
+[`shadow`](#shadow) or [`withShadow`](#withShadow).
+
 -}
 mesh : Material coordinates attributes -> Mesh coordinates attributes -> Entity coordinates
 mesh givenMaterial givenMesh =
     Entity.mesh givenMaterial givenMesh
 
 
-{-| Group a list of entities into a single entity. This entity can then be
-transformed, grouped with other entities, etc.
+{-| Group a list of entities into a single entity. This combined entity can then
+be transformed, grouped with other entities, etc.
 -}
 group : List (Entity coordinates) -> Entity coordinates
 group entities =
