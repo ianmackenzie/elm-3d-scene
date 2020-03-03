@@ -148,10 +148,10 @@ type Shadow coordinates
 
 
 type alias LightMatrices =
-    { lightSources12 : Mat4
-    , lightSources34 : Mat4
-    , lightSources56 : Mat4
-    , lightSources78 : Mat4
+    { lights12 : Mat4
+    , lights34 : Mat4
+    , lights56 : Mat4
+    , lights78 : Mat4
     }
 
 
@@ -192,8 +192,8 @@ type LinearRgb
     = LinearRgb Vec3
 
 
-type LightSource coordinates castsShadows
-    = LightSource
+type Light coordinates castsShadows
+    = Light
         { type_ : Float
         , castsShadows : Bool
         , radius : Float

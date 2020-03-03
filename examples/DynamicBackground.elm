@@ -88,8 +88,8 @@ main =
                             , above = ( Luminance.nits 5000, Chromaticity.d65 )
                             , below = ( Quantity.zero, Chromaticity.d65 )
                             }
-                    , directLighting =
-                        Scene3d.oneLightSource sunlight
+                    , lights =
+                        Scene3d.oneLight sunlight
                     , exposure =
                         Exposure.fromMaxLuminance (Luminance.nits 5000)
                     , whiteBalance = Scene3d.defaultWhiteBalance

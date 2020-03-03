@@ -114,7 +114,7 @@ view model =
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , exposure = Exposure.sunny16
-                , directLighting = Scene3d.oneLightSource sunlight
+                , lights = Scene3d.oneLight sunlight
                 , environmentalLighting = environmentalLighting
                 }
                 [ quad ]

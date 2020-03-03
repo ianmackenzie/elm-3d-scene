@@ -269,7 +269,7 @@ view model =
                 ]
                 { dimensions = model.dimensions
                 , camera = camera model.distance model.azimuth model.elevation
-                , directLighting = directLighting model.lights
+                , lights = lights model.lights
                 , environmentalLighting = environmentalLighting
                 , exposure = Scene3d.Exposure.fromEv100 model.exposure
                 , whiteBalance = Scene3d.defaultWhiteBalance
@@ -337,45 +337,45 @@ camera distance azimuth elevation =
         }
 
 
-directLighting : List DirectLight -> Scene3d.DirectLighting SceneCoordinates
-directLighting lights =
+lights : List DirectLight -> Scene3d.Lights SceneCoordinates
+lights directLights =
     let
         lightsWithoutShadows =
-            List.filterMap (directLight False Scene3d.doesNotCastShadows) lights
+            List.filterMap (directLight False Scene3d.doesNotCastShadows) directLights
 
         lightsWithShadows =
-            List.filterMap (directLight True Scene3d.castsShadows) lights
+            List.filterMap (directLight True Scene3d.castsShadows) directLights
     in
     case ( List.head lightsWithShadows, lightsWithoutShadows ) of
         ( Nothing, [] ) ->
-            Scene3d.noDirectLighting
+            Scene3d.noLights
 
         ( Just light1, [] ) ->
-            Scene3d.oneLightSource light1
+            Scene3d.oneLight light1
 
         ( Nothing, light1 :: [] ) ->
-            Scene3d.oneLightSource light1
+            Scene3d.oneLight light1
 
         ( Just light1, light2 :: [] ) ->
-            Scene3d.twoLightSources light1 light2
+            Scene3d.twoLights light1 light2
 
         ( Nothing, light1 :: light2 :: [] ) ->
-            Scene3d.twoLightSources light1 light2
+            Scene3d.twoLights light1 light2
 
         ( Just light1, light2 :: light3 :: [] ) ->
-            Scene3d.threeLightSources light1 light2 light3
+            Scene3d.threeLights light1 light2 light3
 
         ( Nothing, light1 :: light2 :: light3 :: [] ) ->
-            Scene3d.threeLightSources light1 light2 light3
+            Scene3d.threeLights light1 light2 light3
 
         ( Just light1, light2 :: light3 :: light4 :: _ ) ->
-            Scene3d.fourLightSources light1 light2 light3 light4
+            Scene3d.fourLights light1 light2 light3 light4
 
         ( Nothing, light1 :: light2 :: light3 :: light4 :: _ ) ->
-            Scene3d.fourLightSources light1 light2 light3 light4
+            Scene3d.fourLights light1 light2 light3 light4
 
 
-directLight : Bool -> Scene3d.CastsShadows a -> DirectLight -> Maybe (Scene3d.LightSource SceneCoordinates (Scene3d.CastsShadows a))
+directLight : Bool -> Scene3d.CastsShadows a -> DirectLight -> Maybe (Scene3d.Light SceneCoordinates (Scene3d.CastsShadows a))
 directLight shouldHaveShadows shadows light =
     if (shouldHaveShadows == light.castsShadows) && light.intensity > 0 then
         Just

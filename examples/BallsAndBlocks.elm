@@ -130,7 +130,7 @@ view { world, screenWidth, screenHeight } =
         [ Scene3d.toHtml []
             { dimensions = ( pixels screenWidth, pixels screenHeight )
             , camera = camera
-            , directLighting = Scene3d.oneLightSource sunlight
+            , lights = Scene3d.oneLight sunlight
             , environmentalLighting = environmentalLighting
             , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
             , whiteBalance = Chromaticity.d65

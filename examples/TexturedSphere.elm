@@ -235,8 +235,8 @@ view model =
                         , above = ( Luminance.nits 3000, Chromaticity.d65 )
                         , below = ( Luminance.nits 300, Chromaticity.d65 )
                         }
-                , directLighting =
-                    Scene3d.oneLightSource sunlight
+                , lights =
+                    Scene3d.oneLight sunlight
                 , exposure = Exposure.fromEv100 11
                 , whiteBalance = Scene3d.defaultWhiteBalance
                 , background = Scene3d.transparentBackground

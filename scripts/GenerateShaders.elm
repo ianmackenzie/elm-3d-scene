@@ -77,9 +77,9 @@ sceneProperties =
     Glsl.uniform Glsl.mat4 "sceneProperties"
 
 
-shadowLightSource : Glsl.Uniform
-shadowLightSource =
-    Glsl.uniform Glsl.mat4 "shadowLightSource"
+shadowLight : Glsl.Uniform
+shadowLight =
+    Glsl.uniform Glsl.mat4 "shadowLight"
 
 
 pointRadius : Glsl.Uniform
@@ -167,24 +167,24 @@ environmentalLighting =
     Glsl.uniform Glsl.mat4 "environmentalLighting"
 
 
-lightSources12 : Glsl.Uniform
-lightSources12 =
-    Glsl.uniform Glsl.mat4 "lightSources12"
+lights12 : Glsl.Uniform
+lights12 =
+    Glsl.uniform Glsl.mat4 "lights12"
 
 
-lightSources34 : Glsl.Uniform
-lightSources34 =
-    Glsl.uniform Glsl.mat4 "lightSources34"
+lights34 : Glsl.Uniform
+lights34 =
+    Glsl.uniform Glsl.mat4 "lights34"
 
 
-lightSources56 : Glsl.Uniform
-lightSources56 =
-    Glsl.uniform Glsl.mat4 "lightSources56"
+lights56 : Glsl.Uniform
+lights56 =
+    Glsl.uniform Glsl.mat4 "lights56"
 
 
-lightSources78 : Glsl.Uniform
-lightSources78 =
-    Glsl.uniform Glsl.mat4 "lightSources78"
+lights78 : Glsl.Uniform
+lights78 =
+    Glsl.uniform Glsl.mat4 "lights78"
 
 
 materialColor : Glsl.Uniform
@@ -255,19 +255,19 @@ kOrthographicProjection =
     Glsl.constant Glsl.float "kOrthographicProjection" "1.0"
 
 
-kDisabledLightSource : Glsl.Constant
-kDisabledLightSource =
-    Glsl.constant Glsl.float "kDisabledLightSource" "0.0"
+kDisabledLight : Glsl.Constant
+kDisabledLight =
+    Glsl.constant Glsl.float "kDisabledLight" "0.0"
 
 
-kDirectionalLightSource : Glsl.Constant
-kDirectionalLightSource =
-    Glsl.constant Glsl.float "kDirectionalLightSource" "1.0"
+kDirectionalLight : Glsl.Constant
+kDirectionalLight =
+    Glsl.constant Glsl.float "kDirectionalLight" "1.0"
 
 
-kPointLightSource : Glsl.Constant
-kPointLightSource =
-    Glsl.constant Glsl.float "kPointLightSource" "2.0"
+kPointLight : Glsl.Constant
+kPointLight =
+    Glsl.constant Glsl.float "kPointLight" "2.0"
 
 
 kNoEnvironmentalLighting : Glsl.Constant
@@ -443,14 +443,14 @@ getDirectionToLight : Glsl.Function
 getDirectionToLight =
     Glsl.function
         { dependencies = []
-        , constants = [ kDirectionalLightSource, kPointLightSource ]
+        , constants = [ kDirectionalLight, kPointLight ]
         }
         """
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_radius) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
+            float lightType = xyz_type.w;
+            if (lightType == kDirectionalLight) {
                 return xyz_type.xyz;
-            } else if (lightSourceType == kPointLightSource) {
+            } else if (lightType == kPointLight) {
                 vec3 lightPosition = xyz_type.xyz;
                 return normalize(lightPosition - surfacePosition);
             } else {
@@ -491,7 +491,7 @@ getDirectionToLightAndNormalIlluminance : Glsl.Function
 getDirectionToLightAndNormalIlluminance =
     Glsl.function
         { dependencies = []
-        , constants = [ kDirectionalLightSource, kPointLightSource, kPi ]
+        , constants = [ kDirectionalLight, kPointLight, kPi ]
         }
         """
         void getDirectionToLightAndNormalIlluminance(
@@ -501,13 +501,13 @@ getDirectionToLightAndNormalIlluminance =
             out vec3 directionToLight,
             out vec3 normalIlluminance
         ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDirectionalLightSource) {
+            float lightType = xyz_type.w;
+            if (lightType == kDirectionalLight) {
                 directionToLight = xyz_type.xyz;
                 normalIlluminance = rgb_radius.rgb;
-            } else if (lightSourceType == kPointLightSource) {
-                vec3 lightSourcePosition = xyz_type.xyz;
-                vec3 displacement = lightSourcePosition - surfacePosition;
+            } else if (lightType == kPointLight) {
+                vec3 lightPosition = xyz_type.xyz;
+                vec3 displacement = lightPosition - surfacePosition;
                 float distance = length(displacement);
                 directionToLight = displacement / distance;
                 normalIlluminance = rgb_radius.rgb / (4.0 * kPi * distance * distance);
@@ -611,22 +611,22 @@ lambertianEnvironmentalLighting =
         """
 
 
-lambertianLightSource : Glsl.Function
-lambertianLightSource =
+lambertianLight : Glsl.Function
+lambertianLight =
     Glsl.function
         { dependencies = [ getDirectionToLightAndNormalIlluminance, positiveDotProduct ]
-        , constants = [ kDisabledLightSource, kPi ]
+        , constants = [ kDisabledLight, kPi ]
         }
         """
-        vec3 lambertianLightSource(
+        vec3 lambertianLight(
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 materialColor,
             vec4 xyz_type,
             vec4 rgb_radius
         ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDisabledLightSource) {
+            float lightType = xyz_type.w;
+            if (lightType == kDisabledLight) {
                 return vec3(0.0, 0.0, 0.0);
             } 
 
@@ -649,7 +649,7 @@ lambertianLightSource =
 lambertianDirectLighting : Glsl.Function
 lambertianDirectLighting =
     Glsl.function
-        { dependencies = [ lambertianLightSource ]
+        { dependencies = [ lambertianLight ]
         , constants = []
         }
         """
@@ -657,19 +657,19 @@ lambertianDirectLighting =
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 materialColor,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
+            mat4 lights12,
+            mat4 lights34,
+            mat4 lights56,
+            mat4 lights78
         ) {
-            vec3 litColor1 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[0], lightSources12[1]);
-            vec3 litColor2 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources12[2], lightSources12[3]);
-            vec3 litColor3 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[0], lightSources34[1]);
-            vec3 litColor4 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources34[2], lightSources34[3]);
-            vec3 litColor5 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[0], lightSources56[1]);
-            vec3 litColor6 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources56[2], lightSources56[3]);
-            vec3 litColor7 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[0], lightSources78[1]);
-            vec3 litColor8 = lambertianLightSource(surfacePosition, surfaceNormal, materialColor, lightSources78[2], lightSources78[3]);
+            vec3 litColor1 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights12[0], lights12[1]);
+            vec3 litColor2 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights12[2], lights12[3]);
+            vec3 litColor3 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights34[0], lights34[1]);
+            vec3 litColor4 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights34[2], lights34[3]);
+            vec3 litColor5 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights56[0], lights56[1]);
+            vec3 litColor6 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights56[2], lights56[3]);
+            vec3 litColor7 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights78[0], lights78[1]);
+            vec3 litColor8 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights78[2], lights78[3]);
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         """
@@ -689,10 +689,10 @@ lambertianLighting =
             vec3 directionToCamera,
             mat4 viewMatrix,
             mat4 environmentalLighting,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
+            mat4 lights12,
+            mat4 lights34,
+            mat4 lights56,
+            mat4 lights78
         ) {
             vec3 environmentalContribution = lambertianEnvironmentalLighting(
                 normalDirection,
@@ -705,10 +705,10 @@ lambertianLighting =
                 position,
                 normalDirection,
                 materialColor,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
+                lights12,
+                lights34,
+                lights56,
+                lights78
             );
             return environmentalContribution + directContribution;
         }
@@ -917,18 +917,18 @@ physicalEnvironmentalLighting =
         """
 
 
-physicalLightSource : Glsl.Function
-physicalLightSource =
+physicalLight : Glsl.Function
+physicalLight =
     Glsl.function
         { dependencies =
             [ getDirectionToLightAndNormalIlluminance
             , positiveDotProduct
             , brdf
             ]
-        , constants = [ kDisabledLightSource, kPi ]
+        , constants = [ kDisabledLight, kPi ]
         }
         """
-        vec3 physicalLightSource(
+        vec3 physicalLight(
             vec4 xyz_type,
             vec4 rgb_radius,
             vec3 surfacePosition,
@@ -939,8 +939,8 @@ physicalLightSource =
             vec3 specularBaseColor,
             float alpha
         ) {
-            float lightSourceType = xyz_type.w;
-            if (lightSourceType == kDisabledLightSource) {
+            float lightType = xyz_type.w;
+            if (lightType == kDisabledLight) {
                 return vec3(0.0, 0.0, 0.0);
             }
 
@@ -957,7 +957,7 @@ physicalLightSource =
 
 physicalDirectLighting : Glsl.Function
 physicalDirectLighting =
-    Glsl.function { dependencies = [ physicalLightSource ], constants = [] }
+    Glsl.function { dependencies = [ physicalLight ], constants = [] }
         """
         vec3 physicalDirectLighting(
             vec3 surfacePosition,
@@ -966,20 +966,20 @@ physicalDirectLighting =
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
             float alpha,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
+            mat4 lights12,
+            mat4 lights34,
+            mat4 lights56,
+            mat4 lights78
         ) {
             float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
-            vec3 litColor1 = physicalLightSource(lightSources12[0], lightSources12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLightSource(lightSources12[2], lightSources12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLightSource(lightSources34[0], lightSources34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLightSource(lightSources34[2], lightSources34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalLightSource(lightSources56[0], lightSources56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalLightSource(lightSources56[2], lightSources56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalLightSource(lightSources78[0], lightSources78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalLightSource(lightSources78[2], lightSources78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         """
@@ -1001,10 +1001,10 @@ physicalLighting =
             float roughness,
             float metallic,
             mat4 environmentalLighting,
-            mat4 lightSources12,
-            mat4 lightSources34,
-            mat4 lightSources56,
-            mat4 lightSources78
+            mat4 lights12,
+            mat4 lights34,
+            mat4 lights56,
+            mat4 lights78
         ) {
             float alpha = roughness * roughness;
             float nonmetallic = 1.0 - metallic;
@@ -1028,10 +1028,10 @@ physicalLighting =
                 diffuseBaseColor,
                 specularBaseColor,
                 alpha,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
+                lights12,
+                lights34,
+                lights56,
+                lights78
             );
 
             return environmentalContribution + directContribution;
@@ -1084,11 +1084,11 @@ shadowVertexPosition =
         , constants = []
         }
         """
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLightSource, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
+            vec4 xyz_type = shadowLight[0];
+            vec4 rgb_radius = shadowLight[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_radius);
             vec3 offset = vec3(0.0, 0.0, 0.0);
             if (dot(directionToLight, worldNormal) <= 0.0) {
@@ -1430,7 +1430,7 @@ shadowVertexShader : Glsl.Shader
 shadowVertexShader =
     Glsl.vertexShader "shadowVertex"
         { attributes = [ position, normal ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, shadowLightSource ]
+        , uniforms = [ modelScale, modelMatrix, viewMatrix, sceneProperties, shadowLight ]
         , varyings = []
         , constants = []
         , functions = [ shadowVertexPosition ]
@@ -1440,7 +1440,7 @@ shadowVertexShader =
             gl_Position = shadowVertexPosition(
                 position,
                 normal,
-                shadowLightSource,
+                shadowLight,
                 modelScale,
                 modelMatrix,
                 viewMatrix,
@@ -1459,7 +1459,7 @@ quadShadowVertexShader =
             , modelMatrix
             , viewMatrix
             , sceneProperties
-            , shadowLightSource
+            , shadowLight
             , quadVertexPositions
             ]
         , varyings = []
@@ -1476,7 +1476,7 @@ quadShadowVertexShader =
             gl_Position = shadowVertexPosition(
                 position,
                 normal,
-                shadowLightSource,
+                shadowLight,
                 modelScale,
                 modelMatrix,
                 viewMatrix,
@@ -1495,7 +1495,7 @@ sphereShadowVertexShader =
             , modelMatrix
             , viewMatrix
             , sceneProperties
-            , shadowLightSource
+            , shadowLight
             ]
         , functions =
             [ getWorldPosition
@@ -1509,15 +1509,15 @@ sphereShadowVertexShader =
         """
         void main () {
             vec4 worldCenter = getWorldPosition(vec3(0.0, 0.0, 0.0), modelScale, modelMatrix);
-            vec4 xyz_type = shadowLightSource[0];
-            vec4 rgb_radius = shadowLightSource[1];
+            vec4 xyz_type = shadowLight[0];
+            vec4 rgb_radius = shadowLight[1];
             vec3 zDirection = getDirectionToLight(worldCenter.xyz, xyz_type, rgb_radius);
             vec3 xDirection = perpendicularTo(zDirection);
             vec3 yDirection = cross(zDirection, xDirection);
             float r = modelScale.x;
             float adjustedRadius = r;
             float zOffset = 0.0;
-            if (xyz_type.w == kPointLightSource) {
+            if (xyz_type.w == kPointLight) {
                 float distanceToLight = length(xyz_type.xyz - worldCenter.xyz);
                 float rSquared = r * r;
                 zOffset = rSquared / distanceToLight;
@@ -1658,10 +1658,10 @@ lambertianFragmentShader =
         { uniforms =
             [ sceneProperties
             , environmentalLighting
-            , lightSources12
-            , lightSources34
-            , lightSources56
-            , lightSources78
+            , lights12
+            , lights34
+            , lights56
+            , lights78
             , materialColor
             , viewMatrix
             ]
@@ -1686,10 +1686,10 @@ lambertianFragmentShader =
                 directionToCamera,
                 viewMatrix,
                 environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
+                lights12,
+                lights34,
+                lights56,
+                lights78
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);
@@ -1703,10 +1703,10 @@ lambertianTextureFragmentShader =
         { uniforms =
             [ sceneProperties
             , environmentalLighting
-            , lightSources12
-            , lightSources34
-            , lightSources56
-            , lightSources78
+            , lights12
+            , lights34
+            , lights56
+            , lights78
             , materialColorTexture
             , normalMapTexture
             , useNormalMap
@@ -1740,10 +1740,10 @@ lambertianTextureFragmentShader =
                 directionToCamera,
                 viewMatrix,
                 environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
+                lights12,
+                lights34,
+                lights56,
+                lights78
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);
@@ -1758,10 +1758,10 @@ physicalFragmentShader =
             [ sceneProperties
             , environmentalLighting
             , viewMatrix
-            , lightSources12
-            , lightSources34
-            , lightSources56
-            , lightSources78
+            , lights12
+            , lights34
+            , lights56
+            , lights78
             , baseColor
             , roughness
             , metallic
@@ -1789,10 +1789,10 @@ physicalFragmentShader =
                 roughness,
                 metallic,
                 environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
+                lights12,
+                lights34,
+                lights56,
+                lights78
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);
@@ -1807,10 +1807,10 @@ physicalTexturesFragmentShader =
             [ sceneProperties
             , environmentalLighting
             , viewMatrix
-            , lightSources12
-            , lightSources34
-            , lightSources56
-            , lightSources78
+            , lights12
+            , lights34
+            , lights56
+            , lights78
             , baseColorTexture
             , constantBaseColor
             , roughnessTexture
@@ -1859,10 +1859,10 @@ physicalTexturesFragmentShader =
                 roughness,
                 metallic,
                 environmentalLighting,
-                lightSources12,
-                lightSources34,
-                lightSources56,
-                lightSources78
+                lights12,
+                lights34,
+                lights56,
+                lights78
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);

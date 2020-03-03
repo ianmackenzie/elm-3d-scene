@@ -84,7 +84,7 @@ camera =
         }
 
 
-sunlight : Scene3d.LightSource World (Scene3d.CastsShadows Scene3d.Yes)
+sunlight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 sunlight =
     Scene3d.directionalLight Scene3d.castsShadows
         { chromaticity = Chromaticity.d65
@@ -95,7 +95,7 @@ sunlight =
         }
 
 
-lightBulb : Scene3d.LightSource World (Scene3d.CastsShadows Scene3d.Yes)
+lightBulb : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 lightBulb =
     Scene3d.pointLight Scene3d.castsShadows
         { chromaticity = Chromaticity.d65
@@ -228,7 +228,7 @@ main =
                                     1
                             ]
                             { environmentalLighting = environmentalLighting
-                            , directLighting = Scene3d.oneLightSource lightBulb
+                            , lights = Scene3d.oneLight lightBulb
                             , camera = camera
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Exposure.fromEv100 ev100

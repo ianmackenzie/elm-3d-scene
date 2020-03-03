@@ -17,6 +17,7 @@ import Element.Border
 import Element.Font
 import Element.Input as Input
 import Html exposing (Html)
+import Html.Attributes
 import Http
 import Illuminance
 import Json.Decode as Decode
@@ -1403,8 +1404,8 @@ transformation testCase =
             Scene3d.mirrorAcross (Plane3d.yz |> Plane3d.translateIn Direction3d.x (Length.meters -0.5))
 
 
-directLighting : TestCase -> Scene3d.DirectLighting WorldCoordinates
-directLighting testCase =
+lights : TestCase -> Scene3d.Lights WorldCoordinates
+lights testCase =
     let
         pointLightProperties =
             { chromaticity = Chromaticity.fluorescent
@@ -1420,24 +1421,24 @@ directLighting testCase =
     in
     case testCase.lightSources of
         NoLightSources ->
-            Scene3d.noDirectLighting
+            Scene3d.noLights
 
         PointLight ->
             if testCase.shadow then
-                Scene3d.oneLightSource <|
+                Scene3d.oneLight <|
                     Scene3d.pointLight Scene3d.castsShadows pointLightProperties
 
             else
-                Scene3d.oneLightSource <|
+                Scene3d.oneLight <|
                     Scene3d.pointLight Scene3d.doesNotCastShadows pointLightProperties
 
         DirectionalLight ->
             if testCase.shadow then
-                Scene3d.oneLightSource <|
+                Scene3d.oneLight <|
                     Scene3d.directionalLight Scene3d.castsShadows directionalLightProperties
 
             else
-                Scene3d.oneLightSource <|
+                Scene3d.oneLight <|
                     Scene3d.directionalLight Scene3d.doesNotCastShadows directionalLightProperties
 
         TwoLightSources ->
@@ -1446,12 +1447,12 @@ directLighting testCase =
                     Scene3d.pointLight Scene3d.doesNotCastShadows pointLightProperties
             in
             if testCase.shadow then
-                Scene3d.twoLightSources
+                Scene3d.twoLights
                     (Scene3d.directionalLight Scene3d.castsShadows directionalLightProperties)
                     pointLight
 
             else
-                Scene3d.twoLightSources
+                Scene3d.twoLights
                     (Scene3d.directionalLight Scene3d.doesNotCastShadows directionalLightProperties)
                     pointLight
 
@@ -1545,9 +1546,9 @@ viewTestCase model testCase =
                 [ Element.el [] <|
                     Element.html <|
                         Scene3d.toHtml (options testCase)
-                            { directLighting = directLighting testCase
+                            { lights = lights testCase
                             , environmentalLighting = environmentalLighting testCase
-                            , background = Scene3d.whiteBackground
+                            , background = Scene3d.backgroundColor Tango.skyBlue1
                             , camera =
                                 Camera3d.perspective
                                     { viewpoint =

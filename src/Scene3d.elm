@@ -11,9 +11,9 @@ module Scene3d exposing
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
     , defaultExposure, defaultWhiteBalance
-    , LightSource, directionalLight, pointLight
+    , Light, directionalLight, pointLight
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
-    , DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+    , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     , toWebGLEntities
     )
@@ -102,23 +102,25 @@ when setting up more complex scenes.
 # Lighting
 
 Lighting in `elm-3d-scene` is a combination of _direct_ and _environmental_
-(indirect, ambient) lighting. Direct lighting comes from specific light sources
-like the sun or a light bulb; you can currently have up to eight separate light
-sources in a scene. Environmental lighting accounts for light coming from all
-around an object; for example, if you are outside, you might be getting direct
-light from the sun but you're also getting light reflected from other surfaces
-around you. Generally, direct lighting gives nice highlights but can be very
-harsh; it's usually best to use a combination of one or more direct lights plus
-some soft indirect lighting.
+(indirect, ambient) lighting. Direct lighting comes from specific lights like
+the sun or a light bulb; you can currently have up to eight separate lights
+in a scene. Environmental lighting accounts for light coming from all around an
+object; for example, if you are outside, you might be getting direct light from
+the sun but you're also getting light reflected from other surfaces around you.
+
+Generally, direct lighting gives nice highlights but can be very harsh; it's
+usually best to use a combination of some soft indirect lighting to ensure the
+scene as a whole is reasonably well lit, and then use one or more point or
+directional lights to provide highlights.
 
 
-## Direct lighting
+## Lights
 
-@docs LightSource, directionalLight, pointLight
+@docs Light, directionalLight, pointLight
 
 @docs CastsShadows, Yes, No, castsShadows, doesNotCastShadows
 
-@docs DirectLighting, noDirectLighting, oneLightSource, twoLightSources, threeLightSources, fourLightSources, fiveLightSources, sixLightSources, sevenLightSources, eightLightSources
+@docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
 
 ## Environmental lighting
@@ -378,23 +380,23 @@ relativeTo frame entity =
 -- [ type_i  radius_i  type_j  radius_j ]
 
 
-{-| A `LightSource` represents a single source of light in the scene, such as
-the sun or a light bulb. Light sources are not rendered themselves; they can
-only be seen by how they interact with entities (meshes).
+{-| A `Light` represents a single source of light in the scene, such as the sun
+or a light bulb. Lights are not rendered themselves; they can only be seen by
+how they interact with objects in the scene.
 -}
-type alias LightSource coordinates castsShadows =
-    Types.LightSource coordinates castsShadows
+type alias Light coordinates castsShadows =
+    Types.Light coordinates castsShadows
 
 
-type DirectLighting coordinates
+type Lights coordinates
     = SingleUnshadowedPass LightMatrices
     | SingleShadowedPass LightMatrices
     | TwoPasses LightMatrices LightMatrices
 
 
-disabledLightSource : LightSource coordinates castsShadows
-disabledLightSource =
-    Types.LightSource
+disabledLight : Light coordinates castsShadows
+disabledLight =
+    Types.Light
         { type_ = 0
         , castsShadows = False
         , x = 0
@@ -407,8 +409,8 @@ disabledLightSource =
         }
 
 
-lightSourcePair : LightSource coordinates firstCastsShadows -> LightSource coordinates secondCastsShadows -> Mat4
-lightSourcePair (Types.LightSource first) (Types.LightSource second) =
+lightPair : Light coordinates firstCastsShadows -> Light coordinates secondCastsShadows -> Mat4
+lightPair (Types.Light first) (Types.Light second) =
     Math.Matrix4.fromRecord
         { m11 = first.x
         , m21 = first.y
@@ -431,141 +433,141 @@ lightSourcePair (Types.LightSource first) (Types.LightSource second) =
 
 lightingDisabled : LightMatrices
 lightingDisabled =
-    { lightSources12 = lightSourcePair disabledLightSource disabledLightSource
-    , lightSources34 = lightSourcePair disabledLightSource disabledLightSource
-    , lightSources56 = lightSourcePair disabledLightSource disabledLightSource
-    , lightSources78 = lightSourcePair disabledLightSource disabledLightSource
+    { lights12 = lightPair disabledLight disabledLight
+    , lights34 = lightPair disabledLight disabledLight
+    , lights56 = lightPair disabledLight disabledLight
+    , lights78 = lightPair disabledLight disabledLight
     }
 
 
-noDirectLighting : DirectLighting coordinates
-noDirectLighting =
+noLights : Lights coordinates
+noLights =
     SingleUnshadowedPass lightingDisabled
 
 
-lightCastsShadows : LightSource coordinates castsShadows -> Bool
-lightCastsShadows (Types.LightSource properties) =
+lightCastsShadows : Light coordinates castsShadows -> Bool
+lightCastsShadows (Types.Light properties) =
     properties.castsShadows
 
 
-oneLightSource : LightSource coordinates (CastsShadows a) -> DirectLighting coordinates
-oneLightSource lightSource =
+oneLight : Light coordinates (CastsShadows a) -> Lights coordinates
+oneLight light =
     let
         lightMatrices =
-            { lightSources12 = lightSourcePair lightSource disabledLightSource
-            , lightSources34 = lightSourcePair disabledLightSource disabledLightSource
-            , lightSources56 = lightSourcePair disabledLightSource disabledLightSource
-            , lightSources78 = lightSourcePair disabledLightSource disabledLightSource
+            { lights12 = lightPair light disabledLight
+            , lights34 = lightPair disabledLight disabledLight
+            , lights56 = lightPair disabledLight disabledLight
+            , lights78 = lightPair disabledLight disabledLight
             }
     in
-    if lightCastsShadows lightSource then
+    if lightCastsShadows light then
         SingleShadowedPass lightMatrices
 
     else
         SingleUnshadowedPass lightMatrices
 
 
-twoLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-twoLightSources first second =
-    eightLightSources
+twoLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+twoLights first second =
+    eightLights
         first
         second
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
 
 
-threeLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-threeLightSources first second third =
-    eightLightSources
+threeLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+threeLights first second third =
+    eightLights
         first
         second
         third
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
 
 
-fourLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-fourLightSources first second third fourth =
-    eightLightSources
+fourLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+fourLights first second third fourth =
+    eightLights
         first
         second
         third
         fourth
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
+        disabledLight
+        disabledLight
+        disabledLight
+        disabledLight
 
 
-fiveLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-fiveLightSources first second third fourth fifth =
-    eightLightSources
+fiveLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+fiveLights first second third fourth fifth =
+    eightLights
         first
         second
         third
         fourth
         fifth
-        disabledLightSource
-        disabledLightSource
-        disabledLightSource
+        disabledLight
+        disabledLight
+        disabledLight
 
 
-sixLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-sixLightSources first second third fourth fifth sixth =
-    eightLightSources
+sixLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+sixLights first second third fourth fifth sixth =
+    eightLights
         first
         second
         third
         fourth
         fifth
         sixth
-        disabledLightSource
-        disabledLightSource
+        disabledLight
+        disabledLight
 
 
-sevenLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-sevenLightSources first second third fourth fifth sixth seventh =
-    eightLightSources
+sevenLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+sevenLights first second third fourth fifth sixth seventh =
+    eightLights
         first
         second
         third
@@ -573,39 +575,39 @@ sevenLightSources first second third fourth fifth sixth seventh =
         fifth
         sixth
         seventh
-        disabledLightSource
+        disabledLight
 
 
-eightLightSources :
-    LightSource coordinates (CastsShadows a)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> LightSource coordinates (CastsShadows No)
-    -> DirectLighting coordinates
-eightLightSources first second third fourth fifth sixth seventh eigth =
+eightLights :
+    Light coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Light coordinates (CastsShadows No)
+    -> Lights coordinates
+eightLights first second third fourth fifth sixth seventh eigth =
     if lightCastsShadows first then
         TwoPasses
-            { lightSources12 = lightSourcePair first second
-            , lightSources34 = lightSourcePair third fourth
-            , lightSources56 = lightSourcePair fifth sixth
-            , lightSources78 = lightSourcePair seventh eigth
+            { lights12 = lightPair first second
+            , lights34 = lightPair third fourth
+            , lights56 = lightPair fifth sixth
+            , lights78 = lightPair seventh eigth
             }
-            { lightSources12 = lightSourcePair second third
-            , lightSources34 = lightSourcePair fourth fifth
-            , lightSources56 = lightSourcePair sixth seventh
-            , lightSources78 = lightSourcePair eigth disabledLightSource
+            { lights12 = lightPair second third
+            , lights34 = lightPair fourth fifth
+            , lights56 = lightPair sixth seventh
+            , lights78 = lightPair eigth disabledLight
             }
 
     else
         SingleUnshadowedPass
-            { lightSources12 = lightSourcePair first second
-            , lightSources34 = lightSourcePair third fourth
-            , lightSources56 = lightSourcePair fifth sixth
-            , lightSources78 = lightSourcePair seventh eigth
+            { lights12 = lightPair first second
+            , lights34 = lightPair third fourth
+            , lights56 = lightPair fifth sixth
+            , lights78 = lightPair seventh eigth
             }
 
 
@@ -638,7 +640,7 @@ directionalLight :
         , intensity : Illuminance
         , direction : Direction3d coordinates
         }
-    -> LightSource coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows a)
 directionalLight (CastsShadows shadowFlag) { chromaticity, intensity, direction } =
     let
         { x, y, z } =
@@ -650,7 +652,7 @@ directionalLight (CastsShadows shadowFlag) { chromaticity, intensity, direction 
         lux =
             Illuminance.inLux intensity
     in
-    Types.LightSource
+    Types.Light
         { type_ = 1
         , castsShadows = shadowFlag
         , x = -x
@@ -670,7 +672,7 @@ pointLight :
         , intensity : LuminousFlux
         , position : Point3d Meters coordinates
         }
-    -> LightSource coordinates (CastsShadows a)
+    -> Light coordinates (CastsShadows a)
 pointLight (CastsShadows shadowFlag) { chromaticity, intensity, position } =
     let
         (LinearRgb rgb) =
@@ -682,7 +684,7 @@ pointLight (CastsShadows shadowFlag) { chromaticity, intensity, position } =
         { x, y, z } =
             Point3d.unwrap position
     in
-    Types.LightSource
+    Types.Light
         { type_ = 2
         , castsShadows = shadowFlag
         , x = x
@@ -1029,7 +1031,7 @@ call renderPasses lightMatrices settings =
 
 
 toWebGLEntities :
-    { directLighting : DirectLighting coordinates
+    { lights : Lights coordinates
     , environmentalLighting : EnvironmentalLighting coordinates
     , camera : Camera3d Meters coordinates
     , exposure : Exposure
@@ -1120,7 +1122,7 @@ toWebGLEntities arguments drawables =
                 , points = []
                 }
     in
-    case arguments.directLighting of
+    case arguments.lights of
         SingleUnshadowedPass lightMatrices ->
             List.concat
                 [ call renderPasses.meshes lightMatrices depthTestDefault
@@ -1147,7 +1149,7 @@ toWebGLEntities arguments drawables =
 toHtml :
     List Option
     ->
-        { directLighting : DirectLighting coordinates
+        { lights : Lights coordinates
         , environmentalLighting : EnvironmentalLighting coordinates
         , camera : Camera3d Meters coordinates
         , exposure : Exposure
@@ -1216,7 +1218,7 @@ toHtml options arguments drawables =
                 , Html.Attributes.style "background-color" backgroundColorString
                 ]
                 (toWebGLEntities
-                    { directLighting = arguments.directLighting
+                    { lights = arguments.lights
                     , environmentalLighting = arguments.environmentalLighting
                     , camera = arguments.camera
                     , exposure = arguments.exposure

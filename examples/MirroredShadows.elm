@@ -90,7 +90,7 @@ camera =
         }
 
 
-sunlight : Scene3d.LightSource World (Scene3d.CastsShadows Scene3d.Yes)
+sunlight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 sunlight =
     Scene3d.directionalLight Scene3d.castsShadows
         { chromaticity = Chromaticity.d65
@@ -100,7 +100,7 @@ sunlight =
         }
 
 
-lightBulb : Scene3d.LightSource World (Scene3d.CastsShadows Scene3d.Yes)
+lightBulb : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 lightBulb =
     Scene3d.pointLight Scene3d.castsShadows
         { chromaticity = Chromaticity.d65
@@ -132,8 +132,8 @@ main =
                     , Html.div []
                         [ Scene3d.toHtml []
                             { environmentalLighting = environmentalLighting
-                            , directLighting =
-                                Scene3d.oneLightSource <|
+                            , lights =
+                                Scene3d.oneLight <|
                                     if usePointLight then
                                         lightBulb
 

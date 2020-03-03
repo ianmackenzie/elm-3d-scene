@@ -215,7 +215,7 @@ view { world, width, height } =
         [ Scene3d.toHtml []
             { dimensions = ( width, height )
             , camera = camera
-            , directLighting = Scene3d.oneLightSource sunlight
+            , lights = Scene3d.oneLight sunlight
             , environmentalLighting = environmentalLighting
             , exposure = Scene3d.Exposure.fromMaxLuminance (Luminance.nits 10000)
             , whiteBalance = Scene3d.defaultWhiteBalance
