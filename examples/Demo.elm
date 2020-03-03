@@ -979,19 +979,19 @@ object { kind, position, material, color, roughness } =
             Scene3d.placeIn position (cylinder objectMaterial)
 
 
-cube : Material.Uniform -> Scene3d.Entity EntityCoordinates
+cube : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
 cube material =
     Block3d.from (Point3d.centimeters -7.5 -7.5 15) (Point3d.centimeters 7.5 7.5 0)
         |> Scene3d.block Scene3d.castsShadows material
 
 
-sphere : Material.NormalMapped -> Scene3d.Entity EntityCoordinates
+sphere : Material.Textured EntityCoordinates -> Scene3d.Entity EntityCoordinates
 sphere material =
     Sphere3d.atPoint (Point3d.centimeters 0 0 7) (Length.centimeters 7)
         |> Scene3d.sphere Scene3d.castsShadows material
 
 
-cylinder : Material.Uniform -> Scene3d.Entity EntityCoordinates
+cylinder : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
 cylinder material =
     Cylinder3d.startingAt
         Point3d.origin
