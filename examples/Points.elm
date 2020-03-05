@@ -48,7 +48,7 @@ main =
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , lights = Scene3d.noLights
         , environmentalLighting = Scene3d.noEnvironmentalLighting
-        , background = Scene3d.transparentBackground
+        , background = Scene3d.backgroundColor Tango.orange1
         , exposure = Scene3d.defaultExposure
         , whiteBalance = Scene3d.defaultWhiteBalance
         }
