@@ -173,6 +173,7 @@ import Vector3d exposing (Vector3d)
 import Viewpoint3d
 import WebGL
 import WebGL.Settings
+import WebGL.Settings.Blend as Blend
 import WebGL.Settings.DepthTest as DepthTest
 import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture exposing (Texture)
@@ -978,9 +979,21 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
 -- [ kz            projectionType  dynamicRange  *             ]
 
 
+defaultBlend : WebGL.Settings.Setting
+defaultBlend =
+    Blend.custom
+        { r = 0
+        , g = 0
+        , b = 0
+        , a = 0
+        , color = Blend.customAdd Blend.srcAlpha Blend.oneMinusSrcAlpha
+        , alpha = Blend.customAdd Blend.one Blend.oneMinusSrcAlpha
+        }
+
+
 depthTestDefault : List WebGL.Settings.Setting
 depthTestDefault =
-    [ DepthTest.default ]
+    [ DepthTest.default, defaultBlend ]
 
 
 outsideStencil : List WebGL.Settings.Setting
@@ -995,6 +1008,7 @@ outsideStencil =
         , zpass = StencilTest.keep
         , writeMask = 0x00
         }
+    , defaultBlend
     ]
 
 
@@ -1010,6 +1024,7 @@ insideStencil =
         , zpass = StencilTest.keep
         , writeMask = 0x00
         }
+    , defaultBlend
     ]
 
 

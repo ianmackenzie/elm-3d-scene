@@ -968,23 +968,6 @@ quadShadow firstPoint secondPoint thirdPoint fourthPoint =
                     }
 
 
-blendPointOver : WebGL.Settings.Setting
-blendPointOver =
-    Blend.custom
-        { r = 0
-        , g = 0
-        , b = 0
-        , a = 0
-        , color = Blend.customAdd Blend.srcAlpha Blend.oneMinusSrcAlpha
-        , alpha = Blend.customAdd Blend.one Blend.oneMinusSrcAlpha
-        }
-
-
-pointSettings : List WebGL.Settings.Setting -> List WebGL.Settings.Setting
-pointSettings settings =
-    blendPointOver :: settings
-
-
 cullBackFaceSetting : WebGL.Settings.Setting
 cullBackFaceSetting =
     WebGL.Settings.cullFace WebGL.Settings.back
@@ -1100,7 +1083,7 @@ constantPointMesh color radius webGLMesh =
         PointNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lights settings ->
                 WebGL.entityWith
-                    (pointSettings settings)
+                    settings
                     Shaders.pointVertex
                     Shaders.constantPointFragment
                     webGLMesh
@@ -1159,7 +1142,7 @@ emissivePointMesh color backlight radius webGLMesh =
         PointNode
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix environmentalLighting lights settings ->
                 WebGL.entityWith
-                    (pointSettings settings)
+                    settings
                     Shaders.pointVertex
                     Shaders.emissivePointFragment
                     webGLMesh
