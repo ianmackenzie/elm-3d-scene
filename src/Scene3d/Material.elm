@@ -123,7 +123,7 @@ loadChannelWith options channel url =
 
 loadImpl : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture value)
 loadImpl options (Types.Channel channel) url =
-    WebGL.Texture.load url
+    WebGL.Texture.loadWith options url
         |> Task.map
             (\data ->
                 Types.Texture
