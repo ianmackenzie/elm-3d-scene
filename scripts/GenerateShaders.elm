@@ -2011,14 +2011,23 @@ script { workingDirectory, userPrivileges } =
             , physicalTexturesFragmentShader
             ]
     in
-    Script.printLine "Optimizing shaders..."
+    Script.printLine "Writing unoptimized shaders..."
+        |> Script.andThen
+            (writeToFile unoptimizedOutputFile
+                "Scene3d.UnoptimizedShaders"
+                workingDirectory
+                userPrivileges
+                shaders
+            )
+        |> Script.andThen (Script.printLine "Optimizing shaders...")
         |> Script.andThen (Script.collect (optimizeShader userPrivileges) shaders)
         |> Script.thenWith
             (\optimizedShaders ->
-                Script.do
-                    [ writeToFile optimizedOutputFile "Scene3d.OptimizedShaders" workingDirectory userPrivileges optimizedShaders
-                    , writeToFile unoptimizedOutputFile "Scene3d.UnoptimizedShaders" workingDirectory userPrivileges shaders
-                    ]
+                writeToFile optimizedOutputFile
+                    "Scene3d.OptimizedShaders"
+                    workingDirectory
+                    userPrivileges
+                    optimizedShaders
             )
 
 
