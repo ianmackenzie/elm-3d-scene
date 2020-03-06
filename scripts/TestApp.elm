@@ -1605,6 +1605,16 @@ axes =
         ]
 
 
+floor : Entity WorldCoordinates
+floor =
+    Scene3d.quad Scene3d.doesNotCastShadows
+        (Material.matte Tango.aluminum3)
+        (Point3d.meters 4 -4 0)
+        (Point3d.meters 4 4 0)
+        (Point3d.meters -4 4 0)
+        (Point3d.meters -4 -4 0)
+
+
 viewTestCase : LoadedModel -> TestCase -> Element Msg
 viewTestCase model testCase =
     case entity model testCase of
@@ -1621,12 +1631,7 @@ viewTestCase model testCase =
                             , exposure = Exposure.fromEv100 4
                             , whiteBalance = Chromaticity.tungsten
                             }
-                            [ Scene3d.quad Scene3d.doesNotCastShadows
-                                (Material.matte Tango.aluminum3)
-                                (Point3d.meters 4 -4 0)
-                                (Point3d.meters 4 4 0)
-                                (Point3d.meters -4 4 0)
-                                (Point3d.meters -4 -4 0)
+                            [ floor
                             , axes
                             , validEntity |> transformation testCase
                             ]
