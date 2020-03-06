@@ -1,83 +1,83 @@
-Mesh	Material	Shadows	Transformation	LightSources	EnvironmentalLighting	DynamicRange	Antialiasing
-Quad	Emissive	NoShadow	Scale	TwoLightSources	SoftLighting	1	NoAntialiasing
-Block	Pbr	Shadow	Scale	PointLight	NoEnvironmentalLighting	2	Multisampling
-Quad	Matte	Shadow	Translation	DirectionalLight	NoEnvironmentalLighting	10	Supersampling
-Cylinder	Color	NoShadow	Mirror	PointLight	NoEnvironmentalLighting	5	NoAntialiasing
-Cylinder	Matte	NoShadow	NoTransformation	NoLightSources	SoftLighting	10	Multisampling
-Plain	Emissive	Shadow	NoTransformation	DirectionalLight	SoftLighting	5	Supersampling
-Unlit	TexturedEmissive	NoShadow	Rotation	TwoLightSources	SoftLighting	2	Supersampling
-Points	Color	NoShadow	NoTransformation	TwoLightSources	NoEnvironmentalLighting	2	NoAntialiasing
-Block	Pbr	NoShadow	Mirror	NoLightSources	SoftLighting	1	Supersampling
-Sphere	TexturedPbr	Shadow	Translation	DirectionalLight	NoEnvironmentalLighting	1	NoAntialiasing
-Textured	TexturedColor	Shadow	Mirror	TwoLightSources	SoftLighting	10	Multisampling
-Cylinder	Pbr	NoShadow	Translation	TwoLightSources	SoftLighting	5	Multisampling
-Sphere	TexturedMatte	NoShadow	Mirror	DirectionalLight	SoftLighting	2	Multisampling
-Triangles	Color	Shadow	Scale	PointLight	NoEnvironmentalLighting	10	Supersampling
-Textured	TexturedMatte	Shadow	Rotation	PointLight	NoEnvironmentalLighting	1	NoAntialiasing
-Quad	TexturedPbr	NoShadow	Mirror	NoLightSources	SoftLighting	5	Multisampling
-Sphere	TexturedEmissive	Shadow	NoTransformation	PointLight	NoEnvironmentalLighting	10	Supersampling
-Triangles	Emissive	NoShadow	Mirror	NoLightSources	SoftLighting	2	NoAntialiasing
-Points	Color	NoShadow	Mirror	PointLight	SoftLighting	1	Multisampling
-Plain	Emissive	NoShadow	Translation	PointLight	NoEnvironmentalLighting	10	NoAntialiasing
-Cylinder	Color	Shadow	Rotation	DirectionalLight	NoEnvironmentalLighting	5	Supersampling
-Triangles	Color	NoShadow	Translation	TwoLightSources	NoEnvironmentalLighting	5	Multisampling
-Unlit	TexturedColor	Shadow	Translation	DirectionalLight	NoEnvironmentalLighting	5	NoAntialiasing
-Triangles	Emissive	NoShadow	Rotation	NoLightSources	SoftLighting	1	Multisampling
-Unlit	TexturedEmissive	NoShadow	Mirror	NoLightSources	SoftLighting	1	Multisampling
-Quad	Pbr	NoShadow	Rotation	PointLight	SoftLighting	10	NoAntialiasing
-Plain	Color	NoShadow	Scale	NoLightSources	SoftLighting	2	Multisampling
-LineSegments	Color	NoShadow	Scale	DirectionalLight	SoftLighting	5	Supersampling
-LineSegments	Emissive	NoShadow	Rotation	PointLight	NoEnvironmentalLighting	2	NoAntialiasing
-Textured	TexturedColor	NoShadow	Translation	NoLightSources	SoftLighting	2	Supersampling
-Polyline	Color	NoShadow	Mirror	TwoLightSources	NoEnvironmentalLighting	5	NoAntialiasing
-Uniform	Matte	NoShadow	NoTransformation	PointLight	NoEnvironmentalLighting	1	Supersampling
-LineSegments	Color	NoShadow	NoTransformation	TwoLightSources	NoEnvironmentalLighting	10	Multisampling
-Sphere	Matte	Shadow	Scale	TwoLightSources	NoEnvironmentalLighting	5	Supersampling
-Plain	Color	Shadow	Rotation	TwoLightSources	NoEnvironmentalLighting	1	Supersampling
-Polyline	Emissive	NoShadow	NoTransformation	PointLight	SoftLighting	2	Supersampling
-Block	Matte	Shadow	Rotation	DirectionalLight	SoftLighting	5	NoAntialiasing
-Polyline	Color	NoShadow	Rotation	DirectionalLight	NoEnvironmentalLighting	10	Multisampling
-Textured	Emissive	Shadow	NoTransformation	DirectionalLight	NoEnvironmentalLighting	5	NoAntialiasing
-Quad	TexturedEmissive	Shadow	NoTransformation	DirectionalLight	NoEnvironmentalLighting	2	NoAntialiasing
-Facets	Matte	Shadow	Translation	TwoLightSources	NoEnvironmentalLighting	2	Supersampling
-Facets	Pbr	NoShadow	NoTransformation	PointLight	SoftLighting	10	Multisampling
-Sphere	TexturedColor	NoShadow	Rotation	NoLightSources	SoftLighting	1	Multisampling
-LineSegments	Emissive	NoShadow	Translation	NoLightSources	SoftLighting	1	Supersampling
-Facets	Color	Shadow	Rotation	DirectionalLight	SoftLighting	5	NoAntialiasing
-Block	Emissive	Shadow	Translation	TwoLightSources	SoftLighting	10	Supersampling
-Unlit	Color	Shadow	Scale	PointLight	NoEnvironmentalLighting	10	NoAntialiasing
-Facets	Emissive	NoShadow	Mirror	NoLightSources	SoftLighting	1	Multisampling
-Unlit	Emissive	NoShadow	NoTransformation	DirectionalLight	NoEnvironmentalLighting	1	Supersampling
-Uniform	Color	Shadow	Scale	TwoLightSources	SoftLighting	10	NoAntialiasing
-Sphere	Pbr	Shadow	Rotation	DirectionalLight	NoEnvironmentalLighting	2	Supersampling
-Uniform	Emissive	Shadow	Rotation	DirectionalLight	NoEnvironmentalLighting	5	Multisampling
-Textured	Matte	NoShadow	Mirror	TwoLightSources	NoEnvironmentalLighting	2	Supersampling
-Facets	Emissive	Shadow	Scale	TwoLightSources	NoEnvironmentalLighting	5	Supersampling
-Polyline	Color	NoShadow	Translation	PointLight	NoEnvironmentalLighting	1	Supersampling
-Block	Color	NoShadow	NoTransformation	TwoLightSources	SoftLighting	1	Multisampling
-Quad	TexturedMatte	NoShadow	NoTransformation	TwoLightSources	SoftLighting	5	Supersampling
-Plain	Color	NoShadow	Mirror	PointLight	NoEnvironmentalLighting	10	Supersampling
-Textured	TexturedPbr	Shadow	Scale	PointLight	SoftLighting	10	Supersampling
-Cylinder	Emissive	Shadow	Scale	TwoLightSources	SoftLighting	1	Multisampling
-Textured	TexturedEmissive	NoShadow	Translation	TwoLightSources	NoEnvironmentalLighting	5	NoAntialiasing
-Sphere	Emissive	NoShadow	Translation	TwoLightSources	NoEnvironmentalLighting	1	Supersampling
-Uniform	Pbr	NoShadow	Mirror	NoLightSources	SoftLighting	2	Supersampling
-Quad	TexturedColor	Shadow	Scale	PointLight	SoftLighting	5	Supersampling
-Triangles	Color	Shadow	NoTransformation	DirectionalLight	SoftLighting	2	NoAntialiasing
-Quad	TexturedMatte	Shadow	Translation	DirectionalLight	NoEnvironmentalLighting	10	Supersampling
-LineSegments	Color	NoShadow	Mirror	TwoLightSources	NoEnvironmentalLighting	2	Multisampling
-Uniform	Emissive	NoShadow	Translation	NoLightSources	SoftLighting	2	Multisampling
-Textured	TexturedPbr	Shadow	NoTransformation	TwoLightSources	SoftLighting	2	Supersampling
-Quad	Color	Shadow	Translation	DirectionalLight	NoEnvironmentalLighting	10	Supersampling
-Sphere	TexturedPbr	NoShadow	Rotation	NoLightSources	SoftLighting	10	Supersampling
-Points	Emissive	NoShadow	Translation	DirectionalLight	NoEnvironmentalLighting	5	Supersampling
-Quad	TexturedEmissive	NoShadow	Scale	PointLight	NoEnvironmentalLighting	10	NoAntialiasing
-Points	Emissive	NoShadow	Rotation	DirectionalLight	NoEnvironmentalLighting	10	Supersampling
-Sphere	Color	Shadow	NoTransformation	DirectionalLight	NoEnvironmentalLighting	10	NoAntialiasing
-Polyline	Color	NoShadow	Scale	NoLightSources	SoftLighting	2	Multisampling
-Textured	Color	Shadow	Scale	TwoLightSources	NoEnvironmentalLighting	5	Supersampling
-Unlit	TexturedColor	Shadow	NoTransformation	PointLight	NoEnvironmentalLighting	2	Supersampling
-Points	Emissive	NoShadow	Scale	NoLightSources	SoftLighting	1	Supersampling
-Textured	Pbr	NoShadow	Mirror	DirectionalLight	SoftLighting	2	NoAntialiasing
-Cylinder	Color	Shadow	Scale	TwoLightSources	NoEnvironmentalLighting	2	Supersampling
-Quad	TexturedMatte	NoShadow	Scale	NoLightSources	SoftLighting	1	Supersampling
+Mesh	Material	Shadows	Transformation	LightSources	EnvironmentalLighting	DynamicRange	Antialiasing	Projection
+Quad	TexturedMatte	Shadow	Scale	TwoLightSources	SoftLighting	1	NoAntialiasing	Perspective
+Uniform	Color	NoShadow	Translation	PointLight	NoEnvironmentalLighting	5	Multisampling	Orthographic
+Sphere	TexturedPbr	NoShadow	Translation	DirectionalLight	SoftLighting	2	Supersampling	Perspective
+Quad	Matte	Shadow	Mirror	TwoLightSources	NoEnvironmentalLighting	10	Supersampling	Orthographic
+Polyline	Emissive	NoShadow	NoTransformation	NoLightSources	SoftLighting	10	Multisampling	Perspective
+Uniform	Pbr	Shadow	Rotation	DirectionalLight	NoEnvironmentalLighting	5	NoAntialiasing	Perspective
+Textured	TexturedEmissive	Shadow	Rotation	PointLight	SoftLighting	2	Multisampling	Orthographic
+Quad	TexturedColor	NoShadow	Rotation	DirectionalLight	NoEnvironmentalLighting	1	NoAntialiasing	Orthographic
+Unlit	Emissive	Shadow	Translation	PointLight	NoEnvironmentalLighting	10	NoAntialiasing	Perspective
+Uniform	Emissive	NoShadow	Scale	TwoLightSources	NoEnvironmentalLighting	2	Supersampling	Orthographic
+Textured	Matte	NoShadow	Mirror	NoLightSources	SoftLighting	5	NoAntialiasing	Perspective
+Sphere	TexturedPbr	Shadow	Scale	PointLight	NoEnvironmentalLighting	1	Multisampling	Orthographic
+Points	Color	NoShadow	NoTransformation	TwoLightSources	NoEnvironmentalLighting	5	Supersampling	Orthographic
+Points	Color	NoShadow	Scale	DirectionalLight	SoftLighting	10	Multisampling	Perspective
+Cylinder	Pbr	NoShadow	Mirror	PointLight	NoEnvironmentalLighting	1	Multisampling	Orthographic
+Cylinder	Pbr	NoShadow	Translation	NoLightSources	SoftLighting	1	Supersampling	Perspective
+Polyline	Color	NoShadow	Translation	TwoLightSources	NoEnvironmentalLighting	2	NoAntialiasing	Orthographic
+LineSegments	Emissive	NoShadow	NoTransformation	DirectionalLight	NoEnvironmentalLighting	2	NoAntialiasing	Perspective
+Cylinder	Color	Shadow	Rotation	TwoLightSources	NoEnvironmentalLighting	10	Supersampling	Orthographic
+Textured	TexturedMatte	NoShadow	Translation	TwoLightSources	NoEnvironmentalLighting	10	Supersampling	Orthographic
+Unlit	TexturedColor	NoShadow	Rotation	NoLightSources	SoftLighting	5	Multisampling	Orthographic
+Quad	TexturedColor	Shadow	NoTransformation	PointLight	NoEnvironmentalLighting	2	Multisampling	Perspective
+Points	Emissive	NoShadow	Mirror	DirectionalLight	NoEnvironmentalLighting	2	NoAntialiasing	Perspective
+LineSegments	Emissive	NoShadow	Translation	PointLight	SoftLighting	5	Supersampling	Orthographic
+Sphere	TexturedEmissive	NoShadow	Mirror	TwoLightSources	NoEnvironmentalLighting	10	NoAntialiasing	Perspective
+LineSegments	Color	NoShadow	Mirror	TwoLightSources	NoEnvironmentalLighting	1	Multisampling	Orthographic
+Block	Matte	Shadow	Rotation	DirectionalLight	NoEnvironmentalLighting	2	Supersampling	Orthographic
+Triangles	Emissive	Shadow	Translation	TwoLightSources	NoEnvironmentalLighting	1	Multisampling	Orthographic
+LineSegments	Color	NoShadow	Scale	TwoLightSources	NoEnvironmentalLighting	5	Multisampling	Orthographic
+Facets	Pbr	Shadow	Mirror	TwoLightSources	NoEnvironmentalLighting	2	Supersampling	Orthographic
+Triangles	Color	NoShadow	NoTransformation	NoLightSources	SoftLighting	5	Supersampling	Perspective
+Points	Emissive	NoShadow	Rotation	PointLight	NoEnvironmentalLighting	1	Multisampling	Orthographic
+Textured	TexturedEmissive	Shadow	Scale	DirectionalLight	NoEnvironmentalLighting	1	Supersampling	Perspective
+Plain	Emissive	Shadow	Rotation	TwoLightSources	NoEnvironmentalLighting	10	Multisampling	Orthographic
+Uniform	Matte	NoShadow	Mirror	NoLightSources	SoftLighting	10	Multisampling	Perspective
+LineSegments	Color	NoShadow	Rotation	PointLight	NoEnvironmentalLighting	10	Supersampling	Orthographic
+Cylinder	Matte	NoShadow	NoTransformation	DirectionalLight	SoftLighting	5	NoAntialiasing	Perspective
+Block	Emissive	NoShadow	Mirror	NoLightSources	SoftLighting	5	Multisampling	Perspective
+Plain	Color	NoShadow	Mirror	NoLightSources	SoftLighting	5	Supersampling	Perspective
+Block	Pbr	Shadow	NoTransformation	TwoLightSources	NoEnvironmentalLighting	1	NoAntialiasing	Perspective
+Facets	Matte	NoShadow	Translation	NoLightSources	SoftLighting	5	NoAntialiasing	Perspective
+Polyline	Emissive	NoShadow	Scale	NoLightSources	SoftLighting	5	Supersampling	Perspective
+Facets	Emissive	NoShadow	NoTransformation	PointLight	SoftLighting	10	Multisampling	Orthographic
+Sphere	TexturedPbr	Shadow	NoTransformation	TwoLightSources	NoEnvironmentalLighting	5	NoAntialiasing	Orthographic
+Quad	Emissive	Shadow	Translation	DirectionalLight	NoEnvironmentalLighting	5	NoAntialiasing	Perspective
+Polyline	Emissive	NoShadow	Rotation	PointLight	SoftLighting	1	Multisampling	Orthographic
+Sphere	Emissive	NoShadow	Rotation	NoLightSources	SoftLighting	2	Supersampling	Perspective
+Textured	TexturedColor	Shadow	Translation	TwoLightSources	NoEnvironmentalLighting	10	Supersampling	Orthographic
+Triangles	Emissive	Shadow	Rotation	PointLight	SoftLighting	10	NoAntialiasing	Perspective
+Quad	Color	NoShadow	NoTransformation	NoLightSources	SoftLighting	1	NoAntialiasing	Perspective
+Plain	Color	NoShadow	Translation	PointLight	NoEnvironmentalLighting	2	NoAntialiasing	Orthographic
+Sphere	TexturedColor	Shadow	Scale	DirectionalLight	SoftLighting	10	Multisampling	Perspective
+Triangles	Color	NoShadow	Scale	DirectionalLight	NoEnvironmentalLighting	2	Multisampling	Orthographic
+Textured	Pbr	NoShadow	Scale	DirectionalLight	NoEnvironmentalLighting	10	Supersampling	Orthographic
+Textured	Emissive	NoShadow	NoTransformation	NoLightSources	SoftLighting	2	NoAntialiasing	Perspective
+Plain	Emissive	NoShadow	Scale	DirectionalLight	SoftLighting	1	Multisampling	Perspective
+Quad	Pbr	NoShadow	NoTransformation	TwoLightSources	NoEnvironmentalLighting	1	NoAntialiasing	Perspective
+Quad	TexturedEmissive	NoShadow	Translation	NoLightSources	SoftLighting	5	Supersampling	Orthographic
+Facets	Matte	Shadow	Scale	DirectionalLight	SoftLighting	1	Multisampling	Orthographic
+Plain	Emissive	NoShadow	NoTransformation	PointLight	NoEnvironmentalLighting	5	Multisampling	Perspective
+Unlit	Color	NoShadow	Scale	TwoLightSources	SoftLighting	1	Supersampling	Orthographic
+Cylinder	Emissive	NoShadow	Scale	TwoLightSources	NoEnvironmentalLighting	2	NoAntialiasing	Orthographic
+Textured	TexturedPbr	NoShadow	Mirror	PointLight	NoEnvironmentalLighting	10	NoAntialiasing	Perspective
+Unlit	TexturedEmissive	NoShadow	Mirror	DirectionalLight	NoEnvironmentalLighting	2	Multisampling	Perspective
+Polyline	Emissive	NoShadow	Mirror	DirectionalLight	NoEnvironmentalLighting	5	Multisampling	Orthographic
+Sphere	Matte	Shadow	NoTransformation	PointLight	SoftLighting	2	Multisampling	Perspective
+Block	Color	NoShadow	Scale	PointLight	SoftLighting	10	Multisampling	Perspective
+Quad	TexturedPbr	NoShadow	Rotation	NoLightSources	SoftLighting	5	Supersampling	Perspective
+Block	Matte	NoShadow	Translation	NoLightSources	SoftLighting	5	Multisampling	Orthographic
+Sphere	TexturedMatte	NoShadow	Mirror	NoLightSources	SoftLighting	2	Multisampling	Orthographic
+Unlit	TexturedEmissive	Shadow	NoTransformation	DirectionalLight	SoftLighting	5	Multisampling	Perspective
+Facets	Color	NoShadow	Rotation	DirectionalLight	NoEnvironmentalLighting	5	Supersampling	Orthographic
+Uniform	Emissive	Shadow	NoTransformation	DirectionalLight	NoEnvironmentalLighting	1	NoAntialiasing	Orthographic
+Quad	TexturedMatte	NoShadow	Rotation	PointLight	NoEnvironmentalLighting	5	Supersampling	Orthographic
+Sphere	Pbr	NoShadow	Scale	NoLightSources	SoftLighting	10	NoAntialiasing	Orthographic
+Textured	Color	NoShadow	Translation	NoLightSources	SoftLighting	1	NoAntialiasing	Orthographic
+Triangles	Emissive	Shadow	Mirror	DirectionalLight	SoftLighting	2	Supersampling	Perspective
+Sphere	TexturedColor	NoShadow	Mirror	NoLightSources	SoftLighting	2	NoAntialiasing	Perspective
+LineSegments	Color	NoShadow	NoTransformation	NoLightSources	SoftLighting	5	Supersampling	Perspective
+Sphere	Color	Shadow	Translation	PointLight	SoftLighting	5	NoAntialiasing	Orthographic
+Textured	TexturedMatte	Shadow	NoTransformation	DirectionalLight	SoftLighting	10	Multisampling	Orthographic
+Points	Color	NoShadow	Translation	NoLightSources	SoftLighting	5	NoAntialiasing	Orthographic

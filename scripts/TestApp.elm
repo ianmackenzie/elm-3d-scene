@@ -101,6 +101,11 @@ type Antialiasing
     | Supersampling
 
 
+type Projection
+    = Perspective
+    | Orthographic
+
+
 type alias TestCase =
     { mesh : Mesh
     , material : Material
@@ -110,6 +115,7 @@ type alias TestCase =
     , environmentalLighting : EnvironmentalLighting
     , dynamicRange : Float
     , antialiasing : Antialiasing
+    , projection : Projection
     }
 
 
@@ -283,6 +289,19 @@ parseAntialiasing string =
             Err ("Unrecognized antialiasing type '" ++ string ++ "'")
 
 
+parseProjection : String -> Result String Projection
+parseProjection string =
+    case string of
+        "Perspective" ->
+            Ok Perspective
+
+        "Orthographic" ->
+            Ok Orthographic
+
+        _ ->
+            Err ("Unrecognized projection type '" ++ string ++ "'")
+
+
 parseTestCase : String -> Result String TestCase
 parseTestCase line =
     let
@@ -290,7 +309,7 @@ parseTestCase line =
             String.split "\t" line
     in
     case items of
-        [ meshString, materialString, shadowString, transformationString, lightSourcesString, environmentalLightingString, dynamicRangeString, antialiasingString ] ->
+        [ meshString, materialString, shadowString, transformationString, lightSourcesString, environmentalLightingString, dynamicRangeString, antialiasingString, projectionString ] ->
             Ok TestCase
                 |> Result.Extra.andMap (parseMesh meshString)
                 |> Result.Extra.andMap (parseMaterial materialString)
@@ -300,6 +319,7 @@ parseTestCase line =
                 |> Result.Extra.andMap (parseEnvironmentalLighting environmentalLightingString)
                 |> Result.Extra.andMap (parseDynamicRange dynamicRangeString)
                 |> Result.Extra.andMap (parseAntialiasing antialiasingString)
+                |> Result.Extra.andMap (parseProjection projectionString)
 
         _ ->
             Err ("Expected 8 items in line, got '" ++ line ++ "' with " ++ String.fromInt (List.length items))
@@ -1471,6 +1491,52 @@ environmentalLighting testCase =
                 }
 
 
+camera : TestCase -> Camera3d Meters WorldCoordinates
+camera testCase =
+    let
+        focalPoint =
+            Point3d.meters 0 0 0.5
+
+        eyePoint =
+            Point3d.meters 10 5 7
+
+        verticalFieldOfView =
+            Angle.degrees 30
+
+        clipDepth =
+            Length.meters 1
+
+        focalDistance =
+            Point3d.distanceFrom eyePoint focalPoint
+
+        viewportHeight =
+            focalDistance
+                |> Quantity.multiplyBy
+                    (2 * Angle.tan (Quantity.half verticalFieldOfView))
+
+        viewpoint =
+            Viewpoint3d.lookAt
+                { focalPoint = focalPoint
+                , eyePoint = eyePoint
+                , upDirection = Direction3d.z
+                }
+    in
+    case testCase.projection of
+        Perspective ->
+            Camera3d.perspective
+                { viewpoint = viewpoint
+                , clipDepth = clipDepth
+                , verticalFieldOfView = verticalFieldOfView
+                }
+
+        Orthographic ->
+            Camera3d.orthographic
+                { viewpoint = viewpoint
+                , clipDepth = clipDepth
+                , viewportHeight = viewportHeight
+                }
+
+
 options : TestCase -> List Scene3d.Option
 options testCase =
     Scene3d.dynamicRange testCase.dynamicRange
@@ -1499,6 +1565,7 @@ viewTestCaseProperties testCaseIndex testCase =
             , ( "Environmental lighting:", Debug.toString testCase.environmentalLighting )
             , ( "Dynamic range:", Debug.toString testCase.dynamicRange )
             , ( "Antialiasing:", Debug.toString testCase.antialiasing )
+            , ( "Projection:", Debug.toString testCase.projection )
             ]
         , columns =
             [ { header = Element.none, width = Element.shrink, view = \( property, _ ) -> Element.text property }
@@ -1549,17 +1616,7 @@ viewTestCase model testCase =
                             { lights = lights testCase
                             , environmentalLighting = environmentalLighting testCase
                             , background = Scene3d.backgroundColor Tango.skyBlue1
-                            , camera =
-                                Camera3d.perspective
-                                    { viewpoint =
-                                        Viewpoint3d.lookAt
-                                            { focalPoint = Point3d.meters 0 0 0.5
-                                            , eyePoint = Point3d.meters 10 5 7
-                                            , upDirection = Direction3d.z
-                                            }
-                                    , clipDepth = Length.meters 1
-                                    , verticalFieldOfView = Angle.degrees 30
-                                    }
+                            , camera = camera testCase
                             , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                             , exposure = Exposure.fromEv100 4
                             , whiteBalance = Chromaticity.tungsten

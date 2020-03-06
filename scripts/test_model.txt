@@ -6,6 +6,7 @@ LightSources: NoLightSources, PointLight, DirectionalLight, TwoLightSources
 EnvironmentalLighting: NoEnvironmentalLighting, SoftLighting
 DynamicRange: 1, 2, 5, 10
 Antialiasing: NoAntialiasing, Multisampling, Supersampling
+Projection: Perspective, Orthographic
 
 # Constrain meshes to have valid materials (e.g. can't have textured material on mesh without UVs)
 IF [Mesh] IN {"Points", "LineSegments", "Polyline", "Triangles", "Plain"} THEN [Material] IN {"Color", "Emissive"};
