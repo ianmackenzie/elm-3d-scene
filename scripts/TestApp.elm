@@ -280,7 +280,7 @@ parseAntialiasing string =
             Ok Supersampling
 
         _ ->
-            Err ("Unrecognized environmental lighting type '" ++ string ++ "'")
+            Err ("Unrecognized antialiasing type '" ++ string ++ "'")
 
 
 parseTestCase : String -> Result String TestCase
