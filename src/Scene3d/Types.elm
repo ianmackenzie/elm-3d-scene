@@ -45,12 +45,10 @@ type alias Transformation =
 
 
 type alias Bounds =
-    { minX : Float
-    , maxX : Float
-    , minY : Float
-    , maxY : Float
-    , minZ : Float
-    , maxZ : Float
+    { centerPoint : { x : Float, y : Float, z : Float }
+    , halfX : Float
+    , halfY : Float
+    , halfZ : Float
     }
 
 
@@ -161,6 +159,7 @@ type alias DrawFunction =
     -> Mat4 -- model matrix
     -> Bool -- model matrix is right-handed
     -> Mat4 -- view matrix
+    -> Mat4 -- projection matrix
     -> Mat4 -- ambient lighting
     -> LightMatrices -- lights
     -> List WebGL.Settings.Setting -- stencil, depth, blend etc.
@@ -169,9 +168,9 @@ type alias DrawFunction =
 
 type Node
     = EmptyNode
-    | MeshNode DrawFunction
+    | MeshNode Bounds DrawFunction
     | ShadowNode DrawFunction
-    | PointNode DrawFunction
+    | PointNode Bounds DrawFunction
     | Group (List Node)
     | Transformed Transformation Node
 

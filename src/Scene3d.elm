@@ -167,11 +167,12 @@ import Scene3d.Exposure as Exposure exposing (Exposure)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Transformation as Transformation exposing (Transformation)
-import Scene3d.Types as Types exposing (DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
+import Scene3d.Types as Types exposing (Bounds, DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
 import Sphere3d exposing (Sphere3d)
 import Vector3d exposing (Vector3d)
-import Viewpoint3d
+import Viewpoint3d exposing (Viewpoint3d)
 import WebGL
+import WebGL.Matrices as WebGL
 import WebGL.Settings
 import WebGL.Settings.Blend as Blend
 import WebGL.Settings.DepthTest as DepthTest
@@ -880,8 +881,8 @@ type alias RenderPasses =
     }
 
 
-createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
-createRenderPass sceneProperties viewMatrix ambientLightingMatrix transformation drawFunction =
+createRenderPass : Mat4 -> Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
+createRenderPass sceneProperties viewMatrix projectionMatrix ambientLightingMatrix transformation drawFunction =
     let
         normalSign =
             if transformation.isRightHanded then
@@ -903,11 +904,12 @@ createRenderPass sceneProperties viewMatrix ambientLightingMatrix transformation
         (Transformation.modelMatrix transformation)
         transformation.isRightHanded
         viewMatrix
+        projectionMatrix
         ambientLightingMatrix
 
 
-collectRenderPasses : Mat4 -> Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
-collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTransformation node accumulated =
+collectRenderPasses : Mat4 -> Mat4 -> Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
+collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingMatrix currentTransformation node accumulated =
     case node of
         EmptyNode ->
             accumulated
@@ -916,17 +918,19 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
             collectRenderPasses
                 sceneProperties
                 viewMatrix
+                projectionMatrix
                 ambientLightingMatrix
                 (Transformation.compose transformation currentTransformation)
                 childNode
                 accumulated
 
-        MeshNode meshDrawFunction ->
+        MeshNode _ meshDrawFunction ->
             let
                 updatedMeshes =
                     createRenderPass
                         sceneProperties
                         viewMatrix
+                        projectionMatrix
                         ambientLightingMatrix
                         currentTransformation
                         meshDrawFunction
@@ -937,12 +941,13 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
             , points = accumulated.points
             }
 
-        PointNode pointDrawFunction ->
+        PointNode _ pointDrawFunction ->
             let
                 updatedPoints =
                     createRenderPass
                         sceneProperties
                         viewMatrix
+                        projectionMatrix
                         ambientLightingMatrix
                         currentTransformation
                         pointDrawFunction
@@ -959,6 +964,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
                     createRenderPass
                         sceneProperties
                         viewMatrix
+                        projectionMatrix
                         ambientLightingMatrix
                         currentTransformation
                         shadowDrawFunction
@@ -974,6 +980,7 @@ collectRenderPasses sceneProperties viewMatrix ambientLightingMatrix currentTran
                 (collectRenderPasses
                     sceneProperties
                     viewMatrix
+                    projectionMatrix
                     ambientLightingMatrix
                     currentTransformation
                 )
@@ -1060,10 +1067,105 @@ call renderPasses lightMatrices settings =
         |> List.map (\renderPass -> renderPass lightMatrices settings)
 
 
+getMaxDepth : Bounds -> Axis3d Meters coordinates -> Float -> Float -> Float -> Length
+getMaxDepth bounds viewAxis scaleX scaleY scaleZ =
+    let
+        centerPoint =
+            Point3d.fromMeters bounds.centerPoint
+
+        viewDir =
+            Direction3d.unwrap (Axis3d.direction viewAxis)
+
+        (Quantity d0) =
+            Point3d.signedDistanceAlong viewAxis centerPoint
+
+        dX =
+            abs (bounds.halfX * viewDir.x * scaleX)
+
+        dY =
+            abs (bounds.halfY * viewDir.y * scaleY)
+
+        dZ =
+            abs (bounds.halfZ * viewDir.z * scaleZ)
+    in
+    Quantity (d0 + dX + dY + dZ)
+
+
+getFarClipDepth : Axis3d Meters coordinates -> Length -> Float -> Float -> Float -> List Node -> Length
+getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ nodes =
+    case nodes of
+        first :: rest ->
+            case first of
+                Types.EmptyNode ->
+                    getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ rest
+
+                Types.MeshNode bounds _ ->
+                    let
+                        updatedValue =
+                            Quantity.max currentValue
+                                (getMaxDepth bounds viewAxis scaleX scaleY scaleZ)
+                    in
+                    getFarClipDepth viewAxis updatedValue scaleX scaleY scaleZ rest
+
+                Types.ShadowNode _ ->
+                    getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ rest
+
+                Types.PointNode bounds _ ->
+                    let
+                        updatedValue =
+                            Quantity.max currentValue
+                                (getMaxDepth bounds viewAxis scaleX scaleY scaleZ)
+                    in
+                    getFarClipDepth viewAxis updatedValue scaleX scaleY scaleZ rest
+
+                Types.Group childNodes ->
+                    getFarClipDepth
+                        viewAxis
+                        (getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ childNodes)
+                        scaleX
+                        scaleY
+                        scaleZ
+                        rest
+
+                Types.Transformed transformation childNode ->
+                    let
+                        localScaleX =
+                            scaleX * transformation.scaleX
+
+                        localScaleY =
+                            scaleY * transformation.scaleY
+
+                        localScaleZ =
+                            scaleZ * transformation.scaleZ
+
+                        localViewAxis =
+                            viewAxis
+                                |> Axis3d.relativeTo (Transformation.placementFrame transformation)
+                    in
+                    getFarClipDepth
+                        viewAxis
+                        (getFarClipDepth
+                            localViewAxis
+                            currentValue
+                            localScaleX
+                            localScaleY
+                            localScaleZ
+                            [ childNode ]
+                        )
+                        scaleX
+                        scaleY
+                        scaleZ
+                        rest
+
+        [] ->
+            currentValue
+
+
 toWebGLEntities :
     { lights : Lights coordinates
     , environmentalLighting : EnvironmentalLighting coordinates
     , camera : Camera3d Meters coordinates
+    , clipDepth : Length
     , exposure : Exposure
     , dynamicRange : Float
     , whiteBalance : Chromaticity
@@ -1074,31 +1176,41 @@ toWebGLEntities :
     -> List WebGL.Entity
 toWebGLEntities arguments drawables =
     let
-        projectionParameters =
-            Camera3d.projectionParameters
-                { screenAspectRatio = arguments.aspectRatio }
-                arguments.camera
-
-        clipDistance =
-            Math.Vector4.getX projectionParameters
-
-        kc =
-            Math.Vector4.getZ projectionParameters
-
-        kz =
-            Math.Vector4.getW projectionParameters
-
-        eyePoint =
+        viewpoint =
             Camera3d.viewpoint arguments.camera
-                |> Viewpoint3d.eyePoint
-                |> Point3d.unwrap
+
+        (Types.Entity rootNode) =
+            Entity.group drawables
+
+        viewAxis =
+            Axis3d.through (Viewpoint3d.eyePoint viewpoint) (Viewpoint3d.viewDirection viewpoint)
+
+        farClipDepth =
+            getFarClipDepth viewAxis arguments.clipDepth 1 1 1 [ rootNode ]
+
+        projectionMatrix =
+            WebGL.projectionMatrix arguments.camera
+                { aspectRatio = arguments.aspectRatio
+                , nearClipDepth = arguments.clipDepth
+                , farClipDepth =
+                    if farClipDepth == arguments.clipDepth then
+                        Quantity.positiveInfinity
+
+                    else
+                        farClipDepth
+                }
 
         projectionType =
-            if kz == 0 then
-                0
+            (Math.Matrix4.toRecord projectionMatrix).m44
+
+        eyePointOrDirectionToCamera =
+            if projectionType == 0 then
+                Point3d.toMeters (Viewpoint3d.eyePoint viewpoint)
 
             else
-                1
+                Viewpoint3d.viewDirection viewpoint
+                    |> Direction3d.reverse
+                    |> Direction3d.unwrap
 
         (LinearRgb linearRgb) =
             ColorConversions.chromaticityToLinearRgb arguments.whiteBalance
@@ -1108,13 +1220,13 @@ toWebGLEntities arguments drawables =
 
         sceneProperties =
             Math.Matrix4.fromRecord
-                { m11 = clipDistance
-                , m21 = arguments.aspectRatio
-                , m31 = kc
-                , m41 = kz
-                , m12 = eyePoint.x
-                , m22 = eyePoint.y
-                , m32 = eyePoint.z
+                { m11 = 0
+                , m21 = 0
+                , m31 = 0
+                , m41 = 0
+                , m12 = eyePointOrDirectionToCamera.x
+                , m22 = eyePointOrDirectionToCamera.y
+                , m32 = eyePointOrDirectionToCamera.z
                 , m42 = projectionType
                 , m13 = maxLuminance * Math.Vector3.getX linearRgb
                 , m23 = maxLuminance * Math.Vector3.getY linearRgb
@@ -1127,7 +1239,7 @@ toWebGLEntities arguments drawables =
                 }
 
         viewMatrix =
-            Camera3d.viewMatrix arguments.camera
+            WebGL.viewMatrix viewpoint
 
         environmentalLightingMatrix =
             case arguments.environmentalLighting of
@@ -1137,13 +1249,11 @@ toWebGLEntities arguments drawables =
                 Types.NoEnvironmentalLighting ->
                     environmentalLightingDisabled
 
-        (Types.Entity rootNode) =
-            Entity.group drawables
-
         renderPasses =
             collectRenderPasses
                 sceneProperties
                 viewMatrix
+                projectionMatrix
                 environmentalLightingMatrix
                 Transformation.identity
                 rootNode
@@ -1182,6 +1292,7 @@ toHtml :
         { lights : Lights coordinates
         , environmentalLighting : EnvironmentalLighting coordinates
         , camera : Camera3d Meters coordinates
+        , clipDepth : Length
         , exposure : Exposure
         , whiteBalance : Chromaticity
         , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
@@ -1251,6 +1362,7 @@ toHtml options arguments drawables =
                     { lights = arguments.lights
                     , environmentalLighting = arguments.environmentalLighting
                     , camera = arguments.camera
+                    , clipDepth = arguments.clipDepth
                     , exposure = arguments.exposure
                     , dynamicRange = optionValues.dynamicRange
                     , whiteBalance = arguments.whiteBalance

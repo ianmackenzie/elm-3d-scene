@@ -1503,9 +1503,6 @@ camera testCase =
         verticalFieldOfView =
             Angle.degrees 30
 
-        clipDepth =
-            Length.meters 1
-
         focalDistance =
             Point3d.distanceFrom eyePoint focalPoint
 
@@ -1525,14 +1522,12 @@ camera testCase =
         Perspective ->
             Camera3d.perspective
                 { viewpoint = viewpoint
-                , clipDepth = clipDepth
                 , verticalFieldOfView = verticalFieldOfView
                 }
 
         Orthographic ->
             Camera3d.orthographic
                 { viewpoint = viewpoint
-                , clipDepth = clipDepth
                 , viewportHeight = viewportHeight
                 }
 
@@ -1627,6 +1622,7 @@ viewTestCase model testCase =
                             , environmentalLighting = environmentalLighting testCase
                             , background = Scene3d.backgroundColor Tango.skyBlue1
                             , camera = camera testCase
+                            , clipDepth = Length.meters 1
                             , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                             , exposure = Exposure.fromEv100 4
                             , whiteBalance = Chromaticity.tungsten

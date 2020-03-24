@@ -45,6 +45,7 @@ plainVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
         }
         {}
@@ -57,6 +58,7 @@ plainVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
@@ -64,22 +66,9 @@ plainVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
         }
     |]
 
@@ -94,6 +83,7 @@ unlitVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
         }
         { interpolatedUv : Vec2
@@ -108,6 +98,7 @@ unlitVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         
         varying vec2 interpolatedUv;
@@ -117,22 +108,9 @@ unlitVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main() {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedUv = uv;
         }
     |]
@@ -148,6 +126,7 @@ uniformVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
@@ -163,6 +142,7 @@ uniformVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
@@ -177,22 +157,9 @@ uniformVertex =
             return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
         }
@@ -210,6 +177,7 @@ texturedVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
@@ -228,6 +196,7 @@ texturedVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
@@ -244,22 +213,9 @@ texturedVertex =
             return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
             interpolatedUv = uv;
@@ -280,6 +236,7 @@ normalMappedVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
         }
         { interpolatedPosition : Vec3
@@ -299,6 +256,7 @@ normalMappedVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         
         varying vec3 interpolatedPosition;
@@ -319,22 +277,9 @@ normalMappedVertex =
             return (modelMatrix * vec4(modelTangent, 0.0)).xyz;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
             interpolatedUv = uv;
@@ -352,6 +297,7 @@ plainQuadVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , quadVertexPositions : Mat4
         }
@@ -365,6 +311,7 @@ plainQuadVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 quadVertexPositions;
         
@@ -400,26 +347,13 @@ plainQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
             vec3 tangent = vec3(0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
         }
     |]
 
@@ -433,6 +367,7 @@ unlitQuadVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , quadVertexPositions : Mat4
         }
@@ -447,6 +382,7 @@ unlitQuadVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 quadVertexPositions;
         
@@ -484,26 +420,13 @@ unlitQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
             vec3 tangent = vec3(0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedUv = quadVertex.xy;
         }
     |]
@@ -518,6 +441,7 @@ smoothQuadVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , quadVertexPositions : Mat4
         }
@@ -533,6 +457,7 @@ smoothQuadVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 quadVertexPositions;
         
@@ -575,26 +500,13 @@ smoothQuadVertex =
             return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
             vec3 tangent = vec3(0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
         }
@@ -610,6 +522,7 @@ texturedQuadVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , quadVertexPositions : Mat4
         }
@@ -627,6 +540,7 @@ texturedQuadVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 quadVertexPositions;
         
@@ -671,26 +585,13 @@ texturedQuadVertex =
             return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
             vec3 tangent = vec3(0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
             interpolatedUv = quadVertex.xy;
@@ -709,6 +610,7 @@ pointVertex :
             , modelMatrix : Mat4
             , pointRadius : Float
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
         }
         {}
@@ -722,6 +624,7 @@ pointVertex =
         uniform mat4 modelMatrix;
         uniform float pointRadius;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
@@ -729,22 +632,9 @@ pointVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = project(viewMatrix * worldPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             float supersampling = sceneProperties[3][0];
             gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
         }
@@ -761,6 +651,7 @@ shadowVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , shadowLight : Mat4
         }
@@ -775,6 +666,7 @@ shadowVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 shadowLight;
         
@@ -802,20 +694,7 @@ shadowVertex =
             }
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 projectionMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
             vec4 xyz_type = shadowLight[0];
@@ -826,7 +705,7 @@ shadowVertex =
                 offset = -1.0e9 * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
-            return project(viewMatrix * offsetPosition, sceneProperties[0]);
+            return projectionMatrix * (viewMatrix * offsetPosition);
         }
         
         void main () {
@@ -837,6 +716,7 @@ shadowVertex =
                 modelScale,
                 modelMatrix,
                 viewMatrix,
+                projectionMatrix,
                 sceneProperties
             );
         }
@@ -852,6 +732,7 @@ quadShadowVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , shadowLight : Mat4
             , quadVertexPositions : Mat4
@@ -866,6 +747,7 @@ quadShadowVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 shadowLight;
         uniform mat4 quadVertexPositions;
@@ -921,20 +803,7 @@ quadShadowVertex =
             }
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
-        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 sceneProperties) {
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 projectionMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
             vec4 xyz_type = shadowLight[0];
@@ -945,7 +814,7 @@ quadShadowVertex =
                 offset = -1.0e9 * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
-            return project(viewMatrix * offsetPosition, sceneProperties[0]);
+            return projectionMatrix * (viewMatrix * offsetPosition);
         }
         
         void main () {
@@ -961,6 +830,7 @@ quadShadowVertex =
                 modelScale,
                 modelMatrix,
                 viewMatrix,
+                projectionMatrix,
                 sceneProperties
             );
         }
@@ -977,6 +847,7 @@ sphereShadowVertex :
             | modelScale : Vec4
             , modelMatrix : Mat4
             , viewMatrix : Mat4
+            , projectionMatrix : Mat4
             , sceneProperties : Mat4
             , shadowLight : Mat4
         }
@@ -991,6 +862,7 @@ sphereShadowVertex =
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
         uniform mat4 viewMatrix;
+        uniform mat4 projectionMatrix;
         uniform mat4 sceneProperties;
         uniform mat4 shadowLight;
         
@@ -1038,19 +910,6 @@ sphereShadowVertex =
             }
         }
         
-        vec4 project(vec4 position, vec4 projectionProperties) {
-            float n = projectionProperties[0];
-            float a = projectionProperties[1];
-            float kc = projectionProperties[2];
-            float kz = projectionProperties[3];
-            return vec4(
-                (kc + kz * position.z) * (position.x / a),
-                (kc + kz * position.z) * position.y,
-                (-position.z - 2.0 * n),
-                -position.z
-            );
-        }
-        
         void main () {
             vec4 worldCenter = getWorldPosition(vec3(0.0, 0.0, 0.0), modelScale, modelMatrix);
             vec4 xyz_type = shadowLight[0];
@@ -1076,7 +935,7 @@ sphereShadowVertex =
             vec3 directionToLight = getDirectionToLight(worldPosition, xyz_type, rgb_radius);
             vec3 offset = -1.0e9 * offsetScale * directionToLight;
             vec4 offsetPosition = vec4(worldPosition + offset, 1.0);
-            gl_Position = project(viewMatrix * offsetPosition, sceneProperties[0]);
+            gl_Position = projectionMatrix * (viewMatrix * offsetPosition);
         }
     |]
 
