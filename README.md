@@ -24,7 +24,7 @@ on the [Elm Slack](https://elmlang.herokuapp.com)!
 Contributions are very welcome! Here are some ideas for some that would be very
 useful at this stage:
 
-- More examples to add to the `examples` directory, showing how to do create
+- More examples to add to the `examples` directory, showing how to create
   specific kinds of scenes or how to integrate `elm-3d-scene` with other
   packages, such as:
   - An example combining `elm-3d-scene` and [`elm-gamepad`](https://package.elm-lang.org/packages/xarvh/elm-gamepad/latest/),
