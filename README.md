@@ -66,7 +66,7 @@ as:
 - Funky material types like water and ceramics (https://github.com/ianmackenzie/elm-3d-scene/issues/5)
 
 For now, though, the internals are changing rapidly enough that
-coordination/collaboration on these kinds of issues would be difficult.
+coordination/collaboration on these kinds of issues would be tricky.
 
 ## Climate action
 
