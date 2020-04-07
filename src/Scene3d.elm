@@ -1590,6 +1590,30 @@ photographicExposure { fStop, shutterSpeed, isoSpeed } =
 ----- PRESETS -----
 
 
+unlit :
+    List Option
+    ->
+        { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+        , camera : Camera3d Meters coordinates
+        , clipDepth : Length
+        , background : Background coordinates
+        }
+    -> List (Entity coordinates)
+    -> Html msg
+unlit options arguments entities =
+    toHtml options
+        { lights = noLights
+        , environmentalLighting = noEnvironmentalLighting
+        , camera = arguments.camera
+        , clipDepth = arguments.clipDepth
+        , exposure = maxLuminance Quantity.zero
+        , whiteBalance = daylight
+        , dimensions = arguments.dimensions
+        , background = arguments.background
+        }
+        entities
+
+
 sunny :
     List Option
     ->
