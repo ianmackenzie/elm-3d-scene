@@ -817,11 +817,11 @@ softLighting { upDirection, above, below } =
 ----- BACKGROUND -----
 
 
-type Background
+type Background coordinates
     = BackgroundColor Color.Transparent.Color
 
 
-transparentBackground : Background
+transparentBackground : Background coordinates
 transparentBackground =
     BackgroundColor <|
         Color.Transparent.fromRGBA
@@ -832,7 +832,7 @@ transparentBackground =
             }
 
 
-blackBackground : Background
+blackBackground : Background coordinates
 blackBackground =
     BackgroundColor <|
         Color.Transparent.fromRGBA
@@ -843,7 +843,7 @@ blackBackground =
             }
 
 
-whiteBackground : Background
+whiteBackground : Background coordinates
 whiteBackground =
     BackgroundColor <|
         Color.Transparent.fromRGBA
@@ -854,12 +854,12 @@ whiteBackground =
             }
 
 
-backgroundColor : Color -> Background
+backgroundColor : Color -> Background coordinates
 backgroundColor color =
     BackgroundColor (Color.Transparent.fromColor Color.Transparent.opaque color)
 
 
-transparentBackgroundColor : Color.Transparent.Color -> Background
+transparentBackgroundColor : Color.Transparent.Color -> Background coordinates
 transparentBackgroundColor transparentColor =
     BackgroundColor transparentColor
 
@@ -1294,7 +1294,7 @@ toHtml :
         , exposure : Exposure
         , whiteBalance : Chromaticity
         , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-        , background : Background
+        , background : Background coordinates
         }
     -> List (Entity coordinates)
     -> Html msg
