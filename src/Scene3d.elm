@@ -765,8 +765,8 @@ noEnvironmentalLighting =
 -}
 softLighting :
     { upDirection : Direction3d coordinates
-    , above : { illuminance : Illuminance, chromaticity : Chromaticity }
-    , below : { illuminance : Illuminance, chromaticity : Chromaticity }
+    , above : { intensity : Illuminance, chromaticity : Chromaticity }
+    , below : { intensity : Illuminance, chromaticity : Chromaticity }
     }
     -> EnvironmentalLighting coordinates
 softLighting { upDirection, above, below } =
@@ -777,10 +777,10 @@ softLighting { upDirection, above, below } =
         -- Convert total hemispherical illuminance to the equivalent environmental luminance
         -- (see https://en.wikipedia.org/wiki/Lambert%27s_cosine_law#Relating_peak_luminous_intensity_and_luminous_flux)
         aboveNits =
-            Illuminance.inLux above.illuminance / pi
+            Illuminance.inLux above.intensity / pi
 
         belowNits =
-            Illuminance.inLux below.illuminance / pi
+            Illuminance.inLux below.intensity / pi
 
         (LinearRgb aboveRgb) =
             ColorConversions.chromaticityToLinearRgb above.chromaticity
@@ -1624,11 +1624,11 @@ sunny options arguments entities =
             softLighting
                 { upDirection = arguments.upDirection
                 , above =
-                    { illuminance = Illuminance.lux 20000
+                    { intensity = Illuminance.lux 20000
                     , chromaticity = colorTemperature (Temperature.kelvins 12000)
                     }
                 , below =
-                    { illuminance = Illuminance.lux 15000
+                    { intensity = Illuminance.lux 15000
                     , chromaticity = daylight
                     }
                 }
@@ -1661,11 +1661,11 @@ cloudy options arguments entities =
                 { upDirection = arguments.upDirection
                 , above =
                     { chromaticity = daylight
-                    , illuminance = Illuminance.lux 1000
+                    , intensity = Illuminance.lux 1000
                     }
                 , below =
                     { chromaticity = daylight
-                    , illuminance = Illuminance.lux 200
+                    , intensity = Illuminance.lux 200
                     }
                 }
         , camera = arguments.camera
@@ -1698,11 +1698,11 @@ office options arguments entities =
                 { upDirection = arguments.upDirection
                 , above =
                     { chromaticity = fluorescentLighting
-                    , illuminance = Illuminance.lux 400
+                    , intensity = Illuminance.lux 400
                     }
                 , below =
                     { chromaticity = fluorescentLighting
-                    , illuminance = Illuminance.lux 100
+                    , intensity = Illuminance.lux 100
                     }
                 }
         , camera = arguments.camera
