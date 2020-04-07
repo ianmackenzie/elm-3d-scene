@@ -865,20 +865,6 @@ transparentBackgroundColor transparentColor =
 
 
 
------ DEFAULTS -----
-
-
-defaultExposure : Exposure
-defaultExposure =
-    Exposure.srgb
-
-
-defaultWhiteBalance : Chromaticity
-defaultWhiteBalance =
-    Chromaticity.d65
-
-
-
 ----- RENDERING -----
 
 
