@@ -765,8 +765,8 @@ noEnvironmentalLighting =
 -}
 softLighting :
     { upDirection : Direction3d coordinates
-    , above : ( Luminance, Chromaticity )
-    , below : ( Luminance, Chromaticity )
+    , above : { illuminance : Illuminance, chromaticity : Chromaticity }
+    , below : { illuminance : Illuminance, chromaticity : Chromaticity }
     }
     -> EnvironmentalLighting coordinates
 softLighting { upDirection, above, below } =
@@ -774,23 +774,19 @@ softLighting { upDirection, above, below } =
         { x, y, z } =
             Direction3d.unwrap upDirection
 
-        ( aboveLuminance, aboveChromaticity ) =
-            above
-
-        ( belowLuminance, belowChromaticity ) =
-            below
-
+        -- Convert total hemispherical illuminance to the equivalent environmental luminance
+        -- (see https://en.wikipedia.org/wiki/Lambert%27s_cosine_law#Relating_peak_luminous_intensity_and_luminous_flux)
         aboveNits =
-            Luminance.inNits aboveLuminance
+            Illuminance.inLux above.illuminance / pi
 
         belowNits =
-            Luminance.inNits belowLuminance
+            Illuminance.inLux below.illuminance / pi
 
         (LinearRgb aboveRgb) =
-            ColorConversions.chromaticityToLinearRgb aboveChromaticity
+            ColorConversions.chromaticityToLinearRgb above.chromaticity
 
         (LinearRgb belowRgb) =
-            ColorConversions.chromaticityToLinearRgb belowChromaticity
+            ColorConversions.chromaticityToLinearRgb below.chromaticity
     in
     Types.SoftLighting <|
         Math.Matrix4.fromRecord
