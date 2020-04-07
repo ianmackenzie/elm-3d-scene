@@ -14,8 +14,6 @@ import Pixels
 import Point2d
 import Point3d
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material
 import Scene3d.Material.Channel as Channel
 import SketchPlane3d
@@ -78,13 +76,12 @@ view model =
                 camera =
                     Camera3d.perspective
                         { viewpoint = viewpoint
-                        , clipDepth = Length.centimeters 10
                         , verticalFieldOfView = Angle.degrees 30
                         }
 
                 sunlight =
                     Scene3d.directionalLight Scene3d.doesNotCastShadows
-                        { chromaticity = Chromaticity.sunlight
+                        { chromaticity = Scene3d.sunlight
                         , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -45)
                         , intensity = Illuminance.lux 50000
                         }
@@ -92,8 +89,8 @@ view model =
                 environmentalLighting =
                     Scene3d.softLighting
                         { upDirection = Direction3d.z
-                        , above = ( Luminance.nits 10000, Chromaticity.d65 )
-                        , below = ( Luminance.nits 5000, Chromaticity.d65 )
+                        , above = { intensity = Illuminance.lux 30000, chromaticity = Scene3d.daylight }
+                        , below = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
                         }
 
                 quad =
@@ -112,10 +109,11 @@ view model =
                 { camera = camera
                 , background = Scene3d.transparentBackground
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
-                , whiteBalance = Scene3d.defaultWhiteBalance
-                , exposure = Exposure.sunny16
+                , whiteBalance = Scene3d.daylight
+                , exposure = Scene3d.exposureValue 15
                 , lights = Scene3d.oneLight sunlight
                 , environmentalLighting = environmentalLighting
+                , clipDepth = Length.centimeters 10
                 }
                 [ quad ]
 

@@ -19,8 +19,6 @@ import Pixels exposing (pixels)
 import Plane3d
 import Point3d
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
@@ -86,14 +84,13 @@ camera =
                 , upDirection = Direction3d.positiveZ
                 }
         , verticalFieldOfView = Angle.degrees 30
-        , clipDepth = meters 0.1
         }
 
 
 sunlight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 sunlight =
     Scene3d.directionalLight Scene3d.castsShadows
-        { chromaticity = Chromaticity.d65
+        { chromaticity = Scene3d.daylight
         , intensity = lux 20000
         , direction =
             Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -60)
@@ -103,7 +100,7 @@ sunlight =
 lightBulb : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 lightBulb =
     Scene3d.pointLight Scene3d.castsShadows
-        { chromaticity = Chromaticity.d65
+        { chromaticity = Scene3d.daylight
         , intensity = LuminousFlux.lumens 10000000
         , position = Point3d.meters 0 0 5
         }
@@ -113,8 +110,8 @@ environmentalLighting : Scene3d.EnvironmentalLighting World
 environmentalLighting =
     Scene3d.softLighting
         { upDirection = Direction3d.positiveZ
-        , above = ( Luminance.nits 3000, Chromaticity.d65 )
-        , below = ( Luminance.nits 0, Chromaticity.d65 )
+        , above = { intensity = Illuminance.lux 9000, chromaticity = Scene3d.daylight }
+        , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.daylight }
         }
 
 
@@ -140,9 +137,10 @@ main =
                                     else
                                         sunlight
                             , camera = camera
+                            , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )
-                            , exposure = Exposure.fromEv100 14
-                            , whiteBalance = Chromaticity.d65
+                            , exposure = Scene3d.exposureValue 14
+                            , whiteBalance = Scene3d.daylight
                             , background = Scene3d.transparentBackground
                             }
                             [ floor

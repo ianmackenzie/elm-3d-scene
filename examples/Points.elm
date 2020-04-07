@@ -20,36 +20,28 @@ import Viewpoint3d exposing (Viewpoint3d)
 main : Html msg
 main =
     let
-        points =
-            Parameter1d.steps 20 <|
-                Point3d.interpolateFrom
-                    (Point3d.meters 1 0 -1)
-                    (Point3d.meters -1 0 1)
-
         mesh =
-            Mesh.points { radius = Pixels.pixels 5 } points
-
-        viewpoint =
-            Viewpoint3d.lookAt
-                { focalPoint = Point3d.origin
-                , eyePoint = Point3d.meters 2 6 4
-                , upDirection = Direction3d.positiveZ
-                }
+            Mesh.points { radius = Pixels.pixels 5 } <|
+                Parameter1d.steps 20 <|
+                    Point3d.interpolateFrom
+                        (Point3d.meters 1 0 -1)
+                        (Point3d.meters -1 0 1)
 
         camera =
             Camera3d.perspective
-                { viewpoint = viewpoint
+                { viewpoint =
+                    Viewpoint3d.lookAt
+                        { focalPoint = Point3d.origin
+                        , eyePoint = Point3d.meters 2 6 4
+                        , upDirection = Direction3d.positiveZ
+                        }
                 , verticalFieldOfView = Angle.degrees 30
-                , clipDepth = Length.meters 0.1
                 }
     in
-    Scene3d.toHtml []
+    Scene3d.unlit []
         { camera = camera
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-        , lights = Scene3d.noLights
-        , environmentalLighting = Scene3d.noEnvironmentalLighting
         , background = Scene3d.backgroundColor Tango.orange1
-        , exposure = Scene3d.defaultExposure
-        , whiteBalance = Scene3d.defaultWhiteBalance
+        , clipDepth = Length.meters 0.1
         }
         [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]

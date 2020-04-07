@@ -24,8 +24,6 @@ import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
 import Round
 import Scene3d
-import Scene3d.Chromaticity
-import Scene3d.Exposure
 import Scene3d.Material as Material
 import SketchPlane3d
 import Sphere3d
@@ -241,13 +239,13 @@ view model =
                 Scene3d.softLighting
                     { upDirection = Direction3d.z
                     , above =
-                        ( Luminance.nits model.environmentalLuminanceAbove
-                        , Scene3d.Chromaticity.fromTemperature (Temperature.kelvins model.environmentalTemperatureAbove)
-                        )
+                        { intensity = Illuminance.lux (pi * model.environmentalLuminanceAbove)
+                        , chromaticity = Scene3d.colorTemperature (Temperature.kelvins model.environmentalTemperatureAbove)
+                        }
                     , below =
-                        ( Luminance.nits model.environmentalLuminanceBelow
-                        , Scene3d.Chromaticity.fromTemperature (Temperature.kelvins model.environmentalTemperatureBelow)
-                        )
+                        { intensity = Illuminance.lux (pi * model.environmentalLuminanceBelow)
+                        , chromaticity = Scene3d.colorTemperature (Temperature.kelvins model.environmentalTemperatureBelow)
+                        }
                     }
 
             else
@@ -269,10 +267,11 @@ view model =
                 ]
                 { dimensions = model.dimensions
                 , camera = camera model.distance model.azimuth model.elevation
+                , clipDepth = Length.meters 0.1
                 , lights = lights model.lights
                 , environmentalLighting = environmentalLighting
-                , exposure = Scene3d.Exposure.fromEv100 model.exposure
-                , whiteBalance = Scene3d.defaultWhiteBalance
+                , exposure = Scene3d.exposureValue model.exposure
+                , whiteBalance = Scene3d.daylight
                 , background =
                     Scene3d.backgroundColor
                         (Color.fromHex model.backgroundColor
@@ -332,7 +331,6 @@ camera distance azimuth elevation =
                 , elevation = elevation
                 , distance = distance
                 }
-        , clipDepth = Length.meters 0.1
         , verticalFieldOfView = Angle.degrees 24
         }
 
@@ -382,14 +380,14 @@ directLight shouldHaveShadows shadows light =
             (case light.kind of
                 Bulb position ->
                     Scene3d.pointLight shadows
-                        { chromaticity = Scene3d.Chromaticity.fromTemperature (Temperature.kelvins light.temperature)
+                        { chromaticity = Scene3d.colorTemperature (Temperature.kelvins light.temperature)
                         , intensity = LuminousFlux.lumens light.intensity
                         , position = position
                         }
 
                 Sun direction ->
                     Scene3d.directionalLight shadows
-                        { chromaticity = Scene3d.Chromaticity.fromTemperature (Temperature.kelvins light.temperature)
+                        { chromaticity = Scene3d.colorTemperature (Temperature.kelvins light.temperature)
                         , intensity = Illuminance.lux light.intensity
                         , direction = direction
                         }

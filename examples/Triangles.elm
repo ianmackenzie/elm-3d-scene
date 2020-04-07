@@ -38,28 +38,22 @@ main =
         mesh2 =
             Mesh.triangles [ triangle2 ]
 
-        viewpoint =
-            Viewpoint3d.lookAt
-                { focalPoint = Point3d.meters 0.5 0.5 0
-                , eyePoint = Point3d.meters 3 3 2
-                , upDirection = Direction3d.z
-                }
-
         camera =
             Camera3d.perspective
-                { viewpoint = viewpoint
+                { viewpoint =
+                    Viewpoint3d.lookAt
+                        { focalPoint = Point3d.meters 0.5 0.5 0
+                        , eyePoint = Point3d.meters 3 3 2
+                        , upDirection = Direction3d.z
+                        }
                 , verticalFieldOfView = Angle.degrees 30
-                , clipDepth = Length.meters 0.1
                 }
     in
-    Scene3d.toHtml []
+    Scene3d.unlit []
         { camera = camera
+        , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-        , lights = Scene3d.noLights
-        , environmentalLighting = Scene3d.noEnvironmentalLighting
         , background = Scene3d.transparentBackground
-        , exposure = Scene3d.defaultExposure
-        , whiteBalance = Scene3d.defaultWhiteBalance
         }
         [ Scene3d.mesh (Material.color Tango.orange2) mesh1
         , Scene3d.mesh (Material.color Tango.skyBlue2) mesh2

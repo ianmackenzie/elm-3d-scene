@@ -20,8 +20,6 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
 import Task
@@ -199,7 +197,7 @@ viewpoint =
 
 sunlight =
     Scene3d.directionalLight Scene3d.doesNotCastShadows
-        { chromaticity = Chromaticity.sunlight
+        { chromaticity = Scene3d.sunlight
         , intensity = Illuminance.lux 20000
         , direction = Direction3d.yz (Angle.degrees -120)
         }
@@ -210,7 +208,6 @@ camera =
     Camera3d.perspective
         { viewpoint = viewpoint
         , verticalFieldOfView = Angle.degrees 30
-        , clipDepth = Length.centimeters 0.5
         }
 
 
@@ -228,17 +225,18 @@ view model =
             in
             Scene3d.toHtml [ Scene3d.dynamicRange 2 ]
                 { camera = camera
+                , clipDepth = Length.centimeters 0.5
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                 , environmentalLighting =
                     Scene3d.softLighting
                         { upDirection = Direction3d.positiveZ
-                        , above = ( Luminance.nits 3000, Chromaticity.d65 )
-                        , below = ( Luminance.nits 300, Chromaticity.d65 )
+                        , above = { intensity = Illuminance.lux 9000, chromaticity = Scene3d.daylight }
+                        , below = { intensity = Illuminance.lux 900, chromaticity = Scene3d.daylight }
                         }
                 , lights =
                     Scene3d.oneLight sunlight
-                , exposure = Exposure.fromEv100 11
-                , whiteBalance = Scene3d.defaultWhiteBalance
+                , exposure = Scene3d.exposureValue 11
+                , whiteBalance = Scene3d.daylight
                 , background = Scene3d.transparentBackground
                 }
                 [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin

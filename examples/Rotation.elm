@@ -40,18 +40,15 @@ main =
         mesh2 =
             Mesh.triangles [ triangle2 ]
 
-        viewpoint =
-            Viewpoint3d.lookAt
-                { focalPoint = Point3d.meters 0.5 2 0
-                , eyePoint = Point3d.meters 9 5 4
-                , upDirection = Direction3d.z
-                }
-
         camera =
             Camera3d.perspective
-                { viewpoint = viewpoint
+                { viewpoint =
+                    Viewpoint3d.lookAt
+                        { focalPoint = Point3d.meters 0.5 2 0
+                        , eyePoint = Point3d.meters 9 5 4
+                        , upDirection = Direction3d.z
+                        }
                 , verticalFieldOfView = Angle.degrees 30
-                , clipDepth = Length.meters 0.1
                 }
 
         square =
@@ -72,13 +69,10 @@ main =
         rotatedSquare angle =
             square |> Scene3d.rotateAround rotationAxis angle
     in
-    Scene3d.toHtml []
+    Scene3d.unlit []
         { camera = camera
+        , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-        , lights = Scene3d.noLights
-        , environmentalLighting = Scene3d.noEnvironmentalLighting
         , background = Scene3d.transparentBackground
-        , exposure = Scene3d.defaultExposure
-        , whiteBalance = Scene3d.defaultWhiteBalance
         }
         (List.map rotatedSquare angles)

@@ -20,8 +20,6 @@ import LuminousFlux exposing (lumens)
 import Pixels exposing (pixels)
 import Point3d
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
@@ -80,14 +78,13 @@ camera =
                 , upDirection = Direction3d.positiveZ
                 }
         , verticalFieldOfView = Angle.degrees 30
-        , clipDepth = meters 0.1
         }
 
 
 sunlight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 sunlight =
     Scene3d.directionalLight Scene3d.castsShadows
-        { chromaticity = Chromaticity.d65
+        { chromaticity = Scene3d.sunlight
         , intensity = lux 20000
         , direction =
             Direction3d.negativeZ
@@ -98,7 +95,7 @@ sunlight =
 lightBulb : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
 lightBulb =
     Scene3d.pointLight Scene3d.castsShadows
-        { chromaticity = Chromaticity.d65
+        { chromaticity = Scene3d.incandescentLighting
         , intensity = LuminousFlux.lumens 3000000
         , position = Point3d.meters 0 0 3
         }
@@ -108,8 +105,8 @@ environmentalLighting : Scene3d.EnvironmentalLighting World
 environmentalLighting =
     Scene3d.softLighting
         { upDirection = Direction3d.positiveZ
-        , above = ( Luminance.nits 3000, Chromaticity.d65 )
-        , below = ( Luminance.nits 0, Chromaticity.d65 )
+        , above = { intensity = Illuminance.lux 9000, chromaticity = Scene3d.fluorescentLighting }
+        , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.fluorescentLighting }
         }
 
 
@@ -230,9 +227,10 @@ main =
                             { environmentalLighting = environmentalLighting
                             , lights = Scene3d.oneLight lightBulb
                             , camera = camera
+                            , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )
-                            , exposure = Exposure.fromEv100 ev100
-                            , whiteBalance = Chromaticity.d65
+                            , exposure = Scene3d.exposureValue ev100
+                            , whiteBalance = Scene3d.fluorescentLighting
                             , background = Scene3d.transparentBackground
                             }
                             [ goldSphere

@@ -19,8 +19,6 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
 import Temperature
@@ -42,7 +40,7 @@ viewpoint =
 
 sunlight =
     Scene3d.directionalLight Scene3d.doesNotCastShadows
-        { chromaticity = Chromaticity.d65
+        { chromaticity = Scene3d.daylight
         , intensity = Illuminance.lux 10000
         , direction = Direction3d.yz (Angle.degrees -120)
         }
@@ -53,7 +51,6 @@ camera =
     Camera3d.perspective
         { viewpoint = viewpoint
         , verticalFieldOfView = Angle.degrees 30
-        , clipDepth = Length.centimeters 0.5
         }
 
 
@@ -81,18 +78,19 @@ main =
             \elapsedTime ->
                 Scene3d.toHtml []
                     { camera = camera
+                    , clipDepth = Length.centimeters 0.5
                     , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                     , environmentalLighting =
                         Scene3d.softLighting
                             { upDirection = Direction3d.positiveZ
-                            , above = ( Luminance.nits 5000, Chromaticity.d65 )
-                            , below = ( Quantity.zero, Chromaticity.d65 )
+                            , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
+                            , below = { intensity = Quantity.zero, chromaticity = Scene3d.daylight }
                             }
                     , lights =
                         Scene3d.oneLight sunlight
                     , exposure =
-                        Exposure.fromMaxLuminance (Luminance.nits 5000)
-                    , whiteBalance = Scene3d.defaultWhiteBalance
+                        Scene3d.maxLuminance (Luminance.nits 5000)
+                    , whiteBalance = Scene3d.daylight
                     , background = Scene3d.backgroundColor (backgroundColor elapsedTime)
                     }
                     [ Scene3d.sphere Scene3d.doesNotCastShadows material <|

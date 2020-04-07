@@ -14,8 +14,6 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import SketchPlane3d
@@ -138,19 +136,15 @@ view model =
             Camera3d.perspective
                 { viewpoint = viewpoint
                 , verticalFieldOfView = Angle.degrees 30
-                , clipDepth = Length.meters 0.1
                 }
     in
     { title = "Triangles"
     , body =
-        [ Scene3d.toHtml []
+        [ Scene3d.unlit []
             { camera = camera
+            , clipDepth = Length.meters 0.1
             , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-            , lights = Scene3d.noLights
-            , environmentalLighting = Scene3d.noEnvironmentalLighting
             , background = Scene3d.transparentBackground
-            , exposure = Scene3d.defaultExposure
-            , whiteBalance = Scene3d.defaultWhiteBalance
             }
             [ Scene3d.mesh (Material.color Tango.orange2) model.mesh1
             , Scene3d.mesh (Material.color Tango.skyBlue2) model.mesh2

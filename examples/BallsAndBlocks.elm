@@ -26,8 +26,6 @@ import Pixels exposing (pixels)
 import Point3d
 import Random
 import Scene3d
-import Scene3d.Chromaticity as Chromaticity
-import Scene3d.Exposure as Exposure
 import Scene3d.Material as Material
 import Sphere3d
 import Task
@@ -101,7 +99,6 @@ view { world, screenWidth, screenHeight } =
                         , focalPoint = Point3d.meters 0 0 0
                         , upDirection = Direction3d.positiveZ
                         }
-                , clipDepth = meters 0.1
                 , verticalFieldOfView = Angle.degrees 24
                 }
 
@@ -110,7 +107,7 @@ view { world, screenWidth, screenHeight } =
 
         sunlight =
             Scene3d.directionalLight Scene3d.castsShadows
-                { chromaticity = Chromaticity.d65
+                { chromaticity = Scene3d.sunlight
                 , intensity = Illuminance.lux 10000
                 , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
                 }
@@ -118,8 +115,8 @@ view { world, screenWidth, screenHeight } =
         environmentalLighting =
             Scene3d.softLighting
                 { upDirection = Direction3d.z
-                , above = ( Luminance.nits 5000, Chromaticity.d65 )
-                , below = ( Luminance.nits 0, Chromaticity.d65 )
+                , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
+                , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.daylight }
                 }
     in
     Html.div
@@ -132,9 +129,10 @@ view { world, screenWidth, screenHeight } =
             , camera = camera
             , lights = Scene3d.oneLight sunlight
             , environmentalLighting = environmentalLighting
-            , exposure = Exposure.fromMaxLuminance (Luminance.nits 10000)
-            , whiteBalance = Chromaticity.d65
+            , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
+            , whiteBalance = Scene3d.daylight
             , background = Scene3d.transparentBackground
+            , clipDepth = meters 0.1
             }
             drawables
         ]

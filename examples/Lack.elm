@@ -33,8 +33,6 @@ import Point3d
 import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d
-import Scene3d.Chromaticity
-import Scene3d.Exposure
 import Scene3d.Material as Material
 import Sphere3d
 import Task
@@ -173,7 +171,6 @@ camera =
                 , focalPoint = Point3d.meters -0.5 -0.5 0
                 , upDirection = Direction3d.positiveZ
                 }
-        , clipDepth = meters 0.1
         , verticalFieldOfView = Angle.degrees 24
         }
 
@@ -183,7 +180,7 @@ view { world, width, height } =
     let
         sunlight =
             Scene3d.directionalLight Scene3d.castsShadows
-                { chromaticity = Scene3d.Chromaticity.d65
+                { chromaticity = Scene3d.daylight
                 , intensity = Illuminance.lux 10000
                 , direction = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60)
                 }
@@ -191,8 +188,8 @@ view { world, width, height } =
         environmentalLighting =
             Scene3d.softLighting
                 { upDirection = Direction3d.z
-                , above = ( Luminance.nits 5000, Scene3d.Chromaticity.d65 )
-                , below = ( Luminance.nits 0, Scene3d.Chromaticity.d65 )
+                , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
+                , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.daylight }
                 }
 
         drawables =
@@ -217,8 +214,9 @@ view { world, width, height } =
             , camera = camera
             , lights = Scene3d.oneLight sunlight
             , environmentalLighting = environmentalLighting
-            , exposure = Scene3d.Exposure.fromMaxLuminance (Luminance.nits 10000)
-            , whiteBalance = Scene3d.defaultWhiteBalance
+            , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
+            , whiteBalance = Scene3d.daylight
+            , clipDepth = meters 0.1
             , background = Scene3d.transparentBackground
             }
             drawables
