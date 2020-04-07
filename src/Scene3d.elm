@@ -1475,11 +1475,11 @@ incandescentLighting =
 
 
 {-| The chromaticity of typical fluorescent lighting. This is standardized as
-[Illuminant F4, "Warm White Fluorescent"](https://en.wikipedia.org/wiki/Standard_illuminant).
+[Illuminant F2, "Cool White Fluorescent"](https://en.wikipedia.org/wiki/Standard_illuminant).
 -}
 fluorescentLighting : Chromaticity
 fluorescentLighting =
-    xyChromaticity 0.44018 0.40329
+    xyChromaticity 0.37208 0.37529
 
 
 {-| Specify chromaticity by its _xy_ coordinates in the [CIE xyY color space](https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space).
