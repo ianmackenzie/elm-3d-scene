@@ -10,11 +10,14 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , defaultExposure, defaultWhiteBalance
     , Light, directionalLight, pointLight
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
+    , Chromaticity
+    , chromaticity, daylight, sunlight, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
+    , Exposure
+    , exposureValue, maxLuminance, photographicExposure
     , toWebGLEntities
     )
 
@@ -94,11 +97,6 @@ when setting up more complex scenes.
 @docs transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
 
 
-# Default rendering values
-
-@docs defaultExposure, defaultWhiteBalance
-
-
 # Lighting
 
 Lighting in `elm-3d-scene` is a combination of _direct_ and _environmental_
@@ -128,6 +126,20 @@ directional lights to provide highlights.
 @docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
 
 
+## Chromaticity
+
+@docs Chromaticity
+
+@docs chromaticity, daylight, sunlight, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
+
+
+## Exposure
+
+@docs Exposure
+
+@docs exposureValue, maxLuminance, photographicExposure
+
+
 # Advanced
 
 @docs toWebGLEntities
@@ -142,6 +154,7 @@ import Color exposing (Color)
 import Color.Transparent
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
+import Duration exposing (Duration)
 import Frame3d exposing (Frame3d)
 import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
 import Geometry.Interop.LinearAlgebra.Point3d as Point3d
@@ -160,15 +173,14 @@ import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity(..))
 import Rectangle2d
-import Scene3d.Chromaticity as Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Entity as Entity
-import Scene3d.Exposure as Exposure exposing (Exposure)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (Bounds, DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
 import Sphere3d exposing (Sphere3d)
+import Temperature exposing (Temperature)
 import Vector3d exposing (Vector3d)
 import Viewpoint3d exposing (Viewpoint3d)
 import WebGL
@@ -658,16 +670,16 @@ directionalLight :
         , direction : Direction3d coordinates
         }
     -> Light coordinates (CastsShadows a)
-directionalLight (CastsShadows shadowFlag) { chromaticity, intensity, direction } =
+directionalLight (CastsShadows shadowFlag) light =
     let
         { x, y, z } =
-            Direction3d.unwrap direction
+            Direction3d.unwrap light.direction
 
         (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb chromaticity
+            ColorConversions.chromaticityToLinearRgb light.chromaticity
 
         lux =
-            Illuminance.inLux intensity
+            Illuminance.inLux light.intensity
     in
     Types.Light
         { type_ = 1
@@ -690,16 +702,16 @@ pointLight :
         , position : Point3d Meters coordinates
         }
     -> Light coordinates (CastsShadows a)
-pointLight (CastsShadows shadowFlag) { chromaticity, intensity, position } =
+pointLight (CastsShadows shadowFlag) light =
     let
         (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb chromaticity
+            ColorConversions.chromaticityToLinearRgb light.chromaticity
 
         lumens =
-            LuminousFlux.inLumens intensity
+            LuminousFlux.inLumens light.intensity
 
         { x, y, z } =
-            Point3d.unwrap position
+            Point3d.unwrap light.position
     in
     Types.Light
         { type_ = 2
@@ -1215,8 +1227,8 @@ toWebGLEntities arguments drawables =
         (LinearRgb linearRgb) =
             ColorConversions.chromaticityToLinearRgb arguments.whiteBalance
 
-        maxLuminance =
-            Luminance.inNits (Exposure.maxLuminance arguments.exposure)
+        (Exposure (Quantity nits)) =
+            arguments.exposure
 
         sceneProperties =
             Math.Matrix4.fromRecord
@@ -1228,9 +1240,9 @@ toWebGLEntities arguments drawables =
                 , m22 = eyePointOrDirectionToCamera.y
                 , m32 = eyePointOrDirectionToCamera.z
                 , m42 = projectionType
-                , m13 = maxLuminance * Math.Vector3.getX linearRgb
-                , m23 = maxLuminance * Math.Vector3.getY linearRgb
-                , m33 = maxLuminance * Math.Vector3.getZ linearRgb
+                , m13 = nits * Math.Vector3.getX linearRgb
+                , m23 = nits * Math.Vector3.getY linearRgb
+                , m33 = nits * Math.Vector3.getZ linearRgb
                 , m43 = arguments.dynamicRange
                 , m14 = arguments.supersampling
                 , m24 = 0
@@ -1427,3 +1439,166 @@ setOption option currentValues =
 
         DynamicRange value ->
             { currentValues | dynamicRange = value }
+
+
+
+----- CHROMATICITY -----
+
+
+{-| [Chromaticity](https://en.wikipedia.org/wiki/Chromaticity) is a precise way
+of describing color independent of brightness. You can think of it as roughly
+hue and saturation without value or lightness.
+
+Chromaticity is used for specifying the color of individual lights as well as
+the white balance to use for the overall scene.
+
+-}
+type alias Chromaticity =
+    Types.Chromaticity
+
+
+{-| The approximate chromaticity of noon daylight; this is a combination of
+direct sunlight and blue sky, so is slightly cooler than pure [sunlight](#sunlight).
+As a result, this is a good default choice for white balance, but for _light_
+color you'll likely want to use [`sunlight`](#sunlight), [`incandescentLighting`](#incandescentLighting)
+or [`fluorescentLighting`](#fluorescentLighting) instead.
+
+This is standardized as [Illuminant D65, "Noon Daylight"](https://en.wikipedia.org/wiki/Standard_illuminant),
+and is the 'white' color of a properly-calibrated [sRGB](https://en.wikipedia.org/wiki/SRGB)
+monitor.
+
+-}
+daylight : Chromaticity
+daylight =
+    xyChromaticity 0.31271 0.32902
+
+
+{-| An approximate chromaticity value for direct daytime sunlight. This doesn't
+seem to have an offically standardized value, but 'sunlight' film is apparently
+calibrated to a color temperature of 5600 K so that is what is used here. (This
+falls at low end of ['vertical daylight'](https://en.wikipedia.org/wiki/Color_temperature)
+and above 'horizon daylight', so should be a decent representative value.)
+-}
+sunlight : Chromaticity
+sunlight =
+    colorTemperature (Temperature.kelvins 5600)
+
+
+{-| The chromaticity of typical incandescent/tungsten lighting. This is
+standardized as [Illuminant A, "Incandescent/Tungsten"](https://en.wikipedia.org/wiki/Standard_illuminant).
+-}
+incandescentLighting : Chromaticity
+incandescentLighting =
+    xyChromaticity 0.44757 0.40745
+
+
+{-| The chromaticity of typical fluorescent lighting. This is standardized as
+[Illuminant F4, "Warm White Fluorescent"](https://en.wikipedia.org/wiki/Standard_illuminant).
+-}
+fluorescentLighting : Chromaticity
+fluorescentLighting =
+    xyChromaticity 0.44018 0.40329
+
+
+{-| Specify chromaticity by its _xy_ coordinates in the [CIE xyY color space](https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space).
+-}
+xyChromaticity : Float -> Float -> Chromaticity
+xyChromaticity x y =
+    Types.Chromaticity { x = x, y = y }
+
+
+{-| Specify chromaticity by providing a [color temperature](https://en.wikipedia.org/wiki/Color_temperature).
+For example, `Scene3d.daylight` is equivalent to
+
+    Scene3d.colorTemperature (Temperature.kelvins 5600)
+
+See [here](https://en.wikipedia.org/wiki/Standard_illuminant#White_points_of_standard_illuminants)
+for the color temperatures of many common sources of light.
+
+-}
+colorTemperature : Temperature -> Chromaticity
+colorTemperature temperature =
+    let
+        t =
+            clamp 1667 25000 (Temperature.inKelvins temperature)
+
+        x =
+            if t <= 4000 then
+                (-0.2661239 * 1.0e9 / (t * t * t))
+                    - (0.2343589 * 1.0e6 / (t * t))
+                    + (0.8776956 * 1.0e3 / t)
+                    + 0.17991
+
+            else
+                (-3.0258469 * 1.0e9 / (t * t * t))
+                    + (2.1070379 * 1.0e6 / (t * t))
+                    + (0.2226347 * 1.0e3 / t)
+                    + 0.24039
+
+        y =
+            if t <= 2222 then
+                (-1.1063814 * (x * x * x))
+                    - (1.3481102 * (x * x))
+                    + (2.18555832 * x)
+                    - 0.20219683
+
+            else if t <= 4000 then
+                (-0.9549476 * (x * x * x))
+                    - (1.37418593 * (x * x))
+                    + (2.09137015 * x)
+                    - 0.16748867
+
+            else
+                (3.081758 * (x * x * x))
+                    - (5.8733867 * (x * x))
+                    + (3.75112997 * x)
+                    - 0.37001483
+    in
+    xyChromaticity x y
+
+
+{-| Extract the chromaticity of a given color. Note that this is a lossy
+conversion since it throws away any lightness/brightness information. For
+example, any greyscale color value will have chromaticity equal to
+`Scene3d.daylight` (since that is the standard 'white' chromaticity for the
+sRGB color space).
+-}
+chromaticity : Color -> Chromaticity
+chromaticity color =
+    let
+        (Types.CieXyz bigX bigY bigZ) =
+            ColorConversions.colorToCieXyz color
+
+        sum =
+            bigX + bigY + bigZ
+    in
+    xyChromaticity (bigX / sum) (bigY / sum)
+
+
+
+----- EXPOSURE -----
+
+
+type Exposure
+    = Exposure Luminance
+
+
+exposureValue : Float -> Exposure
+exposureValue ev100 =
+    -- from https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/course-notes-moving-frostbite-to-pbr-v2.pdf
+    Exposure (Luminance.nits (1.2 * 2 ^ ev100))
+
+
+maxLuminance : Luminance -> Exposure
+maxLuminance givenMaxLuminance =
+    Exposure (Quantity.abs givenMaxLuminance)
+
+
+photographicExposure : { fStop : Float, shutterSpeed : Duration, isoSpeed : Float } -> Exposure
+photographicExposure { fStop, shutterSpeed, isoSpeed } =
+    let
+        t =
+            Duration.inSeconds shutterSpeed
+    in
+    -- from https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/course-notes-moving-frostbite-to-pbr-v2.pdf
+    exposureValue (logBase 2 ((100 * fStop ^ 2) / (t * isoSpeed)))

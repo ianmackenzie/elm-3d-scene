@@ -35,7 +35,6 @@ module Scene3d.Material exposing
 import Color exposing (Color)
 import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
-import Scene3d.Chromaticity exposing (Chromaticity)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material.Channel as Channel exposing (Channel)
 import Scene3d.Mesh exposing (No, Yes)

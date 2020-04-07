@@ -6,8 +6,6 @@
     "version": "1.0.0",
     "exposed-modules": [
         "Scene3d",
-        "Scene3d.Chromaticity",
-        "Scene3d.Exposure",
         "Scene3d.Material",
         "Scene3d.Material.Channel",
         "Scene3d.Mesh"
