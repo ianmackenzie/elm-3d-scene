@@ -1,5 +1,5 @@
 module Scene3d exposing
-    ( toHtml
+    ( toHtml, unlit, sunny, cloudy, office
     , Option
     , multisampling, supersampling, dynamicRange
     , Entity
@@ -32,7 +32,7 @@ contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
 module is 'expensive'; meshes should generally be created once and then stored
 in your model.
 
-@docs toHtml
+@docs toHtml, unlit, sunny, cloudy, office
 
 
 # Options
