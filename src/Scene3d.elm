@@ -1584,3 +1584,132 @@ photographicExposure { fStop, shutterSpeed, isoSpeed } =
     in
     -- from https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/course-notes-moving-frostbite-to-pbr-v2.pdf
     exposureValue (logBase 2 ((100 * fStop ^ 2) / (t * isoSpeed)))
+
+
+
+----- PRESETS -----
+
+
+sunny :
+    List Option
+    ->
+        { upDirection : Direction3d coordinates
+        , sunlightDirection : Direction3d coordinates
+        , shadows : Bool
+        , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+        , camera : Camera3d Meters coordinates
+        , clipDepth : Length
+        , background : Background coordinates
+        }
+    -> List (Entity coordinates)
+    -> Html msg
+sunny options arguments entities =
+    let
+        lightProperties =
+            { direction = arguments.sunlightDirection
+            , intensity = Illuminance.lux 80000
+            , chromaticity = sunlight
+            }
+
+        lights =
+            if arguments.shadows then
+                oneLight (directionalLight castsShadows lightProperties)
+
+            else
+                oneLight (directionalLight doesNotCastShadows lightProperties)
+    in
+    toHtml options
+        { lights = lights
+        , environmentalLighting =
+            softLighting
+                { upDirection = arguments.upDirection
+                , above =
+                    { illuminance = Illuminance.lux 20000
+                    , chromaticity = colorTemperature (Temperature.kelvins 12000)
+                    }
+                , below =
+                    { illuminance = Illuminance.lux 15000
+                    , chromaticity = daylight
+                    }
+                }
+        , camera = arguments.camera
+        , clipDepth = arguments.clipDepth
+        , exposure = exposureValue 15
+        , whiteBalance = daylight
+        , dimensions = arguments.dimensions
+        , background = arguments.background
+        }
+        entities
+
+
+cloudy :
+    List Option
+    ->
+        { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+        , upDirection : Direction3d coordinates
+        , camera : Camera3d Meters coordinates
+        , clipDepth : Length
+        , background : Background coordinates
+        }
+    -> List (Entity coordinates)
+    -> Html msg
+cloudy options arguments entities =
+    toHtml options
+        { lights = noLights
+        , environmentalLighting =
+            softLighting
+                { upDirection = arguments.upDirection
+                , above =
+                    { chromaticity = daylight
+                    , illuminance = Illuminance.lux 1000
+                    }
+                , below =
+                    { chromaticity = daylight
+                    , illuminance = Illuminance.lux 200
+                    }
+                }
+        , camera = arguments.camera
+        , clipDepth = arguments.clipDepth
+        , exposure = exposureValue 13
+        , whiteBalance = daylight
+        , dimensions = arguments.dimensions
+        , background = arguments.background
+        }
+        entities
+
+
+office :
+    List Option
+    ->
+        { lights : Lights coordinates
+        , upDirection : Direction3d coordinates
+        , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+        , camera : Camera3d Meters coordinates
+        , clipDepth : Length
+        , background : Background coordinates
+        }
+    -> List (Entity coordinates)
+    -> Html msg
+office options arguments entities =
+    toHtml options
+        { lights = arguments.lights
+        , environmentalLighting =
+            softLighting
+                { upDirection = arguments.upDirection
+                , above =
+                    { chromaticity = fluorescentLighting
+                    , illuminance = Illuminance.lux 400
+                    }
+                , below =
+                    { chromaticity = fluorescentLighting
+                    , illuminance = Illuminance.lux 100
+                    }
+                }
+        , camera = arguments.camera
+        , clipDepth = arguments.clipDepth
+        , exposure = exposureValue 7
+        , whiteBalance = fluorescentLighting
+        , dimensions = arguments.dimensions
+        , background = arguments.background
+        }
+        entities
