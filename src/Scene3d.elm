@@ -1179,19 +1179,21 @@ toWebGLEntities arguments drawables =
         viewAxis =
             Axis3d.through (Viewpoint3d.eyePoint viewpoint) (Viewpoint3d.viewDirection viewpoint)
 
+        nearClipDepth =
+            Quantity.abs arguments.clipDepth
+
         farClipDepth =
-            getFarClipDepth viewAxis arguments.clipDepth 1 1 1 [ rootNode ]
+            getFarClipDepth viewAxis nearClipDepth 1 1 1 [ rootNode ]
+                -- Add 1% extra to make sure objects right at the back don't get
+                -- culled (also to make sure the far clip depth is not exactly
+                -- equal to the near clip depth)
+                |> Quantity.multiplyBy 1.01
 
         projectionMatrix =
             WebGL.projectionMatrix arguments.camera
                 { aspectRatio = arguments.aspectRatio
-                , nearClipDepth = arguments.clipDepth
-                , farClipDepth =
-                    if farClipDepth == arguments.clipDepth then
-                        Quantity.positiveInfinity
-
-                    else
-                        farClipDepth
+                , nearClipDepth = nearClipDepth
+                , farClipDepth = farClipDepth
                 }
 
         projectionType =
