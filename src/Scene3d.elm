@@ -15,7 +15,7 @@ module Scene3d exposing
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     , Chromaticity
-    , chromaticity, daylight, sunlight, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
+    , chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
     , Exposure
     , exposureValue, maxLuminance, photographicExposure
     , toWebGLEntities
@@ -130,7 +130,7 @@ directional lights to provide highlights.
 
 @docs Chromaticity
 
-@docs chromaticity, daylight, sunlight, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
+@docs chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
 
 
 ## Exposure
@@ -1496,6 +1496,13 @@ and above 'horizon daylight', so should be a decent representative value.)
 sunlight : Chromaticity
 sunlight =
     colorTemperature (Temperature.kelvins 5600)
+
+
+{-| An approximate chromaticity value for clear blue sky (12000 K).
+-}
+blueSky : Chromaticity
+blueSky =
+    colorTemperature (Temperature.kelvins 12000)
 
 
 {-| The chromaticity of typical incandescent/tungsten lighting. This is
