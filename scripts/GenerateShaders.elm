@@ -2002,16 +2002,6 @@ script { workingDirectory, userPrivileges } =
                 userPrivileges
                 shaders
             )
-        |> Script.andThen (Script.printLine "Optimizing shaders...")
-        |> Script.andThen (Script.collect (optimizeShader userPrivileges) shaders)
-        |> Script.thenWith
-            (\optimizedShaders ->
-                writeToFile optimizedOutputFile
-                    "Scene3d.OptimizedShaders"
-                    workingDirectory
-                    userPrivileges
-                    optimizedShaders
-            )
 
 
 main : Script.Program
