@@ -58,19 +58,22 @@ material =
         }
 
 
+overheadLighting =
+    Scene3d.overheadLighting
+        { upDirection = Direction3d.positiveZ
+        , intensity = Illuminance.lux 15000
+        , chromaticity = Scene3d.daylight
+        }
+
+
 main : Html msg
 main =
     Scene3d.toHtml []
         { camera = camera
         , clipDepth = Length.centimeters 0.5
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-        , environmentalLighting =
-            Scene3d.softLighting
-                { upDirection = Direction3d.positiveZ
-                , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
-                , below = { intensity = Quantity.zero, chromaticity = Scene3d.daylight }
-                }
-        , lights = Scene3d.oneLight sunlight
+        , environmentalLighting = Scene3d.noEnvironmentalLighting
+        , lights = Scene3d.twoLights sunlight overheadLighting
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , whiteBalance = Scene3d.daylight
         , background = Scene3d.transparentBackground

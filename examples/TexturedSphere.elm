@@ -203,6 +203,22 @@ sunlight =
         }
 
 
+sky =
+    Scene3d.overheadLighting
+        { upDirection = Direction3d.positiveZ
+        , intensity = Illuminance.lux 7000
+        , chromaticity = Scene3d.blueSky
+        }
+
+
+environment =
+    Scene3d.overheadLighting
+        { upDirection = Direction3d.negativeZ
+        , intensity = Illuminance.lux 5000
+        , chromaticity = Scene3d.daylight
+        }
+
+
 camera : Camera3d Meters WorldCoordinates
 camera =
     Camera3d.perspective
@@ -227,14 +243,8 @@ view model =
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-                , environmentalLighting =
-                    Scene3d.softLighting
-                        { upDirection = Direction3d.positiveZ
-                        , above = { intensity = Illuminance.lux 9000, chromaticity = Scene3d.daylight }
-                        , below = { intensity = Illuminance.lux 900, chromaticity = Scene3d.daylight }
-                        }
-                , lights =
-                    Scene3d.oneLight sunlight
+                , environmentalLighting = Scene3d.noEnvironmentalLighting
+                , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
                 , whiteBalance = Scene3d.daylight
                 , background = Scene3d.transparentBackground
