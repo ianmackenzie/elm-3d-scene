@@ -275,6 +275,11 @@ kPointLight =
     Glsl.constant Glsl.float "kPointLight" "2.0"
 
 
+kOverheadLight : Glsl.Constant
+kOverheadLight =
+    Glsl.constant Glsl.float "kOverheadLight" "3.0"
+
+
 kNoEnvironmentalLighting : Glsl.Constant
 kNoEnvironmentalLighting =
     Glsl.constant Glsl.float "kNoEnvironmentalLighting" "0.0"
@@ -297,8 +302,6 @@ kMediumpFloatMax =
 
 
 ---------- FUNCTIONS ----------
-
-
 
 
 gammaCorrect : Glsl.Function
@@ -901,8 +904,9 @@ physicalLight =
             [ getDirectionToLightAndNormalIlluminance
             , positiveDotProduct
             , brdf
+            , overheadLight
             ]
-        , constants = [ kDisabledLight, kPi ]
+        , constants = [ kDisabledLight, kOverheadLight, kPi ]
         }
         """
         vec3 physicalLight(
@@ -911,6 +915,7 @@ physicalLight =
             vec3 surfacePosition,
             vec3 normalDirection,
             vec3 directionToCamera,
+            vec3 viewY,
             float dotNV,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
@@ -919,6 +924,8 @@ physicalLight =
             float lightType = xyz_type.w;
             if (lightType == kDisabledLight) {
                 return vec3(0.0, 0.0, 0.0);
+            } else if (lightType == kOverheadLight) {
+                return overheadLight(normalDirection, diffuseBaseColor, specularBaseColor, alpha, directionToCamera, viewY, xyz_type, rgb_radius);
             }
 
             vec3 directionToLight = vec3(0.0, 0.0, 0.0);
@@ -932,6 +939,70 @@ physicalLight =
         """
 
 
+overheadLight : Glsl.Function
+overheadLight =
+    Glsl.function
+        { dependencies =
+            [ sampleFacetNormal
+            , softLightingSpecularSample
+            , softLightingLuminance
+            ]
+        , constants = []
+        }
+        """
+        vec3 overheadLight(
+            vec3 normalDirection,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha,
+            vec3 directionToCamera,
+            vec3 viewY,
+            vec4 xyz_type,
+            vec4 rgb_radius
+        ) {
+            float alphaSquared = alpha * alpha;
+            vec3 upDirection = xyz_type.xyz;
+            vec3 luminance = rgb_radius.rgb;
+            vec3 crossProduct = cross(normalDirection, directionToCamera);
+            float crossMagnitude = length(crossProduct);
+            vec3 xDirection = vec3(0.0, 0.0, 0.0);
+            vec3 yDirection = vec3(0.0, 0.0, 0.0);
+            if (crossMagnitude > 1.0e-6) {
+                yDirection = (1.0 / crossMagnitude) * crossProduct;
+                xDirection = cross(yDirection, normalDirection);
+            } else {
+                vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                xDirection = normalize(cross(viewY, normalDirection));
+                yDirection = cross(normalDirection, xDirection);
+            }
+            float localViewX = dot(directionToCamera, xDirection);
+            float localViewZ = dot(directionToCamera, normalDirection);
+            vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
+            float localUpX = dot(upDirection, xDirection);
+            float localUpY = dot(upDirection, yDirection);
+            float localUpZ = dot(upDirection, normalDirection);
+            vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
+
+            vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
+            vec3 vT1 = vec3(0.0, 1.0, 0.0);
+            vec3 vT2 = cross(vH, vT1);
+            float s = 0.5 * (1.0 + vH.z);
+            
+            vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
+            vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
+            
+            localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
+            localLightDirection = -reflect(localViewDirection, localHalfDirection);
+            vec3 specular = softLightingSpecularSample(luminance, vec3(0.0, 0.0, 0.0), localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+            
+            localLightDirection = vec3(0.000000, 0.000000, 1.000000);
+            vec3 diffuse = softLightingLuminance(luminance, vec3(0.0, 0.0, 0.0), localUpDirection, localLightDirection) * localLightDirection.z;
+            
+            return specular + diffuse * diffuseBaseColor;
+        }
+        """
+
+
 physicalDirectLighting : Glsl.Function
 physicalDirectLighting =
     Glsl.function { dependencies = [ physicalLight ], constants = [] }
@@ -940,6 +1011,7 @@ physicalDirectLighting =
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 directionToCamera,
+            vec3 viewY,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
             float alpha,
@@ -949,14 +1021,14 @@ physicalDirectLighting =
             mat4 lights78
         ) {
             float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
-            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         """
@@ -997,11 +1069,13 @@ physicalLighting =
                 viewMatrix,
                 environmentalLighting
             );
-
+            
+            vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
             vec3 directContribution = physicalDirectLighting(
                 interpolatedPosition,
                 normalDirection,
                 directionToCamera,
+                viewY,
                 diffuseBaseColor,
                 specularBaseColor,
                 alpha,

@@ -10,7 +10,7 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight
+    , Light, directionalLight, pointLight, overheadLighting
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , EnvironmentalLighting, noEnvironmentalLighting, softLighting
@@ -114,7 +114,7 @@ directional lights to provide highlights.
 
 ## Lights
 
-@docs Light, directionalLight, pointLight
+@docs Light, directionalLight, pointLight, overheadLighting
 
 @docs CastsShadows, Yes, No, castsShadows, doesNotCastShadows
 
@@ -722,6 +722,36 @@ pointLight (CastsShadows shadowFlag) light =
         , r = lumens * Math.Vector3.getX rgb
         , g = lumens * Math.Vector3.getY rgb
         , b = lumens * Math.Vector3.getZ rgb
+        , radius = 0
+        }
+
+
+overheadLighting :
+    { chromaticity : Chromaticity
+    , intensity : Illuminance
+    , upDirection : Direction3d coordinates
+    }
+    -> Light coordinates (CastsShadows No)
+overheadLighting light =
+    let
+        (LinearRgb rgb) =
+            ColorConversions.chromaticityToLinearRgb light.chromaticity
+
+        nits =
+            Illuminance.inLux light.intensity / pi
+
+        { x, y, z } =
+            Direction3d.unwrap light.upDirection
+    in
+    Types.Light
+        { type_ = 3
+        , castsShadows = False
+        , x = x
+        , y = y
+        , z = z
+        , r = nits * Math.Vector3.getX rgb
+        , g = nits * Math.Vector3.getY rgb
+        , b = nits * Math.Vector3.getZ rgb
         , radius = 0
         }
 
