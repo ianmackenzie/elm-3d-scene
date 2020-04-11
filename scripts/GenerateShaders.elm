@@ -822,22 +822,11 @@ softLightingSpecularSample =
         """
 
 
-specularLightDirection : Glsl.Function
-specularLightDirection =
-    Glsl.function { dependencies = [], constants = [] }
-        """
-        vec3 specularLightDirection(vec3 v, vec3 h) {
-            return (2.0 * dot(v, h)) * h - v;
-        }
-        """
-
-
 physicalEnvironmentalLighting : Glsl.Function
 physicalEnvironmentalLighting =
     Glsl.function
         { dependencies =
             [ sampleFacetNormal
-            , specularLightDirection
             , softLightingSpecularSample
             , softLightingLuminance
             ]
@@ -891,7 +880,7 @@ physicalEnvironmentalLighting =
                 vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
                 
                 localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                localLightDirection = -reflect(localViewDirection, localHalfDirection);
                 vec3 specular = softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
                 
                 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
