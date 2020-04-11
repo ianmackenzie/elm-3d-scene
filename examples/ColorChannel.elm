@@ -105,7 +105,10 @@ view model =
                         (Point3d.meters -1 1 0)
                         (Point3d.meters -1 -1 0)
             in
-            Scene3d.toHtml []
+            Scene3d.toHtml
+                [ Scene3d.multisampling False
+                , Scene3d.supersampling 2
+                ]
                 { camera = camera
                 , background = Scene3d.transparentBackground
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
@@ -129,10 +132,7 @@ loadOptions =
         defaultOptions =
             WebGL.Texture.defaultOptions
     in
-    { defaultOptions
-        | magnify = WebGL.Texture.nearest
-        , minify = WebGL.Texture.nearest
-    }
+    { defaultOptions | minify = WebGL.Texture.nearest }
 
 
 main : Program () Model Msg
