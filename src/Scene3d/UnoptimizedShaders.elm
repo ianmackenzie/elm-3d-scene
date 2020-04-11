@@ -1768,6 +1768,7 @@ physicalFragment =
         const float kPi = 3.14159265359;
         const float kMediumpFloatMax = 65504.0;
         const float kDisabledLight = 0.0;
+        const float kOverheadLight = 3.0;
         
         float getNormalSign() {
             return 2.0 * float(gl_FrontFacing) - 1.0;
@@ -1787,10 +1788,6 @@ physicalFragment =
             float t2 = (1.0 - s);
             vec3 vNh = t2 * vT2 + sqrt(max(0.0, 1.0 - t2 * t2)) * vH;
             return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
-        }
-        
-        vec3 specularLightDirection(vec3 v, vec3 h) {
-            return (2.0 * dot(v, h)) * h - v;
         }
         
         vec3 softLightingLuminance(
@@ -1889,7 +1886,7 @@ physicalFragment =
                 vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
                 
                 localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                localLightDirection = -reflect(localViewDirection, localHalfDirection);
                 vec3 specular = softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
                 
                 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
@@ -1946,12 +1943,64 @@ physicalFragment =
             return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
         }
         
+        vec3 overheadLight(
+            vec3 normalDirection,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha,
+            vec3 directionToCamera,
+            vec3 viewY,
+            vec4 xyz_type,
+            vec4 rgb_radius
+        ) {
+            float alphaSquared = alpha * alpha;
+            vec3 upDirection = xyz_type.xyz;
+            vec3 luminance = rgb_radius.rgb;
+            vec3 crossProduct = cross(normalDirection, directionToCamera);
+            float crossMagnitude = length(crossProduct);
+            vec3 xDirection = vec3(0.0, 0.0, 0.0);
+            vec3 yDirection = vec3(0.0, 0.0, 0.0);
+            if (crossMagnitude > 1.0e-6) {
+                yDirection = (1.0 / crossMagnitude) * crossProduct;
+                xDirection = cross(yDirection, normalDirection);
+            } else {
+                vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                xDirection = normalize(cross(viewY, normalDirection));
+                yDirection = cross(normalDirection, xDirection);
+            }
+            float localViewX = dot(directionToCamera, xDirection);
+            float localViewZ = dot(directionToCamera, normalDirection);
+            vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
+            float localUpX = dot(upDirection, xDirection);
+            float localUpY = dot(upDirection, yDirection);
+            float localUpZ = dot(upDirection, normalDirection);
+            vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
+        
+            vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
+            vec3 vT1 = vec3(0.0, 1.0, 0.0);
+            vec3 vT2 = cross(vH, vT1);
+            float s = 0.5 * (1.0 + vH.z);
+            
+            vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
+            vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
+            
+            localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
+            localLightDirection = -reflect(localViewDirection, localHalfDirection);
+            vec3 specular = softLightingSpecularSample(luminance, vec3(0.0, 0.0, 0.0), localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+            
+            localLightDirection = vec3(0.000000, 0.000000, 1.000000);
+            vec3 diffuse = softLightingLuminance(luminance, vec3(0.0, 0.0, 0.0), localUpDirection, localLightDirection) * localLightDirection.z;
+            
+            return specular + diffuse * diffuseBaseColor;
+        }
+        
         vec3 physicalLight(
             vec4 xyz_type,
             vec4 rgb_radius,
             vec3 surfacePosition,
             vec3 normalDirection,
             vec3 directionToCamera,
+            vec3 viewY,
             float dotNV,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
@@ -1960,6 +2009,8 @@ physicalFragment =
             float lightType = xyz_type.w;
             if (lightType == kDisabledLight) {
                 return vec3(0.0, 0.0, 0.0);
+            } else if (lightType == kOverheadLight) {
+                return overheadLight(normalDirection, diffuseBaseColor, specularBaseColor, alpha, directionToCamera, viewY, xyz_type, rgb_radius);
             }
         
             vec3 directionToLight = vec3(0.0, 0.0, 0.0);
@@ -1975,6 +2026,7 @@ physicalFragment =
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 directionToCamera,
+            vec3 viewY,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
             float alpha,
@@ -1984,14 +2036,14 @@ physicalFragment =
             mat4 lights78
         ) {
             float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
-            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
@@ -2023,11 +2075,13 @@ physicalFragment =
                 viewMatrix,
                 environmentalLighting
             );
-        
+            
+            vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
             vec3 directContribution = physicalDirectLighting(
                 interpolatedPosition,
                 normalDirection,
                 directionToCamera,
+                viewY,
                 diffuseBaseColor,
                 specularBaseColor,
                 alpha,
@@ -2148,6 +2202,7 @@ physicalTexturesFragment =
         const float kPi = 3.14159265359;
         const float kMediumpFloatMax = 65504.0;
         const float kDisabledLight = 0.0;
+        const float kOverheadLight = 3.0;
         
         float getChannelValue(sampler2D texture, vec2 uv, vec4 channel) {
             float constantValue = channel.a;
@@ -2188,10 +2243,6 @@ physicalTexturesFragment =
             float t2 = (1.0 - s);
             vec3 vNh = t2 * vT2 + sqrt(max(0.0, 1.0 - t2 * t2)) * vH;
             return normalize(vec3(alpha * vNh.x, alpha * vNh.y, max(0.0, vNh.z)));
-        }
-        
-        vec3 specularLightDirection(vec3 v, vec3 h) {
-            return (2.0 * dot(v, h)) * h - v;
         }
         
         vec3 softLightingLuminance(
@@ -2290,7 +2341,7 @@ physicalTexturesFragment =
                 vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
                 
                 localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
-                localLightDirection = specularLightDirection(localViewDirection, localHalfDirection);
+                localLightDirection = -reflect(localViewDirection, localHalfDirection);
                 vec3 specular = softLightingSpecularSample(aboveLuminance, belowLuminance, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
                 
                 localLightDirection = vec3(0.000000, 0.000000, 1.000000);
@@ -2347,12 +2398,64 @@ physicalTexturesFragment =
             return safeQuotient(d * g, 4.0 * dotNL * dotNV) * f;
         }
         
+        vec3 overheadLight(
+            vec3 normalDirection,
+            vec3 diffuseBaseColor,
+            vec3 specularBaseColor,
+            float alpha,
+            vec3 directionToCamera,
+            vec3 viewY,
+            vec4 xyz_type,
+            vec4 rgb_radius
+        ) {
+            float alphaSquared = alpha * alpha;
+            vec3 upDirection = xyz_type.xyz;
+            vec3 luminance = rgb_radius.rgb;
+            vec3 crossProduct = cross(normalDirection, directionToCamera);
+            float crossMagnitude = length(crossProduct);
+            vec3 xDirection = vec3(0.0, 0.0, 0.0);
+            vec3 yDirection = vec3(0.0, 0.0, 0.0);
+            if (crossMagnitude > 1.0e-6) {
+                yDirection = (1.0 / crossMagnitude) * crossProduct;
+                xDirection = cross(yDirection, normalDirection);
+            } else {
+                vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+                xDirection = normalize(cross(viewY, normalDirection));
+                yDirection = cross(normalDirection, xDirection);
+            }
+            float localViewX = dot(directionToCamera, xDirection);
+            float localViewZ = dot(directionToCamera, normalDirection);
+            vec3 localViewDirection = vec3(localViewX, 0, localViewZ);
+            float localUpX = dot(upDirection, xDirection);
+            float localUpY = dot(upDirection, yDirection);
+            float localUpZ = dot(upDirection, normalDirection);
+            vec3 localUpDirection = vec3(localUpX, localUpY, localUpZ);
+        
+            vec3 vH = normalize(vec3(alpha * localViewX, 0.0, localViewZ));
+            vec3 vT1 = vec3(0.0, 1.0, 0.0);
+            vec3 vT2 = cross(vH, vT1);
+            float s = 0.5 * (1.0 + vH.z);
+            
+            vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
+            vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
+            
+            localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
+            localLightDirection = -reflect(localViewDirection, localHalfDirection);
+            vec3 specular = softLightingSpecularSample(luminance, vec3(0.0, 0.0, 0.0), localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
+            
+            localLightDirection = vec3(0.000000, 0.000000, 1.000000);
+            vec3 diffuse = softLightingLuminance(luminance, vec3(0.0, 0.0, 0.0), localUpDirection, localLightDirection) * localLightDirection.z;
+            
+            return specular + diffuse * diffuseBaseColor;
+        }
+        
         vec3 physicalLight(
             vec4 xyz_type,
             vec4 rgb_radius,
             vec3 surfacePosition,
             vec3 normalDirection,
             vec3 directionToCamera,
+            vec3 viewY,
             float dotNV,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
@@ -2361,6 +2464,8 @@ physicalTexturesFragment =
             float lightType = xyz_type.w;
             if (lightType == kDisabledLight) {
                 return vec3(0.0, 0.0, 0.0);
+            } else if (lightType == kOverheadLight) {
+                return overheadLight(normalDirection, diffuseBaseColor, specularBaseColor, alpha, directionToCamera, viewY, xyz_type, rgb_radius);
             }
         
             vec3 directionToLight = vec3(0.0, 0.0, 0.0);
@@ -2376,6 +2481,7 @@ physicalTexturesFragment =
             vec3 surfacePosition,
             vec3 surfaceNormal,
             vec3 directionToCamera,
+            vec3 viewY,
             vec3 diffuseBaseColor,
             vec3 specularBaseColor,
             float alpha,
@@ -2385,14 +2491,14 @@ physicalTexturesFragment =
             mat4 lights78
         ) {
             float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
-            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor8 = physicalLight(lights78[2], lights78[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
@@ -2424,11 +2530,13 @@ physicalTexturesFragment =
                 viewMatrix,
                 environmentalLighting
             );
-        
+            
+            vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
             vec3 directContribution = physicalDirectLighting(
                 interpolatedPosition,
                 normalDirection,
                 directionToCamera,
+                viewY,
                 diffuseBaseColor,
                 specularBaseColor,
                 alpha,
