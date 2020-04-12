@@ -115,6 +115,7 @@ view model =
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                 , whiteBalance = Scene3d.daylight
                 , exposure = Scene3d.exposureValue 15
+                , toneMapping = Scene3d.noToneMapping
                 , lights = Scene3d.twoLights sunlight softLighting
                 , clipDepth = Length.centimeters 10
                 }

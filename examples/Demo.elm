@@ -245,13 +245,13 @@ view model =
             [ Scene3d.toHtml
                 [ Scene3d.multisampling model.multisampling
                 , Scene3d.supersampling model.supersampling
-                , Scene3d.dynamicRange model.dynamicRange
                 ]
                 { dimensions = model.dimensions
                 , camera = camera model.distance model.azimuth model.elevation
                 , clipDepth = Length.meters 0.1
                 , lights = lights model.lights
                 , exposure = Scene3d.exposureValue model.exposure
+                , toneMapping = Scene3d.reinhardToneMapping model.dynamicRange
                 , whiteBalance = Scene3d.daylight
                 , background =
                     Scene3d.backgroundColor

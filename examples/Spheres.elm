@@ -215,8 +215,7 @@ main =
                 Html.div []
                     [ Html.div []
                         [ Scene3d.toHtml
-                            [ Scene3d.dynamicRange dynamicRange
-                            , Scene3d.multisampling (antialiasing == Multisampling)
+                            [ Scene3d.multisampling (antialiasing == Multisampling)
                             , Scene3d.supersampling <|
                                 if antialiasing == Supersampling then
                                     2
@@ -229,6 +228,7 @@ main =
                             , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Scene3d.exposureValue ev100
+                            , toneMapping = Scene3d.reinhardToneMapping dynamicRange
                             , whiteBalance = Scene3d.fluorescentLighting
                             , background = Scene3d.transparentBackground
                             }

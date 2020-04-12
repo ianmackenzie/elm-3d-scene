@@ -29,6 +29,7 @@ main =
         , dimensions = ( Pixels.pixels 1400, Pixels.pixels 900 )
         , lights = Scene3d.twoLights sunlight daylight
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
+        , toneMapping = Scene3d.noToneMapping
         , whiteBalance = Scene3d.daylight
         , background = Scene3d.transparentBackground
         , clipDepth = Length.centimeters 0.5

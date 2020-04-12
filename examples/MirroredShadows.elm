@@ -141,6 +141,7 @@ main =
                             , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Scene3d.exposureValue 14
+                            , toneMapping = Scene3d.noToneMapping
                             , whiteBalance = Scene3d.daylight
                             , background = Scene3d.transparentBackground
                             }

@@ -214,6 +214,7 @@ view { world, width, height } =
             , camera = camera
             , lights = Scene3d.twoLights sunlight daylight
             , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
+            , toneMapping = Scene3d.noToneMapping
             , whiteBalance = Scene3d.daylight
             , clipDepth = meters 0.1
             , background = Scene3d.transparentBackground

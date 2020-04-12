@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( toHtml, unlit, sunny, cloudy, office
     , Option
-    , multisampling, supersampling, dynamicRange
+    , multisampling, supersampling
     , Entity
     , quad, block, sphere, cylinder
     , mesh
@@ -17,6 +17,8 @@ module Scene3d exposing
     , chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
     , Exposure
     , exposureValue, maxLuminance, photographicExposure
+    , ToneMapping
+    , noToneMapping, reinhardToneMapping
     , toWebGLEntities
     )
 
@@ -38,7 +40,7 @@ in your model.
 
 @docs Option
 
-@docs multisampling, supersampling, dynamicRange
+@docs multisampling, supersampling
 
 
 # Entities
@@ -132,6 +134,13 @@ directional lights to provide highlights.
 @docs Exposure
 
 @docs exposureValue, maxLuminance, photographicExposure
+
+
+## Tone mapping
+
+@docs ToneMapping
+
+@docs noToneMapping, reinhardToneMapping
 
 
 # Advanced
@@ -1142,7 +1151,7 @@ toWebGLEntities :
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , exposure : Exposure
-    , dynamicRange : Float
+    , toneMapping : ToneMapping
     , whiteBalance : Chromaticity
     , aspectRatio : Float
     , supersampling : Float
@@ -1195,6 +1204,9 @@ toWebGLEntities arguments drawables =
         (Exposure (Quantity nits)) =
             arguments.exposure
 
+        (ToneMapping dynamicRange) =
+            arguments.toneMapping
+
         sceneProperties =
             Math.Matrix4.fromRecord
                 { m11 = 0
@@ -1208,7 +1220,7 @@ toWebGLEntities arguments drawables =
                 , m13 = nits * Math.Vector3.getX linearRgb
                 , m23 = nits * Math.Vector3.getY linearRgb
                 , m33 = nits * Math.Vector3.getZ linearRgb
-                , m43 = arguments.dynamicRange
+                , m43 = dynamicRange
                 , m14 = arguments.supersampling
                 , m24 = 0
                 , m34 = 0
@@ -1261,6 +1273,7 @@ toHtml :
         , camera : Camera3d Meters coordinates
         , clipDepth : Length
         , exposure : Exposure
+        , toneMapping : ToneMapping
         , whiteBalance : Chromaticity
         , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
         , background : Background coordinates
@@ -1330,7 +1343,7 @@ toHtml options arguments drawables =
                     , camera = arguments.camera
                     , clipDepth = arguments.clipDepth
                     , exposure = arguments.exposure
-                    , dynamicRange = optionValues.dynamicRange
+                    , toneMapping = arguments.toneMapping
                     , whiteBalance = arguments.whiteBalance
                     , aspectRatio = Quantity.ratio width height
                     , supersampling = optionValues.supersampling
@@ -1344,7 +1357,6 @@ toHtml options arguments drawables =
 type Option
     = Multisampling Bool
     | Supersampling Float
-    | DynamicRange Float
 
 
 multisampling : Bool -> Option
@@ -1357,15 +1369,9 @@ supersampling =
     Supersampling
 
 
-dynamicRange : Float -> Option
-dynamicRange =
-    DynamicRange
-
-
 type alias OptionValues =
     { multisampling : Bool
     , supersampling : Float
-    , dynamicRange : Float
     }
 
 
@@ -1373,7 +1379,6 @@ defaultOptionValues : OptionValues
 defaultOptionValues =
     { multisampling = True
     , supersampling = 1
-    , dynamicRange = 1
     }
 
 
@@ -1390,9 +1395,6 @@ setOption option currentValues =
 
         Supersampling value ->
             { currentValues | supersampling = value }
-
-        DynamicRange value ->
-            { currentValues | dynamicRange = value }
 
 
 
@@ -1566,6 +1568,24 @@ photographicExposure { fStop, shutterSpeed, isoSpeed } =
 
 
 
+----- TONE MAPPING -----
+
+
+type ToneMapping
+    = ToneMapping Float
+
+
+noToneMapping : ToneMapping
+noToneMapping =
+    ToneMapping 1
+
+
+reinhardToneMapping : Float -> ToneMapping
+reinhardToneMapping maxOverExposure =
+    ToneMapping (abs maxOverExposure)
+
+
+
 ----- PRESETS -----
 
 
@@ -1588,6 +1608,7 @@ unlit options arguments entities =
         , whiteBalance = daylight
         , dimensions = arguments.dimensions
         , background = arguments.background
+        , toneMapping = noToneMapping
         }
         entities
 
@@ -1643,6 +1664,7 @@ sunny options arguments entities =
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 15
+        , toneMapping = noToneMapping
         , whiteBalance = daylight
         , dimensions = arguments.dimensions
         , background = arguments.background
@@ -1674,6 +1696,7 @@ cloudy options arguments entities =
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 13
+        , toneMapping = noToneMapping
         , whiteBalance = daylight
         , dimensions = arguments.dimensions
         , background = arguments.background
@@ -1706,6 +1729,7 @@ office options arguments entities =
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 7
+        , toneMapping = noToneMapping
         , whiteBalance = fluorescentLighting
         , dimensions = arguments.dimensions
         , background = arguments.background

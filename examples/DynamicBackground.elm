@@ -94,6 +94,7 @@ main =
                     , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                     , lights = Scene3d.twoLights sunlight (overheadLighting currentBackgroundColor)
                     , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
+                    , toneMapping = Scene3d.noToneMapping
                     , whiteBalance = Scene3d.daylight
                     , background = Scene3d.backgroundColor currentBackgroundColor
                     }
