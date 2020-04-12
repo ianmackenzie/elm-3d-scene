@@ -1847,11 +1847,11 @@ button properties =
         properties
 
 
-viewTestCaseProperties : Int -> TestCase -> Element Msg
-viewTestCaseProperties testCaseIndex testCase =
+viewTestCaseProperties : Int -> Int -> TestCase -> Element Msg
+viewTestCaseProperties testCaseIndex numTestCases testCase =
     Element.table [ Element.Font.size 14, Element.spacingXY 10 3 ]
         { data =
-            [ ( "Test case:", String.fromInt (testCaseIndex + 1), Nothing )
+            [ ( "Test case:", String.fromInt (testCaseIndex + 1) ++ " of " ++ String.fromInt numTestCases, Nothing )
             , ( "Mesh:", Debug.toString testCase.mesh, Nothing )
             , ( "Material:", Debug.toString testCase.material, Nothing )
             , ( "Shadow:", Debug.toString testCase.shadow, Just ToggleShadow )
@@ -1965,7 +1965,7 @@ viewTestCase model testCase =
                         ]
                     , Element.el [ Element.Font.size 14 ] (Element.text "(or use arrow keys)")
                     ]
-                , viewTestCaseProperties model.testCaseIndex testCase
+                , viewTestCaseProperties model.testCaseIndex (Array.length model.testCases) testCase
                 ]
 
         Nothing ->
