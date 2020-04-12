@@ -69,7 +69,7 @@ main =
         rotatedSquare angle =
             square |> Scene3d.rotateAround rotationAxis angle
     in
-    Scene3d.unlit []
+    Scene3d.unlit
         { camera = camera
         , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )

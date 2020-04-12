@@ -58,7 +58,7 @@ main =
         squareAtHeight height =
             square |> Scene3d.translateIn Direction3d.z height
     in
-    Scene3d.unlit []
+    Scene3d.unlit
         { camera = camera
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.transparentBackground

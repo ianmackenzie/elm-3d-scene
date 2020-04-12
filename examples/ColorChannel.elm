@@ -107,11 +107,9 @@ view model =
                         (Point3d.meters -1 -1 0)
             in
             Scene3d.toHtml
-                [ Scene3d.multisampling False
-                , Scene3d.supersampling 2
-                ]
                 { camera = camera
                 , background = Scene3d.transparentBackground
+                , antialiasing = Scene3d.supersampling 2
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                 , whiteBalance = Scene3d.daylight
                 , exposure = Scene3d.exposureValue 15

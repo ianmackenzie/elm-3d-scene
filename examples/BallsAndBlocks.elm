@@ -124,8 +124,9 @@ view { world, screenWidth, screenHeight } =
         , Html.Attributes.style "left" "0"
         , Html.Attributes.style "top" "0"
         ]
-        [ Scene3d.toHtml []
+        [ Scene3d.toHtml
             { dimensions = ( pixels screenWidth, pixels screenHeight )
+            , antialiasing = Scene3d.multisampling
             , camera = camera
             , lights = Scene3d.twoLights sunlight daylight
             , exposure = Scene3d.maxLuminance (Luminance.nits 10000)

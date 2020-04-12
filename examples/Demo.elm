@@ -243,10 +243,13 @@ view model =
                 :: events model.orbiting
             )
             [ Scene3d.toHtml
-                [ Scene3d.multisampling model.multisampling
-                , Scene3d.supersampling model.supersampling
-                ]
                 { dimensions = model.dimensions
+                , antialiasing =
+                    if model.multisampling then
+                        Scene3d.multisampling
+
+                    else
+                        Scene3d.supersampling model.supersampling
                 , camera = camera model.distance model.azimuth model.elevation
                 , clipDepth = Length.meters 0.1
                 , lights = lights model.lights

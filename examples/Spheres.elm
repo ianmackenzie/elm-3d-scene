@@ -215,18 +215,20 @@ main =
                 Html.div []
                     [ Html.div []
                         [ Scene3d.toHtml
-                            [ Scene3d.multisampling (antialiasing == Multisampling)
-                            , Scene3d.supersampling <|
-                                if antialiasing == Supersampling then
-                                    2
-
-                                else
-                                    1
-                            ]
                             { lights = Scene3d.twoLights lightBulb overheadLighting
                             , camera = camera
                             , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )
+                            , antialiasing =
+                                case antialiasing of
+                                    Multisampling ->
+                                        Scene3d.multisampling
+
+                                    Supersampling ->
+                                        Scene3d.supersampling 2
+
+                                    NoAntialiasing ->
+                                        Scene3d.noAntialiasing
                             , exposure = Scene3d.exposureValue ev100
                             , toneMapping = Scene3d.reinhardToneMapping dynamicRange
                             , whiteBalance = Scene3d.fluorescentLighting

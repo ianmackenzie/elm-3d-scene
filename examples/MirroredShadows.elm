@@ -127,7 +127,7 @@ main =
                     [ Html.span [ Html.Attributes.style "user-select" "none" ]
                         [ Html.text "Click to toggle between point and directional light" ]
                     , Html.div []
-                        [ Scene3d.toHtml []
+                        [ Scene3d.toHtml
                             { lights =
                                 Scene3d.twoLights
                                     (if usePointLight then
@@ -139,6 +139,7 @@ main =
                                     daylight
                             , camera = camera
                             , clipDepth = meters 0.1
+                            , antialiasing = Scene3d.multisampling
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Scene3d.exposureValue 14
                             , toneMapping = Scene3d.noToneMapping

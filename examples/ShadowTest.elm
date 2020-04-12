@@ -24,9 +24,10 @@ type WorldCoordinates
 
 main : Html msg
 main =
-    Scene3d.toHtml []
+    Scene3d.toHtml
         { camera = camera
         , dimensions = ( Pixels.pixels 1400, Pixels.pixels 900 )
+        , antialiasing = Scene3d.multisampling
         , lights = Scene3d.twoLights sunlight daylight
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , toneMapping = Scene3d.noToneMapping

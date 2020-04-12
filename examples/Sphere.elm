@@ -68,10 +68,11 @@ overheadLighting =
 
 main : Html msg
 main =
-    Scene3d.toHtml []
+    Scene3d.toHtml
         { camera = camera
         , clipDepth = Length.centimeters 0.5
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+        , antialiasing = Scene3d.multisampling
         , lights = Scene3d.twoLights sunlight overheadLighting
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , toneMapping = Scene3d.noToneMapping

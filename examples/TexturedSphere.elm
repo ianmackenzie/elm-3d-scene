@@ -239,10 +239,11 @@ view model =
                         , metallic = metallicTexture
                         }
             in
-            Scene3d.toHtml []
+            Scene3d.toHtml
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+                , antialiasing = Scene3d.multisampling
                 , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
                 , toneMapping = Scene3d.reinhardToneMapping 2

@@ -1,7 +1,5 @@
 module Scene3d exposing
     ( toHtml, unlit, sunny, cloudy, office
-    , Option
-    , multisampling, supersampling
     , Entity
     , quad, block, sphere, cylinder
     , mesh
@@ -19,6 +17,8 @@ module Scene3d exposing
     , exposureValue, maxLuminance, photographicExposure
     , ToneMapping
     , noToneMapping, reinhardToneMapping
+    , Antialiasing
+    , noAntialiasing, multisampling, supersampling
     , toWebGLEntities
     )
 
@@ -34,13 +34,6 @@ module is 'expensive'; meshes should generally be created once and then stored
 in your model.
 
 @docs toHtml, unlit, sunny, cloudy, office
-
-
-# Options
-
-@docs Option
-
-@docs multisampling, supersampling
 
 
 # Entities
@@ -141,6 +134,13 @@ directional lights to provide highlights.
 @docs ToneMapping
 
 @docs noToneMapping, reinhardToneMapping
+
+
+# Antialiasing
+
+@docs Antialiasing
+
+@docs noAntialiasing, multisampling, supersampling
 
 
 # Advanced
@@ -1267,20 +1267,19 @@ toWebGLEntities arguments drawables =
 
 
 toHtml :
-    List Option
-    ->
-        { lights : Lights coordinates
-        , camera : Camera3d Meters coordinates
-        , clipDepth : Length
-        , exposure : Exposure
-        , toneMapping : ToneMapping
-        , whiteBalance : Chromaticity
-        , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-        , background : Background coordinates
-        }
+    { lights : Lights coordinates
+    , camera : Camera3d Meters coordinates
+    , clipDepth : Length
+    , exposure : Exposure
+    , toneMapping : ToneMapping
+    , whiteBalance : Chromaticity
+    , antialiasing : Antialiasing
+    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , background : Background coordinates
+    }
     -> List (Entity coordinates)
     -> Html msg
-toHtml options arguments drawables =
+toHtml arguments drawables =
     let
         ( width, height ) =
             arguments.dimensions
@@ -1297,9 +1296,6 @@ toHtml options arguments drawables =
         backgroundColorString =
             Color.Transparent.toRGBAString givenBackgroundColor
 
-        optionValues =
-            collectOptionValues options
-
         commonWebGLOptions =
             [ WebGL.depth 1
             , WebGL.stencil 0
@@ -1307,20 +1303,18 @@ toHtml options arguments drawables =
             , WebGL.clearColor 0 0 0 0
             ]
 
-        webGLOptions =
-            if optionValues.multisampling then
-                WebGL.antialias :: commonWebGLOptions
+        -- Use key value to force WebGL context to be recreated if multisample
+        -- antialising is enabled/disabled
+        ( webGLOptions, key, scalingFactor ) =
+            case arguments.antialiasing of
+                NoAntialiasing ->
+                    ( commonWebGLOptions, "0", 1 )
 
-            else
-                commonWebGLOptions
+                Multisampling ->
+                    ( WebGL.antialias :: commonWebGLOptions, "1", 1 )
 
-        -- Force WebGL context to be recreated if multisampling option changes
-        key =
-            if optionValues.multisampling then
-                "1"
-
-            else
-                "0"
+                Supersampling value ->
+                    ( commonWebGLOptions, "0", value )
 
         widthCss =
             Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
@@ -1331,8 +1325,8 @@ toHtml options arguments drawables =
     Html.Keyed.node "div" [ Html.Attributes.style "padding" "0px", widthCss, heightCss ] <|
         [ ( key
           , WebGL.toHtmlWith webGLOptions
-                [ Html.Attributes.width (round (widthInPixels * optionValues.supersampling))
-                , Html.Attributes.height (round (heightInPixels * optionValues.supersampling))
+                [ Html.Attributes.width (round (widthInPixels * scalingFactor))
+                , Html.Attributes.height (round (heightInPixels * scalingFactor))
                 , widthCss
                 , heightCss
                 , Html.Attributes.style "display" "block"
@@ -1346,55 +1340,12 @@ toHtml options arguments drawables =
                     , toneMapping = arguments.toneMapping
                     , whiteBalance = arguments.whiteBalance
                     , aspectRatio = Quantity.ratio width height
-                    , supersampling = optionValues.supersampling
+                    , supersampling = scalingFactor
                     }
                     drawables
                 )
           )
         ]
-
-
-type Option
-    = Multisampling Bool
-    | Supersampling Float
-
-
-multisampling : Bool -> Option
-multisampling =
-    Multisampling
-
-
-supersampling : Float -> Option
-supersampling =
-    Supersampling
-
-
-type alias OptionValues =
-    { multisampling : Bool
-    , supersampling : Float
-    }
-
-
-defaultOptionValues : OptionValues
-defaultOptionValues =
-    { multisampling = True
-    , supersampling = 1
-    }
-
-
-collectOptionValues : List Option -> OptionValues
-collectOptionValues options =
-    List.foldl setOption defaultOptionValues options
-
-
-setOption : Option -> OptionValues -> OptionValues
-setOption option currentValues =
-    case option of
-        Multisampling value ->
-            { currentValues | multisampling = value }
-
-        Supersampling value ->
-            { currentValues | supersampling = value }
 
 
 
@@ -1586,26 +1537,50 @@ reinhardToneMapping maxOverExposure =
 
 
 
+----- ANTIALIASING -----
+
+
+type Antialiasing
+    = NoAntialiasing
+    | Multisampling
+    | Supersampling Float
+
+
+noAntialiasing : Antialiasing
+noAntialiasing =
+    NoAntialiasing
+
+
+multisampling : Antialiasing
+multisampling =
+    Multisampling
+
+
+supersampling : Float -> Antialiasing
+supersampling factor =
+    Supersampling factor
+
+
+
 ----- PRESETS -----
 
 
 unlit :
-    List Option
-    ->
-        { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-        , camera : Camera3d Meters coordinates
-        , clipDepth : Length
-        , background : Background coordinates
-        }
+    { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , camera : Camera3d Meters coordinates
+    , clipDepth : Length
+    , background : Background coordinates
+    }
     -> List (Entity coordinates)
     -> Html msg
-unlit options arguments entities =
-    toHtml options
+unlit arguments entities =
+    toHtml
         { lights = noLights
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = maxLuminance (Luminance.nits 80) -- sRGB standard monitor brightness
         , whiteBalance = daylight
+        , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
         , toneMapping = noToneMapping
@@ -1614,19 +1589,17 @@ unlit options arguments entities =
 
 
 sunny :
-    List Option
-    ->
-        { upDirection : Direction3d coordinates
-        , sunlightDirection : Direction3d coordinates
-        , shadows : Bool
-        , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-        , camera : Camera3d Meters coordinates
-        , clipDepth : Length
-        , background : Background coordinates
-        }
+    { upDirection : Direction3d coordinates
+    , sunlightDirection : Direction3d coordinates
+    , shadows : Bool
+    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , camera : Camera3d Meters coordinates
+    , clipDepth : Length
+    , background : Background coordinates
+    }
     -> List (Entity coordinates)
     -> Html msg
-sunny options arguments entities =
+sunny arguments entities =
     let
         lightProperties =
             { direction = arguments.sunlightDirection
@@ -1659,13 +1632,14 @@ sunny options arguments entities =
                     sky
                     environment
     in
-    toHtml options
+    toHtml
         { lights = lights
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 15
         , toneMapping = noToneMapping
         , whiteBalance = daylight
+        , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
         }
@@ -1673,18 +1647,16 @@ sunny options arguments entities =
 
 
 cloudy :
-    List Option
-    ->
-        { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-        , upDirection : Direction3d coordinates
-        , camera : Camera3d Meters coordinates
-        , clipDepth : Length
-        , background : Background coordinates
-        }
+    { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , upDirection : Direction3d coordinates
+    , camera : Camera3d Meters coordinates
+    , clipDepth : Length
+    , background : Background coordinates
+    }
     -> List (Entity coordinates)
     -> Html msg
-cloudy options arguments entities =
-    toHtml options
+cloudy arguments entities =
+    toHtml
         { lights =
             oneLight <|
                 softLighting
@@ -1698,6 +1670,7 @@ cloudy options arguments entities =
         , exposure = exposureValue 13
         , toneMapping = noToneMapping
         , whiteBalance = daylight
+        , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
         }
@@ -1705,19 +1678,17 @@ cloudy options arguments entities =
 
 
 office :
-    List Option
-    ->
-        { lights : Lights coordinates
-        , upDirection : Direction3d coordinates
-        , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-        , camera : Camera3d Meters coordinates
-        , clipDepth : Length
-        , background : Background coordinates
-        }
+    { lights : Lights coordinates
+    , upDirection : Direction3d coordinates
+    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , camera : Camera3d Meters coordinates
+    , clipDepth : Length
+    , background : Background coordinates
+    }
     -> List (Entity coordinates)
     -> Html msg
-office options arguments entities =
-    toHtml options
+office arguments entities =
+    toHtml
         { lights =
             oneLight <|
                 softLighting
@@ -1731,6 +1702,7 @@ office options arguments entities =
         , exposure = exposureValue 7
         , toneMapping = noToneMapping
         , whiteBalance = fluorescentLighting
+        , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
         }

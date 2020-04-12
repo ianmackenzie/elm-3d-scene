@@ -38,7 +38,7 @@ main =
                 , verticalFieldOfView = Angle.degrees 30
                 }
     in
-    Scene3d.unlit []
+    Scene3d.unlit
         { camera = camera
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.backgroundColor Tango.orange1

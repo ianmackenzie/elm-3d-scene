@@ -144,7 +144,7 @@ view model =
     , body =
         case model.texture of
             Just texture ->
-                [ Scene3d.unlit []
+                [ Scene3d.unlit
                     { camera = camera
                     , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                     , background = Scene3d.backgroundColor Tango.plum1
