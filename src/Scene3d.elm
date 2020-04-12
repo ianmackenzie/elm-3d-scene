@@ -64,12 +64,12 @@ materials; `quad`s and `sphere`s support all materials, while `block`s and
 @docs group, nothing
 
 
-# Shadows
+## Shadows
 
 @docs shadow, withShadow
 
 
-# Transformations
+## Transformations
 
 These transformations are 'cheap' in that they don't actually transform the
 underlying mesh; under the hood they use a WebGL [transformation matrix](https://learnopengl.com/Getting-started/Transformations)
@@ -78,7 +78,7 @@ to change where that mesh gets rendered.
 @docs rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
 
 
-# Coordinate conversions
+## Coordinate conversions
 
 You're unlikely to need these functions right away but they can be very useful
 when setting up more complex scenes.
