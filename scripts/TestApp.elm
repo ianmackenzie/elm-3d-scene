@@ -1035,14 +1035,6 @@ view model =
         Loaded loadedModel ->
             case Array.get loadedModel.testCaseIndex loadedModel.testCases of
                 Just currentTestCase ->
-                    let
-                        buttonAttributes =
-                            [ Element.paddingXY 10 0
-                            , Element.Border.rounded 5
-                            , Element.Border.solid
-                            , Element.Border.width 1
-                            ]
-                    in
                     Element.layout [] <|
                         Element.column []
                             [ viewTestCase loadedModel currentTestCase
