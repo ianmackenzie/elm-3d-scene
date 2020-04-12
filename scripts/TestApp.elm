@@ -2,6 +2,7 @@ module TestApp exposing (main)
 
 import Angle exposing (Angle)
 import Array exposing (Array)
+import Array.Extra as Array
 import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
 import Browser
@@ -125,6 +126,108 @@ type alias TestCase =
     , antialiasing : Antialiasing
     , projection : Projection
     }
+
+
+toggleMesh : Mesh -> Mesh
+toggleMesh mesh =
+    case mesh of
+        Points ->
+            LineSegments
+
+        LineSegments ->
+            Polyline
+
+        Polyline ->
+            Triangles
+
+        Triangles ->
+            Facets
+
+        Facets ->
+            Plain
+
+        Plain ->
+            Uniform
+
+        Uniform ->
+            Unlit
+
+        Unlit ->
+            Textured
+
+        Textured ->
+            Quad
+
+        Quad ->
+            Block
+
+        Block ->
+            Sphere
+
+        Sphere ->
+            Cylinder
+
+        Cylinder ->
+            Points
+
+
+toggleShadow : Shadow -> Shadow
+toggleShadow shadow =
+    case shadow of
+        Shadow ->
+            NoShadow
+
+        NoShadow ->
+            Shadow
+
+
+toggleTransformation : Transformation -> Transformation
+toggleTransformation currentTransformation =
+    case currentTransformation of
+        NoTransformation ->
+            Translation
+
+        Translation ->
+            Rotation
+
+        Rotation ->
+            Scale
+
+        Scale ->
+            Mirror
+
+        Mirror ->
+            NoTransformation
+
+
+togglePointLight : PointLight -> PointLight
+togglePointLight currentPointLight =
+    case currentPointLight of
+        PointLight ->
+            NoPointLight
+
+        NoPointLight ->
+            PointLight
+
+
+toggleDirectionalLight : DirectionalLight -> DirectionalLight
+toggleDirectionalLight currentDirectionalLight =
+    case currentDirectionalLight of
+        DirectionalLight ->
+            NoDirectionalLight
+
+        NoDirectionalLight ->
+            DirectionalLight
+
+
+toggleSoftLighting : SoftLighting -> SoftLighting
+toggleSoftLighting currentSoftLighting =
+    case currentSoftLighting of
+        SoftLighting ->
+            NoSoftLighting
+
+        NoSoftLighting ->
+            SoftLighting
 
 
 parseMesh : String -> Result String Mesh
@@ -641,10 +744,31 @@ type Msg
     | Previous
     | First
     | Last
+    | ToggleShadow
+    | ToggleTransformation
+    | TogglePointLight
+    | ToggleDirectionalLight
+    | ToggleSoftLighting
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        updateCurrentTestCase function =
+            ( case model of
+                Loaded loadedModel ->
+                    Loaded
+                        { loadedModel
+                            | testCases =
+                                loadedModel.testCases
+                                    |> Array.update loadedModel.testCaseIndex function
+                        }
+
+                _ ->
+                    model
+            , Cmd.none
+            )
+    in
     case msg of
         TestCasesResponse (Ok fileContents) ->
             case model of
@@ -761,6 +885,46 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        ToggleShadow ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | shadow = toggleShadow testCase.shadow
+                    }
+                )
+
+        ToggleTransformation ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | transformation = toggleTransformation testCase.transformation
+                    }
+                )
+
+        TogglePointLight ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | pointLight = togglePointLight testCase.pointLight
+                    }
+                )
+
+        ToggleDirectionalLight ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | directionalLight = toggleDirectionalLight testCase.directionalLight
+                    }
+                )
+
+        ToggleSoftLighting ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | softLighting = toggleSoftLighting testCase.softLighting
+                    }
+                )
 
 
 parseObj : String -> TriangularMesh Vertex
@@ -1607,23 +1771,41 @@ toneMapping testCase =
 
 viewTestCaseProperties : Int -> TestCase -> Element Msg
 viewTestCaseProperties testCaseIndex testCase =
-    Element.table [ Element.Font.size 14, Element.spacingXY 10 0 ]
+    Element.table [ Element.Font.size 14, Element.spacingXY 10 3 ]
         { data =
-            [ ( "Test case:", String.fromInt (testCaseIndex + 1) )
-            , ( "Mesh:", Debug.toString testCase.mesh )
-            , ( "Material:", Debug.toString testCase.material )
-            , ( "Shadow:", Debug.toString testCase.shadow )
-            , ( "Transformation:", Debug.toString testCase.transformation )
-            , ( "Point light:", Debug.toString testCase.pointLight )
-            , ( "Directional light:", Debug.toString testCase.directionalLight )
-            , ( "Soft lighting:", Debug.toString testCase.softLighting )
-            , ( "Dynamic range:", Debug.toString testCase.dynamicRange )
-            , ( "Antialiasing:", Debug.toString testCase.antialiasing )
-            , ( "Projection:", Debug.toString testCase.projection )
+            [ ( "Test case:", String.fromInt (testCaseIndex + 1), Nothing )
+            , ( "Mesh:", Debug.toString testCase.mesh, Nothing )
+            , ( "Material:", Debug.toString testCase.material, Nothing )
+            , ( "Shadow:", Debug.toString testCase.shadow, Just ToggleShadow )
+            , ( "Transformation:", Debug.toString testCase.transformation, Just ToggleTransformation )
+            , ( "Point light:", Debug.toString testCase.pointLight, Just TogglePointLight )
+            , ( "Directional light:", Debug.toString testCase.directionalLight, Just ToggleDirectionalLight )
+            , ( "Soft lighting:", Debug.toString testCase.softLighting, Just ToggleSoftLighting )
+            , ( "Dynamic range:", Debug.toString testCase.dynamicRange, Nothing )
+            , ( "Antialiasing:", Debug.toString testCase.antialiasing, Nothing )
+            , ( "Projection:", Debug.toString testCase.projection, Nothing )
             ]
         , columns =
-            [ { header = Element.none, width = Element.shrink, view = \( property, _ ) -> Element.text property }
-            , { header = Element.none, width = Element.shrink, view = \( _, value ) -> Element.text value }
+            [ { header = Element.none, width = Element.shrink, view = \( property, _, _ ) -> Element.text property }
+            , { header = Element.none
+              , width = Element.shrink
+              , view =
+                    \( _, value, maybeMessage ) ->
+                        case maybeMessage of
+                            Nothing ->
+                                Element.text value
+
+                            Just message ->
+                                Input.button
+                                    [ Element.Border.rounded 3
+                                    , Element.Border.solid
+                                    , Element.Border.width 1
+                                    , Element.Border.color (Element.rgb 0.25 0.25 0.25)
+                                    ]
+                                    { onPress = Just message
+                                    , label = Element.text value
+                                    }
+              }
             ]
         }
 
