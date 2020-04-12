@@ -7,6 +7,7 @@ import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
 import Browser
 import Browser.Events
+import Browser.Navigation as Navigation
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Cylinder3d exposing (Cylinder3d)
@@ -43,6 +44,9 @@ import Task
 import Temperature
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
+import Url exposing (Url)
+import Url.Parser
+import Url.Parser.Query
 import Vector3d exposing (Vector3d)
 import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
@@ -656,26 +660,33 @@ cylinderEntity shadow material =
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
         , view = view
         , update = update
+        , onUrlChange = UrlChanged
+        , onUrlRequest = UrlChangeRequested
         , subscriptions = subscriptions
         }
 
 
 type alias LoadingModel =
     { testCases : Maybe (List TestCase)
+    , testCaseIndex : Int
+    , initialUrl : Url
     , colorTexture : Maybe (Material.Texture Color)
     , roughnessTexture : Maybe (Material.Texture Float)
     , metallicTexture : Maybe (Material.Texture Float)
     , suzanneMesh : Maybe (TriangularMesh Vertex)
+    , navigationKey : Navigation.Key
     }
 
 
 type alias LoadedModel =
     { testCases : Array TestCase
     , testCaseIndex : Int
+    , initialUrl : Url
+    , navigationKey : Navigation.Key
     , colorTexture : Material.Texture Color
     , roughnessTexture : Material.Texture Float
     , metallicTexture : Material.Texture Float
@@ -700,14 +711,38 @@ type Model
     | Error String
 
 
-init : flags -> ( Model, Cmd Msg )
-init flags =
+getTestCaseIndex : Url -> Int
+getTestCaseIndex url =
+    case Url.Parser.parse (Url.Parser.query (Url.Parser.Query.int "test_case")) { url | path = "" } of
+        Nothing ->
+            let
+                _ =
+                    Debug.log "Nothing" url
+            in
+            0
+
+        Just Nothing ->
+            let
+                _ =
+                    Debug.log "Just Nothing" url
+            in
+            0
+
+        Just (Just index) ->
+            index - 1
+
+
+init : flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
+init flags initialUrl navigationKey =
     ( Loading
         { testCases = Nothing
+        , testCaseIndex = getTestCaseIndex initialUrl
+        , initialUrl = initialUrl
         , colorTexture = Nothing
         , roughnessTexture = Nothing
         , metallicTexture = Nothing
         , suzanneMesh = Nothing
+        , navigationKey = navigationKey
         }
     , Cmd.batch
         [ Http.get
@@ -740,6 +775,8 @@ type Msg
     | RoughnessTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
     | MetallicTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
     | SuzanneMeshResponse (Result Http.Error String)
+    | UrlChanged Url
+    | UrlChangeRequested Browser.UrlRequest
     | Next
     | Previous
     | First
@@ -767,6 +804,17 @@ update msg model =
                 _ ->
                     model
             , Cmd.none
+            )
+
+        switchTo newIndex loadedModel =
+            let
+                initialUrl =
+                    loadedModel.initialUrl
+            in
+            ( Loaded { loadedModel | testCaseIndex = newIndex }
+            , Navigation.pushUrl loadedModel.navigationKey <|
+                Url.toString <|
+                    { initialUrl | query = Just ("test_case=" ++ String.fromInt (newIndex + 1)) }
             )
     in
     case msg of
@@ -843,12 +891,9 @@ update msg model =
         Previous ->
             case model of
                 Loaded loadedModel ->
-                    ( Loaded
-                        { loadedModel
-                            | testCaseIndex = max 0 (loadedModel.testCaseIndex - 1)
-                        }
-                    , Cmd.none
-                    )
+                    switchTo
+                        (max 0 (loadedModel.testCaseIndex - 1))
+                        loadedModel
 
                 _ ->
                     ( model, Cmd.none )
@@ -856,12 +901,9 @@ update msg model =
         Next ->
             case model of
                 Loaded loadedModel ->
-                    ( Loaded
-                        { loadedModel
-                            | testCaseIndex = min (loadedModel.testCaseIndex + 1) (Array.length loadedModel.testCases - 1)
-                        }
-                    , Cmd.none
-                    )
+                    switchTo
+                        (min (loadedModel.testCaseIndex + 1) (Array.length loadedModel.testCases - 1))
+                        loadedModel
 
                 _ ->
                     ( model, Cmd.none )
@@ -869,9 +911,7 @@ update msg model =
         First ->
             case model of
                 Loaded loadedModel ->
-                    ( Loaded { loadedModel | testCaseIndex = 0 }
-                    , Cmd.none
-                    )
+                    switchTo 0 loadedModel
 
                 _ ->
                     ( model, Cmd.none )
@@ -879,7 +919,28 @@ update msg model =
         Last ->
             case model of
                 Loaded loadedModel ->
-                    ( Loaded { loadedModel | testCaseIndex = Array.length loadedModel.testCases - 1 }
+                    switchTo (Array.length loadedModel.testCases - 1) loadedModel
+
+                _ ->
+                    ( model, Cmd.none )
+
+        UrlChangeRequested request ->
+            case model of
+                Loaded loadedModel ->
+                    case request of
+                        Browser.Internal url ->
+                            ( model, Navigation.pushUrl loadedModel.navigationKey (Url.toString url) )
+
+                        Browser.External url ->
+                            ( model, Navigation.load url )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        UrlChanged newUrl ->
+            case model of
+                Loaded loadedModel ->
+                    ( Loaded { loadedModel | testCaseIndex = getTestCaseIndex newUrl }
                     , Cmd.none
                     )
 
@@ -1132,7 +1193,9 @@ checkIfLoaded loadingModel =
                     Mesh.textured suzanneMesh
             in
             { testCases = testCaseArray testCases
-            , testCaseIndex = 0
+            , testCaseIndex = loadingModel.testCaseIndex
+            , navigationKey = loadingModel.navigationKey
+            , initialUrl = loadingModel.initialUrl
             , colorTexture = colorTexture
             , roughnessTexture = roughnessTexture
             , metallicTexture = metallicTexture
@@ -1190,25 +1253,29 @@ subscriptions model =
         )
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
-    case model of
-        Loading _ ->
-            Html.text "Loading..."
+    { title = "elm-3d-scene test app"
+    , body =
+        [ case model of
+            Loading _ ->
+                Html.text "Loading..."
 
-        Loaded loadedModel ->
-            case Array.get loadedModel.testCaseIndex loadedModel.testCases of
-                Just currentTestCase ->
-                    Element.layout [] <|
-                        Element.column []
-                            [ viewTestCase loadedModel currentTestCase
-                            ]
+            Loaded loadedModel ->
+                case Array.get loadedModel.testCaseIndex loadedModel.testCases of
+                    Just currentTestCase ->
+                        Element.layout [] <|
+                            Element.column []
+                                [ viewTestCase loadedModel currentTestCase
+                                ]
 
-                Nothing ->
-                    Html.text ""
+                    Nothing ->
+                        Html.text ""
 
-        Error message ->
-            Html.text message
+            Error message ->
+                Html.text message
+        ]
+    }
 
 
 entity : LoadedModel -> TestCase -> Maybe (Entity WorldCoordinates)
@@ -1769,6 +1836,17 @@ toneMapping testCase =
     Scene3d.reinhardToneMapping testCase.dynamicRange
 
 
+button : { onPress : Maybe Msg, label : Element Msg } -> Element Msg
+button properties =
+    Input.button
+        [ Element.Border.rounded 3
+        , Element.Border.solid
+        , Element.Border.width 1
+        , Element.Border.color (Element.rgb 0.25 0.25 0.25)
+        ]
+        properties
+
+
 viewTestCaseProperties : Int -> TestCase -> Element Msg
 viewTestCaseProperties testCaseIndex testCase =
     Element.table [ Element.Font.size 14, Element.spacingXY 10 3 ]
@@ -1796,12 +1874,7 @@ viewTestCaseProperties testCaseIndex testCase =
                                 Element.text value
 
                             Just message ->
-                                Input.button
-                                    [ Element.Border.rounded 3
-                                    , Element.Border.solid
-                                    , Element.Border.width 1
-                                    , Element.Border.color (Element.rgb 0.25 0.25 0.25)
-                                    ]
+                                button
                                     { onPress = Just message
                                     , label = Element.text value
                                     }
@@ -1855,24 +1928,40 @@ viewTestCase : LoadedModel -> TestCase -> Element Msg
 viewTestCase model testCase =
     case entity model testCase of
         Just validEntity ->
-            Element.row [ Element.spacing 10 ]
-                [ Element.el [] <|
-                    Element.html <|
-                        Scene3d.toHtml
-                            { lights = lights testCase
-                            , background = Scene3d.backgroundColor Tango.skyBlue1
-                            , camera = camera testCase
-                            , clipDepth = Length.meters 1
-                            , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-                            , antialiasing = antialiasing testCase
-                            , exposure = Scene3d.exposureValue 4
-                            , toneMapping = toneMapping testCase
-                            , whiteBalance = Scene3d.incandescentLighting
-                            }
-                            [ floor
-                            , axes
-                            , validEntity |> transformation testCase
-                            ]
+            Element.column [ Element.spacing 10 ]
+                [ Element.html <|
+                    Scene3d.toHtml
+                        { lights = lights testCase
+                        , background = Scene3d.transparentBackground
+                        , camera = camera testCase
+                        , clipDepth = Length.meters 1
+                        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+                        , antialiasing = antialiasing testCase
+                        , exposure = Scene3d.exposureValue 4
+                        , toneMapping = toneMapping testCase
+                        , whiteBalance = Scene3d.incandescentLighting
+                        }
+                        [ floor
+                        , axes
+                        , validEntity |> transformation testCase
+                        ]
+                , Element.image
+                    [ Element.width (Element.px 400)
+                    , Element.height (Element.px 300)
+                    ]
+                    { src = "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/test-v1/test" ++ String.fromInt (model.testCaseIndex + 1) ++ ".png"
+                    , description = "Reference render"
+                    }
+                , Element.row [] <|
+                    [ button
+                        { onPress = Just Previous
+                        , label = Element.text "Prev"
+                        }
+                    , button
+                        { onPress = Just Next
+                        , label = Element.text "Next"
+                        }
+                    ]
                 , viewTestCaseProperties model.testCaseIndex testCase
                 ]
 
