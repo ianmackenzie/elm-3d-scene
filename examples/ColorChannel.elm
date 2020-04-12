@@ -86,11 +86,12 @@ view model =
                         , intensity = Illuminance.lux 50000
                         }
 
-                environmentalLighting =
+                softLighting =
                     Scene3d.softLighting
                         { upDirection = Direction3d.z
-                        , above = { intensity = Illuminance.lux 30000, chromaticity = Scene3d.daylight }
-                        , below = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
+                        , chromaticity = Scene3d.daylight
+                        , intensityAbove = Illuminance.lux 30000
+                        , intensityBelow = Illuminance.lux 15000
                         }
 
                 quad =
@@ -114,8 +115,7 @@ view model =
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 800 )
                 , whiteBalance = Scene3d.daylight
                 , exposure = Scene3d.exposureValue 15
-                , lights = Scene3d.oneLight sunlight
-                , environmentalLighting = environmentalLighting
+                , lights = Scene3d.twoLights sunlight softLighting
                 , clipDepth = Length.centimeters 10
                 }
                 [ quad ]

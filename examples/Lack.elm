@@ -185,11 +185,11 @@ view { world, width, height } =
                 , direction = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60)
                 }
 
-        environmentalLighting =
-            Scene3d.softLighting
+        daylight =
+            Scene3d.overheadLighting
                 { upDirection = Direction3d.z
-                , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
-                , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.daylight }
+                , chromaticity = Scene3d.daylight
+                , intensity = Illuminance.lux 15000
                 }
 
         drawables =
@@ -212,8 +212,7 @@ view { world, width, height } =
         [ Scene3d.toHtml []
             { dimensions = ( width, height )
             , camera = camera
-            , lights = Scene3d.oneLight sunlight
-            , environmentalLighting = environmentalLighting
+            , lights = Scene3d.twoLights sunlight daylight
             , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
             , whiteBalance = Scene3d.daylight
             , clipDepth = meters 0.1

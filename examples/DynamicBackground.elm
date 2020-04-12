@@ -46,6 +46,14 @@ sunlight =
         }
 
 
+overheadLighting color =
+    Scene3d.overheadLighting
+        { upDirection = Direction3d.positiveZ
+        , chromaticity = Scene3d.chromaticity color
+        , intensity = Illuminance.lux 10000
+        }
+
+
 camera : Camera3d Meters World
 camera =
     Camera3d.perspective
@@ -64,7 +72,7 @@ material =
 
 backgroundColor : Duration -> Color
 backgroundColor elapsedTime =
-    Color.rotateHue (45 * Duration.inSeconds elapsedTime) Tango.skyBlue2
+    Color.rotateHue (15 * Duration.inSeconds elapsedTime) Tango.skyBlue2
 
 
 main : Program () Duration Duration
@@ -76,22 +84,18 @@ main =
         , subscriptions = always (Browser.Events.onAnimationFrameDelta Duration.milliseconds)
         , view =
             \elapsedTime ->
+                let
+                    currentBackgroundColor =
+                        backgroundColor elapsedTime
+                in
                 Scene3d.toHtml []
                     { camera = camera
                     , clipDepth = Length.centimeters 0.5
                     , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-                    , environmentalLighting =
-                        Scene3d.softLighting
-                            { upDirection = Direction3d.positiveZ
-                            , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
-                            , below = { intensity = Quantity.zero, chromaticity = Scene3d.daylight }
-                            }
-                    , lights =
-                        Scene3d.oneLight sunlight
-                    , exposure =
-                        Scene3d.maxLuminance (Luminance.nits 5000)
+                    , lights = Scene3d.twoLights sunlight (overheadLighting currentBackgroundColor)
+                    , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
                     , whiteBalance = Scene3d.daylight
-                    , background = Scene3d.backgroundColor (backgroundColor elapsedTime)
+                    , background = Scene3d.backgroundColor currentBackgroundColor
                     }
                     [ Scene3d.sphere Scene3d.doesNotCastShadows material <|
                         Sphere3d.withRadius (Length.centimeters 5) Point3d.origin

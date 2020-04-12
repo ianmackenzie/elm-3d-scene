@@ -112,11 +112,11 @@ view { world, screenWidth, screenHeight } =
                 , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
                 }
 
-        environmentalLighting =
-            Scene3d.softLighting
+        daylight =
+            Scene3d.overheadLighting
                 { upDirection = Direction3d.z
-                , above = { intensity = Illuminance.lux 15000, chromaticity = Scene3d.daylight }
-                , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.daylight }
+                , chromaticity = Scene3d.daylight
+                , intensity = Illuminance.lux 15000
                 }
     in
     Html.div
@@ -127,8 +127,7 @@ view { world, screenWidth, screenHeight } =
         [ Scene3d.toHtml []
             { dimensions = ( pixels screenWidth, pixels screenHeight )
             , camera = camera
-            , lights = Scene3d.oneLight sunlight
-            , environmentalLighting = environmentalLighting
+            , lights = Scene3d.twoLights sunlight daylight
             , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
             , whiteBalance = Scene3d.daylight
             , background = Scene3d.transparentBackground

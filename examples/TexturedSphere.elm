@@ -243,7 +243,6 @@ view model =
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-                , environmentalLighting = Scene3d.noEnvironmentalLighting
                 , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
                 , whiteBalance = Scene3d.daylight

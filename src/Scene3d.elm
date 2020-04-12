@@ -10,10 +10,9 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight, overheadLighting
+    , Light, directionalLight, pointLight, overheadLighting, softLighting, disabledLight
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
-    , EnvironmentalLighting, noEnvironmentalLighting, softLighting
     , Chromaticity
     , chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
     , Exposure
@@ -114,16 +113,11 @@ directional lights to provide highlights.
 
 ## Lights
 
-@docs Light, directionalLight, pointLight, overheadLighting
+@docs Light, directionalLight, pointLight, overheadLighting, softLighting, disabledLight
 
 @docs CastsShadows, Yes, No, castsShadows, doesNotCastShadows
 
 @docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
-
-
-## Environmental lighting
-
-@docs EnvironmentalLighting, noEnvironmentalLighting, softLighting
 
 
 ## Chromaticity
@@ -430,7 +424,7 @@ disabledLight =
         , r = 0
         , g = 0
         , b = 0
-        , radius = 0
+        , parameter = 0
         }
 
 
@@ -444,7 +438,7 @@ lightPair (Types.Light first) (Types.Light second) =
         , m12 = first.r
         , m22 = first.g
         , m32 = first.b
-        , m42 = first.radius
+        , m42 = first.parameter
         , m13 = second.x
         , m23 = second.y
         , m33 = second.z
@@ -452,7 +446,7 @@ lightPair (Types.Light first) (Types.Light second) =
         , m14 = second.r
         , m24 = second.g
         , m34 = second.b
-        , m44 = second.radius
+        , m44 = second.parameter
         }
 
 
@@ -690,7 +684,7 @@ directionalLight (CastsShadows shadowFlag) light =
         , r = lux * Math.Vector3.getX rgb
         , g = lux * Math.Vector3.getY rgb
         , b = lux * Math.Vector3.getZ rgb
-        , radius = 0
+        , parameter = 0
         }
 
 
@@ -722,121 +716,72 @@ pointLight (CastsShadows shadowFlag) light =
         , r = lumens * Math.Vector3.getX rgb
         , g = lumens * Math.Vector3.getY rgb
         , b = lumens * Math.Vector3.getZ rgb
-        , radius = 0
+        , parameter = 0
         }
+
+
+softLighting :
+    { upDirection : Direction3d coordinates
+    , chromaticity : Chromaticity
+    , intensityAbove : Illuminance
+    , intensityBelow : Illuminance
+    }
+    -> Light coordinates (CastsShadows No)
+softLighting light =
+    if light.intensityAbove == Quantity.zero && light.intensityBelow == Quantity.zero then
+        disabledLight
+
+    else if
+        Quantity.abs light.intensityBelow
+            |> Quantity.greaterThan (Quantity.abs light.intensityAbove)
+    then
+        softLighting
+            { upDirection = Direction3d.reverse light.upDirection
+            , chromaticity = light.chromaticity
+            , intensityAbove = light.intensityBelow
+            , intensityBelow = light.intensityAbove
+            }
+
+    else
+        let
+            (LinearRgb rgb) =
+                ColorConversions.chromaticityToLinearRgb light.chromaticity
+
+            nitsAbove =
+                abs (Illuminance.inLux light.intensityAbove / pi)
+
+            nitsBelow =
+                abs (Illuminance.inLux light.intensityBelow / pi)
+
+            { x, y, z } =
+                Direction3d.unwrap light.upDirection
+        in
+        Types.Light
+            { type_ = 3
+            , castsShadows = False
+            , x = x
+            , y = y
+            , z = z
+            , r = nitsAbove * Math.Vector3.getX rgb
+            , g = nitsAbove * Math.Vector3.getY rgb
+            , b = nitsAbove * Math.Vector3.getZ rgb
+            , parameter = nitsBelow / nitsAbove
+            }
 
 
 overheadLighting :
-    { chromaticity : Chromaticity
+    { upDirection : Direction3d coordinates
+    , chromaticity : Chromaticity
     , intensity : Illuminance
-    , upDirection : Direction3d coordinates
     }
     -> Light coordinates (CastsShadows No)
-overheadLighting light =
-    let
-        (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb light.chromaticity
-
-        nits =
-            Illuminance.inLux light.intensity / pi
-
-        { x, y, z } =
-            Direction3d.unwrap light.upDirection
-    in
-    Types.Light
-        { type_ = 3
-        , castsShadows = False
-        , x = x
-        , y = y
-        , z = z
-        , r = nits * Math.Vector3.getX rgb
-        , g = nits * Math.Vector3.getY rgb
-        , b = nits * Math.Vector3.getZ rgb
-        , radius = 0
+overheadLighting arguments =
+    softLighting
+        { upDirection = arguments.upDirection
+        , chromaticity = arguments.chromaticity
+        , intensityAbove = arguments.intensity
+        , intensityBelow = Quantity.zero
         }
-
-
-
------ ENVIRONMENTAL LIGHTING ------
-
-
-type alias EnvironmentalLighting coordinates =
-    Types.EnvironmentalLighting coordinates
-
-
-environmentalLightingDisabled : Mat4
-environmentalLightingDisabled =
-    Math.Matrix4.fromRecord
-        { m11 = 0
-        , m21 = 0
-        , m31 = 0
-        , m41 = 0
-        , m12 = 0
-        , m22 = 0
-        , m32 = 0
-        , m42 = 0
-        , m13 = 0
-        , m23 = 0
-        , m33 = 0
-        , m43 = 0
-        , m14 = 0
-        , m24 = 0
-        , m34 = 0
-        , m44 = 0
-        }
-
-
-noEnvironmentalLighting : EnvironmentalLighting coordinates
-noEnvironmentalLighting =
-    Types.NoEnvironmentalLighting
-
-
-{-| Good default value for max luminance: 5000 nits
--}
-softLighting :
-    { upDirection : Direction3d coordinates
-    , above : { intensity : Illuminance, chromaticity : Chromaticity }
-    , below : { intensity : Illuminance, chromaticity : Chromaticity }
-    }
-    -> EnvironmentalLighting coordinates
-softLighting { upDirection, above, below } =
-    let
-        { x, y, z } =
-            Direction3d.unwrap upDirection
-
-        -- Convert total hemispherical illuminance to the equivalent environmental luminance
-        -- (see https://en.wikipedia.org/wiki/Lambert%27s_cosine_law#Relating_peak_luminous_intensity_and_luminous_flux)
-        aboveNits =
-            Illuminance.inLux above.intensity / pi
-
-        belowNits =
-            Illuminance.inLux below.intensity / pi
-
-        (LinearRgb aboveRgb) =
-            ColorConversions.chromaticityToLinearRgb above.chromaticity
-
-        (LinearRgb belowRgb) =
-            ColorConversions.chromaticityToLinearRgb below.chromaticity
-    in
-    Types.SoftLighting <|
-        Math.Matrix4.fromRecord
-            { m11 = x
-            , m21 = y
-            , m31 = z
-            , m41 = 1
-            , m12 = aboveNits * Math.Vector3.getX aboveRgb
-            , m22 = aboveNits * Math.Vector3.getY aboveRgb
-            , m32 = aboveNits * Math.Vector3.getZ aboveRgb
-            , m42 = 0
-            , m13 = belowNits * Math.Vector3.getX belowRgb
-            , m23 = belowNits * Math.Vector3.getY belowRgb
-            , m33 = belowNits * Math.Vector3.getZ belowRgb
-            , m43 = 0
-            , m14 = 0
-            , m24 = 0
-            , m34 = 0
-            , m44 = 0
-            }
 
 
 
@@ -905,8 +850,8 @@ type alias RenderPasses =
     }
 
 
-createRenderPass : Mat4 -> Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
-createRenderPass sceneProperties viewMatrix projectionMatrix ambientLightingMatrix transformation drawFunction =
+createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
+createRenderPass sceneProperties viewMatrix projectionMatrix transformation drawFunction =
     let
         normalSign =
             if transformation.isRightHanded then
@@ -929,11 +874,10 @@ createRenderPass sceneProperties viewMatrix projectionMatrix ambientLightingMatr
         transformation.isRightHanded
         viewMatrix
         projectionMatrix
-        ambientLightingMatrix
 
 
-collectRenderPasses : Mat4 -> Mat4 -> Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
-collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingMatrix currentTransformation node accumulated =
+collectRenderPasses : Mat4 -> Mat4 -> Mat4 -> Transformation -> Node -> RenderPasses -> RenderPasses
+collectRenderPasses sceneProperties viewMatrix projectionMatrix currentTransformation node accumulated =
     case node of
         EmptyNode ->
             accumulated
@@ -943,7 +887,6 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingM
                 sceneProperties
                 viewMatrix
                 projectionMatrix
-                ambientLightingMatrix
                 (Transformation.compose transformation currentTransformation)
                 childNode
                 accumulated
@@ -955,7 +898,6 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingM
                         sceneProperties
                         viewMatrix
                         projectionMatrix
-                        ambientLightingMatrix
                         currentTransformation
                         meshDrawFunction
                         :: accumulated.meshes
@@ -972,7 +914,6 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingM
                         sceneProperties
                         viewMatrix
                         projectionMatrix
-                        ambientLightingMatrix
                         currentTransformation
                         pointDrawFunction
                         :: accumulated.points
@@ -989,7 +930,6 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingM
                         sceneProperties
                         viewMatrix
                         projectionMatrix
-                        ambientLightingMatrix
                         currentTransformation
                         shadowDrawFunction
                         :: accumulated.shadows
@@ -1005,7 +945,6 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix ambientLightingM
                     sceneProperties
                     viewMatrix
                     projectionMatrix
-                    ambientLightingMatrix
                     currentTransformation
                 )
                 accumulated
@@ -1187,7 +1126,6 @@ getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ nodes =
 
 toWebGLEntities :
     { lights : Lights coordinates
-    , environmentalLighting : EnvironmentalLighting coordinates
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , exposure : Exposure
@@ -1267,20 +1205,11 @@ toWebGLEntities arguments drawables =
         viewMatrix =
             WebGL.viewMatrix viewpoint
 
-        environmentalLightingMatrix =
-            case arguments.environmentalLighting of
-                Types.SoftLighting matrix ->
-                    matrix
-
-                Types.NoEnvironmentalLighting ->
-                    environmentalLightingDisabled
-
         renderPasses =
             collectRenderPasses
                 sceneProperties
                 viewMatrix
                 projectionMatrix
-                environmentalLightingMatrix
                 Transformation.identity
                 rootNode
                 { meshes = []
@@ -1316,7 +1245,6 @@ toHtml :
     List Option
     ->
         { lights : Lights coordinates
-        , environmentalLighting : EnvironmentalLighting coordinates
         , camera : Camera3d Meters coordinates
         , clipDepth : Length
         , exposure : Exposure
@@ -1386,7 +1314,6 @@ toHtml options arguments drawables =
                 ]
                 (toWebGLEntities
                     { lights = arguments.lights
-                    , environmentalLighting = arguments.environmentalLighting
                     , camera = arguments.camera
                     , clipDepth = arguments.clipDepth
                     , exposure = arguments.exposure
@@ -1642,7 +1569,6 @@ unlit :
 unlit options arguments entities =
     toHtml options
         { lights = noLights
-        , environmentalLighting = noEnvironmentalLighting
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = maxLuminance Quantity.zero
@@ -1674,27 +1600,33 @@ sunny options arguments entities =
             , chromaticity = sunlight
             }
 
+        sky =
+            overheadLighting
+                { upDirection = arguments.upDirection
+                , chromaticity = blueSky
+                , intensity = Illuminance.lux 20000
+                }
+
+        environment =
+            overheadLighting
+                { upDirection = Direction3d.reverse arguments.upDirection
+                , chromaticity = daylight
+                , intensity = Illuminance.lux 15000
+                }
+
         lights =
             if arguments.shadows then
-                oneLight (directionalLight castsShadows lightProperties)
+                threeLights (directionalLight castsShadows lightProperties)
+                    sky
+                    environment
 
             else
-                oneLight (directionalLight doesNotCastShadows lightProperties)
+                threeLights (directionalLight doesNotCastShadows lightProperties)
+                    sky
+                    environment
     in
     toHtml options
         { lights = lights
-        , environmentalLighting =
-            softLighting
-                { upDirection = arguments.upDirection
-                , above =
-                    { intensity = Illuminance.lux 20000
-                    , chromaticity = colorTemperature (Temperature.kelvins 12000)
-                    }
-                , below =
-                    { intensity = Illuminance.lux 15000
-                    , chromaticity = daylight
-                    }
-                }
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 15
@@ -1718,19 +1650,14 @@ cloudy :
     -> Html msg
 cloudy options arguments entities =
     toHtml options
-        { lights = noLights
-        , environmentalLighting =
-            softLighting
-                { upDirection = arguments.upDirection
-                , above =
-                    { chromaticity = daylight
-                    , intensity = Illuminance.lux 1000
+        { lights =
+            oneLight <|
+                softLighting
+                    { upDirection = arguments.upDirection
+                    , chromaticity = daylight
+                    , intensityAbove = Illuminance.lux 1000
+                    , intensityBelow = Illuminance.lux 200
                     }
-                , below =
-                    { chromaticity = daylight
-                    , intensity = Illuminance.lux 200
-                    }
-                }
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 13
@@ -1755,19 +1682,14 @@ office :
     -> Html msg
 office options arguments entities =
     toHtml options
-        { lights = arguments.lights
-        , environmentalLighting =
-            softLighting
-                { upDirection = arguments.upDirection
-                , above =
-                    { chromaticity = fluorescentLighting
-                    , intensity = Illuminance.lux 400
+        { lights =
+            oneLight <|
+                softLighting
+                    { upDirection = arguments.upDirection
+                    , chromaticity = fluorescentLighting
+                    , intensityAbove = Illuminance.lux 400
+                    , intensityBelow = Illuminance.lux 100
                     }
-                , below =
-                    { chromaticity = fluorescentLighting
-                    , intensity = Illuminance.lux 100
-                    }
-                }
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 7

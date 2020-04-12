@@ -72,7 +72,6 @@ main =
         { camera = camera
         , clipDepth = Length.centimeters 0.5
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-        , environmentalLighting = Scene3d.noEnvironmentalLighting
         , lights = Scene3d.twoLights sunlight overheadLighting
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , whiteBalance = Scene3d.daylight

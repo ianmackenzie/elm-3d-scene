@@ -106,12 +106,12 @@ lightBulb =
         }
 
 
-environmentalLighting : Scene3d.EnvironmentalLighting World
-environmentalLighting =
-    Scene3d.softLighting
+daylight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.No)
+daylight =
+    Scene3d.overheadLighting
         { upDirection = Direction3d.positiveZ
-        , above = { intensity = Illuminance.lux 9000, chromaticity = Scene3d.daylight }
-        , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.daylight }
+        , chromaticity = Scene3d.daylight
+        , intensity = Illuminance.lux 9000
         }
 
 
@@ -128,14 +128,15 @@ main =
                         [ Html.text "Click to toggle between point and directional light" ]
                     , Html.div []
                         [ Scene3d.toHtml []
-                            { environmentalLighting = environmentalLighting
-                            , lights =
-                                Scene3d.oneLight <|
-                                    if usePointLight then
+                            { lights =
+                                Scene3d.twoLights
+                                    (if usePointLight then
                                         lightBulb
 
-                                    else
+                                     else
                                         sunlight
+                                    )
+                                    daylight
                             , camera = camera
                             , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )

@@ -27,14 +27,7 @@ main =
     Scene3d.toHtml []
         { camera = camera
         , dimensions = ( Pixels.pixels 1400, Pixels.pixels 900 )
-        , environmentalLighting =
-            Scene3d.softLighting
-                { upDirection = Direction3d.positiveZ
-                , above = { intensity = Illuminance.lux (pi * 5000), chromaticity = Scene3d.daylight }
-                , below = { intensity = Quantity.zero, chromaticity = Scene3d.daylight }
-                }
-        , lights =
-            Scene3d.oneLight sunlight
+        , lights = Scene3d.twoLights sunlight daylight
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , whiteBalance = Scene3d.daylight
         , background = Scene3d.transparentBackground
@@ -66,6 +59,14 @@ sunlight =
         { chromaticity = Scene3d.daylight
         , intensity = Illuminance.lux 5000
         , direction = Direction3d.yz (Angle.degrees -150)
+        }
+
+
+daylight =
+    Scene3d.overheadLighting
+        { upDirection = Direction3d.positiveZ
+        , chromaticity = Scene3d.daylight
+        , intensity = Illuminance.lux 15000
         }
 
 

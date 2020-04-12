@@ -101,12 +101,12 @@ lightBulb =
         }
 
 
-environmentalLighting : Scene3d.EnvironmentalLighting World
-environmentalLighting =
-    Scene3d.softLighting
+overheadLighting : Scene3d.Light World (Scene3d.CastsShadows Scene3d.No)
+overheadLighting =
+    Scene3d.overheadLighting
         { upDirection = Direction3d.positiveZ
-        , above = { intensity = Illuminance.lux 9000, chromaticity = Scene3d.fluorescentLighting }
-        , below = { intensity = Illuminance.lux 0, chromaticity = Scene3d.fluorescentLighting }
+        , chromaticity = Scene3d.fluorescentLighting
+        , intensity = Illuminance.lux 9000
         }
 
 
@@ -208,7 +208,7 @@ antialiasString antialiasing =
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always ( { antialiasing = NoAntialiasing, ev100 = 14, dynamicRange = 1 }, Cmd.none )
+        { init = always ( { antialiasing = Multisampling, ev100 = 14, dynamicRange = 1 }, Cmd.none )
         , update = \message model -> ( update message model, Cmd.none )
         , view =
             \{ antialiasing, ev100, dynamicRange } ->
@@ -224,8 +224,7 @@ main =
                                 else
                                     1
                             ]
-                            { environmentalLighting = environmentalLighting
-                            , lights = Scene3d.oneLight lightBulb
+                            { lights = Scene3d.twoLights lightBulb overheadLighting
                             , camera = camera
                             , clipDepth = meters 0.1
                             , dimensions = ( pixels 1024, pixels 768 )

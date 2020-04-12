@@ -160,7 +160,6 @@ type alias DrawFunction =
     -> Bool -- model matrix is right-handed
     -> Mat4 -- view matrix
     -> Mat4 -- projection matrix
-    -> Mat4 -- ambient lighting
     -> LightMatrices -- lights
     -> List WebGL.Settings.Setting -- stencil, depth, blend etc.
     -> WebGL.Entity
@@ -195,7 +194,7 @@ type Light coordinates castsShadows
     = Light
         { type_ : Float
         , castsShadows : Bool
-        , radius : Float
+        , parameter : Float
         , x : Float
         , y : Float
         , z : Float
@@ -203,8 +202,3 @@ type Light coordinates castsShadows
         , g : Float
         , b : Float
         }
-
-
-type EnvironmentalLighting coordinates
-    = NoEnvironmentalLighting
-    | SoftLighting Mat4
