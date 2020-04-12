@@ -1952,15 +1952,18 @@ viewTestCase model testCase =
                     { src = "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/test-v1/test" ++ String.fromInt (model.testCaseIndex + 1) ++ ".png"
                     , description = "Reference render"
                     }
-                , Element.row [] <|
-                    [ button
-                        { onPress = Just Previous
-                        , label = Element.text "Prev"
-                        }
-                    , button
-                        { onPress = Just Next
-                        , label = Element.text "Next"
-                        }
+                , Element.column []
+                    [ Element.row [] <|
+                        [ button
+                            { onPress = Just Previous
+                            , label = Element.text "Prev"
+                            }
+                        , button
+                            { onPress = Just Next
+                            , label = Element.text "Next"
+                            }
+                        ]
+                    , Element.el [ Element.Font.size 14 ] (Element.text "(or use arrow keys)")
                     ]
                 , viewTestCaseProperties model.testCaseIndex testCase
                 ]
