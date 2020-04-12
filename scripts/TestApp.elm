@@ -1587,19 +1587,22 @@ camera testCase =
                 }
 
 
-options : TestCase -> List Scene3d.Option
-options testCase =
-    Scene3d.dynamicRange testCase.dynamicRange
-        :: (case testCase.antialiasing of
-                NoAntialiasing ->
-                    [ Scene3d.multisampling False ]
+antialiasing : TestCase -> Scene3d.Antialiasing
+antialiasing testCase =
+    case testCase.antialiasing of
+        NoAntialiasing ->
+            Scene3d.noAntialiasing
 
-                Multisampling ->
-                    [ Scene3d.multisampling True ]
+        Multisampling ->
+            Scene3d.multisampling
 
-                Supersampling ->
-                    [ Scene3d.multisampling False, Scene3d.supersampling 2 ]
-           )
+        Supersampling ->
+            Scene3d.supersampling 2
+
+
+toneMapping : TestCase -> Scene3d.ToneMapping
+toneMapping testCase =
+    Scene3d.reinhardToneMapping testCase.dynamicRange
 
 
 viewTestCaseProperties : Int -> TestCase -> Element Msg
@@ -1673,13 +1676,15 @@ viewTestCase model testCase =
             Element.row [ Element.spacing 10 ]
                 [ Element.el [] <|
                     Element.html <|
-                        Scene3d.toHtml (options testCase)
+                        Scene3d.toHtml
                             { lights = lights testCase
                             , background = Scene3d.backgroundColor Tango.skyBlue1
                             , camera = camera testCase
                             , clipDepth = Length.meters 1
                             , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+                            , antialiasing = antialiasing testCase
                             , exposure = Scene3d.exposureValue 4
+                            , toneMapping = toneMapping testCase
                             , whiteBalance = Scene3d.incandescentLighting
                             }
                             [ floor
