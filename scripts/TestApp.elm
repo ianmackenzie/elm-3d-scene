@@ -746,7 +746,7 @@ init flags initialUrl navigationKey =
         }
     , Cmd.batch
         [ Http.get
-            { url = "test_cases_2.txt"
+            { url = "portability-testing/test_cases_2.txt"
             , expect = Http.expectString TestCasesResponse
             }
         , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_col.jpg"
