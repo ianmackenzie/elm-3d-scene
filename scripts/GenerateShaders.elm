@@ -838,10 +838,9 @@ softLighting =
             vec3 vT2 = cross(vH, vT1);
             float s = 0.5 * (1.0 + vH.z);
             
-            vec3 localHalfDirection = vec3(0.0, 0.0, 0.0);
+            vec3 localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
             vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
             
-            localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
             localLightDirection = -reflect(localViewDirection, localHalfDirection);
             vec3 specular = softLightingSpecularSample(luminanceAbove, luminanceBelow, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
             
