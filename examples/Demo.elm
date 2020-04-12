@@ -233,24 +233,6 @@ type Material
 
 view : Model -> Html Msg
 view model =
-    let
-        environmentalLighting =
-            if model.environmentalLighting then
-                Scene3d.softLighting
-                    { upDirection = Direction3d.z
-                    , above =
-                        { intensity = Illuminance.lux (pi * model.environmentalLuminanceAbove)
-                        , chromaticity = Scene3d.colorTemperature (Temperature.kelvins model.environmentalTemperatureAbove)
-                        }
-                    , below =
-                        { intensity = Illuminance.lux (pi * model.environmentalLuminanceBelow)
-                        , chromaticity = Scene3d.colorTemperature (Temperature.kelvins model.environmentalTemperatureBelow)
-                        }
-                    }
-
-            else
-                Scene3d.noEnvironmentalLighting
-    in
     Html.div []
         [ panel model
         , Html.div
@@ -269,7 +251,6 @@ view model =
                 , camera = camera model.distance model.azimuth model.elevation
                 , clipDepth = Length.meters 0.1
                 , lights = lights model.lights
-                , environmentalLighting = environmentalLighting
                 , exposure = Scene3d.exposureValue model.exposure
                 , whiteBalance = Scene3d.daylight
                 , background =
