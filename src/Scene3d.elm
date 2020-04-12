@@ -10,7 +10,7 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight, overheadLighting, softLighting, disabledLight
+    , Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting, disabledLight
     , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , Chromaticity
@@ -113,7 +113,7 @@ directional lights to provide highlights.
 
 ## Lights
 
-@docs Light, directionalLight, pointLight, overheadLighting, softLighting, disabledLight
+@docs Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting, disabledLight
 
 @docs CastsShadows, Yes, No, castsShadows, doesNotCastShadows
 
@@ -780,6 +780,20 @@ overheadLighting arguments =
         , chromaticity = arguments.chromaticity
         , intensityAbove = arguments.intensity
         , intensityBelow = Quantity.zero
+        }
+
+
+ambientLighting :
+    { chromaticity : Chromaticity
+    , intensity : Illuminance
+    }
+    -> Light coordinates (CastsShadows No)
+ambientLighting arguments =
+    softLighting
+        { upDirection = Direction3d.z
+        , chromaticity = arguments.chromaticity
+        , intensityAbove = arguments.intensity
+        , intensityBelow = arguments.intensity
         }
 
 
