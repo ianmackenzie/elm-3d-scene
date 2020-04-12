@@ -3,3 +3,4 @@ elm-script
 elm-script.cmd
 Shaders.elm
 pict.exe
+portability-testing/main.js

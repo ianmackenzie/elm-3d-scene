@@ -1255,7 +1255,7 @@ subscriptions model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "elm-3d-scene test app"
+    { title = "elm-3d-scene portability testing"
     , body =
         [ case model of
             Loading _ ->

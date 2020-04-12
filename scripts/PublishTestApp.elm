@@ -15,10 +15,14 @@ script { userPrivileges, workingDirectory } =
             , arguments =
                 [ "make"
                 , "--output"
-                , "C:/Git/ianmackenzie/ianmackenzie.github.io/elm-3d-scene/portability-testing.html"
+                , "C:/Git/ianmackenzie/ianmackenzie.github.io/elm-3d-scene/portability-testing/main.js"
                 , "TestApp.elm"
                 ]
             }
+            |> Script.ignoreResult
+        , File.copyInto
+            (Directory.writable userPrivileges "C:/Git/ianmackenzie/ianmackenzie.github.io/elm-3d-scene")
+            (File.in_ workingDirectory "portability-testing.html")
             |> Script.ignoreResult
         , File.copyInto
             (Directory.writable userPrivileges "C:/Git/ianmackenzie/ianmackenzie.github.io/elm-3d-scene/portability-testing")
