@@ -379,13 +379,12 @@ relativeTo frame entity =
 --   0 : disabled
 --   1 : directional (XYZ is direction to light, i.e. reversed light direction)
 --   2 : point (XYZ is light position)
+--   3 : soft lighting (XYZ is up direction, parameter is ratio of below luminance to above)
 --
--- radius is unused for now (will hopefully add sphere lights in the future)
---
--- [ x_i     r_i       x_j     r_j      ]
--- [ y_i     g_i       y_j     g_j      ]
--- [ z_i     b_i       z_j     b_j      ]
--- [ type_i  radius_i  type_j  radius_j ]
+-- [ x_i     r_i          x_j     r_j         ]
+-- [ y_i     g_i          y_j     g_j         ]
+-- [ z_i     b_i          z_j     b_j         ]
+-- [ type_i  parameter_i  type_j  parameter_j ]
 
 
 {-| A `Light` represents a single source of light in the scene, such as the sun
