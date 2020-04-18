@@ -199,8 +199,8 @@ cylinder =
                         |> Direction3d.toVector
             in
             [ ( { position = bottomCenter, normal = negativeZVector }
-              , { position = p0, normal = negativeZVector }
               , { position = p1, normal = negativeZVector }
+              , { position = p0, normal = negativeZVector }
               )
             , ( { position = p0, normal = startNormal }
               , { position = p1, normal = endNormal }
