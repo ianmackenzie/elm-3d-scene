@@ -156,13 +156,16 @@ cylinder =
         topCenter =
             Point3d.xyz zero zero topZ
 
-        wedge index =
+        wedge startIndex =
             let
                 startAngle =
-                    wedgeAngle |> Quantity.multiplyBy (toFloat index)
+                    wedgeAngle |> Quantity.multiplyBy (toFloat startIndex)
+
+                endIndex =
+                    startIndex + 1 |> modBy subdivisions
 
                 endAngle =
-                    startAngle |> Quantity.plus wedgeAngle
+                    wedgeAngle |> Quantity.multiplyBy (toFloat endIndex)
 
                 startX =
                     radius |> Quantity.multiplyBy (Angle.cos startAngle)
