@@ -132,17 +132,9 @@ type Mesh coordinates attributes
     | Points (BoundingBox3d Meters coordinates) Float (List (Point3d Meters coordinates)) (WebGL.Mesh PlainVertex)
 
 
-type alias ShadowEdge coordinates =
-    { startPoint : Point3d Meters coordinates
-    , endPoint : Point3d Meters coordinates
-    , leftNormal : Vector3d Unitless coordinates
-    , rightNormal : Vector3d Unitless coordinates
-    }
-
-
 type Shadow coordinates
     = EmptyShadow
-    | Shadow (List (ShadowEdge coordinates)) (WebGL.Mesh VertexWithNormal)
+    | Shadow (BoundingBox3d Meters coordinates) (TriangularMesh VertexWithNormal) (WebGL.Mesh VertexWithNormal)
 
 
 type alias LightMatrices =

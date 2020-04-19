@@ -814,7 +814,7 @@ sphereShadow givenSphere =
                 WebGL.entityWith (shadowSettings True settings)
                     Shaders.sphereShadowVertex
                     Shaders.shadowFragment
-                    sphereOutlineMesh
+                    sphereShadowMesh
                     { sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -825,36 +825,90 @@ sphereShadow givenSphere =
                     }
 
 
-sphereOutlineMesh : WebGL.Mesh { angle : Float, offsetScale : Float }
-sphereOutlineMesh =
-    WebGL.triangleStrip (buildSphereOutline numOutlineSegments [])
+sphereShadowMesh : WebGL.Mesh { radiusScale : Float, angle : Float, offsetScale : Float }
+sphereShadowMesh =
+    let
+        sphereShadowVertices =
+            buildSphereShadowVertices (numStrips - 1)
+                [ { radiusScale = 0, angle = 0, offsetScale = 0 }
+                , { radiusScale = 0, angle = 0, offsetScale = 1 }
+                ]
+
+        sphereShadowIndices =
+            buildSphereShadowIndices (numStrips - 1) []
+    in
+    WebGL.indexedTriangles sphereShadowVertices sphereShadowIndices
 
 
-numOutlineSegments : number
-numOutlineSegments =
+numStrips : number
+numStrips =
     72
 
 
-buildSphereOutline : Float -> List { angle : Float, offsetScale : Float } -> List { angle : Float, offsetScale : Float }
-buildSphereOutline index accumulated =
+numOutlineVertices : number
+numOutlineVertices =
+    2 * numStrips
+
+
+buildSphereShadowVertices :
+    Float
+    -> List { radiusScale : Float, angle : Float, offsetScale : Float }
+    -> List { radiusScale : Float, angle : Float, offsetScale : Float }
+buildSphereShadowVertices stripIndex accumulated =
     let
         angle =
-            Float.interpolateFrom 0 (2 * pi) (index / numOutlineSegments)
+            Float.interpolateFrom 0 (2 * pi) (stripIndex / numStrips)
 
         left =
-            { angle = angle, offsetScale = 0 }
+            { radiusScale = 1, angle = angle, offsetScale = 0 }
 
         right =
-            { angle = angle, offsetScale = 1 }
+            { radiusScale = 1, angle = angle, offsetScale = 1 }
 
         updated =
             left :: right :: accumulated
     in
-    if index == 0 then
+    if stripIndex == 0 then
         updated
 
     else
-        buildSphereOutline (index - 1) updated
+        buildSphereShadowVertices (stripIndex - 1) updated
+
+
+buildSphereShadowIndices : Int -> List ( Int, Int, Int ) -> List ( Int, Int, Int )
+buildSphereShadowIndices stripIndex accumulated =
+    let
+        --   d---e
+        --  /|  /|\
+        -- a | / | f
+        --  \|/  |/
+        --   b---c
+        a =
+            numOutlineVertices
+
+        b =
+            2 * stripIndex
+
+        c =
+            2 * stripIndex + 1
+
+        d =
+            2 * stripIndex + 2 |> modBy numOutlineVertices
+
+        e =
+            2 * stripIndex + 3 |> modBy numOutlineVertices
+
+        f =
+            numOutlineVertices + 1
+
+        updated =
+            ( a, b, d ) :: ( b, e, d ) :: ( b, c, e ) :: ( c, f, e ) :: accumulated
+    in
+    if stripIndex == 0 then
+        updated
+
+    else
+        buildSphereShadowIndices (stripIndex - 1) updated
 
 
 block : Bool -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
@@ -921,8 +975,7 @@ shadowDrawFunction givenShadow =
         Types.EmptyShadow ->
             Nothing
 
-        Types.Shadow _ webGLMesh ->
-            -- TODO take handedness into account?
+        Types.Shadow _ _ webGLMesh ->
             Just <|
                 \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                     WebGL.entityWith (shadowSettings isRightHanded settings)
@@ -938,42 +991,36 @@ shadowDrawFunction givenShadow =
                         }
 
 
-quadShadowVertices : WebGL.Mesh { quadShadowVertex : Vec2 }
-quadShadowVertices =
-    WebGL.triangles
-        [ ( { quadShadowVertex = Math.Vector2.vec2 0 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 1 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 1 1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 1 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 0 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 0 -1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 1 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 2 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 2 1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 2 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 1 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 1 -1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 2 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 3 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 3 1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 3 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 2 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 2 -1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 3 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 0 -1 }
-          , { quadShadowVertex = Math.Vector2.vec2 0 1 }
-          )
-        , ( { quadShadowVertex = Math.Vector2.vec2 0 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 3 1 }
-          , { quadShadowVertex = Math.Vector2.vec2 3 -1 }
-          )
-        ]
+quadShadowMesh : WebGL.Mesh { quadShadowVertex : Vec2 }
+quadShadowMesh =
+    let
+        quadShadowVertices =
+            [ { quadShadowVertex = Math.Vector2.vec2 0 1 } -- 0
+            , { quadShadowVertex = Math.Vector2.vec2 1 1 } -- 1
+            , { quadShadowVertex = Math.Vector2.vec2 2 1 } -- 2
+            , { quadShadowVertex = Math.Vector2.vec2 3 1 } -- 3
+            , { quadShadowVertex = Math.Vector2.vec2 0 -1 } -- 4
+            , { quadShadowVertex = Math.Vector2.vec2 1 -1 } -- 5
+            , { quadShadowVertex = Math.Vector2.vec2 2 -1 } -- 6
+            , { quadShadowVertex = Math.Vector2.vec2 3 -1 } -- 7
+            ]
+
+        quadShadowFaces =
+            [ ( 0, 1, 2 ) -- top
+            , ( 0, 2, 3 )
+            , ( 4, 6, 5 ) -- bottom
+            , ( 4, 7, 6 )
+            , ( 4, 5, 1 ) -- side 1
+            , ( 1, 0, 4 )
+            , ( 5, 6, 2 ) -- side 2
+            , ( 2, 1, 5 )
+            , ( 6, 7, 3 ) -- side 3
+            , ( 3, 2, 6 )
+            , ( 7, 4, 0 ) -- side 4
+            , ( 0, 3, 7 )
+            ]
+    in
+    WebGL.indexedTriangles quadShadowVertices quadShadowFaces
 
 
 quadShadow :
@@ -989,7 +1036,7 @@ quadShadow firstPoint secondPoint thirdPoint fourthPoint =
                 WebGL.entityWith (shadowSettings isRightHanded settings)
                     Shaders.quadShadowVertex
                     Shaders.shadowFragment
-                    quadShadowVertices
+                    quadShadowMesh
                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale

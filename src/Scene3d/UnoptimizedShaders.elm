@@ -701,8 +701,9 @@ shadowVertex =
             vec4 rgb_parameter = shadowLight[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_parameter);
             vec3 offset = vec3(0.0, 0.0, 0.0);
+            float sceneDiameter = sceneProperties[3][1];
             if (dot(directionToLight, worldNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
+                offset = -sceneDiameter * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
             return projectionMatrix * (viewMatrix * offsetPosition);
@@ -810,8 +811,9 @@ quadShadowVertex =
             vec4 rgb_parameter = shadowLight[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_parameter);
             vec3 offset = vec3(0.0, 0.0, 0.0);
+            float sceneDiameter = sceneProperties[3][1];
             if (dot(directionToLight, worldNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
+                offset = -sceneDiameter * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
             return projectionMatrix * (viewMatrix * offsetPosition);
@@ -842,6 +844,7 @@ sphereShadowVertex :
         { attributes
             | angle : Float
             , offsetScale : Float
+            , radiusScale : Float
         }
         { uniforms
             | modelScale : Vec4
@@ -858,6 +861,7 @@ sphereShadowVertex =
         
         attribute float angle;
         attribute float offsetScale;
+        attribute float radiusScale;
         
         uniform vec4 modelScale;
         uniform mat4 modelMatrix;
@@ -925,7 +929,7 @@ sphereShadowVertex =
                 float rSquared = r * r;
                 zOffset = rSquared / distanceToLight;
                 float zSquared = zOffset * zOffset;
-                adjustedRadius = sqrt(rSquared - zSquared);
+                adjustedRadius = sqrt(rSquared - zSquared) * radiusScale;
             }
             vec3 worldPosition =
                 worldCenter.xyz
@@ -933,7 +937,8 @@ sphereShadowVertex =
                     + xDirection * adjustedRadius * cos(angle)
                     + yDirection * adjustedRadius * sin(angle);
             vec3 directionToLight = getDirectionToLight(worldPosition, xyz_type, rgb_parameter);
-            vec3 offset = -1.0e9 * offsetScale * directionToLight;
+            float sceneDiameter = sceneProperties[3][1];
+            vec3 offset = -sceneDiameter * offsetScale * directionToLight;
             vec4 offsetPosition = vec4(worldPosition + offset, 1.0);
             gl_Position = projectionMatrix * (viewMatrix * offsetPosition);
         }

@@ -57,7 +57,6 @@ import Scene3d.Types as Types
         , Bounds
         , PlainVertex
         , Shadow
-        , ShadowEdge
         , VertexWithNormal
         , VertexWithNormalAndUv
         , VertexWithTangent
@@ -581,33 +580,29 @@ shadow mesh =
                 vertexTriples =
                     List.map Triangle3d.vertices meshTriangles
             in
-            shadowImpl boundingBox (TriangularMesh.triangles vertexTriples)
+            shadowImpl boundingBox identity (TriangularMesh.triangles vertexTriples)
 
         Types.Facets boundingBox meshTriangles _ _ ->
             let
                 vertexTriples =
                     List.map Triangle3d.vertices meshTriangles
             in
-            shadowImpl boundingBox (TriangularMesh.triangles vertexTriples)
+            shadowImpl boundingBox identity (TriangularMesh.triangles vertexTriples)
 
         Types.Indexed boundingBox triangularMesh _ _ ->
-            shadowImpl boundingBox triangularMesh
+            shadowImpl boundingBox identity triangularMesh
 
         Types.MeshWithNormals boundingBox triangularMesh _ _ ->
-            shadowImpl boundingBox
-                (TriangularMesh.mapVertices .position triangularMesh)
+            shadowImpl boundingBox .position triangularMesh
 
         Types.MeshWithUvs boundingBox triangularMesh _ _ ->
-            shadowImpl boundingBox
-                (TriangularMesh.mapVertices .position triangularMesh)
+            shadowImpl boundingBox .position triangularMesh
 
         Types.MeshWithNormalsAndUvs boundingBox triangularMesh _ _ ->
-            shadowImpl boundingBox
-                (TriangularMesh.mapVertices .position triangularMesh)
+            shadowImpl boundingBox .position triangularMesh
 
         Types.MeshWithTangents boundingBox triangularMesh _ _ ->
-            shadowImpl boundingBox
-                (TriangularMesh.mapVertices .position triangularMesh)
+            shadowImpl boundingBox .position triangularMesh
 
         Types.LineSegments _ _ _ ->
             Types.EmptyShadow
@@ -619,176 +614,220 @@ shadow mesh =
             Types.EmptyShadow
 
 
-shadowImpl : BoundingBox3d Meters coordinates -> TriangularMesh (Point3d Meters coordinates) -> Shadow coordinates
-shadowImpl boundingBox triangularMesh =
+shadowImpl : BoundingBox3d Meters coordinates -> (a -> Point3d Meters coordinates) -> TriangularMesh a -> Shadow coordinates
+shadowImpl meshBounds getPosition triangularMesh =
     let
-        numVertices =
-            Array.length (TriangularMesh.vertices triangularMesh)
-
-        faceIndices =
-            TriangularMesh.faceIndices triangularMesh
-
-        faceVertices =
+        meshFaceVertices =
             TriangularMesh.faceVertices triangularMesh
 
-        shadowEdges =
-            buildShadowEdges numVertices faceIndices faceVertices Dict.empty
+        initialShadowVertices =
+            List.foldr (collectShadowVertices getPosition) [] meshFaceVertices
 
-        shadowVolumeFaces =
-            List.foldl collectShadowFaces [] shadowEdges
+        ( initialShadowFaceIndices, neighborDict, nextShadowVertexIndex ) =
+            visitFaces getPosition meshFaceVertices 0 [] Dict.empty
+
+        ( allShadowFaceIndices, extraShadowVertices ) =
+            ( initialShadowFaceIndices, [], nextShadowVertexIndex )
+                |> joinEdges getPosition neighborDict meshFaceVertices 0
+
+        allShadowVertices =
+            if List.isEmpty extraShadowVertices then
+                initialShadowVertices
+
+            else
+                initialShadowVertices ++ extraShadowVertices
     in
-    Types.Shadow shadowEdges (WebGL.triangles shadowVolumeFaces)
+    Types.Shadow meshBounds
+        (TriangularMesh.indexed (Array.fromList allShadowVertices) allShadowFaceIndices)
+        (WebGL.indexedTriangles allShadowVertices allShadowFaceIndices)
 
 
-buildShadowEdges :
-    Int
+collectShadowVertices :
+    (meshVertex -> Point3d Meters coordinates)
+    -> ( meshVertex, meshVertex, meshVertex )
+    -> List VertexWithNormal
+    -> List VertexWithNormal
+collectShadowVertices getPosition ( mv1, mv2, mv3 ) accumulated =
+    let
+        p1 =
+            getPosition mv1
+
+        p2 =
+            getPosition mv2
+
+        p3 =
+            getPosition mv3
+
+        faceNormal =
+            Vector3d.from p1 p2
+                |> Vector3d.cross (Vector3d.from p1 p3)
+                |> Vector3d.normalize
+                |> Vector3d.toVec3
+
+        sv1 =
+            { position = Point3d.toVec3 p1, normal = faceNormal }
+
+        sv2 =
+            { position = Point3d.toVec3 p2, normal = faceNormal }
+
+        sv3 =
+            { position = Point3d.toVec3 p3, normal = faceNormal }
+    in
+    sv1 :: sv2 :: sv3 :: accumulated
+
+
+type alias EdgeKey =
+    ( ( Float, Float, Float ), ( Float, Float, Float ) )
+
+
+edgeKey : Point3d Meters coordinates -> Point3d Meters coordinates -> EdgeKey
+edgeKey firstPoint secondPoint =
+    let
+        p1 =
+            Point3d.toMeters firstPoint
+
+        p2 =
+            Point3d.toMeters secondPoint
+    in
+    ( ( p1.x, p1.y, p1.z ), ( p2.x, p2.y, p2.z ) )
+
+
+visitFaces :
+    (meshVertex -> Point3d Meters coordinates)
+    -> List ( meshVertex, meshVertex, meshVertex )
+    -> Int
     -> List ( Int, Int, Int )
-    -> List ( Point3d Meters coordinates, Point3d Meters coordinates, Point3d Meters coordinates )
-    -> Dict Int (ShadowEdge coordinates)
-    -> List (ShadowEdge coordinates)
-buildShadowEdges numVertices faceIndices faceVertices edgeDictionary =
-    case faceIndices of
-        ( i, j, k ) :: remainingFaceIndices ->
-            case faceVertices of
-                ( p1, p2, p3 ) :: remainingFaceVertices ->
-                    let
-                        normal =
-                            Vector3d.from p1 p2
-                                |> Vector3d.cross (Vector3d.from p1 p3)
-                                |> Vector3d.normalize
+    -> Dict EdgeKey Int
+    -> ( List ( Int, Int, Int ), Dict EdgeKey Int, Int )
+visitFaces getPosition meshFaceVertices nextShadowVertexIndex shadowFaceIndices neighborDict =
+    case meshFaceVertices of
+        ( mv1, mv2, mv3 ) :: remainingMeshFaceVertices ->
+            let
+                p1 =
+                    getPosition mv1
 
-                        updatedEdgeDictionary =
-                            if normal == Vector3d.zero then
-                                -- Skip degenerate faces
-                                edgeDictionary
+                p2 =
+                    getPosition mv2
 
-                            else
-                                edgeDictionary
-                                    |> Dict.update (edgeKey numVertices i j)
-                                        (updateShadowEdge i j p1 p2 normal)
-                                    |> Dict.update (edgeKey numVertices j k)
-                                        (updateShadowEdge j k p2 p3 normal)
-                                    |> Dict.update (edgeKey numVertices k i)
-                                        (updateShadowEdge k i p3 p1 normal)
-                    in
-                    buildShadowEdges numVertices
-                        remainingFaceIndices
-                        remainingFaceVertices
-                        updatedEdgeDictionary
+                p3 =
+                    getPosition mv3
 
-                [] ->
-                    -- Should never happen, faceIndices and faceVertices should
-                    -- always be the same length
-                    []
+                a =
+                    nextShadowVertexIndex
+
+                b =
+                    nextShadowVertexIndex + 1
+
+                c =
+                    nextShadowVertexIndex + 2
+
+                updatedShadowFaceIndices =
+                    ( a, b, c ) :: shadowFaceIndices
+
+                updatedNeighborDict =
+                    neighborDict
+                        |> Dict.insert (edgeKey p2 p1) a
+                        |> Dict.insert (edgeKey p3 p2) b
+                        |> Dict.insert (edgeKey p1 p3) c
+            in
+            visitFaces
+                getPosition
+                remainingMeshFaceVertices
+                (nextShadowVertexIndex + 3)
+                updatedShadowFaceIndices
+                updatedNeighborDict
 
         [] ->
-            Dict.values edgeDictionary
+            ( shadowFaceIndices, neighborDict, nextShadowVertexIndex )
 
 
-collectShadowFaces :
-    ShadowEdge coordinates
-    -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
-    -> List ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
-collectShadowFaces { startPoint, endPoint, leftNormal, rightNormal } accumulated =
-    let
-        firstFace =
-            ( { position = Point3d.toVec3 startPoint, normal = Vector3d.toVec3 rightNormal }
-            , { position = Point3d.toVec3 endPoint, normal = Vector3d.toVec3 rightNormal }
-            , { position = Point3d.toVec3 endPoint, normal = Vector3d.toVec3 leftNormal }
-            )
-
-        secondFace =
-            ( { position = Point3d.toVec3 endPoint, normal = Vector3d.toVec3 leftNormal }
-            , { position = Point3d.toVec3 startPoint, normal = Vector3d.toVec3 leftNormal }
-            , { position = Point3d.toVec3 startPoint, normal = Vector3d.toVec3 rightNormal }
-            )
-    in
-    firstFace :: secondFace :: accumulated
-
-
-edgeKey : Int -> Int -> Int -> Int
-edgeKey numVertices i j =
-    if i < j then
-        i * numVertices + j
-
-    else
-        j * numVertices + i
-
-
-updateShadowEdge :
-    Int
+joinEdges :
+    (meshVertex -> Point3d Meters coordinates)
+    -> Dict EdgeKey Int
+    -> List ( meshVertex, meshVertex, meshVertex )
     -> Int
+    -> ( List ( Int, Int, Int ), List VertexWithNormal, Int )
+    -> ( List ( Int, Int, Int ), List VertexWithNormal )
+joinEdges getPosition neighborDict meshFaceVertices nextShadowVertexIndex state =
+    case meshFaceVertices of
+        ( mv1, mv2, mv3 ) :: remainingMeshFaceVertices ->
+            let
+                p1 =
+                    getPosition mv1
+
+                p2 =
+                    getPosition mv2
+
+                p3 =
+                    getPosition mv3
+
+                a =
+                    nextShadowVertexIndex
+
+                b =
+                    nextShadowVertexIndex + 1
+
+                c =
+                    nextShadowVertexIndex + 2
+            in
+            joinEdges
+                getPosition
+                neighborDict
+                remainingMeshFaceVertices
+                (nextShadowVertexIndex + 3)
+                (state
+                    |> joinEdge p1 p2 a b neighborDict
+                    |> joinEdge p2 p3 b c neighborDict
+                    |> joinEdge p3 p1 c a neighborDict
+                )
+
+        [] ->
+            let
+                ( shadowFaceIndices, extraShadowVertices, _ ) =
+                    state
+            in
+            ( shadowFaceIndices, List.reverse extraShadowVertices )
+
+
+zeroVec3 : Vec3
+zeroVec3 =
+    Math.Vector3.vec3 0 0 0
+
+
+joinEdge :
+    Point3d Meters coordinates
     -> Point3d Meters coordinates
-    -> Point3d Meters coordinates
-    -> Vector3d Unitless coordinates
-    -> Maybe (ShadowEdge coordinates)
-    -> Maybe (ShadowEdge coordinates)
-updateShadowEdge i j pi pj normalVector currentEntry =
-    case currentEntry of
+    -> Int
+    -> Int
+    -> Dict EdgeKey Int
+    -> ( List ( Int, Int, Int ), List VertexWithNormal, Int )
+    -> ( List ( Int, Int, Int ), List VertexWithNormal, Int )
+joinEdge p1 p2 start end neighborDict ( shadowFaceIndices, extraShadowVertices, nextShadowVertexIndex ) =
+    case Dict.get (edgeKey p1 p2) neighborDict of
+        Just opposite ->
+            ( ( start, opposite, end ) :: shadowFaceIndices
+            , extraShadowVertices
+            , nextShadowVertexIndex
+            )
+
         Nothing ->
-            if i < j then
-                Just
-                    { startPoint = pi
-                    , endPoint = pj
-                    , leftNormal = normalVector
-                    , rightNormal = Vector3d.zero
-                    }
+            let
+                v1 =
+                    { position = Point3d.toVec3 p1, normal = zeroVec3 }
 
-            else
-                Just
-                    { startPoint = pj
-                    , endPoint = pi
-                    , leftNormal = Vector3d.zero
-                    , rightNormal = normalVector
-                    }
+                v2 =
+                    { position = Point3d.toVec3 p2, normal = zeroVec3 }
 
-        Just currentEdge ->
-            if i < j then
-                if currentEdge.leftNormal == Vector3d.zero then
-                    if currentEdge.rightNormal == Vector3d.zero then
-                        -- Degenerate edge, leave as is
-                        currentEntry
+                a =
+                    nextShadowVertexIndex
 
-                    else
-                        -- Add left normal to edge
-                        Just
-                            { startPoint = currentEdge.startPoint
-                            , endPoint = currentEdge.endPoint
-                            , leftNormal = normalVector
-                            , rightNormal = currentEdge.rightNormal
-                            }
-
-                else
-                    -- Encountered a degenerate edge, , mark it as degenerate
-                    Just
-                        { startPoint = currentEdge.startPoint
-                        , endPoint = currentEdge.endPoint
-                        , leftNormal = Vector3d.zero
-                        , rightNormal = Vector3d.zero
-                        }
-
-            else if currentEdge.rightNormal == Vector3d.zero then
-                if currentEdge.leftNormal == Vector3d.zero then
-                    -- Degenerate edge, leave as is
-                    currentEntry
-
-                else
-                    -- Add right normal to edge
-                    Just
-                        { startPoint = currentEdge.startPoint
-                        , endPoint = currentEdge.endPoint
-                        , leftNormal = currentEdge.leftNormal
-                        , rightNormal = normalVector
-                        }
-
-            else
-                -- Found a degenerate edge, mark it as degenerate
-                Just
-                    { startPoint = currentEdge.startPoint
-                    , endPoint = currentEdge.endPoint
-                    , leftNormal = Vector3d.zero
-                    , rightNormal = Vector3d.zero
-                    }
+                b =
+                    nextShadowVertexIndex + 1
+            in
+            ( ( start, a, b ) :: ( start, b, end ) :: shadowFaceIndices
+            , v2 :: v1 :: extraShadowVertices
+            , nextShadowVertexIndex + 2
+            )
 
 
 cullBackFaces : Mesh coordinates attributes -> Mesh coordinates attributes

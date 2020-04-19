@@ -152,6 +152,7 @@ directional lights to provide highlights.
 import Angle exposing (Angle)
 import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
+import BoundingBox3d exposing (BoundingBox3d)
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Color.Transparent
@@ -1041,7 +1042,7 @@ createShadowStencil =
     -- entity (in Scene3d.Entity.shadowSettings) since the exact test to perform
     -- depends on whether the current model matrix is right-handed or
     -- left-handed
-    [ DepthTest.less { write = False, near = 0, far = 1 }
+    [ DepthTest.greaterOrEqual { write = False, near = 0, far = 1 }
     , WebGL.Settings.colorMask False False False False
     ]
 
@@ -1052,64 +1053,81 @@ call renderPasses lightMatrices settings =
         |> List.map (\renderPass -> renderPass lightMatrices settings)
 
 
-getMaxDepth : Bounds -> Axis3d Meters coordinates -> Float -> Float -> Float -> Length
-getMaxDepth bounds viewAxis scaleX scaleY scaleZ =
+updateViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Float -> Float -> Bounds -> Maybe (BoundingBox3d Meters viewCoordinates) -> Maybe (BoundingBox3d Meters viewCoordinates)
+updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current =
     let
-        centerPoint =
-            Point3d.fromMeters bounds.centerPoint
+        i =
+            Direction3d.unwrap (Frame3d.xDirection viewFrame)
 
-        viewDir =
-            Direction3d.unwrap (Axis3d.direction viewAxis)
+        j =
+            Direction3d.unwrap (Frame3d.yDirection viewFrame)
 
-        (Quantity d0) =
-            Point3d.signedDistanceAlong viewAxis centerPoint
+        k =
+            Direction3d.unwrap (Frame3d.zDirection viewFrame)
 
-        dX =
-            abs (bounds.halfX * viewDir.x * scaleX)
+        modelXDimension =
+            2 * modelBounds.halfX * scaleX
 
-        dY =
-            abs (bounds.halfY * viewDir.y * scaleY)
+        modelYDimension =
+            2 * modelBounds.halfY * scaleY
 
-        dZ =
-            abs (bounds.halfZ * viewDir.z * scaleZ)
+        modelZDimension =
+            2 * modelBounds.halfZ * scaleZ
+
+        xDimension =
+            abs (modelXDimension * i.x) + abs (modelYDimension * i.y) + abs (modelZDimension * i.z)
+
+        yDimension =
+            abs (modelXDimension * j.x) + abs (modelYDimension * j.y) + abs (modelZDimension * j.z)
+
+        zDimension =
+            abs (modelXDimension * k.x) + abs (modelYDimension * k.y) + abs (modelZDimension * k.z)
+
+        nodeBounds =
+            BoundingBox3d.withDimensions
+                ( Quantity xDimension, Quantity yDimension, Quantity zDimension )
+                (Point3d.relativeTo viewFrame (Point3d.fromMeters modelBounds.centerPoint))
     in
-    Quantity (d0 + dX + dY + dZ)
+    case current of
+        Just currentBounds ->
+            Just (BoundingBox3d.union currentBounds nodeBounds)
+
+        Nothing ->
+            Just nodeBounds
 
 
-getFarClipDepth : Axis3d Meters coordinates -> Length -> Float -> Float -> Float -> List Node -> Length
-getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ nodes =
+getViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Float -> Float -> Maybe (BoundingBox3d Meters viewCoordinates) -> List Node -> Maybe (BoundingBox3d Meters viewCoordinates)
+getViewBounds viewFrame scaleX scaleY scaleZ current nodes =
     case nodes of
         first :: rest ->
             case first of
                 Types.EmptyNode ->
-                    getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ rest
+                    getViewBounds viewFrame scaleX scaleY scaleZ current rest
 
-                Types.MeshNode bounds _ ->
+                Types.MeshNode modelBounds _ ->
                     let
-                        updatedValue =
-                            Quantity.max currentValue
-                                (getMaxDepth bounds viewAxis scaleX scaleY scaleZ)
+                        updated =
+                            updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current
                     in
-                    getFarClipDepth viewAxis updatedValue scaleX scaleY scaleZ rest
+                    getViewBounds viewFrame scaleX scaleY scaleZ updated rest
 
                 Types.ShadowNode _ ->
-                    getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ rest
+                    getViewBounds viewFrame scaleX scaleY scaleZ current rest
 
-                Types.PointNode bounds _ ->
+                Types.PointNode modelBounds _ ->
                     let
-                        updatedValue =
-                            Quantity.max currentValue
-                                (getMaxDepth bounds viewAxis scaleX scaleY scaleZ)
+                        updated =
+                            updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current
                     in
-                    getFarClipDepth viewAxis updatedValue scaleX scaleY scaleZ rest
+                    getViewBounds viewFrame scaleX scaleY scaleZ updated rest
 
                 Types.Group childNodes ->
-                    getFarClipDepth
-                        viewAxis
-                        (getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ childNodes)
+                    getViewBounds
+                        viewFrame
                         scaleX
                         scaleY
                         scaleZ
+                        (getViewBounds viewFrame scaleX scaleY scaleZ current childNodes)
                         rest
 
                 Types.Transformed transformation childNode ->
@@ -1123,27 +1141,27 @@ getFarClipDepth viewAxis currentValue scaleX scaleY scaleZ nodes =
                         localScaleZ =
                             scaleZ * transformation.scaleZ
 
-                        localViewAxis =
-                            viewAxis
-                                |> Axis3d.relativeTo (Transformation.placementFrame transformation)
+                        localViewFrame =
+                            viewFrame
+                                |> Frame3d.relativeTo (Transformation.placementFrame transformation)
                     in
-                    getFarClipDepth
-                        viewAxis
-                        (getFarClipDepth
-                            localViewAxis
-                            currentValue
-                            localScaleX
-                            localScaleY
-                            localScaleZ
-                            [ childNode ]
-                        )
+                    getViewBounds
+                        viewFrame
                         scaleX
                         scaleY
                         scaleZ
+                        (getViewBounds
+                            localViewFrame
+                            localScaleX
+                            localScaleY
+                            localScaleZ
+                            current
+                            [ childNode ]
+                        )
                         rest
 
         [] ->
-            currentValue
+            current
 
 
 toWebGLEntities :
@@ -1166,104 +1184,140 @@ toWebGLEntities arguments drawables =
         (Types.Entity rootNode) =
             Entity.group drawables
 
-        viewAxis =
-            Axis3d.through (Viewpoint3d.eyePoint viewpoint) (Viewpoint3d.viewDirection viewpoint)
-
-        nearClipDepth =
-            Quantity.abs arguments.clipDepth
-
-        farClipDepth =
-            getFarClipDepth viewAxis nearClipDepth 1 1 1 [ rootNode ]
-                -- Add 1% extra to make sure objects right at the back don't get
-                -- culled (also to make sure the far clip depth is not exactly
-                -- equal to the near clip depth)
-                |> Quantity.multiplyBy 1.01
-
-        projectionMatrix =
-            WebGL.projectionMatrix arguments.camera
-                { aspectRatio = arguments.aspectRatio
-                , nearClipDepth = nearClipDepth
-                , farClipDepth = farClipDepth
-                }
-
-        projectionType =
-            (Math.Matrix4.toRecord projectionMatrix).m44
-
-        eyePointOrDirectionToCamera =
-            if projectionType == 0 then
-                Point3d.toMeters (Viewpoint3d.eyePoint viewpoint)
-
-            else
-                Viewpoint3d.viewDirection viewpoint
-                    |> Direction3d.reverse
-                    |> Direction3d.unwrap
-
-        (LinearRgb linearRgb) =
-            ColorConversions.chromaticityToLinearRgb arguments.whiteBalance
-
-        (Exposure (Quantity nits)) =
-            arguments.exposure
-
-        (ToneMapping dynamicRange) =
-            arguments.toneMapping
-
-        sceneProperties =
-            Math.Matrix4.fromRecord
-                { m11 = 0
-                , m21 = 0
-                , m31 = 0
-                , m41 = 0
-                , m12 = eyePointOrDirectionToCamera.x
-                , m22 = eyePointOrDirectionToCamera.y
-                , m32 = eyePointOrDirectionToCamera.z
-                , m42 = projectionType
-                , m13 = nits * Math.Vector3.getX linearRgb
-                , m23 = nits * Math.Vector3.getY linearRgb
-                , m33 = nits * Math.Vector3.getZ linearRgb
-                , m43 = dynamicRange
-                , m14 = arguments.supersampling
-                , m24 = 0
-                , m34 = 0
-                , m44 = 0
-                }
-
-        viewMatrix =
-            WebGL.viewMatrix viewpoint
-
-        renderPasses =
-            collectRenderPasses
-                sceneProperties
-                viewMatrix
-                projectionMatrix
-                Transformation.identity
-                rootNode
-                { meshes = []
-                , shadows = []
-                , points = []
+        viewFrame =
+            Frame3d.unsafe
+                { originPoint = Viewpoint3d.eyePoint viewpoint
+                , xDirection = Viewpoint3d.xDirection viewpoint
+                , yDirection = Viewpoint3d.yDirection viewpoint
+                , zDirection = Direction3d.reverse (Viewpoint3d.viewDirection viewpoint)
                 }
     in
-    case arguments.lights of
-        SingleUnshadowedPass lightMatrices ->
-            List.concat
-                [ call renderPasses.meshes lightMatrices depthTestDefault
-                , call renderPasses.points lightingDisabled depthTestDefault
-                ]
+    case getViewBounds viewFrame 1 1 1 Nothing [ rootNode ] of
+        Nothing ->
+            -- Empty view bounds means there's nothing to render!
+            []
 
-        SingleShadowedPass lightMatrices ->
-            List.concat
-                [ call renderPasses.meshes lightingDisabled depthTestDefault
-                , call renderPasses.shadows lightMatrices createShadowStencil
-                , call renderPasses.meshes lightMatrices outsideStencil
-                , call renderPasses.points lightingDisabled depthTestDefault
-                ]
+        Just viewBounds ->
+            let
+                ( xDimension, yDimension, zDimension ) =
+                    BoundingBox3d.dimensions viewBounds
 
-        TwoPasses allLightMatrices unshadowedLightMatrices ->
-            List.concat
-                [ call renderPasses.meshes allLightMatrices depthTestDefault
-                , call renderPasses.shadows allLightMatrices createShadowStencil
-                , call renderPasses.meshes unshadowedLightMatrices insideStencil
-                , call renderPasses.points lightingDisabled depthTestDefault
-                ]
+                -- Used as the offset value when constructing shadows,
+                -- to ensure they extend all the way out of the scene
+                sceneDiameter =
+                    Vector3d.length (Vector3d.xyz xDimension yDimension zDimension)
+
+                nearClipDepth =
+                    -- If nearest object is further away than the given
+                    -- clip depth, then use that (larger) depth instead
+                    -- to get better depth buffer accuracy for free
+                    Quantity.max
+                        (Quantity.abs arguments.clipDepth)
+                        (Quantity.negate (BoundingBox3d.maxZ viewBounds))
+                        -- Accommodate for a bit of roundoff error,
+                        -- ensure things right at the near plane
+                        -- don't get clipped
+                        |> Quantity.multiplyBy 0.99
+
+                farClipDepth =
+                    -- Start at the maximum distance anything is from
+                    -- the camera
+                    Quantity.negate (BoundingBox3d.minZ viewBounds)
+                        -- Ensure shadows don't get clipped (shadows
+                        -- extend past actual scene geometry)
+                        |> Quantity.plus sceneDiameter
+                        -- Accommodate for a bit of roundoff error,
+                        -- ensure things right at the far plane
+                        -- don't get clipped
+                        |> Quantity.multiplyBy 1.01
+
+                projectionMatrix =
+                    WebGL.projectionMatrix arguments.camera
+                        { aspectRatio = arguments.aspectRatio
+                        , nearClipDepth = nearClipDepth
+                        , farClipDepth = farClipDepth
+                        }
+
+                projectionType =
+                    (Math.Matrix4.toRecord projectionMatrix).m44
+
+                eyePointOrDirectionToCamera =
+                    if projectionType == 0 then
+                        -- Perspective projection
+                        Point3d.toMeters (Viewpoint3d.eyePoint viewpoint)
+
+                    else
+                        -- Orthographic projection
+                        Viewpoint3d.viewDirection viewpoint
+                            |> Direction3d.reverse
+                            |> Direction3d.unwrap
+
+                (LinearRgb linearRgb) =
+                    ColorConversions.chromaticityToLinearRgb arguments.whiteBalance
+
+                (Exposure (Quantity nits)) =
+                    arguments.exposure
+
+                (ToneMapping dynamicRange) =
+                    arguments.toneMapping
+
+                sceneProperties =
+                    Math.Matrix4.fromRecord
+                        { m11 = 0
+                        , m21 = 0
+                        , m31 = 0
+                        , m41 = 0
+                        , m12 = eyePointOrDirectionToCamera.x
+                        , m22 = eyePointOrDirectionToCamera.y
+                        , m32 = eyePointOrDirectionToCamera.z
+                        , m42 = projectionType
+                        , m13 = nits * Math.Vector3.getX linearRgb
+                        , m23 = nits * Math.Vector3.getY linearRgb
+                        , m33 = nits * Math.Vector3.getZ linearRgb
+                        , m43 = dynamicRange
+                        , m14 = arguments.supersampling
+                        , m24 = Length.inMeters sceneDiameter
+                        , m34 = 0
+                        , m44 = 0
+                        }
+
+                viewMatrix =
+                    WebGL.viewMatrix viewpoint
+
+                renderPasses =
+                    collectRenderPasses
+                        sceneProperties
+                        viewMatrix
+                        projectionMatrix
+                        Transformation.identity
+                        rootNode
+                        { meshes = []
+                        , shadows = []
+                        , points = []
+                        }
+            in
+            case arguments.lights of
+                SingleUnshadowedPass lightMatrices ->
+                    List.concat
+                        [ call renderPasses.meshes lightMatrices depthTestDefault
+                        , call renderPasses.points lightingDisabled depthTestDefault
+                        ]
+
+                SingleShadowedPass lightMatrices ->
+                    List.concat
+                        [ call renderPasses.meshes lightingDisabled depthTestDefault
+                        , call renderPasses.shadows lightMatrices createShadowStencil
+                        , call renderPasses.meshes lightMatrices outsideStencil
+                        , call renderPasses.points lightingDisabled depthTestDefault
+                        ]
+
+                TwoPasses allLightMatrices unshadowedLightMatrices ->
+                    List.concat
+                        [ call renderPasses.meshes allLightMatrices depthTestDefault
+                        , call renderPasses.shadows allLightMatrices createShadowStencil
+                        , call renderPasses.meshes unshadowedLightMatrices insideStencil
+                        , call renderPasses.points lightingDisabled depthTestDefault
+                        ]
 
 
 toHtml :

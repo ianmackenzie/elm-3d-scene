@@ -53,6 +53,11 @@ offsetScale =
     Glsl.attribute Glsl.float "offsetScale"
 
 
+radiusScale : Glsl.Attribute
+radiusScale =
+    Glsl.attribute Glsl.float "radiusScale"
+
+
 
 ---------- UNIFORMS ----------
 
@@ -940,8 +945,9 @@ shadowVertexPosition =
             vec4 rgb_parameter = shadowLight[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_parameter);
             vec3 offset = vec3(0.0, 0.0, 0.0);
+            float sceneDiameter = sceneProperties[3][1];
             if (dot(directionToLight, worldNormal) <= 0.0) {
-                offset = -1.0e9 * directionToLight;
+                offset = -sceneDiameter * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
             return projectionMatrix * (viewMatrix * offsetPosition);
@@ -1345,7 +1351,7 @@ quadShadowVertexShader =
 sphereShadowVertexShader : Glsl.Shader
 sphereShadowVertexShader =
     Glsl.vertexShader "sphereShadowVertex"
-        { attributes = [ angle, offsetScale ]
+        { attributes = [ angle, offsetScale, radiusScale ]
         , uniforms =
             [ modelScale
             , modelMatrix
@@ -1378,7 +1384,7 @@ sphereShadowVertexShader =
                 float rSquared = r * r;
                 zOffset = rSquared / distanceToLight;
                 float zSquared = zOffset * zOffset;
-                adjustedRadius = sqrt(rSquared - zSquared);
+                adjustedRadius = sqrt(rSquared - zSquared) * radiusScale;
             }
             vec3 worldPosition =
                 worldCenter.xyz
@@ -1386,7 +1392,8 @@ sphereShadowVertexShader =
                     + xDirection * adjustedRadius * cos(angle)
                     + yDirection * adjustedRadius * sin(angle);
             vec3 directionToLight = getDirectionToLight(worldPosition, xyz_type, rgb_parameter);
-            vec3 offset = -1.0e9 * offsetScale * directionToLight;
+            float sceneDiameter = sceneProperties[3][1];
+            vec3 offset = -sceneDiameter * offsetScale * directionToLight;
             vec4 offsetPosition = vec4(worldPosition + offset, 1.0);
             gl_Position = projectionMatrix * (viewMatrix * offsetPosition);
         }
