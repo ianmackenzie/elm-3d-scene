@@ -234,6 +234,44 @@ toggleSoftLighting currentSoftLighting =
             SoftLighting
 
 
+toggleProjection : Projection -> Projection
+toggleProjection currentProjection =
+    case currentProjection of
+        Perspective ->
+            Orthographic
+
+        Orthographic ->
+            Perspective
+
+
+toggleAntialiasing : Antialiasing -> Antialiasing
+toggleAntialiasing currentAntialiasing =
+    case currentAntialiasing of
+        NoAntialiasing ->
+            Multisampling
+
+        Multisampling ->
+            Supersampling
+
+        Supersampling ->
+            NoAntialiasing
+
+
+toggleDynamicRange : Float -> Float
+toggleDynamicRange currentDynamicRange =
+    if currentDynamicRange == 1 then
+        2
+
+    else if currentDynamicRange == 2 then
+        5
+
+    else if currentDynamicRange == 5 then
+        10
+
+    else
+        1
+
+
 parseMesh : String -> Result String Mesh
 parseMesh string =
     case string of
@@ -778,6 +816,9 @@ type Msg
     | TogglePointLight
     | ToggleDirectionalLight
     | ToggleSoftLighting
+    | ToggleProjection
+    | ToggleAntialiasing
+    | ToggleDynamicRange
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -976,6 +1017,30 @@ update msg model =
                 (\testCase ->
                     { testCase
                         | softLighting = toggleSoftLighting testCase.softLighting
+                    }
+                )
+
+        ToggleProjection ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | projection = toggleProjection testCase.projection
+                    }
+                )
+
+        ToggleAntialiasing ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | antialiasing = toggleAntialiasing testCase.antialiasing
+                    }
+                )
+
+        ToggleDynamicRange ->
+            updateCurrentTestCase
+                (\testCase ->
+                    { testCase
+                        | dynamicRange = toggleDynamicRange testCase.dynamicRange
                     }
                 )
 
@@ -1839,21 +1904,174 @@ button properties =
         properties
 
 
+meshDescription : Mesh -> String
+meshDescription mesh =
+    case mesh of
+        Points ->
+            "Points"
+
+        LineSegments ->
+            "Line segments"
+
+        Polyline ->
+            "Polyline"
+
+        Triangles ->
+            "Triangles"
+
+        Facets ->
+            "Facets"
+
+        Plain ->
+            "Plain"
+
+        Uniform ->
+            "Uniform"
+
+        Unlit ->
+            "Unlit"
+
+        Textured ->
+            "Textured"
+
+        Quad ->
+            "Quad"
+
+        Block ->
+            "Block"
+
+        Sphere ->
+            "Sphere"
+
+        Cylinder ->
+            "Cylinder"
+
+
+materialDescription : Material -> String
+materialDescription material =
+    case material of
+        Color ->
+            "Color"
+
+        Emissive ->
+            "Emissive"
+
+        Matte ->
+            "Matte"
+
+        Pbr ->
+            "PBR"
+
+        TexturedColor ->
+            "TexturedColor"
+
+        TexturedEmissive ->
+            "Textured emissive"
+
+        TexturedMatte ->
+            "Textured matte"
+
+        TexturedPbr ->
+            "Textured PBR"
+
+
+shadowDescription : Shadow -> String
+shadowDescription shadow =
+    case shadow of
+        Shadow ->
+            "Shadow"
+
+        NoShadow ->
+            "No shadow"
+
+
+transformationDescription : Transformation -> String
+transformationDescription givenTransformation =
+    case givenTransformation of
+        NoTransformation ->
+            "No transformation"
+
+        Translation ->
+            "Translation"
+
+        Rotation ->
+            "Rotation"
+
+        Scale ->
+            "Scale"
+
+        Mirror ->
+            "Mirror"
+
+
+pointLightDescription : PointLight -> String
+pointLightDescription pointLight =
+    case pointLight of
+        PointLight ->
+            "Point light"
+
+        NoPointLight ->
+            "No point light"
+
+
+directionalLightDescription : DirectionalLight -> String
+directionalLightDescription directionalLight =
+    case directionalLight of
+        DirectionalLight ->
+            "Directional light"
+
+        NoDirectionalLight ->
+            "No directional light"
+
+
+softLightingDescription : SoftLighting -> String
+softLightingDescription softLighting =
+    case softLighting of
+        SoftLighting ->
+            "Soft lighting"
+
+        NoSoftLighting ->
+            "No soft lighting"
+
+
+antialiasingDescription : Antialiasing -> String
+antialiasingDescription givenAntialiasing =
+    case givenAntialiasing of
+        NoAntialiasing ->
+            "No antialiasing"
+
+        Multisampling ->
+            "Multisampling"
+
+        Supersampling ->
+            "Supersampling"
+
+
+projectionDescription : Projection -> String
+projectionDescription projection =
+    case projection of
+        Perspective ->
+            "Perspective"
+
+        Orthographic ->
+            "Orthographic"
+
+
 viewTestCaseProperties : Int -> Int -> TestCase -> Element Msg
 viewTestCaseProperties testCaseIndex numTestCases testCase =
     Element.table [ Element.Font.size 14, Element.spacingXY 10 3 ]
         { data =
             [ ( "Test case:", String.fromInt (testCaseIndex + 1) ++ " of " ++ String.fromInt numTestCases, Nothing )
-            , ( "Mesh:", Debug.toString testCase.mesh, Nothing )
-            , ( "Material:", Debug.toString testCase.material, Nothing )
-            , ( "Shadow:", Debug.toString testCase.shadow, Just ToggleShadow )
-            , ( "Transformation:", Debug.toString testCase.transformation, Just ToggleTransformation )
-            , ( "Point light:", Debug.toString testCase.pointLight, Just TogglePointLight )
-            , ( "Directional light:", Debug.toString testCase.directionalLight, Just ToggleDirectionalLight )
-            , ( "Soft lighting:", Debug.toString testCase.softLighting, Just ToggleSoftLighting )
-            , ( "Dynamic range:", Debug.toString testCase.dynamicRange, Nothing )
-            , ( "Antialiasing:", Debug.toString testCase.antialiasing, Nothing )
-            , ( "Projection:", Debug.toString testCase.projection, Nothing )
+            , ( "Mesh:", meshDescription testCase.mesh, Nothing )
+            , ( "Material:", materialDescription testCase.material, Nothing )
+            , ( "Shadow:", shadowDescription testCase.shadow, Just ToggleShadow )
+            , ( "Transformation:", transformationDescription testCase.transformation, Just ToggleTransformation )
+            , ( "Point light:", pointLightDescription testCase.pointLight, Just TogglePointLight )
+            , ( "Directional light:", directionalLightDescription testCase.directionalLight, Just ToggleDirectionalLight )
+            , ( "Soft lighting:", softLightingDescription testCase.softLighting, Just ToggleSoftLighting )
+            , ( "Dynamic range:", String.fromFloat testCase.dynamicRange, Just ToggleDynamicRange )
+            , ( "Antialiasing:", antialiasingDescription testCase.antialiasing, Just ToggleAntialiasing )
+            , ( "Projection:", projectionDescription testCase.projection, Just ToggleProjection )
             ]
         , columns =
             [ { header = Element.none, width = Element.shrink, view = \( property, _, _ ) -> Element.text property }
