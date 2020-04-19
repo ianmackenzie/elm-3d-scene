@@ -27,6 +27,7 @@ import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance
 import LuminousFlux
+import Maybe.Extra as Maybe
 import Palette.Tango as Tango
 import Pixels
 import Plane3d exposing (Plane3d)
@@ -578,13 +579,12 @@ type alias Vertex =
     }
 
 
-suzanneTransform : Entity WorldCoordinates -> Entity WorldCoordinates
-suzanneTransform =
-    Scene3d.rotateAround Axis3d.z (Angle.degrees 90)
-        >> Scene3d.rotateAround
-            (Axis3d.through (Point3d.meters 0 0 1) Direction3d.y)
-            (Angle.degrees 90)
-        >> Scene3d.translateBy (Vector3d.meters 1 0 1)
+duckTransform : Entity WorldCoordinates -> Entity WorldCoordinates
+duckTransform =
+    Scene3d.scaleAbout Point3d.origin 0.05
+        >> Scene3d.rotateAround Axis3d.z (Angle.degrees 90)
+        >> Scene3d.translateIn Direction3d.x (Length.meters 0.5)
+        >> Scene3d.translateIn Direction3d.negativeZ (Length.centimeters 5)
 
 
 plainEntity :
@@ -596,7 +596,7 @@ plainEntity :
 plainEntity shadow material plainMesh plainShadow =
     Scene3d.mesh material plainMesh
         |> addShadow shadow plainShadow
-        |> suzanneTransform
+        |> duckTransform
 
 
 uniformEntity :
@@ -608,21 +608,21 @@ uniformEntity :
 uniformEntity shadow material uniformMesh uniformShadow =
     Scene3d.mesh material uniformMesh
         |> addShadow shadow uniformShadow
-        |> suzanneTransform
+        |> duckTransform
 
 
 unlitEntity : Shadow -> Material.Unlit WorldCoordinates -> Mesh.Unlit WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
 unlitEntity shadow material unlitMesh unlitShadow =
     Scene3d.mesh material unlitMesh
         |> addShadow shadow unlitShadow
-        |> suzanneTransform
+        |> duckTransform
 
 
 texturedEntity : Shadow -> Material.Textured WorldCoordinates -> Mesh.Textured WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
 texturedEntity shadow material texturedMesh texturedShadow =
     Scene3d.mesh material texturedMesh
         |> addShadow shadow texturedShadow
-        |> suzanneTransform
+        |> duckTransform
 
 
 quadEntity : Shadow -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
@@ -715,7 +715,8 @@ type alias LoadingModel =
     , colorTexture : Maybe (Material.Texture Color)
     , roughnessTexture : Maybe (Material.Texture Float)
     , metallicTexture : Maybe (Material.Texture Float)
-    , suzanneMesh : Maybe (TriangularMesh Vertex)
+    , duckMesh : Maybe (TriangularMesh Vertex)
+    , duckTexture : Maybe (Material.Texture Color)
     , navigationKey : Navigation.Key
     }
 
@@ -728,6 +729,7 @@ type alias LoadedModel =
     , colorTexture : Material.Texture Color
     , roughnessTexture : Material.Texture Float
     , metallicTexture : Material.Texture Float
+    , duckTexture : Material.Texture Color
     , trianglesMesh : Mesh.Plain WorldCoordinates
     , trianglesShadow : Mesh.Shadow WorldCoordinates
     , facetsMesh : Mesh.Uniform WorldCoordinates
@@ -771,7 +773,8 @@ init flags initialUrl navigationKey =
         , colorTexture = Nothing
         , roughnessTexture = Nothing
         , metallicTexture = Nothing
-        , suzanneMesh = Nothing
+        , duckMesh = Nothing
+        , duckTexture = Nothing
         , navigationKey = navigationKey
         }
     , Cmd.batch
@@ -785,9 +788,18 @@ init flags initialUrl navigationKey =
             |> Task.attempt RoughnessTextureResponse
         , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_met.jpg"
             |> Task.attempt MetallicTextureResponse
+        , Material.loadWith
+            { minify = WebGL.Texture.linearMipmapLinear
+            , magnify = WebGL.Texture.linear
+            , horizontalWrap = WebGL.Texture.repeat
+            , verticalWrap = WebGL.Texture.repeat
+            , flipY = True
+            }
+            "https://ianmackenzie.github.io/elm-3d-scene/examples/duck.jpg"
+            |> Task.attempt DuckTextureResponse
         , Http.get
-            { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/suzanne.obj"
-            , expect = Http.expectString SuzanneMeshResponse
+            { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/duck.obj"
+            , expect = Http.expectString DuckMeshResponse
             }
         ]
     )
@@ -804,7 +816,8 @@ type Msg
     | ColorTextureResponse (Result WebGL.Texture.Error (Material.Texture Color))
     | RoughnessTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
     | MetallicTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
-    | SuzanneMeshResponse (Result Http.Error String)
+    | DuckMeshResponse (Result Http.Error String)
+    | DuckTextureResponse (Result WebGL.Texture.Error (Material.Texture Color))
     | UrlChanged Url
     | UrlChangeRequested Browser.UrlRequest
     | Next
@@ -908,18 +921,31 @@ update msg model =
         MetallicTextureResponse (Err _) ->
             ( Error "Error loading metallic texture", Cmd.none )
 
-        SuzanneMeshResponse (Ok fileContents) ->
+        DuckMeshResponse (Ok fileContents) ->
             case model of
                 Loading loadingModel ->
-                    ( checkIfLoaded { loadingModel | suzanneMesh = Just (parseObj fileContents) }
+                    ( checkIfLoaded { loadingModel | duckMesh = Just (parseObj fileContents) }
                     , Cmd.none
                     )
 
                 _ ->
                     ( model, Cmd.none )
 
-        SuzanneMeshResponse (Err _) ->
-            ( Error "Error loading Suzanne mesh", Cmd.none )
+        DuckMeshResponse (Err _) ->
+            ( Error "Error loading duck mesh", Cmd.none )
+
+        DuckTextureResponse (Ok duckTexture) ->
+            case model of
+                Loading loadingModel ->
+                    ( checkIfLoaded { loadingModel | duckTexture = Just duckTexture }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        DuckTextureResponse (Err _) ->
+            ( Error "Error loading duck texture", Cmd.none )
 
         Previous ->
             case model of
@@ -1073,7 +1099,7 @@ parseObj fileContents =
             Array.fromList (List.filterMap parseNormal normalLines)
 
         faceVertexIndices =
-            List.filterMap parseFace faceLines
+            List.concatMap parseFace faceLines
 
         uniqueVertices =
             faceVertexIndices
@@ -1159,14 +1185,14 @@ parseUv line =
                 |> List.filterMap String.toFloat
     in
     case coordinates of
-        [ u, v ] ->
+        u :: v :: rest ->
             Just ( u, v )
 
         _ ->
             Nothing
 
 
-parseFace : String -> Maybe ( ( Int, Int, Int ), ( Int, Int, Int ), ( Int, Int, Int ) )
+parseFace : String -> List ( ( Int, Int, Int ), ( Int, Int, Int ), ( Int, Int, Int ) )
 parseFace line =
     let
         vertices =
@@ -1177,10 +1203,13 @@ parseFace line =
     in
     case vertices of
         [ v1, v2, v3 ] ->
-            Just ( v1, v2, v3 )
+            [ ( v1, v2, v3 ) ]
+
+        [ v1, v2, v3, v4 ] ->
+            [ ( v1, v2, v3 ), ( v1, v3, v4 ) ]
 
         _ ->
-            Nothing
+            []
 
 
 parseFaceVertex : String -> Maybe ( Int, Int, Int )
@@ -1213,11 +1242,11 @@ testCaseArray testCases =
 
 checkIfLoaded : LoadingModel -> Model
 checkIfLoaded loadingModel =
-    Maybe.map5
-        (\testCases colorTexture roughnessTexture metallicTexture suzanneMesh ->
+    Just
+        (\testCases colorTexture roughnessTexture metallicTexture duckMesh duckTexture ->
             let
                 plainTriangularMesh =
-                    TriangularMesh.mapVertices .position suzanneMesh
+                    TriangularMesh.mapVertices .position duckMesh
 
                 triangles =
                     List.map Triangle3d.fromVertices
@@ -1236,18 +1265,18 @@ checkIfLoaded loadingModel =
                     Mesh.uniform
                         (TriangularMesh.mapVertices
                             (\{ position, normal } -> { position = position, normal = normal })
-                            suzanneMesh
+                            duckMesh
                         )
 
                 unlitMesh =
                     Mesh.unlit
                         (TriangularMesh.mapVertices
                             (\{ position, uv } -> { position = position, uv = uv })
-                            suzanneMesh
+                            duckMesh
                         )
 
                 texturedMesh =
-                    Mesh.textured suzanneMesh
+                    Mesh.textured duckMesh
             in
             { testCases = testCaseArray testCases
             , testCaseIndex = loadingModel.testCaseIndex
@@ -1256,6 +1285,7 @@ checkIfLoaded loadingModel =
             , colorTexture = colorTexture
             , roughnessTexture = roughnessTexture
             , metallicTexture = metallicTexture
+            , duckTexture = duckTexture
             , trianglesMesh = trianglesMesh
             , trianglesShadow = Mesh.shadow trianglesMesh
             , facetsMesh = facetsMesh
@@ -1270,11 +1300,12 @@ checkIfLoaded loadingModel =
             , texturedShadow = Mesh.shadow texturedMesh
             }
         )
-        loadingModel.testCases
-        loadingModel.colorTexture
-        loadingModel.roughnessTexture
-        loadingModel.metallicTexture
-        loadingModel.suzanneMesh
+        |> Maybe.andMap loadingModel.testCases
+        |> Maybe.andMap loadingModel.colorTexture
+        |> Maybe.andMap loadingModel.roughnessTexture
+        |> Maybe.andMap loadingModel.metallicTexture
+        |> Maybe.andMap loadingModel.duckMesh
+        |> Maybe.andMap loadingModel.duckTexture
         |> Maybe.map Loaded
         |> Maybe.withDefault (Loading loadingModel)
 
@@ -1523,8 +1554,11 @@ entity model testCase =
 
         TexturedColor ->
             let
-                material =
+                metalMaterial =
                     Material.texturedColor model.colorTexture
+
+                duckMaterial =
+                    Material.texturedColor model.duckTexture
             in
             case testCase.mesh of
                 Points ->
@@ -1549,27 +1583,30 @@ entity model testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase.shadow duckMaterial model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase.shadow metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase.shadow metalMaterial)
 
                 Cylinder ->
                     Nothing
 
         TexturedEmissive ->
             let
-                material =
+                metalMaterial =
                     Material.texturedEmissive model.colorTexture (Luminance.nits 10)
+
+                duckMaterial =
+                    Material.texturedEmissive model.duckTexture (Luminance.nits 10)
             in
             case testCase.mesh of
                 Points ->
@@ -1594,27 +1631,30 @@ entity model testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase.shadow duckMaterial model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase.shadow metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase.shadow metalMaterial)
 
                 Cylinder ->
                     Nothing
 
         TexturedMatte ->
             let
-                material =
+                metalMaterial =
                     Material.texturedMatte model.colorTexture
+
+                duckMaterial =
+                    Material.texturedMatte model.duckTexture
             in
             case testCase.mesh of
                 Points ->
@@ -1642,27 +1682,34 @@ entity model testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase.shadow metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase.shadow metalMaterial)
 
                 Cylinder ->
                     Nothing
 
         TexturedPbr ->
             let
-                material =
+                metalMaterial =
                     Material.texturedPbr
                         { baseColor = model.colorTexture
                         , roughness = model.roughnessTexture
                         , metallic = model.metallicTexture
+                        }
+
+                duckMaterial =
+                    Material.texturedPbr
+                        { baseColor = model.duckTexture
+                        , roughness = Material.constant 0.25
+                        , metallic = Material.constant 0
                         }
             in
             case testCase.mesh of
@@ -1691,16 +1738,16 @@ entity model testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase.shadow metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase.shadow metalMaterial)
 
                 Cylinder ->
                     Nothing
@@ -1719,7 +1766,7 @@ transformation testCase =
             Scene3d.rotateAround Axis3d.z (Angle.degrees 45)
 
         Scale ->
-            Scene3d.scaleAbout (Point3d.meters 0 0 1) 1.5
+            Scene3d.scaleAbout Point3d.origin (4 / 3)
 
         Mirror ->
             Scene3d.mirrorAcross (Plane3d.yz |> Plane3d.translateIn Direction3d.x (Length.meters -0.5))
