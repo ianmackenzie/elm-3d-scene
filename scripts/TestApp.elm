@@ -715,17 +715,9 @@ getTestCaseIndex : Url -> Int
 getTestCaseIndex url =
     case Url.Parser.parse (Url.Parser.query (Url.Parser.Query.int "test_case")) { url | path = "" } of
         Nothing ->
-            let
-                _ =
-                    Debug.log "Nothing" url
-            in
             0
 
         Just Nothing ->
-            let
-                _ =
-                    Debug.log "Just Nothing" url
-            in
             0
 
         Just (Just index) ->
