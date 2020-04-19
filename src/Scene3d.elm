@@ -1044,6 +1044,7 @@ createShadowStencil =
     -- left-handed
     [ DepthTest.greaterOrEqual { write = False, near = 0, far = 1 }
     , WebGL.Settings.colorMask False False False False
+    , WebGL.Settings.polygonOffset 0.0 1.0
     ]
 
 
