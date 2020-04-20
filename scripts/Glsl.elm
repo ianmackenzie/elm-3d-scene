@@ -1,6 +1,7 @@
 module Glsl exposing
     ( function, vertexShader, fragmentShader, generateModule
     , Attribute, Uniform, Varying, Constant, Function, Type, Shader
+    , Precision, highp, mediump, lowp
     , float, vec2, vec3, vec4, mat4, sampler2D
     , attribute, uniform, varying, constant
     , ShaderType(..), shaderName, shaderType, shaderSource, setShaderSource
@@ -11,6 +12,8 @@ module Glsl exposing
 @docs function, vertexShader, fragmentShader, generateModule
 
 @docs Attribute, Uniform, Varying, Constant, Function, Type, Shader
+
+@docs Precision, highp, mediump, lowp
 
 @docs float, vec2, vec3, vec4, mat4, sampler2D
 
@@ -23,6 +26,12 @@ module Glsl exposing
 
 type Function
     = Function String (List Function) (List Constant)
+
+
+type Precision
+    = Highp
+    | Mediump
+    | Lowp
 
 
 type Type
@@ -60,24 +69,39 @@ sampler2D =
 
 
 type Attribute
-    = Attribute Type String
+    = Attribute Precision Type String
 
 
 type Uniform
-    = Uniform Type String
+    = Uniform Precision Type String
 
 
 type Varying
-    = Varying Type String
+    = Varying Precision Type String
 
 
 type Constant
-    = Constant Type String String
+    = Constant Precision Type String String
+
+
+highp : Precision
+highp =
+    Highp
+
+
+mediump : Precision
+mediump =
+    Mediump
+
+
+lowp : Precision
+lowp =
+    Lowp
 
 
 type InternalShaderType
     = Vertex (List Attribute)
-    | Fragment
+    | Fragment Precision
 
 
 type ShaderType
@@ -95,22 +119,22 @@ type Shader
         }
 
 
-attribute : Type -> String -> Attribute
+attribute : Precision -> Type -> String -> Attribute
 attribute =
     Attribute
 
 
-uniform : Type -> String -> Uniform
+uniform : Precision -> Type -> String -> Uniform
 uniform =
     Uniform
 
 
-varying : Type -> String -> Varying
+varying : Precision -> Type -> String -> Varying
 varying =
     Varying
 
 
-constant : Type -> String -> String -> Constant
+constant : Precision -> Type -> String -> String -> Constant
 constant =
     Constant
 
@@ -148,10 +172,10 @@ collectFunctionSources functions accumulated =
 
 
 addConstant : Constant -> List String -> List String
-addConstant (Constant (Type typeName) name value) accumulated =
+addConstant (Constant precision (Type typeName) name value) accumulated =
     let
         constantLine =
-            "const " ++ typeName ++ " " ++ name ++ " = " ++ value ++ ";"
+            "const " ++ precisionString precision ++ " " ++ typeName ++ " " ++ name ++ " = " ++ value ++ ";"
     in
     if List.member constantLine accumulated then
         accumulated
@@ -196,7 +220,8 @@ vertexShader name { attributes, uniforms, varyings, constants, functions } sourc
 fragmentShader :
     String
     ->
-        { uniforms : List Uniform
+        { precision : Precision
+        , uniforms : List Uniform
         , varyings : List Varying
         , constants : List Constant
         , functions : List Function
@@ -204,17 +229,18 @@ fragmentShader :
     -> String
     -> Shader
 fragmentShader name properties source =
-    shader name Fragment properties source
+    shader name (Fragment properties.precision) properties source
 
 
 shader :
     String
     -> InternalShaderType
     ->
-        { uniforms : List Uniform
-        , varyings : List Varying
-        , constants : List Constant
-        , functions : List Function
+        { a
+            | uniforms : List Uniform
+            , varyings : List Varying
+            , constants : List Constant
+            , functions : List Function
         }
     -> String
     -> Shader
@@ -230,7 +256,7 @@ shader name type_ { uniforms, varyings, constants, functions } source =
         glslSource =
             String.join "\n\n" <|
                 List.filter (not << String.isEmpty) <|
-                    [ "precision mediump float;"
+                    [ shaderPrecisionString type_
                     , attributesBlock type_
                     , uniformsBlock uniforms
                     , varyingsBlock varyings
@@ -246,6 +272,29 @@ shader name type_ { uniforms, varyings, constants, functions } source =
         , varyings = varyings
         , source = glslSource
         }
+
+
+precisionString : Precision -> String
+precisionString precision =
+    case precision of
+        Highp ->
+            "highp"
+
+        Mediump ->
+            "mediump"
+
+        Lowp ->
+            "lowp"
+
+
+shaderPrecisionString : InternalShaderType -> String
+shaderPrecisionString type_ =
+    case type_ of
+        Vertex _ ->
+            "precision highp float;"
+
+        Fragment precision ->
+            "precision " ++ precisionString precision ++ " float;"
 
 
 elmSource : Shader -> String
@@ -288,7 +337,7 @@ varyingsSignature varyings =
         [] ->
             "{}"
 
-        (Varying firstType firstName) :: rest ->
+        (Varying _ firstType firstName) :: rest ->
             String.join "\n"
                 [ "{ " ++ elmField firstType firstName
                 , String.join "\n" (List.map varyingField rest)
@@ -297,7 +346,7 @@ varyingsSignature varyings =
 
 
 varyingField : Varying -> String
-varyingField (Varying fieldType fieldName) =
+varyingField (Varying _ fieldType fieldName) =
     ", " ++ elmField fieldType fieldName
 
 
@@ -307,7 +356,7 @@ uniformsSignature uniforms =
         [] ->
             "uniforms"
 
-        (Uniform firstType firstName) :: rest ->
+        (Uniform _ firstType firstName) :: rest ->
             String.join "\n"
                 [ "{ uniforms"
                 , "    | " ++ elmField firstType firstName
@@ -317,7 +366,7 @@ uniformsSignature uniforms =
 
 
 uniformField : Uniform -> String
-uniformField (Uniform fieldType fieldName) =
+uniformField (Uniform _ fieldType fieldName) =
     "    , " ++ elmField fieldType fieldName
 
 
@@ -329,7 +378,7 @@ attributesSignature type_ =
                 [] ->
                     "attributes"
 
-                (Attribute firstType firstName) :: rest ->
+                (Attribute _ firstType firstName) :: rest ->
                     String.join "\n"
                         [ "{ attributes"
                         , "    | " ++ elmField firstType firstName
@@ -337,12 +386,12 @@ attributesSignature type_ =
                         , "}"
                         ]
 
-        Fragment ->
+        Fragment _ ->
             "{}"
 
 
 attributeField : Attribute -> String
-attributeField (Attribute fieldType fieldName) =
+attributeField (Attribute _ fieldType fieldName) =
     "    , " ++ elmField fieldType fieldName
 
 
@@ -363,7 +412,7 @@ attributesBlock type_ =
         Vertex attributes ->
             String.join "\n" (List.map attributeLine attributes)
 
-        Fragment ->
+        Fragment _ ->
             ""
 
 
@@ -378,18 +427,18 @@ varyingsBlock varyings =
 
 
 attributeLine : Attribute -> String
-attributeLine (Attribute (Type typeName) name) =
-    "attribute " ++ typeName ++ " " ++ name ++ ";"
+attributeLine (Attribute precision (Type typeName) name) =
+    "attribute " ++ precisionString precision ++ " " ++ typeName ++ " " ++ name ++ ";"
 
 
 uniformLine : Uniform -> String
-uniformLine (Uniform (Type typeName) name) =
-    "uniform " ++ typeName ++ " " ++ name ++ ";"
+uniformLine (Uniform precision (Type typeName) name) =
+    "uniform " ++ precisionString precision ++ " " ++ typeName ++ " " ++ name ++ ";"
 
 
 varyingLine : Varying -> String
-varyingLine (Varying (Type typeName) name) =
-    "varying " ++ typeName ++ " " ++ name ++ ";"
+varyingLine (Varying precision (Type typeName) name) =
+    "varying " ++ precisionString precision ++ " " ++ typeName ++ " " ++ name ++ ";"
 
 
 indentation : String -> Maybe Int
@@ -454,7 +503,7 @@ shaderType (Shader { type_ }) =
         Vertex _ ->
             VertexShader
 
-        Fragment ->
+        Fragment precision ->
             FragmentShader
 
 

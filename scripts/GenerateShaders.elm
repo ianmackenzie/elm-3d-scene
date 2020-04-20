@@ -15,47 +15,47 @@ import Script.File as File exposing (File, Writable)
 
 position : Glsl.Attribute
 position =
-    Glsl.attribute Glsl.vec3 "position"
+    Glsl.attribute Glsl.highp Glsl.vec3 "position"
 
 
 normal : Glsl.Attribute
 normal =
-    Glsl.attribute Glsl.vec3 "normal"
+    Glsl.attribute Glsl.highp Glsl.vec3 "normal"
 
 
 uv : Glsl.Attribute
 uv =
-    Glsl.attribute Glsl.vec2 "uv"
+    Glsl.attribute Glsl.mediump Glsl.vec2 "uv"
 
 
 tangent : Glsl.Attribute
 tangent =
-    Glsl.attribute Glsl.vec3 "tangent"
+    Glsl.attribute Glsl.highp Glsl.vec3 "tangent"
 
 
 quadVertex : Glsl.Attribute
 quadVertex =
-    Glsl.attribute Glsl.vec3 "quadVertex"
+    Glsl.attribute Glsl.highp Glsl.vec3 "quadVertex"
 
 
 quadShadowVertex : Glsl.Attribute
 quadShadowVertex =
-    Glsl.attribute Glsl.vec2 "quadShadowVertex"
+    Glsl.attribute Glsl.highp Glsl.vec2 "quadShadowVertex"
 
 
 angle : Glsl.Attribute
 angle =
-    Glsl.attribute Glsl.float "angle"
+    Glsl.attribute Glsl.highp Glsl.float "angle"
 
 
 offsetScale : Glsl.Attribute
 offsetScale =
-    Glsl.attribute Glsl.float "offsetScale"
+    Glsl.attribute Glsl.highp Glsl.float "offsetScale"
 
 
 radiusScale : Glsl.Attribute
 radiusScale =
-    Glsl.attribute Glsl.float "radiusScale"
+    Glsl.attribute Glsl.highp Glsl.float "radiusScale"
 
 
 
@@ -64,162 +64,162 @@ radiusScale =
 
 modelScale : Glsl.Uniform
 modelScale =
-    Glsl.uniform Glsl.vec4 "modelScale"
+    Glsl.uniform Glsl.highp Glsl.vec4 "modelScale"
 
 
 modelMatrix : Glsl.Uniform
 modelMatrix =
-    Glsl.uniform Glsl.mat4 "modelMatrix"
+    Glsl.uniform Glsl.highp Glsl.mat4 "modelMatrix"
 
 
 viewMatrix : Glsl.Uniform
 viewMatrix =
-    Glsl.uniform Glsl.mat4 "viewMatrix"
+    Glsl.uniform Glsl.highp Glsl.mat4 "viewMatrix"
 
 
 projectionMatrix : Glsl.Uniform
 projectionMatrix =
-    Glsl.uniform Glsl.mat4 "projectionMatrix"
+    Glsl.uniform Glsl.highp Glsl.mat4 "projectionMatrix"
 
 
 sceneProperties : Glsl.Uniform
 sceneProperties =
-    Glsl.uniform Glsl.mat4 "sceneProperties"
+    Glsl.uniform Glsl.highp Glsl.mat4 "sceneProperties"
 
 
 shadowLight : Glsl.Uniform
 shadowLight =
-    Glsl.uniform Glsl.mat4 "shadowLight"
+    Glsl.uniform Glsl.highp Glsl.mat4 "shadowLight"
 
 
 pointRadius : Glsl.Uniform
 pointRadius =
-    Glsl.uniform Glsl.float "pointRadius"
+    Glsl.uniform Glsl.lowp Glsl.float "pointRadius"
 
 
 constantColor : Glsl.Uniform
 constantColor =
-    Glsl.uniform Glsl.vec3 "constantColor"
+    Glsl.uniform Glsl.lowp Glsl.vec3 "constantColor"
 
 
 colorTexture : Glsl.Uniform
 colorTexture =
-    Glsl.uniform Glsl.sampler2D "colorTexture"
+    Glsl.uniform Glsl.mediump Glsl.sampler2D "colorTexture"
 
 
 emissiveColor : Glsl.Uniform
 emissiveColor =
-    Glsl.uniform Glsl.vec3 "emissiveColor"
+    Glsl.uniform Glsl.mediump Glsl.vec3 "emissiveColor"
 
 
 backlight : Glsl.Uniform
 backlight =
-    Glsl.uniform Glsl.float "backlight"
+    Glsl.uniform Glsl.mediump Glsl.float "backlight"
 
 
 baseColor : Glsl.Uniform
 baseColor =
-    Glsl.uniform Glsl.vec3 "baseColor"
+    Glsl.uniform Glsl.lowp Glsl.vec3 "baseColor"
 
 
 baseColorTexture : Glsl.Uniform
 baseColorTexture =
-    Glsl.uniform Glsl.sampler2D "baseColorTexture"
+    Glsl.uniform Glsl.mediump Glsl.sampler2D "baseColorTexture"
 
 
 constantBaseColor : Glsl.Uniform
 constantBaseColor =
-    Glsl.uniform Glsl.vec4 "constantBaseColor"
+    Glsl.uniform Glsl.lowp Glsl.vec4 "constantBaseColor"
 
 
 roughness : Glsl.Uniform
 roughness =
-    Glsl.uniform Glsl.float "roughness"
+    Glsl.uniform Glsl.lowp Glsl.float "roughness"
 
 
 roughnessTexture : Glsl.Uniform
 roughnessTexture =
-    Glsl.uniform Glsl.sampler2D "roughnessTexture"
+    Glsl.uniform Glsl.mediump Glsl.sampler2D "roughnessTexture"
 
 
 roughnessChannel : Glsl.Uniform
 roughnessChannel =
-    Glsl.uniform Glsl.vec4 "roughnessChannel"
+    Glsl.uniform Glsl.lowp Glsl.vec4 "roughnessChannel"
 
 
 metallic : Glsl.Uniform
 metallic =
-    Glsl.uniform Glsl.float "metallic"
+    Glsl.uniform Glsl.lowp Glsl.float "metallic"
 
 
 metallicTexture : Glsl.Uniform
 metallicTexture =
-    Glsl.uniform Glsl.sampler2D "metallicTexture"
+    Glsl.uniform Glsl.mediump Glsl.sampler2D "metallicTexture"
 
 
 metallicChannel : Glsl.Uniform
 metallicChannel =
-    Glsl.uniform Glsl.vec4 "metallicChannel"
+    Glsl.uniform Glsl.lowp Glsl.vec4 "metallicChannel"
 
 
 normalMapTexture : Glsl.Uniform
 normalMapTexture =
-    Glsl.uniform Glsl.sampler2D "normalMapTexture"
+    Glsl.uniform Glsl.mediump Glsl.sampler2D "normalMapTexture"
 
 
 useNormalMap : Glsl.Uniform
 useNormalMap =
-    Glsl.uniform Glsl.float "useNormalMap"
+    Glsl.uniform Glsl.lowp Glsl.float "useNormalMap"
 
 
 lights12 : Glsl.Uniform
 lights12 =
-    Glsl.uniform Glsl.mat4 "lights12"
+    Glsl.uniform Glsl.highp Glsl.mat4 "lights12"
 
 
 lights34 : Glsl.Uniform
 lights34 =
-    Glsl.uniform Glsl.mat4 "lights34"
+    Glsl.uniform Glsl.highp Glsl.mat4 "lights34"
 
 
 lights56 : Glsl.Uniform
 lights56 =
-    Glsl.uniform Glsl.mat4 "lights56"
+    Glsl.uniform Glsl.highp Glsl.mat4 "lights56"
 
 
 lights78 : Glsl.Uniform
 lights78 =
-    Glsl.uniform Glsl.mat4 "lights78"
+    Glsl.uniform Glsl.highp Glsl.mat4 "lights78"
 
 
 materialColor : Glsl.Uniform
 materialColor =
-    Glsl.uniform Glsl.vec3 "materialColor"
+    Glsl.uniform Glsl.lowp Glsl.vec3 "materialColor"
 
 
 materialColorTexture : Glsl.Uniform
 materialColorTexture =
-    Glsl.uniform Glsl.sampler2D "materialColorTexture"
+    Glsl.uniform Glsl.mediump Glsl.sampler2D "materialColorTexture"
 
 
 constantMaterialColor : Glsl.Uniform
 constantMaterialColor =
-    Glsl.uniform Glsl.vec2 "constantMaterialColor"
+    Glsl.uniform Glsl.lowp Glsl.vec2 "constantMaterialColor"
 
 
 quadVertexPositions : Glsl.Uniform
 quadVertexPositions =
-    Glsl.uniform Glsl.mat4 "quadVertexPositions"
+    Glsl.uniform Glsl.highp Glsl.mat4 "quadVertexPositions"
 
 
 planarMap : Glsl.Uniform
 planarMap =
-    Glsl.uniform Glsl.mat4 "planarMap"
+    Glsl.uniform Glsl.highp Glsl.mat4 "planarMap"
 
 
 sphericalMap : Glsl.Uniform
 sphericalMap =
-    Glsl.uniform Glsl.mat4 "sphericalMap"
+    Glsl.uniform Glsl.highp Glsl.mat4 "sphericalMap"
 
 
 
@@ -228,22 +228,22 @@ sphericalMap =
 
 interpolatedPosition : Glsl.Varying
 interpolatedPosition =
-    Glsl.varying Glsl.vec3 "interpolatedPosition"
+    Glsl.varying Glsl.highp Glsl.vec3 "interpolatedPosition"
 
 
 interpolatedNormal : Glsl.Varying
 interpolatedNormal =
-    Glsl.varying Glsl.vec3 "interpolatedNormal"
+    Glsl.varying Glsl.highp Glsl.vec3 "interpolatedNormal"
 
 
 interpolatedUv : Glsl.Varying
 interpolatedUv =
-    Glsl.varying Glsl.vec2 "interpolatedUv"
+    Glsl.varying Glsl.mediump Glsl.vec2 "interpolatedUv"
 
 
 interpolatedTangent : Glsl.Varying
 interpolatedTangent =
-    Glsl.varying Glsl.vec3 "interpolatedTangent"
+    Glsl.varying Glsl.highp Glsl.vec3 "interpolatedTangent"
 
 
 
@@ -252,42 +252,42 @@ interpolatedTangent =
 
 kPerspectiveProjection : Glsl.Constant
 kPerspectiveProjection =
-    Glsl.constant Glsl.float "kPerspectiveProjection" "0.0"
+    Glsl.constant Glsl.lowp Glsl.float "kPerspectiveProjection" "0.0"
 
 
 kOrthographicProjection : Glsl.Constant
 kOrthographicProjection =
-    Glsl.constant Glsl.float "kOrthographicProjection" "1.0"
+    Glsl.constant Glsl.lowp Glsl.float "kOrthographicProjection" "1.0"
 
 
 kDisabledLight : Glsl.Constant
 kDisabledLight =
-    Glsl.constant Glsl.float "kDisabledLight" "0.0"
+    Glsl.constant Glsl.lowp Glsl.float "kDisabledLight" "0.0"
 
 
 kDirectionalLight : Glsl.Constant
 kDirectionalLight =
-    Glsl.constant Glsl.float "kDirectionalLight" "1.0"
+    Glsl.constant Glsl.lowp Glsl.float "kDirectionalLight" "1.0"
 
 
 kPointLight : Glsl.Constant
 kPointLight =
-    Glsl.constant Glsl.float "kPointLight" "2.0"
+    Glsl.constant Glsl.lowp Glsl.float "kPointLight" "2.0"
 
 
 kSoftLighting : Glsl.Constant
 kSoftLighting =
-    Glsl.constant Glsl.float "kSoftLighting" "3.0"
+    Glsl.constant Glsl.lowp Glsl.float "kSoftLighting" "3.0"
 
 
 kPi : Glsl.Constant
 kPi =
-    Glsl.constant Glsl.float "kPi" "3.14159265359"
+    Glsl.constant Glsl.highp Glsl.float "kPi" "3.14159265359"
 
 
 kMediumpFloatMax : Glsl.Constant
 kMediumpFloatMax =
-    Glsl.constant Glsl.float "kMediumpFloatMax" "65504.0"
+    Glsl.constant Glsl.mediump Glsl.float "kMediumpFloatMax" "65504.0"
 
 
 
@@ -1409,7 +1409,8 @@ sphereShadowVertexShader =
 shadowFragmentShader : Glsl.Shader
 shadowFragmentShader =
     Glsl.fragmentShader "shadowFragment"
-        { uniforms = []
+        { precision = Glsl.lowp
+        , uniforms = []
         , varyings = []
         , constants = []
         , functions = []
@@ -1424,7 +1425,8 @@ shadowFragmentShader =
 constantFragmentShader : Glsl.Shader
 constantFragmentShader =
     Glsl.fragmentShader "constantFragment"
-        { uniforms = [ constantColor ]
+        { precision = Glsl.lowp
+        , uniforms = [ constantColor ]
         , constants = []
         , varyings = []
         , functions = []
@@ -1439,7 +1441,8 @@ constantFragmentShader =
 colorTextureFragmentShader : Glsl.Shader
 colorTextureFragmentShader =
     Glsl.fragmentShader "colorTextureFragment"
-        { uniforms = [ colorTexture ]
+        { precision = Glsl.mediump
+        , uniforms = [ colorTexture ]
         , constants = []
         , varyings = [ interpolatedUv ]
         , functions = []
@@ -1454,7 +1457,8 @@ colorTextureFragmentShader =
 constantPointFragmentShader : Glsl.Shader
 constantPointFragmentShader =
     Glsl.fragmentShader "constantPointFragment"
-        { uniforms = [ constantColor, pointRadius, sceneProperties ]
+        { precision = Glsl.lowp
+        , uniforms = [ constantColor, pointRadius, sceneProperties ]
         , constants = []
         , varyings = []
         , functions = [ pointAlpha ]
@@ -1471,7 +1475,8 @@ constantPointFragmentShader =
 emissiveFragmentShader : Glsl.Shader
 emissiveFragmentShader =
     Glsl.fragmentShader "emissiveFragment"
-        { uniforms = [ emissiveColor, sceneProperties ]
+        { precision = Glsl.mediump
+        , uniforms = [ emissiveColor, sceneProperties ]
         , constants = []
         , varyings = []
         , functions = [ toSrgb ]
@@ -1486,7 +1491,8 @@ emissiveFragmentShader =
 emissiveTextureFragmentShader : Glsl.Shader
 emissiveTextureFragmentShader =
     Glsl.fragmentShader "emissiveTextureFragment"
-        { uniforms = [ colorTexture, backlight, sceneProperties ]
+        { precision = Glsl.mediump
+        , uniforms = [ colorTexture, backlight, sceneProperties ]
         , varyings = [ interpolatedUv ]
         , constants = []
         , functions = [ fromSrgb, toSrgb ]
@@ -1502,7 +1508,8 @@ emissiveTextureFragmentShader =
 emissivePointFragmentShader : Glsl.Shader
 emissivePointFragmentShader =
     Glsl.fragmentShader "emissivePointFragment"
-        { uniforms = [ emissiveColor, pointRadius, sceneProperties ]
+        { precision = Glsl.mediump
+        , uniforms = [ emissiveColor, pointRadius, sceneProperties ]
         , varyings = []
         , functions = [ toSrgb, pointAlpha ]
         , constants = []
@@ -1520,7 +1527,8 @@ emissivePointFragmentShader =
 lambertianFragmentShader : Glsl.Shader
 lambertianFragmentShader =
     Glsl.fragmentShader "lambertianFragment"
-        { uniforms =
+        { precision = Glsl.mediump
+        , uniforms =
             [ sceneProperties
             , lights12
             , lights34
@@ -1561,7 +1569,8 @@ lambertianFragmentShader =
 lambertianTextureFragmentShader : Glsl.Shader
 lambertianTextureFragmentShader =
     Glsl.fragmentShader "lambertianTextureFragment"
-        { uniforms =
+        { precision = Glsl.mediump
+        , uniforms =
             [ sceneProperties
             , lights12
             , lights34
@@ -1611,7 +1620,8 @@ lambertianTextureFragmentShader =
 physicalFragmentShader : Glsl.Shader
 physicalFragmentShader =
     Glsl.fragmentShader "physicalFragment"
-        { uniforms =
+        { precision = Glsl.highp
+        , uniforms =
             [ sceneProperties
             , viewMatrix
             , lights12
@@ -1658,7 +1668,8 @@ physicalFragmentShader =
 physicalTexturesFragmentShader : Glsl.Shader
 physicalTexturesFragmentShader =
     Glsl.fragmentShader "physicalTexturesFragment"
-        { uniforms =
+        { precision = Glsl.highp
+        , uniforms =
             [ sceneProperties
             , viewMatrix
             , lights12

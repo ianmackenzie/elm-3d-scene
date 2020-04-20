@@ -51,15 +51,15 @@ plainVertex :
         {}
 plainVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
+        attribute highp vec3 position;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -90,18 +90,18 @@ unlitVertex :
         }
 unlitVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
-        attribute vec2 uv;
+        attribute highp vec3 position;
+        attribute mediump vec2 uv;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
         
-        varying vec2 interpolatedUv;
+        varying mediump vec2 interpolatedUv;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -134,19 +134,19 @@ uniformVertex :
         }
 uniformVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
-        attribute vec3 normal;
+        attribute highp vec3 position;
+        attribute highp vec3 normal;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -187,22 +187,22 @@ texturedVertex :
         }
 texturedVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec2 uv;
+        attribute highp vec3 position;
+        attribute highp vec3 normal;
+        attribute mediump vec2 uv;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
+        varying mediump vec2 interpolatedUv;
+        varying highp vec3 interpolatedTangent;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -246,23 +246,23 @@ normalMappedVertex :
         }
 normalMappedVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec2 uv;
-        attribute vec3 tangent;
+        attribute highp vec3 position;
+        attribute highp vec3 normal;
+        attribute mediump vec2 uv;
+        attribute highp vec3 tangent;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
+        varying mediump vec2 interpolatedUv;
+        varying highp vec3 interpolatedTangent;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -304,16 +304,16 @@ plainQuadVertex :
         {}
 plainQuadVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 quadVertex;
+        attribute highp vec3 quadVertex;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 quadVertexPositions;
         
         void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
@@ -375,18 +375,18 @@ unlitQuadVertex :
         }
 unlitQuadVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 quadVertex;
+        attribute highp vec3 quadVertex;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 quadVertexPositions;
         
-        varying vec2 interpolatedUv;
+        varying mediump vec2 interpolatedUv;
         
         void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
@@ -450,19 +450,19 @@ smoothQuadVertex :
         }
 smoothQuadVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 quadVertex;
+        attribute highp vec3 quadVertex;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 quadVertexPositions;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
         
         void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
@@ -533,21 +533,21 @@ texturedQuadVertex :
         }
 texturedQuadVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 quadVertex;
+        attribute highp vec3 quadVertex;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 quadVertexPositions;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 quadVertexPositions;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
+        varying mediump vec2 interpolatedUv;
+        varying highp vec3 interpolatedTangent;
         
         void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
@@ -616,16 +616,16 @@ pointVertex :
         {}
 pointVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
+        attribute highp vec3 position;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform float pointRadius;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform lowp float pointRadius;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -658,20 +658,20 @@ shadowVertex :
         {}
 shadowVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec3 position;
-        attribute vec3 normal;
+        attribute highp vec3 position;
+        attribute highp vec3 normal;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 shadowLight;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 shadowLight;
         
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -704,6 +704,8 @@ shadowVertex =
             float sceneDiameter = sceneProperties[3][1];
             if (dot(directionToLight, worldNormal) <= 0.0) {
                 offset = -sceneDiameter * directionToLight;
+            } else {
+                offset = -0.001 * sceneDiameter * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
             return projectionMatrix * (viewMatrix * offsetPosition);
@@ -741,20 +743,20 @@ quadShadowVertex :
         {}
 quadShadowVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute vec2 quadShadowVertex;
+        attribute highp vec2 quadShadowVertex;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 shadowLight;
-        uniform mat4 quadVertexPositions;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 shadowLight;
+        uniform highp mat4 quadVertexPositions;
         
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
         
         void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
@@ -814,6 +816,8 @@ quadShadowVertex =
             float sceneDiameter = sceneProperties[3][1];
             if (dot(directionToLight, worldNormal) <= 0.0) {
                 offset = -sceneDiameter * directionToLight;
+            } else {
+                offset = -0.001 * sceneDiameter * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
             return projectionMatrix * (viewMatrix * offsetPosition);
@@ -857,22 +861,22 @@ sphereShadowVertex :
         {}
 sphereShadowVertex =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        attribute float angle;
-        attribute float offsetScale;
-        attribute float radiusScale;
+        attribute highp float angle;
+        attribute highp float offsetScale;
+        attribute highp float radiusScale;
         
-        uniform vec4 modelScale;
-        uniform mat4 modelMatrix;
-        uniform mat4 viewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform mat4 sceneProperties;
-        uniform mat4 shadowLight;
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 shadowLight;
         
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
-        const float kPerspectiveProjection = 0.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
+        const lowp float kPerspectiveProjection = 0.0;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -948,7 +952,7 @@ sphereShadowVertex =
 shadowFragment : WebGL.Shader {} uniforms {}
 shadowFragment =
     [glsl|
-        precision mediump float;
+        precision lowp float;
         
         void main () {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
@@ -964,9 +968,9 @@ constantFragment :
         {}
 constantFragment =
     [glsl|
-        precision mediump float;
+        precision lowp float;
         
-        uniform vec3 constantColor;
+        uniform lowp vec3 constantColor;
         
         void main () {
             gl_FragColor = vec4(constantColor, 1.0);
@@ -985,9 +989,9 @@ colorTextureFragment =
     [glsl|
         precision mediump float;
         
-        uniform sampler2D colorTexture;
+        uniform mediump sampler2D colorTexture;
         
-        varying vec2 interpolatedUv;
+        varying mediump vec2 interpolatedUv;
         
         void main () {
             gl_FragColor = texture2D(colorTexture, interpolatedUv);
@@ -1005,11 +1009,11 @@ constantPointFragment :
         {}
 constantPointFragment =
     [glsl|
-        precision mediump float;
+        precision lowp float;
         
-        uniform vec3 constantColor;
-        uniform float pointRadius;
-        uniform mat4 sceneProperties;
+        uniform lowp vec3 constantColor;
+        uniform lowp float pointRadius;
+        uniform highp mat4 sceneProperties;
         
         float pointAlpha(float pointRadius, vec2 pointCoord) {
             float pointSize = 2.0 * pointRadius;
@@ -1046,8 +1050,8 @@ emissiveFragment =
     [glsl|
         precision mediump float;
         
-        uniform vec3 emissiveColor;
-        uniform mat4 sceneProperties;
+        uniform mediump vec3 emissiveColor;
+        uniform highp mat4 sceneProperties;
         
         float toneMap(float y, float yMax) {
             return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
@@ -1095,11 +1099,11 @@ emissiveTextureFragment =
     [glsl|
         precision mediump float;
         
-        uniform sampler2D colorTexture;
-        uniform float backlight;
-        uniform mat4 sceneProperties;
+        uniform mediump sampler2D colorTexture;
+        uniform mediump float backlight;
+        uniform highp mat4 sceneProperties;
         
-        varying vec2 interpolatedUv;
+        varying mediump vec2 interpolatedUv;
         
         float inverseGamma(float u) {
             if (u <= 0.04045) {
@@ -1163,9 +1167,9 @@ emissivePointFragment =
     [glsl|
         precision mediump float;
         
-        uniform vec3 emissiveColor;
-        uniform float pointRadius;
-        uniform mat4 sceneProperties;
+        uniform mediump vec3 emissiveColor;
+        uniform lowp float pointRadius;
+        uniform highp mat4 sceneProperties;
         
         float toneMap(float y, float yMax) {
             return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
@@ -1237,23 +1241,23 @@ lambertianFragment =
     [glsl|
         precision mediump float;
         
-        uniform mat4 sceneProperties;
-        uniform mat4 lights12;
-        uniform mat4 lights34;
-        uniform mat4 lights56;
-        uniform mat4 lights78;
-        uniform vec3 materialColor;
-        uniform mat4 viewMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 lights12;
+        uniform highp mat4 lights34;
+        uniform highp mat4 lights56;
+        uniform highp mat4 lights78;
+        uniform lowp vec3 materialColor;
+        uniform highp mat4 viewMatrix;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
         
-        const float kPerspectiveProjection = 0.0;
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
-        const float kPi = 3.14159265359;
-        const float kDisabledLight = 0.0;
-        const float kSoftLighting = 3.0;
+        const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
+        const highp float kPi = 3.14159265359;
+        const lowp float kDisabledLight = 0.0;
+        const lowp float kSoftLighting = 3.0;
         
         float getNormalSign() {
             return 2.0 * float(gl_FrontFacing) - 1.0;
@@ -1424,27 +1428,27 @@ lambertianTextureFragment =
     [glsl|
         precision mediump float;
         
-        uniform mat4 sceneProperties;
-        uniform mat4 lights12;
-        uniform mat4 lights34;
-        uniform mat4 lights56;
-        uniform mat4 lights78;
-        uniform sampler2D materialColorTexture;
-        uniform sampler2D normalMapTexture;
-        uniform float useNormalMap;
-        uniform mat4 viewMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 lights12;
+        uniform highp mat4 lights34;
+        uniform highp mat4 lights56;
+        uniform highp mat4 lights78;
+        uniform mediump sampler2D materialColorTexture;
+        uniform mediump sampler2D normalMapTexture;
+        uniform lowp float useNormalMap;
+        uniform highp mat4 viewMatrix;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
+        varying mediump vec2 interpolatedUv;
+        varying highp vec3 interpolatedTangent;
         
-        const float kPerspectiveProjection = 0.0;
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
-        const float kPi = 3.14159265359;
-        const float kDisabledLight = 0.0;
-        const float kSoftLighting = 3.0;
+        const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
+        const highp float kPi = 3.14159265359;
+        const lowp float kDisabledLight = 0.0;
+        const lowp float kSoftLighting = 3.0;
         
         vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
             vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
@@ -1644,28 +1648,28 @@ physicalFragment :
         }
 physicalFragment =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        uniform mat4 sceneProperties;
-        uniform mat4 viewMatrix;
-        uniform mat4 lights12;
-        uniform mat4 lights34;
-        uniform mat4 lights56;
-        uniform mat4 lights78;
-        uniform vec3 baseColor;
-        uniform float roughness;
-        uniform float metallic;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 lights12;
+        uniform highp mat4 lights34;
+        uniform highp mat4 lights56;
+        uniform highp mat4 lights78;
+        uniform lowp vec3 baseColor;
+        uniform lowp float roughness;
+        uniform lowp float metallic;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
         
-        const float kPerspectiveProjection = 0.0;
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
-        const float kPi = 3.14159265359;
-        const float kMediumpFloatMax = 65504.0;
-        const float kDisabledLight = 0.0;
-        const float kSoftLighting = 3.0;
+        const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
+        const highp float kPi = 3.14159265359;
+        const mediump float kMediumpFloatMax = 65504.0;
+        const lowp float kDisabledLight = 0.0;
+        const lowp float kSoftLighting = 3.0;
         
         float getNormalSign() {
             return 2.0 * float(gl_FrontFacing) - 1.0;
@@ -1966,35 +1970,35 @@ physicalTexturesFragment :
         }
 physicalTexturesFragment =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
-        uniform mat4 sceneProperties;
-        uniform mat4 viewMatrix;
-        uniform mat4 lights12;
-        uniform mat4 lights34;
-        uniform mat4 lights56;
-        uniform mat4 lights78;
-        uniform sampler2D baseColorTexture;
-        uniform vec4 constantBaseColor;
-        uniform sampler2D roughnessTexture;
-        uniform vec4 roughnessChannel;
-        uniform sampler2D metallicTexture;
-        uniform vec4 metallicChannel;
-        uniform sampler2D normalMapTexture;
-        uniform float useNormalMap;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 lights12;
+        uniform highp mat4 lights34;
+        uniform highp mat4 lights56;
+        uniform highp mat4 lights78;
+        uniform mediump sampler2D baseColorTexture;
+        uniform lowp vec4 constantBaseColor;
+        uniform mediump sampler2D roughnessTexture;
+        uniform lowp vec4 roughnessChannel;
+        uniform mediump sampler2D metallicTexture;
+        uniform lowp vec4 metallicChannel;
+        uniform mediump sampler2D normalMapTexture;
+        uniform lowp float useNormalMap;
         
-        varying vec3 interpolatedPosition;
-        varying vec3 interpolatedNormal;
-        varying vec2 interpolatedUv;
-        varying vec3 interpolatedTangent;
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
+        varying mediump vec2 interpolatedUv;
+        varying highp vec3 interpolatedTangent;
         
-        const float kPerspectiveProjection = 0.0;
-        const float kDirectionalLight = 1.0;
-        const float kPointLight = 2.0;
-        const float kPi = 3.14159265359;
-        const float kMediumpFloatMax = 65504.0;
-        const float kDisabledLight = 0.0;
-        const float kSoftLighting = 3.0;
+        const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
+        const highp float kPi = 3.14159265359;
+        const mediump float kMediumpFloatMax = 65504.0;
+        const lowp float kDisabledLight = 0.0;
+        const lowp float kSoftLighting = 3.0;
         
         float getChannelValue(sampler2D texture, vec2 uv, vec4 channel) {
             float constantValue = channel.a;
