@@ -1239,7 +1239,7 @@ lambertianFragment :
         }
 lambertianFragment =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
         uniform highp mat4 sceneProperties;
         uniform highp mat4 lights12;
@@ -1426,7 +1426,7 @@ lambertianTextureFragment :
         }
 lambertianTextureFragment =
     [glsl|
-        precision mediump float;
+        precision highp float;
         
         uniform highp mat4 sceneProperties;
         uniform highp mat4 lights12;

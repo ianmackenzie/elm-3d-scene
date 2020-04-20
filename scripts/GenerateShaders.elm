@@ -1527,7 +1527,7 @@ emissivePointFragmentShader =
 lambertianFragmentShader : Glsl.Shader
 lambertianFragmentShader =
     Glsl.fragmentShader "lambertianFragment"
-        { precision = Glsl.mediump
+        { precision = Glsl.highp
         , uniforms =
             [ sceneProperties
             , lights12
@@ -1569,7 +1569,7 @@ lambertianFragmentShader =
 lambertianTextureFragmentShader : Glsl.Shader
 lambertianTextureFragmentShader =
     Glsl.fragmentShader "lambertianTextureFragment"
-        { precision = Glsl.mediump
+        { precision = Glsl.highp
         , uniforms =
             [ sceneProperties
             , lights12
