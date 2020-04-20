@@ -16,6 +16,7 @@ import Direction3d exposing (Direction3d)
 import Element exposing (Element)
 import Element.Background
 import Element.Border
+import Element.Events
 import Element.Font
 import Element.Input as Input
 import Html exposing (Html)
@@ -2186,27 +2187,29 @@ viewTestCase model testCase =
     case entity model testCase of
         Just validEntity ->
             Element.column [ Element.spacing 10 ]
-                [ Element.html <|
-                    Scene3d.toHtml
-                        { lights = lights testCase
-                        , background = Scene3d.transparentBackground
-                        , camera = camera testCase
-                        , clipDepth = Length.meters 1
-                        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
-                        , antialiasing = antialiasing testCase
-                        , exposure = Scene3d.exposureValue 4
-                        , toneMapping = toneMapping testCase
-                        , whiteBalance = Scene3d.incandescentLighting
-                        }
-                        [ floor
-                        , axes
-                        , validEntity |> transformation testCase
-                        ]
+                [ Element.el [ Element.Events.onClick Next ] <|
+                    Element.html <|
+                        Scene3d.toHtml
+                            { lights = lights testCase
+                            , background = Scene3d.transparentBackground
+                            , camera = camera testCase
+                            , clipDepth = Length.meters 1
+                            , dimensions = ( Pixels.pixels 480, Pixels.pixels 360 )
+                            , antialiasing = antialiasing testCase
+                            , exposure = Scene3d.exposureValue 4
+                            , toneMapping = toneMapping testCase
+                            , whiteBalance = Scene3d.incandescentLighting
+                            }
+                            [ floor
+                            , axes
+                            , validEntity |> transformation testCase
+                            ]
                 , Element.image
-                    [ Element.width (Element.px 400)
-                    , Element.height (Element.px 300)
+                    [ Element.width (Element.px 480)
+                    , Element.height (Element.px 360)
+                    , Element.Events.onClick Next
                     ]
-                    { src = "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/test-v1/test" ++ String.fromInt (model.testCaseIndex + 1) ++ ".png"
+                    { src = "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/test-v2/test" ++ String.fromInt (model.testCaseIndex + 1) ++ ".png"
                     , description = "Reference render"
                     }
                 , Element.column []
@@ -2220,7 +2223,7 @@ viewTestCase model testCase =
                             , label = Element.text "Next"
                             }
                         ]
-                    , Element.el [ Element.Font.size 14 ] (Element.text "(or use arrow keys)")
+                    , Element.el [ Element.Font.size 14 ] (Element.text "(or use arrow keys, or click on either image)")
                     ]
                 , viewTestCaseProperties model.testCaseIndex (Array.length model.testCases) testCase
                 ]
