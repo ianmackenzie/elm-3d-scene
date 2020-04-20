@@ -948,6 +948,8 @@ shadowVertexPosition =
             float sceneDiameter = sceneProperties[3][1];
             if (dot(directionToLight, worldNormal) <= 0.0) {
                 offset = -sceneDiameter * directionToLight;
+            } else {
+                offset = -0.001 * sceneDiameter * directionToLight;
             }
             vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
             return projectionMatrix * (viewMatrix * offsetPosition);
