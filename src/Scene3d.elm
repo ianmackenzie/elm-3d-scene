@@ -170,6 +170,7 @@ import Length exposing (Length, Meters)
 import Luminance exposing (Luminance)
 import LuminousFlux exposing (LuminousFlux)
 import Math.Matrix4 exposing (Mat4)
+import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels, inPixels)
@@ -1155,6 +1156,40 @@ getViewBounds viewFrame scaleX scaleY scaleZ current nodes =
 
         [] ->
             current
+
+
+fullScreenQuadMesh : WebGL.Mesh { position : Vec2 }
+fullScreenQuadMesh =
+    WebGL.triangleStrip
+        [ { position = Math.Vector2.vec2 -1 -1 }
+        , { position = Math.Vector2.vec2 1 -1 }
+        , { position = Math.Vector2.vec2 -1 1 }
+        , { position = Math.Vector2.vec2 1 1 }
+        ]
+
+
+fullScreenQuadVertexShader : WebGL.Shader { position : Vec2 } {} {}
+fullScreenQuadVertexShader =
+    [glsl|
+        precision lowp float;
+
+        attribute vec2 position;
+
+        void main() {
+            gl_Position = vec3(position, 0.0);
+        }
+    |]
+
+
+dummyFragmentShader : WebGL.Shader {} {} {}
+dummyFragmentShader =
+    [glsl|
+        precision lowp float;
+
+        void main() {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        }
+    |]
 
 
 toWebGLEntities :
