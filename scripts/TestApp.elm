@@ -81,32 +81,12 @@ type Material
     | TexturedPbr
 
 
-type Shadow
-    = Shadow
-    | NoShadow
-
-
 type Transformation
     = NoTransformation
     | Translation
     | Rotation
     | Scale
     | Mirror
-
-
-type PointLight
-    = PointLight
-    | NoPointLight
-
-
-type DirectionalLight
-    = DirectionalLight
-    | NoDirectionalLight
-
-
-type SoftLighting
-    = SoftLighting
-    | NoSoftLighting
 
 
 type Antialiasing
@@ -123,11 +103,11 @@ type Projection
 type alias TestCase =
     { mesh : Mesh
     , material : Material
-    , shadow : Shadow
+    , shadows : Bool
     , transformation : Transformation
-    , pointLight : PointLight
-    , directionalLight : DirectionalLight
-    , softLighting : SoftLighting
+    , pointLight : Bool
+    , directionalLight : Bool
+    , softLighting : Bool
     , dynamicRange : Float
     , antialiasing : Antialiasing
     , projection : Projection
@@ -177,16 +157,6 @@ toggleMesh mesh =
             Points
 
 
-toggleShadow : Shadow -> Shadow
-toggleShadow shadow =
-    case shadow of
-        Shadow ->
-            NoShadow
-
-        NoShadow ->
-            Shadow
-
-
 toggleTransformation : Transformation -> Transformation
 toggleTransformation currentTransformation =
     case currentTransformation of
@@ -204,36 +174,6 @@ toggleTransformation currentTransformation =
 
         Mirror ->
             NoTransformation
-
-
-togglePointLight : PointLight -> PointLight
-togglePointLight currentPointLight =
-    case currentPointLight of
-        PointLight ->
-            NoPointLight
-
-        NoPointLight ->
-            PointLight
-
-
-toggleDirectionalLight : DirectionalLight -> DirectionalLight
-toggleDirectionalLight currentDirectionalLight =
-    case currentDirectionalLight of
-        DirectionalLight ->
-            NoDirectionalLight
-
-        NoDirectionalLight ->
-            DirectionalLight
-
-
-toggleSoftLighting : SoftLighting -> SoftLighting
-toggleSoftLighting currentSoftLighting =
-    case currentSoftLighting of
-        SoftLighting ->
-            NoSoftLighting
-
-        NoSoftLighting ->
-            SoftLighting
 
 
 toggleProjection : Projection -> Projection
@@ -351,17 +291,17 @@ parseMaterial string =
             Err ("Unrecognized material type '" ++ string ++ "'")
 
 
-parseShadow : String -> Result String Shadow
-parseShadow string =
+parseShadows : String -> Result String Bool
+parseShadows string =
     case string of
-        "NoShadow" ->
-            Ok NoShadow
+        "NoShadows" ->
+            Ok False
 
-        "Shadow" ->
-            Ok Shadow
+        "Shadows" ->
+            Ok True
 
         _ ->
-            Err ("Unrecognized shadow setting '" ++ string ++ "'")
+            Err ("Unrecognized shadows setting '" ++ string ++ "'")
 
 
 parseTransformation : String -> Result String Transformation
@@ -386,40 +326,40 @@ parseTransformation string =
             Err ("Unrecognized transformation type '" ++ string ++ "'")
 
 
-parsePointLight : String -> Result String PointLight
+parsePointLight : String -> Result String Bool
 parsePointLight string =
     case string of
         "PointLight" ->
-            Ok PointLight
+            Ok True
 
         "NoPointLight" ->
-            Ok NoPointLight
+            Ok False
 
         _ ->
             Err ("Unrecognized point light type '" ++ string ++ "'")
 
 
-parseDirectionalLight : String -> Result String DirectionalLight
+parseDirectionalLight : String -> Result String Bool
 parseDirectionalLight string =
     case string of
         "DirectionalLight" ->
-            Ok DirectionalLight
+            Ok True
 
         "NoDirectionalLight" ->
-            Ok NoDirectionalLight
+            Ok False
 
         _ ->
             Err ("Unrecognized directional light type '" ++ string ++ "'")
 
 
-parseSoftLighting : String -> Result String SoftLighting
+parseSoftLighting : String -> Result String Bool
 parseSoftLighting string =
     case string of
         "SoftLighting" ->
-            Ok SoftLighting
+            Ok True
 
         "NoSoftLighting" ->
-            Ok NoSoftLighting
+            Ok False
 
         _ ->
             Err ("Unrecognized soft lighting type '" ++ string ++ "'")
@@ -475,7 +415,7 @@ parseTestCase line =
             Ok TestCase
                 |> Result.Extra.andMap (parseMesh meshString)
                 |> Result.Extra.andMap (parseMaterial materialString)
-                |> Result.Extra.andMap (parseShadow shadowString)
+                |> Result.Extra.andMap (parseShadows shadowString)
                 |> Result.Extra.andMap (parseTransformation transformationString)
                 |> Result.Extra.andMap (parsePointLight pointLightString)
                 |> Result.Extra.andMap (parseDirectionalLight directionalLightString)
@@ -507,14 +447,13 @@ type alias Scene =
     }
 
 
-addShadow : Shadow -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates -> Entity WorldCoordinates
-addShadow shadowSetting shadowMesh givenEntity =
-    case shadowSetting of
-        Shadow ->
-            givenEntity |> Scene3d.withShadow shadowMesh
+addShadowIf : Bool -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates -> Entity WorldCoordinates
+addShadowIf shadowSetting shadowMesh givenEntity =
+    if shadowSetting then
+        givenEntity |> Scene3d.withShadow shadowMesh
 
-        NoShadow ->
-            givenEntity
+    else
+        givenEntity
 
 
 polyline : Polyline3d Meters WorldCoordinates
@@ -538,9 +477,9 @@ pointsShadow =
     Mesh.shadow pointsMesh
 
 
-pointsEntity : Shadow -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
-pointsEntity shadow material =
-    Scene3d.mesh material pointsMesh |> addShadow shadow pointsShadow
+pointsEntity : { a | shadows : Bool } -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
+pointsEntity { shadows } material =
+    Scene3d.mesh material pointsMesh |> addShadowIf shadows pointsShadow
 
 
 lineSegmentsMesh : Mesh.Plain WorldCoordinates
@@ -553,9 +492,9 @@ lineSegmentsShadow =
     Mesh.shadow lineSegmentsMesh
 
 
-lineSegmentsEntity : Shadow -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
-lineSegmentsEntity shadow material =
-    Scene3d.mesh material lineSegmentsMesh |> addShadow shadow lineSegmentsShadow
+lineSegmentsEntity : { a | shadows : Bool } -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
+lineSegmentsEntity { shadows } material =
+    Scene3d.mesh material lineSegmentsMesh |> addShadowIf shadows lineSegmentsShadow
 
 
 polylineMesh : Mesh.Plain WorldCoordinates
@@ -568,9 +507,9 @@ polylineShadow =
     Mesh.shadow polylineMesh
 
 
-polylineEntity : Shadow -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
-polylineEntity shadow material =
-    Scene3d.mesh material polylineMesh |> addShadow shadow polylineShadow
+polylineEntity : { a | shadows : Bool } -> Material.Plain WorldCoordinates -> Entity WorldCoordinates
+polylineEntity { shadows } material =
+    Scene3d.mesh material polylineMesh |> addShadowIf shadows polylineShadow
 
 
 type alias Vertex =
@@ -589,45 +528,45 @@ duckTransform =
 
 
 plainEntity :
-    Shadow
+    { a | shadows : Bool }
     -> Material.Plain WorldCoordinates
     -> Mesh.Plain WorldCoordinates
     -> Mesh.Shadow WorldCoordinates
     -> Entity WorldCoordinates
-plainEntity shadow material plainMesh plainShadow =
+plainEntity { shadows } material plainMesh plainShadow =
     Scene3d.mesh material plainMesh
-        |> addShadow shadow plainShadow
+        |> addShadowIf shadows plainShadow
         |> duckTransform
 
 
 uniformEntity :
-    Shadow
+    { a | shadows : Bool }
     -> Material.Uniform WorldCoordinates
     -> Mesh.Uniform WorldCoordinates
     -> Mesh.Shadow WorldCoordinates
     -> Entity WorldCoordinates
-uniformEntity shadow material uniformMesh uniformShadow =
+uniformEntity { shadows } material uniformMesh uniformShadow =
     Scene3d.mesh material uniformMesh
-        |> addShadow shadow uniformShadow
+        |> addShadowIf shadows uniformShadow
         |> duckTransform
 
 
-unlitEntity : Shadow -> Material.Unlit WorldCoordinates -> Mesh.Unlit WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
-unlitEntity shadow material unlitMesh unlitShadow =
+unlitEntity : { a | shadows : Bool } -> Material.Unlit WorldCoordinates -> Mesh.Unlit WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
+unlitEntity { shadows } material unlitMesh unlitShadow =
     Scene3d.mesh material unlitMesh
-        |> addShadow shadow unlitShadow
+        |> addShadowIf shadows unlitShadow
         |> duckTransform
 
 
-texturedEntity : Shadow -> Material.Textured WorldCoordinates -> Mesh.Textured WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
-texturedEntity shadow material texturedMesh texturedShadow =
+texturedEntity : { a | shadows : Bool } -> Material.Textured WorldCoordinates -> Mesh.Textured WorldCoordinates -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates
+texturedEntity { shadows } material texturedMesh texturedShadow =
     Scene3d.mesh material texturedMesh
-        |> addShadow shadow texturedShadow
+        |> addShadowIf shadows texturedShadow
         |> duckTransform
 
 
-quadEntity : Shadow -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
-quadEntity shadow material =
+quadEntity : { a | shadows : Bool } -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
+quadEntity { shadows } material =
     let
         p1 =
             Point3d.meters 1 -1 1
@@ -641,60 +580,31 @@ quadEntity shadow material =
         p4 =
             Point3d.meters -1 -1 1
     in
-    case shadow of
-        Shadow ->
-            Scene3d.quad Scene3d.castsShadows material p1 p2 p3 p4
-
-        NoShadow ->
-            Scene3d.quad Scene3d.doesNotCastShadows material p1 p2 p3 p4
+    Scene3d.quad (Scene3d.castsShadows shadows) material p1 p2 p3 p4
 
 
-blockEntity : Shadow -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
-blockEntity shadow material =
-    let
-        block =
-            Block3d.from
-                (Point3d.meters -1 -1 1)
-                (Point3d.meters 1 1 2)
-    in
-    case shadow of
-        Shadow ->
-            Scene3d.block Scene3d.castsShadows material block
-
-        NoShadow ->
-            Scene3d.block Scene3d.doesNotCastShadows material block
+blockEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
+blockEntity { shadows } material =
+    Scene3d.block (Scene3d.castsShadows shadows) material <|
+        Block3d.from
+            (Point3d.meters -1 -1 1)
+            (Point3d.meters 1 1 2)
 
 
-sphereEntity : Shadow -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
-sphereEntity shadow material =
-    let
-        sphere =
-            Sphere3d.withRadius (Length.meters 1) (Point3d.meters 0 0 2)
-    in
-    case shadow of
-        Shadow ->
-            Scene3d.sphere Scene3d.castsShadows material sphere
-
-        NoShadow ->
-            Scene3d.sphere Scene3d.doesNotCastShadows material sphere
+sphereEntity : { a | shadows : Bool } -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
+sphereEntity { shadows } material =
+    Scene3d.sphere (Scene3d.castsShadows shadows) material <|
+        Sphere3d.withRadius (Length.meters 1) (Point3d.meters 0 0 2)
 
 
-cylinderEntity : Shadow -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
-cylinderEntity shadow material =
-    let
-        cylinder =
-            Cylinder3d.along Axis3d.z
-                { start = Length.meters 1
-                , end = Length.meters 2
-                , radius = Length.meters 1
-                }
-    in
-    case shadow of
-        Shadow ->
-            Scene3d.cylinder Scene3d.castsShadows material cylinder
-
-        NoShadow ->
-            Scene3d.cylinder Scene3d.doesNotCastShadows material cylinder
+cylinderEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
+cylinderEntity { shadows } material =
+    Scene3d.cylinder (Scene3d.castsShadows shadows) material <|
+        Cylinder3d.along Axis3d.z
+            { start = Length.meters 1
+            , end = Length.meters 2
+            , radius = Length.meters 1
+            }
 
 
 main : Program () Model Msg
@@ -1011,7 +921,7 @@ update msg model =
             updateCurrentTestCase
                 (\testCase ->
                     { testCase
-                        | shadow = toggleShadow testCase.shadow
+                        | shadows = not testCase.shadows
                     }
                 )
 
@@ -1027,7 +937,7 @@ update msg model =
             updateCurrentTestCase
                 (\testCase ->
                     { testCase
-                        | pointLight = togglePointLight testCase.pointLight
+                        | pointLight = not testCase.pointLight
                     }
                 )
 
@@ -1035,7 +945,7 @@ update msg model =
             updateCurrentTestCase
                 (\testCase ->
                     { testCase
-                        | directionalLight = toggleDirectionalLight testCase.directionalLight
+                        | directionalLight = not testCase.directionalLight
                     }
                 )
 
@@ -1043,7 +953,7 @@ update msg model =
             updateCurrentTestCase
                 (\testCase ->
                     { testCase
-                        | softLighting = toggleSoftLighting testCase.softLighting
+                        | softLighting = not testCase.softLighting
                     }
                 )
 
@@ -1377,43 +1287,43 @@ entity model testCase =
             in
             case testCase.mesh of
                 Points ->
-                    Just (pointsEntity testCase.shadow material)
+                    Just (pointsEntity testCase material)
 
                 LineSegments ->
-                    Just (lineSegmentsEntity testCase.shadow material)
+                    Just (lineSegmentsEntity testCase material)
 
                 Polyline ->
-                    Just (polylineEntity testCase.shadow material)
+                    Just (polylineEntity testCase material)
 
                 Triangles ->
-                    Just (plainEntity testCase.shadow material model.trianglesMesh model.trianglesShadow)
+                    Just (plainEntity testCase material model.trianglesMesh model.trianglesShadow)
 
                 Facets ->
-                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
 
                 Plain ->
-                    Just (plainEntity testCase.shadow material model.plainMesh model.plainShadow)
+                    Just (plainEntity testCase material model.plainMesh model.plainShadow)
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase material model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase material)
 
                 Block ->
-                    Just (blockEntity testCase.shadow material)
+                    Just (blockEntity testCase material)
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase material)
 
                 Cylinder ->
-                    Just (cylinderEntity testCase.shadow material)
+                    Just (cylinderEntity testCase material)
 
         Emissive ->
             let
@@ -1422,43 +1332,43 @@ entity model testCase =
             in
             case testCase.mesh of
                 Points ->
-                    Just (pointsEntity testCase.shadow material)
+                    Just (pointsEntity testCase material)
 
                 LineSegments ->
-                    Just (lineSegmentsEntity testCase.shadow material)
+                    Just (lineSegmentsEntity testCase material)
 
                 Polyline ->
-                    Just (polylineEntity testCase.shadow material)
+                    Just (polylineEntity testCase material)
 
                 Triangles ->
-                    Just (plainEntity testCase.shadow material model.trianglesMesh model.trianglesShadow)
+                    Just (plainEntity testCase material model.trianglesMesh model.trianglesShadow)
 
                 Facets ->
-                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
 
                 Plain ->
-                    Just (plainEntity testCase.shadow material model.plainMesh model.plainShadow)
+                    Just (plainEntity testCase material model.plainMesh model.plainShadow)
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow material model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase material model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase material)
 
                 Block ->
-                    Just (blockEntity testCase.shadow material)
+                    Just (blockEntity testCase material)
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase material)
 
                 Cylinder ->
-                    Just (cylinderEntity testCase.shadow material)
+                    Just (cylinderEntity testCase material)
 
         Matte ->
             let
@@ -1479,31 +1389,31 @@ entity model testCase =
                     Nothing
 
                 Facets ->
-                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
 
                 Plain ->
                     Nothing
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase material)
 
                 Block ->
-                    Just (blockEntity testCase.shadow material)
+                    Just (blockEntity testCase material)
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase material)
 
                 Cylinder ->
-                    Just (cylinderEntity testCase.shadow material)
+                    Just (cylinderEntity testCase material)
 
         Pbr ->
             let
@@ -1527,31 +1437,31 @@ entity model testCase =
                     Nothing
 
                 Facets ->
-                    Just (uniformEntity testCase.shadow material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
 
                 Plain ->
                     Nothing
 
                 Uniform ->
-                    Just (uniformEntity testCase.shadow material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
 
                 Unlit ->
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow material)
+                    Just (quadEntity testCase material)
 
                 Block ->
-                    Just (blockEntity testCase.shadow material)
+                    Just (blockEntity testCase material)
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow material)
+                    Just (sphereEntity testCase material)
 
                 Cylinder ->
-                    Just (cylinderEntity testCase.shadow material)
+                    Just (cylinderEntity testCase material)
 
         TexturedColor ->
             let
@@ -1584,19 +1494,19 @@ entity model testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow duckMaterial model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase duckMaterial model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow metalMaterial)
+                    Just (quadEntity testCase metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow metalMaterial)
+                    Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
                     Nothing
@@ -1632,19 +1542,19 @@ entity model testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase.shadow duckMaterial model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase duckMaterial model.unlitMesh model.unlitShadow)
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow metalMaterial)
+                    Just (quadEntity testCase metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow metalMaterial)
+                    Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
                     Nothing
@@ -1683,16 +1593,16 @@ entity model testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow metalMaterial)
+                    Just (quadEntity testCase metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow metalMaterial)
+                    Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
                     Nothing
@@ -1739,16 +1649,16 @@ entity model testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase.shadow duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
 
                 Quad ->
-                    Just (quadEntity testCase.shadow metalMaterial)
+                    Just (quadEntity testCase metalMaterial)
 
                 Block ->
                     Nothing
 
                 Sphere ->
-                    Just (sphereEntity testCase.shadow metalMaterial)
+                    Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
                     Nothing
@@ -1776,17 +1686,19 @@ transformation testCase =
 lights : TestCase -> Scene3d.Lights WorldCoordinates
 lights testCase =
     let
-        pointLightProperties =
-            { chromaticity = Scene3d.fluorescentLighting
-            , position = Point3d.meters 0 -4 4
-            , intensity = LuminousFlux.lumens 20000
-            }
+        pointLight castsShadows =
+            Scene3d.pointLight castsShadows
+                { chromaticity = Scene3d.fluorescentLighting
+                , position = Point3d.meters 0 -4 4
+                , intensity = LuminousFlux.lumens 20000
+                }
 
-        directionalLightProperties =
-            { chromaticity = Scene3d.colorTemperature (Temperature.kelvins 2200)
-            , intensity = Illuminance.lux 60
-            , direction = Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -30)
-            }
+        directionalLight castsShadows =
+            Scene3d.directionalLight castsShadows
+                { chromaticity = Scene3d.colorTemperature (Temperature.kelvins 2200)
+                , intensity = Illuminance.lux 60
+                , direction = Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -30)
+                }
 
         softLighting =
             Scene3d.softLighting
@@ -1795,91 +1707,39 @@ lights testCase =
                 , intensityAbove = Illuminance.lux 15
                 , intensityBelow = Illuminance.lux 0
                 }
+
+        shadowSetting =
+            Scene3d.castsShadows testCase.shadows
     in
     case ( testCase.pointLight, testCase.directionalLight, testCase.softLighting ) of
-        ( NoPointLight, NoDirectionalLight, NoSoftLighting ) ->
+        ( False, False, False ) ->
             Scene3d.noLights
 
-        ( PointLight, NoDirectionalLight, NoSoftLighting ) ->
-            case testCase.shadow of
-                Shadow ->
-                    Scene3d.oneLight <|
-                        Scene3d.pointLight Scene3d.castsShadows pointLightProperties
+        ( True, False, False ) ->
+            Scene3d.oneLight (pointLight shadowSetting)
 
-                NoShadow ->
-                    Scene3d.oneLight <|
-                        Scene3d.pointLight Scene3d.doesNotCastShadows pointLightProperties
+        ( False, True, False ) ->
+            Scene3d.oneLight (directionalLight shadowSetting)
 
-        ( NoPointLight, DirectionalLight, NoSoftLighting ) ->
-            case testCase.shadow of
-                Shadow ->
-                    Scene3d.oneLight <|
-                        Scene3d.directionalLight Scene3d.castsShadows directionalLightProperties
+        ( True, True, False ) ->
+            Scene3d.twoLights
+                (directionalLight shadowSetting)
+                (pointLight Scene3d.neverCastsShadows)
 
-                NoShadow ->
-                    Scene3d.oneLight <|
-                        Scene3d.directionalLight Scene3d.doesNotCastShadows directionalLightProperties
-
-        ( PointLight, DirectionalLight, NoSoftLighting ) ->
-            let
-                pointLight =
-                    Scene3d.pointLight Scene3d.doesNotCastShadows pointLightProperties
-            in
-            case testCase.shadow of
-                Shadow ->
-                    Scene3d.twoLights
-                        (Scene3d.directionalLight Scene3d.castsShadows directionalLightProperties)
-                        pointLight
-
-                NoShadow ->
-                    Scene3d.twoLights
-                        (Scene3d.directionalLight Scene3d.doesNotCastShadows directionalLightProperties)
-                        pointLight
-
-        ( NoPointLight, NoDirectionalLight, SoftLighting ) ->
+        ( False, False, True ) ->
             Scene3d.oneLight softLighting
 
-        ( PointLight, NoDirectionalLight, SoftLighting ) ->
-            case testCase.shadow of
-                Shadow ->
-                    Scene3d.twoLights
-                        (Scene3d.pointLight Scene3d.castsShadows pointLightProperties)
-                        softLighting
+        ( True, False, True ) ->
+            Scene3d.twoLights (pointLight shadowSetting) softLighting
 
-                NoShadow ->
-                    Scene3d.twoLights
-                        (Scene3d.pointLight Scene3d.doesNotCastShadows pointLightProperties)
-                        softLighting
+        ( False, True, True ) ->
+            Scene3d.twoLights (directionalLight shadowSetting) softLighting
 
-        ( NoPointLight, DirectionalLight, SoftLighting ) ->
-            case testCase.shadow of
-                Shadow ->
-                    Scene3d.twoLights
-                        (Scene3d.directionalLight Scene3d.castsShadows directionalLightProperties)
-                        softLighting
-
-                NoShadow ->
-                    Scene3d.twoLights
-                        (Scene3d.directionalLight Scene3d.doesNotCastShadows directionalLightProperties)
-                        softLighting
-
-        ( PointLight, DirectionalLight, SoftLighting ) ->
-            let
-                pointLight =
-                    Scene3d.pointLight Scene3d.doesNotCastShadows pointLightProperties
-            in
-            case testCase.shadow of
-                Shadow ->
-                    Scene3d.threeLights
-                        (Scene3d.directionalLight Scene3d.castsShadows directionalLightProperties)
-                        pointLight
-                        softLighting
-
-                NoShadow ->
-                    Scene3d.threeLights
-                        (Scene3d.directionalLight Scene3d.doesNotCastShadows directionalLightProperties)
-                        pointLight
-                        softLighting
+        ( True, True, True ) ->
+            Scene3d.threeLights
+                (directionalLight shadowSetting)
+                (pointLight Scene3d.neverCastsShadows)
+                softLighting
 
 
 camera : TestCase -> Camera3d Meters WorldCoordinates
@@ -2023,14 +1883,13 @@ materialDescription material =
             "Textured PBR"
 
 
-shadowDescription : Shadow -> String
-shadowDescription shadow =
-    case shadow of
-        Shadow ->
-            "Shadow"
+shadowsDescription : Bool -> String
+shadowsDescription shadows =
+    if shadows then
+        "Shadows"
 
-        NoShadow ->
-            "No shadow"
+    else
+        "No shadows"
 
 
 transformationDescription : Transformation -> String
@@ -2052,34 +1911,31 @@ transformationDescription givenTransformation =
             "Mirror"
 
 
-pointLightDescription : PointLight -> String
+pointLightDescription : Bool -> String
 pointLightDescription pointLight =
-    case pointLight of
-        PointLight ->
-            "Point light"
+    if pointLight then
+        "Point light"
 
-        NoPointLight ->
-            "No point light"
+    else
+        "No point light"
 
 
-directionalLightDescription : DirectionalLight -> String
+directionalLightDescription : Bool -> String
 directionalLightDescription directionalLight =
-    case directionalLight of
-        DirectionalLight ->
-            "Directional light"
+    if directionalLight then
+        "Directional light"
 
-        NoDirectionalLight ->
-            "No directional light"
+    else
+        "No directional light"
 
 
-softLightingDescription : SoftLighting -> String
+softLightingDescription : Bool -> String
 softLightingDescription softLighting =
-    case softLighting of
-        SoftLighting ->
-            "Soft lighting"
+    if softLighting then
+        "Soft lighting"
 
-        NoSoftLighting ->
-            "No soft lighting"
+    else
+        "No soft lighting"
 
 
 antialiasingDescription : Antialiasing -> String
@@ -2112,7 +1968,7 @@ viewTestCaseProperties testCaseIndex numTestCases testCase =
             [ ( "Test case:", String.fromInt (testCaseIndex + 1) ++ " of " ++ String.fromInt numTestCases, Nothing )
             , ( "Mesh:", meshDescription testCase.mesh, Nothing )
             , ( "Material:", materialDescription testCase.material, Nothing )
-            , ( "Shadow:", shadowDescription testCase.shadow, Just ToggleShadow )
+            , ( "Shadows:", shadowsDescription testCase.shadows, Just ToggleShadow )
             , ( "Transformation:", transformationDescription testCase.transformation, Just ToggleTransformation )
             , ( "Point light:", pointLightDescription testCase.pointLight, Just TogglePointLight )
             , ( "Directional light:", directionalLightDescription testCase.directionalLight, Just ToggleDirectionalLight )
@@ -2174,7 +2030,7 @@ axes =
 
 floor : Entity WorldCoordinates
 floor =
-    Scene3d.quad Scene3d.doesNotCastShadows
+    Scene3d.quad (Scene3d.castsShadows False)
         (Material.matte Tango.aluminum3)
         (Point3d.meters 4 -4 0)
         (Point3d.meters 4 4 0)

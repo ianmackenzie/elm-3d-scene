@@ -150,7 +150,7 @@ view model =
                     , background = Scene3d.backgroundColor Tango.plum1
                     , clipDepth = Length.meters 0.1
                     }
-                    [ Scene3d.quad Scene3d.doesNotCastShadows
+                    [ Scene3d.quad (Scene3d.castsShadows False)
                         (Material.texturedColor texture)
                         (Point3d.meters 0 0 0)
                         (Point3d.meters 1 0 0)

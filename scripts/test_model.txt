@@ -1,6 +1,6 @@
 Mesh: Points, LineSegments, Polyline, Triangles, Facets, Plain, Uniform, Unlit, Textured, Quad, Block, Sphere, Cylinder
 Material: Color, Emissive, Matte, Pbr, TexturedColor, TexturedEmissive, TexturedMatte, TexturedPbr
-Shadows: NoShadow, Shadow
+Shadows: NoShadows, Shadows
 Transformation: NoTransformation, Translation, Rotation, Scale, Mirror
 PointLight: PointLight, NoPointLight
 DirectionalLight: DirectionalLight, NoDirectionalLight
@@ -15,9 +15,9 @@ IF [Mesh] IN {"Facets", "Uniform", "Block", "Cylinder"} THEN [Material] IN {"Col
 IF [Mesh] IN {"Unlit"} THEN [Material] IN {"Color", "Emissive", "TexturedColor", "TexturedEmissive"};
 
 # Don't bother testing shadows without shadow-casting lighting
-IF [Shadows] = "Shadow" THEN [PointLight] = "PointLight" OR [DirectionalLight] = "DirectionalLight";
+IF [Shadows] = "Shadows" THEN [PointLight] = "PointLight" OR [DirectionalLight] = "DirectionalLight";
 # Don't bother testing shadows with points, lines and polylines
-IF [Shadows] = "Shadow" THEN [Mesh] IN {"Triangles", "Facets", "Plain", "Uniform", "Unlit", "Textured", "Quad", "Block", "Sphere", "Cylinder"};
+IF [Shadows] = "Shadows" THEN [Mesh] IN {"Triangles", "Facets", "Plain", "Uniform", "Unlit", "Textured", "Quad", "Block", "Sphere", "Cylinder"};
 
 # Make sure there's some kind of light in the scene
 IF [PointLight] = "NoPointLight" AND [DirectionalLight] = "NoDirectionalLight" THEN [SoftLighting] = "SoftLighting";

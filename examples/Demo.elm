@@ -323,10 +323,10 @@ lights : List DirectLight -> Scene3d.Lights SceneCoordinates
 lights directLights =
     let
         lightsWithoutShadows =
-            List.filterMap (directLight False Scene3d.doesNotCastShadows) directLights
+            List.filterMap (directLight False Scene3d.neverCastsShadows) directLights
 
         lightsWithShadows =
-            List.filterMap (directLight True Scene3d.castsShadows) directLights
+            List.filterMap (directLight True (Scene3d.castsShadows True)) directLights
     in
     case ( List.head lightsWithShadows, lightsWithoutShadows ) of
         ( Nothing, [] ) ->
@@ -357,7 +357,7 @@ lights directLights =
             Scene3d.fourLights light1 light2 light3 light4
 
 
-directLight : Bool -> Scene3d.CastsShadows a -> DirectLight -> Maybe (Scene3d.Light SceneCoordinates (Scene3d.CastsShadows a))
+directLight : Bool -> Scene3d.CastsShadows castsShadows -> DirectLight -> Maybe (Scene3d.Light SceneCoordinates castsShadows)
 directLight shouldHaveShadows shadows light =
     if (shouldHaveShadows == light.castsShadows) && light.intensity > 0 then
         Just
@@ -812,7 +812,7 @@ type EntityCoordinates
 
 floor : Scene3d.Entity EntityCoordinates
 floor =
-    Scene3d.quad Scene3d.doesNotCastShadows
+    Scene3d.quad (Scene3d.castsShadows False)
         (Material.nonmetal
             { baseColor = Color.fromRGB ( 50, 50, 50 )
             , roughness = 0.9
@@ -859,7 +859,7 @@ table =
         (Point3d.centimeters halfWidth halfLength height)
     ]
         |> List.map
-            (Scene3d.block Scene3d.castsShadows
+            (Scene3d.block (Scene3d.castsShadows True)
                 (Material.nonmetal
                     { baseColor = Color.fromRGB ( 250, 180, 60 )
                     , roughness = 0.8
@@ -916,7 +916,7 @@ chair =
         (Point3d.centimeters (-halfWidth + leg) (-halfDepth + leg) (height - backDistanceFromTop - backHeight))
     ]
         |> List.map
-            (Scene3d.block Scene3d.castsShadows
+            (Scene3d.block (Scene3d.castsShadows True)
                 (Material.nonmetal
                     { baseColor = Color.fromRGB ( 250, 180, 60 )
                     , roughness = 0.8
@@ -964,13 +964,13 @@ object { kind, position, material, color, roughness } =
 cube : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
 cube material =
     Block3d.from (Point3d.centimeters -7.5 -7.5 15) (Point3d.centimeters 7.5 7.5 0)
-        |> Scene3d.block Scene3d.castsShadows material
+        |> Scene3d.block (Scene3d.castsShadows True) material
 
 
 sphere : Material.Textured EntityCoordinates -> Scene3d.Entity EntityCoordinates
 sphere material =
     Sphere3d.atPoint (Point3d.centimeters 0 0 7) (Length.centimeters 7)
-        |> Scene3d.sphere Scene3d.castsShadows material
+        |> Scene3d.sphere (Scene3d.castsShadows True) material
 
 
 cylinder : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
@@ -979,7 +979,7 @@ cylinder material =
         Point3d.origin
         Direction3d.z
         { radius = Length.centimeters 8, length = Length.centimeters 20 }
-        |> Scene3d.cylinder Scene3d.castsShadows material
+        |> Scene3d.cylinder (Scene3d.castsShadows True) material
 
 
 bulb : DirectLight -> Maybe (Scene3d.Entity SceneCoordinates)
@@ -989,7 +989,7 @@ bulb light =
             Just
                 (Scene3d.group
                     [ Sphere3d.atOrigin (Length.centimeters 2)
-                        |> Scene3d.sphere Scene3d.doesNotCastShadows
+                        |> Scene3d.sphere (Scene3d.castsShadows False)
                             (if light.intensity > 600 then
                                 Material.emissive (Color.fromRGB ( 255, 255, 255 ))
                                     (Luminance.nits light.intensity)
@@ -1000,7 +1000,7 @@ bulb light =
                     , Cylinder3d.startingAt (Point3d.centimeters 0 0 2)
                         Direction3d.z
                         { radius = Length.millimeters 2, length = Length.meters 7 }
-                        |> Scene3d.cylinder Scene3d.doesNotCastShadows
+                        |> Scene3d.cylinder (Scene3d.castsShadows False)
                             (Material.matte (Color.fromRGB ( 255, 255, 255 )))
                     ]
                     |> Scene3d.placeIn (Frame3d.atPoint position)

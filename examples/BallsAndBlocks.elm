@@ -106,7 +106,7 @@ view { world, screenWidth, screenHeight } =
             List.map getTransformedDrawable (World.bodies world)
 
         sunlight =
-            Scene3d.directionalLight Scene3d.castsShadows
+            Scene3d.directionalLight (Scene3d.castsShadows True)
                 { chromaticity = Scene3d.sunlight
                 , intensity = Illuminance.lux 10000
                 , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
@@ -267,7 +267,7 @@ floor =
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere Scene3d.doesNotCastShadows
+    Scene3d.sphere (Scene3d.castsShadows False)
         (Material.uniform Materials.aluminum)
         shape
         |> Body.sphere shape
@@ -291,7 +291,7 @@ box material =
             Block3d.centeredOn Frame3d.atOrigin
                 ( boxSize, boxSize, boxSize )
     in
-    Scene3d.block Scene3d.castsShadows material shape
+    Scene3d.block (Scene3d.castsShadows True) material shape
         |> Body.block shape
         |> Body.withBehavior (Body.dynamic (Mass.kilograms 5))
 
@@ -307,7 +307,7 @@ sphere material =
         shape =
             Sphere3d.atOrigin sphereRadius
     in
-    Scene3d.sphere Scene3d.castsShadows material shape
+    Scene3d.sphere (Scene3d.castsShadows True) material shape
         |> Body.sphere shape
         |> Body.withBehavior (Body.dynamic (Mass.kilograms 2.5))
 

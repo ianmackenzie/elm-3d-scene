@@ -114,7 +114,7 @@ floor =
         { id = Floor
         , entity =
             shape
-                |> Scene3d.block Scene3d.doesNotCastShadows (Material.matte Tango.aluminum6)
+                |> Scene3d.block (Scene3d.castsShadows False) (Material.matte Tango.aluminum6)
                 |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -147,7 +147,7 @@ table =
         entities =
             blocks
                 |> List.map
-                    (Scene3d.block Scene3d.castsShadows
+                    (Scene3d.block (Scene3d.castsShadows True)
                         (Material.nonmetal
                             { baseColor = Color.fromRGB ( 255, 255, 255 )
                             , roughness = 0.25
@@ -179,7 +179,7 @@ view : Model -> Html Msg
 view { world, width, height } =
     let
         sunlight =
-            Scene3d.directionalLight Scene3d.castsShadows
+            Scene3d.directionalLight (Scene3d.castsShadows True)
                 { chromaticity = Scene3d.daylight
                 , intensity = Illuminance.lux 10000
                 , direction = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60)
@@ -337,7 +337,7 @@ mouse =
     Body.compound []
         { id = Mouse
         , entity =
-            Scene3d.sphere Scene3d.doesNotCastShadows
+            Scene3d.sphere (Scene3d.castsShadows False)
                 (Material.matte (Color.fromRGB ( 255, 255, 255 )))
                 (Sphere3d.atOrigin (millimeters 20))
         }

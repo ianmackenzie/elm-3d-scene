@@ -42,25 +42,25 @@ floorMaterial =
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block Scene3d.doesNotCastShadows floorMaterial <|
+    Scene3d.block (Scene3d.castsShadows False) floorMaterial <|
         Block3d.from (Point3d.meters -7.5 -7.5 -0.2) (Point3d.meters 7.5 7.5 0)
 
 
 initialBlock : Scene3d.Entity World
 initialBlock =
-    Scene3d.block Scene3d.castsShadows objectMaterial <|
+    Scene3d.block (Scene3d.castsShadows True) objectMaterial <|
         Block3d.from (Point3d.meters 1 1 1) (Point3d.meters 2.5 2.5 2.5)
 
 
 initialSphere : Scene3d.Entity World
 initialSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.uniform objectMaterial) <|
+    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform objectMaterial) <|
         Sphere3d.withRadius (Length.meters 1) (Point3d.meters 4 1.5 1.5)
 
 
 initialQuad : Scene3d.Entity World
 initialQuad =
-    Scene3d.quad Scene3d.castsShadows
+    Scene3d.quad (Scene3d.castsShadows True)
         (Material.uniform objectMaterial)
         (Point3d.meters 1 3.5 1)
         (Point3d.meters 2.5 3.5 1)
@@ -87,9 +87,9 @@ camera =
         }
 
 
-sunlight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
+sunlight : Scene3d.Light World Bool
 sunlight =
-    Scene3d.directionalLight Scene3d.castsShadows
+    Scene3d.directionalLight (Scene3d.castsShadows True)
         { chromaticity = Scene3d.daylight
         , intensity = lux 20000
         , direction =
@@ -97,16 +97,16 @@ sunlight =
         }
 
 
-lightBulb : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
+lightBulb : Scene3d.Light World Bool
 lightBulb =
-    Scene3d.pointLight Scene3d.castsShadows
+    Scene3d.pointLight (Scene3d.castsShadows True)
         { chromaticity = Scene3d.daylight
         , intensity = LuminousFlux.lumens 10000000
         , position = Point3d.meters 0 0 5
         }
 
 
-daylight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.No)
+daylight : Scene3d.Light World Never
 daylight =
     Scene3d.overheadLighting
         { upDirection = Direction3d.positiveZ

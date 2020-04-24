@@ -80,7 +80,7 @@ view model =
                         }
 
                 sunlight =
-                    Scene3d.directionalLight Scene3d.doesNotCastShadows
+                    Scene3d.directionalLight Scene3d.neverCastsShadows
                         { chromaticity = Scene3d.sunlight
                         , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -45)
                         , intensity = Illuminance.lux 50000
@@ -95,7 +95,7 @@ view model =
                         }
 
                 quad =
-                    Scene3d.quad Scene3d.doesNotCastShadows
+                    Scene3d.quad (Scene3d.castsShadows False)
                         (Material.texturedNonmetal
                             { baseColor = Material.constant Tango.skyBlue2
                             , roughness = roughnessTexture

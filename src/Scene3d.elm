@@ -9,7 +9,7 @@ module Scene3d exposing
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
     , Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting, disabledLight
-    , CastsShadows, Yes, No, castsShadows, doesNotCastShadows
+    , CastsShadows, castsShadows, neverCastsShadows
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , Chromaticity
     , chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
@@ -110,7 +110,7 @@ directional lights to provide highlights.
 
 @docs Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting, disabledLight
 
-@docs CastsShadows, Yes, No, castsShadows, doesNotCastShadows
+@docs CastsShadows, castsShadows, neverCastsShadows
 
 @docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
@@ -252,7 +252,7 @@ Note that this projection, while simple, means that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
-sphere : CastsShadows a -> Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+sphere : CastsShadows Bool -> Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
     Entity.sphere shadowFlag givenMaterial givenSphere
 
@@ -260,7 +260,7 @@ sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
 {-| Draw a rectangular block using the [`Block3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Block3d)
 type from `elm-geometry`.
 -}
-block : CastsShadows a -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
+block : CastsShadows Bool -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
 block (CastsShadows shadowFlag) givenMaterial givenBlock =
     Entity.block shadowFlag givenMaterial givenBlock
 
@@ -268,7 +268,7 @@ block (CastsShadows shadowFlag) givenMaterial givenBlock =
 {-| Draw a cylinder using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cylinder3d)
 type from `elm-geometry`.
 -}
-cylinder : CastsShadows a -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder : CastsShadows Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
     Entity.cylinder shadowFlag givenMaterial givenCylinder
 
@@ -482,7 +482,7 @@ lightCastsShadows (Types.Light properties) =
     properties.castsShadows
 
 
-oneLight : Light coordinates (CastsShadows a) -> Lights coordinates
+oneLight : Light coordinates castsShadows -> Lights coordinates
 oneLight light =
     let
         lightMatrices =
@@ -500,8 +500,8 @@ oneLight light =
 
 
 twoLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
     -> Lights coordinates
 twoLights first second =
     eightLights
@@ -516,9 +516,9 @@ twoLights first second =
 
 
 threeLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
+    -> Light coordinates Never
     -> Lights coordinates
 threeLights first second third =
     eightLights
@@ -533,10 +533,10 @@ threeLights first second third =
 
 
 fourLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
     -> Lights coordinates
 fourLights first second third fourth =
     eightLights
@@ -551,11 +551,11 @@ fourLights first second third fourth =
 
 
 fiveLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
     -> Lights coordinates
 fiveLights first second third fourth fifth =
     eightLights
@@ -570,12 +570,12 @@ fiveLights first second third fourth fifth =
 
 
 sixLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
     -> Lights coordinates
 sixLights first second third fourth fifth sixth =
     eightLights
@@ -590,13 +590,13 @@ sixLights first second third fourth fifth sixth =
 
 
 sevenLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
     -> Lights coordinates
 sevenLights first second third fourth fifth sixth seventh =
     eightLights
@@ -611,14 +611,14 @@ sevenLights first second third fourth fifth sixth seventh =
 
 
 eightLights :
-    Light coordinates (CastsShadows a)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
-    -> Light coordinates (CastsShadows No)
+    Light coordinates castsShadows
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
+    -> Light coordinates Never
     -> Lights coordinates
 eightLights first second third fourth fifth sixth seventh eigth =
     if lightCastsShadows first then
@@ -647,32 +647,24 @@ type CastsShadows a
     = CastsShadows Bool
 
 
-type Yes
-    = Yes
+castsShadows : Bool -> CastsShadows Bool
+castsShadows flag =
+    CastsShadows flag
 
 
-type No
-    = No
-
-
-castsShadows : CastsShadows Yes
-castsShadows =
-    CastsShadows True
-
-
-doesNotCastShadows : CastsShadows No
-doesNotCastShadows =
+neverCastsShadows : CastsShadows Never
+neverCastsShadows =
     CastsShadows False
 
 
 directionalLight :
-    CastsShadows a
+    CastsShadows castsShadows
     ->
         { chromaticity : Chromaticity
         , intensity : Illuminance
         , direction : Direction3d coordinates
         }
-    -> Light coordinates (CastsShadows a)
+    -> Light coordinates castsShadows
 directionalLight (CastsShadows shadowFlag) light =
     let
         { x, y, z } =
@@ -698,13 +690,13 @@ directionalLight (CastsShadows shadowFlag) light =
 
 
 pointLight :
-    CastsShadows a
+    CastsShadows castsShadows
     ->
         { chromaticity : Chromaticity
         , intensity : LuminousFlux
         , position : Point3d Meters coordinates
         }
-    -> Light coordinates (CastsShadows a)
+    -> Light coordinates castsShadows
 pointLight (CastsShadows shadowFlag) light =
     let
         (LinearRgb rgb) =
@@ -735,7 +727,7 @@ softLighting :
     , intensityAbove : Illuminance
     , intensityBelow : Illuminance
     }
-    -> Light coordinates (CastsShadows No)
+    -> Light coordinates Never
 softLighting light =
     if light.intensityAbove == Quantity.zero && light.intensityBelow == Quantity.zero then
         disabledLight
@@ -783,7 +775,7 @@ overheadLighting :
     , chromaticity : Chromaticity
     , intensity : Illuminance
     }
-    -> Light coordinates (CastsShadows No)
+    -> Light coordinates Never
 overheadLighting arguments =
     softLighting
         { upDirection = arguments.upDirection
@@ -797,7 +789,7 @@ ambientLighting :
     { chromaticity : Chromaticity
     , intensity : Illuminance
     }
-    -> Light coordinates (CastsShadows No)
+    -> Light coordinates Never
 ambientLighting arguments =
     softLighting
         { upDirection = Direction3d.z
@@ -1656,11 +1648,12 @@ sunny :
     -> Html msg
 sunny arguments entities =
     let
-        lightProperties =
-            { direction = arguments.sunlightDirection
-            , intensity = Illuminance.lux 80000
-            , chromaticity = sunlight
-            }
+        sun =
+            directionalLight (castsShadows arguments.shadows)
+                { direction = arguments.sunlightDirection
+                , intensity = Illuminance.lux 80000
+                , chromaticity = sunlight
+                }
 
         sky =
             overheadLighting
@@ -1677,15 +1670,7 @@ sunny arguments entities =
                 }
 
         lights =
-            if arguments.shadows then
-                threeLights (directionalLight castsShadows lightProperties)
-                    sky
-                    environment
-
-            else
-                threeLights (directionalLight doesNotCastShadows lightProperties)
-                    sky
-                    environment
+            threeLights sun sky environment
     in
     toHtml
         { lights = lights

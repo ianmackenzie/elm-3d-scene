@@ -34,8 +34,9 @@ viewpoint =
         }
 
 
+sunlight : Scene3d.Light World Bool
 sunlight =
-    Scene3d.directionalLight Scene3d.doesNotCastShadows
+    Scene3d.directionalLight (Scene3d.castsShadows False)
         { chromaticity = Scene3d.sunlight
         , intensity = Illuminance.lux 10000
         , direction = Direction3d.yz (Angle.degrees -120)
@@ -79,6 +80,6 @@ main =
         , whiteBalance = Scene3d.daylight
         , background = Scene3d.transparentBackground
         }
-        [ Scene3d.sphere Scene3d.doesNotCastShadows (Material.uniform material) <|
+        [ Scene3d.sphere (Scene3d.castsShadows False) (Material.uniform material) <|
             Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
         ]

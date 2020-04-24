@@ -33,7 +33,7 @@ type World
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block Scene3d.doesNotCastShadows Materials.aluminum <|
+    Scene3d.block (Scene3d.castsShadows False) Materials.aluminum <|
         Block3d.with
             { x1 = meters -4
             , x2 = meters 4
@@ -46,25 +46,25 @@ floor =
 
 goldSphere : Scene3d.Entity World
 goldSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.gold) <|
+    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.gold) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0)
 
 
 aluminumSphere : Scene3d.Entity World
 aluminumSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.aluminum) <|
+    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.aluminum) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0)
 
 
 blackPlasticSphere : Scene3d.Entity World
 blackPlasticSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.blackPlastic) <|
+    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.blackPlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0)
 
 
 whitePlasticSphere : Scene3d.Entity World
 whitePlasticSphere =
-    Scene3d.sphere Scene3d.castsShadows (Material.uniform Materials.whitePlastic) <|
+    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.whitePlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0)
 
 
@@ -81,9 +81,9 @@ camera =
         }
 
 
-sunlight : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
+sunlight : Scene3d.Light World Bool
 sunlight =
-    Scene3d.directionalLight Scene3d.castsShadows
+    Scene3d.directionalLight (Scene3d.castsShadows True)
         { chromaticity = Scene3d.sunlight
         , intensity = lux 20000
         , direction =
@@ -92,16 +92,16 @@ sunlight =
         }
 
 
-lightBulb : Scene3d.Light World (Scene3d.CastsShadows Scene3d.Yes)
+lightBulb : Scene3d.Light World Bool
 lightBulb =
-    Scene3d.pointLight Scene3d.castsShadows
+    Scene3d.pointLight (Scene3d.castsShadows True)
         { chromaticity = Scene3d.incandescentLighting
         , intensity = LuminousFlux.lumens 3000000
         , position = Point3d.meters 0 0 3
         }
 
 
-overheadLighting : Scene3d.Light World (Scene3d.CastsShadows Scene3d.No)
+overheadLighting : Scene3d.Light World Never
 overheadLighting =
     Scene3d.overheadLighting
         { upDirection = Direction3d.positiveZ
@@ -239,7 +239,7 @@ main =
                             , blackPlasticSphere
                             , whitePlasticSphere
                             , floor
-                            , Scene3d.quad Scene3d.castsShadows
+                            , Scene3d.quad (Scene3d.castsShadows True)
                                 (Material.uniform Materials.aluminum)
                                 (Point3d.meters 1 1 -0.5)
                                 (Point3d.meters -1 1 0)

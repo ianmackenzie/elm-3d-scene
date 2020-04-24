@@ -35,13 +35,13 @@ main =
         , background = Scene3d.transparentBackground
         , clipDepth = Length.centimeters 0.5
         }
-        [ Scene3d.sphere Scene3d.castsShadows (Material.uniform ballMaterial) <|
+        [ Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform ballMaterial) <|
             Sphere3d.withRadius (Length.meters 0.1) (Point3d.fromMeters { x = 30, y = 30, z = 0.2 })
-        , Scene3d.quad Scene3d.doesNotCastShadows (Material.uniform grassMaterial) (Point3d.meters 4 4 0) (Point3d.meters 104 4 0) (Point3d.meters 104 64 0) (Point3d.meters 4 64 0)
+        , Scene3d.quad (Scene3d.castsShadows False) (Material.uniform grassMaterial) (Point3d.meters 4 4 0) (Point3d.meters 104 4 0) (Point3d.meters 104 64 0) (Point3d.meters 4 64 0)
         , Cylinder3d.from (Point3d.fromMeters { x = 20, y = 40, z = 0 }) (Point3d.fromMeters { x = 20, y = 40, z = 2 }) (Length.meters 1)
-            |> Maybe.map (Scene3d.cylinder Scene3d.castsShadows (Material.uniform playerMaterialA))
+            |> Maybe.map (Scene3d.cylinder (Scene3d.castsShadows True) (Material.uniform playerMaterialA))
             |> Maybe.withDefault
-                (Scene3d.sphere Scene3d.castsShadows (Material.uniform ballMaterial) <|
+                (Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform ballMaterial) <|
                     Sphere3d.withRadius (Length.meters 0.35) (Point3d.fromMeters { x = 20, y = 20, z = 0 })
                 )
         ]
@@ -56,14 +56,16 @@ viewpoint =
         }
 
 
+sunlight : Scene3d.Light WorldCoordinates Bool
 sunlight =
-    Scene3d.directionalLight Scene3d.castsShadows
+    Scene3d.directionalLight (Scene3d.castsShadows True)
         { chromaticity = Scene3d.daylight
         , intensity = Illuminance.lux 5000
         , direction = Direction3d.yz (Angle.degrees -150)
         }
 
 
+daylight : Scene3d.Light WorldCoordinates Never
 daylight =
     Scene3d.overheadLighting
         { upDirection = Direction3d.positiveZ
