@@ -1002,28 +1002,28 @@ outsideStencil =
     [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
     , StencilTest.test
         { ref = 0
-        , mask = 0xFF
+        , mask = upperFourBits
         , test = StencilTest.equal
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
         , zpass = StencilTest.keep
-        , writeMask = 0x00
+        , writeMask = 0
         }
     , defaultBlend
     ]
 
 
-insideStencil : List WebGL.Settings.Setting
-insideStencil =
+insideStencil : Int -> List WebGL.Settings.Setting
+insideStencil lightMask =
     [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
     , StencilTest.test
-        { ref = 0
-        , mask = 0xFF
-        , test = StencilTest.notEqual
+        { ref = lightMask
+        , mask = upperFourBits
+        , test = StencilTest.equal
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
         , zpass = StencilTest.keep
-        , writeMask = 0x00
+        , writeMask = 0
         }
     , defaultBlend
     ]
@@ -1192,6 +1192,86 @@ dummyFragmentShader =
     |]
 
 
+updateStencil :
+    { ref : Int
+    , mask : Int
+    , test : StencilTest.Test
+    , fail : StencilTest.Operation
+    , zfail : StencilTest.Operation
+    , zpass : StencilTest.Operation
+    , writeMask : Int
+    }
+    -> WebGL.Entity
+updateStencil test =
+    WebGL.entityWith
+        [ StencilTest.test test
+        , WebGL.Settings.colorMask False False False False
+        ]
+        fullScreenQuadVertexShader
+        dummyFragmentShader
+        fullScreenQuadMesh
+        {}
+
+
+initStencil : WebGL.Entity
+initStencil =
+    updateStencil
+        { ref = initialStencilCount
+        , mask = 0
+        , test = StencilTest.always
+        , fail = StencilTest.replace
+        , zfail = StencilTest.replace
+        , zpass = StencilTest.replace
+        , writeMask = 0xFF
+        }
+
+
+initialStencilCount : Int
+initialStencilCount =
+    8
+
+
+lowerFourBits : Int
+lowerFourBits =
+    0x0F
+
+
+upperFourBits : Int
+upperFourBits =
+    0xF0
+
+
+resetStencil : WebGL.Entity
+resetStencil =
+    updateStencil
+        { ref = initialStencilCount
+        , mask = 0
+        , test = StencilTest.always
+        , fail = StencilTest.replace
+        , zfail = StencilTest.replace
+        , zpass = StencilTest.replace
+        , writeMask = lowerFourBits
+        }
+
+
+singleLightMask : Int -> Int
+singleLightMask index =
+    2 ^ (index + 4)
+
+
+storeStencilValue : Int -> WebGL.Entity
+storeStencilValue lightIndex =
+    updateStencil
+        { ref = initialStencilCount
+        , mask = lowerFourBits
+        , test = StencilTest.greater
+        , fail = StencilTest.keep
+        , zfail = StencilTest.invert
+        , zpass = StencilTest.invert
+        , writeMask = singleLightMask lightIndex
+        }
+
+
 toWebGLEntities :
     { lights : Lights coordinates
     , camera : Camera3d Meters coordinates
@@ -1334,7 +1414,9 @@ toWebGLEntities arguments drawables =
                 SingleShadowedPass lightMatrices ->
                     List.concat
                         [ call renderPasses.meshes lightingDisabled depthTestDefault
+                        , [ initStencil ]
                         , call renderPasses.shadows lightMatrices createShadowStencil
+                        , [ storeStencilValue 0 ]
                         , call renderPasses.meshes lightMatrices outsideStencil
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
@@ -1342,8 +1424,10 @@ toWebGLEntities arguments drawables =
                 TwoPasses allLightMatrices unshadowedLightMatrices ->
                     List.concat
                         [ call renderPasses.meshes allLightMatrices depthTestDefault
+                        , [ initStencil ]
                         , call renderPasses.shadows allLightMatrices createShadowStencil
-                        , call renderPasses.meshes unshadowedLightMatrices insideStencil
+                        , [ storeStencilValue 0 ]
+                        , call renderPasses.meshes unshadowedLightMatrices (insideStencil (singleLightMask 0))
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
 

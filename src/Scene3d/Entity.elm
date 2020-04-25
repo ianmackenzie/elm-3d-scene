@@ -1074,38 +1074,38 @@ meshSettings isRightHanded backFaceSetting settings =
 rightHandedStencilTest : WebGL.Settings.Setting
 rightHandedStencilTest =
     StencilTest.testSeparate
-        { ref = 1
-        , mask = 0xFF
-        , writeMask = 0xFF
+        { ref = 0
+        , mask = 0
+        , writeMask = 0x0F
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.incrementWrap
+        , zpass = StencilTest.increment
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.decrementWrap
+        , zpass = StencilTest.decrement
         }
 
 
 leftHandedStencilTest : WebGL.Settings.Setting
 leftHandedStencilTest =
     StencilTest.testSeparate
-        { ref = 1
-        , mask = 0xFF
-        , writeMask = 0xFF
+        { ref = 0
+        , mask = 0
+        , writeMask = 0x0F
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.decrementWrap
+        , zpass = StencilTest.decrement
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.incrementWrap
+        , zpass = StencilTest.increment
         }
 
 
