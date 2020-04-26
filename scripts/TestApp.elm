@@ -1328,7 +1328,7 @@ entity model testCase =
         Emissive ->
             let
                 material =
-                    Material.emissive Tango.orange2 (Luminance.nits 250)
+                    Material.emissive (Scene3d.chromaticity Tango.orange2) (Luminance.nits 250)
             in
             case testCase.mesh of
                 Points ->

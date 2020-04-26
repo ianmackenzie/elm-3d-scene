@@ -38,7 +38,7 @@ import Math.Vector3 exposing (Vec3)
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material.Channel as Channel exposing (Channel)
 import Scene3d.Mesh exposing (No, Yes)
-import Scene3d.Types as Types exposing (LinearRgb(..))
+import Scene3d.Types as Types exposing (Chromaticity, LinearRgb(..))
 import Task exposing (Task)
 import WebGL.Texture
 
@@ -59,10 +59,10 @@ matte materialColor =
         (Types.Constant Types.VerticalNormal)
 
 
-emissive : Color -> Luminance -> Material coordinates attributes
-emissive givenColor brightness =
+emissive : Chromaticity -> Luminance -> Material coordinates attributes
+emissive givenChromaticity brightness =
     Types.EmissiveMaterial Types.UseMeshUvs
-        (Types.Constant (ColorConversions.colorToLinearRgb givenColor))
+        (Types.Constant (ColorConversions.chromaticityToLinearRgb givenChromaticity))
         (Luminance.inNits brightness)
 
 
