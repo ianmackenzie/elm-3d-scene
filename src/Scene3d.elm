@@ -1837,8 +1837,7 @@ cloudy arguments entities =
 
 
 office :
-    { lights : Lights coordinates
-    , upDirection : Direction3d coordinates
+    { upDirection : Direction3d coordinates
     , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
