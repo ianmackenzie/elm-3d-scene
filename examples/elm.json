@@ -22,7 +22,7 @@
             "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.1",
             "ianmackenzie/elm-interval": "2.0.0",
             "ianmackenzie/elm-triangular-mesh": "1.0.2",
-            "ianmackenzie/elm-units": "2.2.0",
+            "ianmackenzie/elm-units": "2.5.0",
             "ianmackenzie/elm-units-interval": "1.0.0",
             "mdgriffith/elm-ui": "1.1.2",
             "myrho/elm-round": "1.0.4",

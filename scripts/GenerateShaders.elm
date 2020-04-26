@@ -192,6 +192,11 @@ lights78 =
     Glsl.uniform Glsl.highp Glsl.mat4 "lights78"
 
 
+enabledLights : Glsl.Uniform
+enabledLights =
+    Glsl.uniform Glsl.lowp Glsl.vec4 "enabledLights"
+
+
 materialColor : Glsl.Uniform
 materialColor =
     Glsl.uniform Glsl.lowp Glsl.vec3 "materialColor"
@@ -617,12 +622,13 @@ lambertianLighting =
             mat4 lights12,
             mat4 lights34,
             mat4 lights56,
-            mat4 lights78
+            mat4 lights78,
+            vec4 enabledLights
         ) {
-            vec3 litColor1 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights12[0], lights12[1]);
-            vec3 litColor2 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights12[2], lights12[3]);
-            vec3 litColor3 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights34[0], lights34[1]);
-            vec3 litColor4 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights34[2], lights34[3]);
+            vec3 litColor1 = enabledLights[0] == 1.0 ? lambertianLight(surfacePosition, surfaceNormal, materialColor, lights12[0], lights12[1]) : vec3(0.0, 0.0, 0.0);
+            vec3 litColor2 = enabledLights[1] == 1.0 ? lambertianLight(surfacePosition, surfaceNormal, materialColor, lights12[2], lights12[3]) : vec3(0.0, 0.0, 0.0);
+            vec3 litColor3 = enabledLights[2] == 1.0 ? lambertianLight(surfacePosition, surfaceNormal, materialColor, lights34[0], lights34[1]) : vec3(0.0, 0.0, 0.0);
+            vec3 litColor4 = enabledLights[3] == 1.0 ? lambertianLight(surfacePosition, surfaceNormal, materialColor, lights34[2], lights34[3]) : vec3(0.0, 0.0, 0.0);
             vec3 litColor5 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights56[0], lights56[1]);
             vec3 litColor6 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights56[2], lights56[3]);
             vec3 litColor7 = lambertianLight(surfacePosition, surfaceNormal, materialColor, lights78[0], lights78[1]);
@@ -872,7 +878,8 @@ physicalLighting =
             mat4 lights12,
             mat4 lights34,
             mat4 lights56,
-            mat4 lights78
+            mat4 lights78,
+            vec4 enabledLights
         ) {
             float dotNV = positiveDotProduct(surfaceNormal, directionToCamera);
             float alpha = roughness * roughness;
@@ -881,10 +888,10 @@ physicalLighting =
             vec3 specularBaseColor = nonmetallic * 0.04 * vec3(1.0, 1.0, 1.0) + metallic * baseColor;
             vec3 viewY = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
 
-            vec3 litColor1 = physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor2 = physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor3 = physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
-            vec3 litColor4 = physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
+            vec3 litColor1 = enabledLights[0] == 1.0 ? physicalLight(lights12[0], lights12[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha) : vec3(0.0, 0.0, 0.0);
+            vec3 litColor2 = enabledLights[1] == 1.0 ? physicalLight(lights12[2], lights12[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha) : vec3(0.0, 0.0, 0.0);
+            vec3 litColor3 = enabledLights[2] == 1.0 ? physicalLight(lights34[0], lights34[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha) : vec3(0.0, 0.0, 0.0);
+            vec3 litColor4 = enabledLights[3] == 1.0 ? physicalLight(lights34[2], lights34[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha) : vec3(0.0, 0.0, 0.0);
             vec3 litColor5 = physicalLight(lights56[0], lights56[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
             vec3 litColor6 = physicalLight(lights56[2], lights56[3], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
             vec3 litColor7 = physicalLight(lights78[0], lights78[1], surfacePosition, surfaceNormal, directionToCamera, viewY, dotNV, diffuseBaseColor, specularBaseColor, alpha);
@@ -1534,6 +1541,7 @@ lambertianFragmentShader =
             , lights34
             , lights56
             , lights78
+            , enabledLights
             , materialColor
             , viewMatrix
             ]
@@ -1558,7 +1566,8 @@ lambertianFragmentShader =
                 lights12,
                 lights34,
                 lights56,
-                lights78
+                lights78,
+                enabledLights
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);
@@ -1576,6 +1585,7 @@ lambertianTextureFragmentShader =
             , lights34
             , lights56
             , lights78
+            , enabledLights
             , materialColorTexture
             , normalMapTexture
             , useNormalMap
@@ -1609,7 +1619,8 @@ lambertianTextureFragmentShader =
                 lights12,
                 lights34,
                 lights56,
-                lights78
+                lights78,
+                enabledLights
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);
@@ -1628,6 +1639,7 @@ physicalFragmentShader =
             , lights34
             , lights56
             , lights78
+            , enabledLights
             , baseColor
             , roughness
             , metallic
@@ -1657,7 +1669,8 @@ physicalFragmentShader =
                 lights12,
                 lights34,
                 lights56,
-                lights78
+                lights78,
+                enabledLights
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);
@@ -1676,6 +1689,7 @@ physicalTexturesFragmentShader =
             , lights34
             , lights56
             , lights78
+            , enabledLights
             , baseColorTexture
             , constantBaseColor
             , roughnessTexture
@@ -1726,7 +1740,8 @@ physicalTexturesFragmentShader =
                 lights12,
                 lights34,
                 lights56,
-                lights78
+                lights78,
+                enabledLights
             );
 
             gl_FragColor = toSrgb(linearColor, sceneProperties);

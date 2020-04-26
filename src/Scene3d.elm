@@ -151,6 +151,7 @@ directional lights to provide highlights.
 
 import Angle exposing (Angle)
 import Axis3d exposing (Axis3d)
+import Bitwise
 import Block3d exposing (Block3d)
 import BoundingBox3d exposing (BoundingBox3d)
 import Camera3d exposing (Camera3d)
@@ -420,7 +421,7 @@ constraints are satisfied.)
 type Lights coordinates
     = SingleUnshadowedPass LightMatrices
     | SingleShadowedPass LightMatrices
-    | TwoPasses LightMatrices LightMatrices
+    | MultiplePasses (List Mat4) LightMatrices
 
 
 disabledLight : Light coordinates castsShadows
@@ -435,6 +436,28 @@ disabledLight =
         , g = 0
         , b = 0
         , parameter = 0
+        }
+
+
+singleLight : Light coordinates castsShadows -> Mat4
+singleLight (Types.Light light) =
+    Math.Matrix4.fromRecord
+        { m11 = light.x
+        , m21 = light.y
+        , m31 = light.z
+        , m41 = light.type_
+        , m12 = light.r
+        , m22 = light.g
+        , m32 = light.b
+        , m42 = light.parameter
+        , m13 = 0
+        , m23 = 0
+        , m33 = 0
+        , m43 = 0
+        , m14 = 0
+        , m24 = 0
+        , m34 = 0
+        , m44 = 0
         }
 
 
@@ -460,13 +483,20 @@ lightPair (Types.Light first) (Types.Light second) =
         }
 
 
-lightingDisabled : LightMatrices
+lightingDisabled : ( LightMatrices, Vec4 )
 lightingDisabled =
-    { lights12 = lightPair disabledLight disabledLight
-    , lights34 = lightPair disabledLight disabledLight
-    , lights56 = lightPair disabledLight disabledLight
-    , lights78 = lightPair disabledLight disabledLight
-    }
+    ( { lights12 = lightPair disabledLight disabledLight
+      , lights34 = lightPair disabledLight disabledLight
+      , lights56 = lightPair disabledLight disabledLight
+      , lights78 = lightPair disabledLight disabledLight
+      }
+    , Math.Vector4.vec4 0 0 0 0
+    )
+
+
+allLightsEnabled : Vec4
+allLightsEnabled =
+    Math.Vector4.vec4 1 1 1 1
 
 
 {-| No lights at all! You don't need lights if you're only using materials
@@ -475,7 +505,7 @@ materials don't react to light anyways).
 -}
 noLights : Lights coordinates
 noLights =
-    SingleUnshadowedPass lightingDisabled
+    SingleUnshadowedPass (Tuple.first lightingDisabled)
 
 
 lightCastsShadows : Light coordinates castsShadows -> Bool
@@ -501,8 +531,8 @@ oneLight light =
 
 
 twoLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
     -> Lights coordinates
 twoLights first second =
     eightLights
@@ -517,9 +547,9 @@ twoLights first second =
 
 
 threeLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
+    -> Light coordinates castsShadows3
     -> Lights coordinates
 threeLights first second third =
     eightLights
@@ -534,10 +564,10 @@ threeLights first second third =
 
 
 fourLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
-    -> Light coordinates Never
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
+    -> Light coordinates castsShadows3
+    -> Light coordinates castsShadows4
     -> Lights coordinates
 fourLights first second third fourth =
     eightLights
@@ -552,10 +582,10 @@ fourLights first second third fourth =
 
 
 fiveLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
-    -> Light coordinates Never
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
+    -> Light coordinates castsShadows3
+    -> Light coordinates castsShadows4
     -> Light coordinates Never
     -> Lights coordinates
 fiveLights first second third fourth fifth =
@@ -571,10 +601,10 @@ fiveLights first second third fourth fifth =
 
 
 sixLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
-    -> Light coordinates Never
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
+    -> Light coordinates castsShadows3
+    -> Light coordinates castsShadows4
     -> Light coordinates Never
     -> Light coordinates Never
     -> Lights coordinates
@@ -591,10 +621,10 @@ sixLights first second third fourth fifth sixth =
 
 
 sevenLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
-    -> Light coordinates Never
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
+    -> Light coordinates castsShadows3
+    -> Light coordinates castsShadows4
     -> Light coordinates Never
     -> Light coordinates Never
     -> Light coordinates Never
@@ -611,37 +641,57 @@ sevenLights first second third fourth fifth sixth seventh =
         disabledLight
 
 
+eraseLight : Light coordinates castsShadows -> Light coordinates ()
+eraseLight (Types.Light light) =
+    Types.Light light
+
+
 eightLights :
-    Light coordinates castsShadows
-    -> Light coordinates Never
-    -> Light coordinates Never
-    -> Light coordinates Never
+    Light coordinates castsShadows1
+    -> Light coordinates castsShadows2
+    -> Light coordinates castsShadows3
+    -> Light coordinates castsShadows4
     -> Light coordinates Never
     -> Light coordinates Never
     -> Light coordinates Never
     -> Light coordinates Never
     -> Lights coordinates
 eightLights first second third fourth fifth sixth seventh eigth =
-    if lightCastsShadows first then
-        TwoPasses
-            { lights12 = lightPair first second
-            , lights34 = lightPair third fourth
-            , lights56 = lightPair fifth sixth
-            , lights78 = lightPair seventh eigth
-            }
-            { lights12 = lightPair second third
-            , lights34 = lightPair fourth fifth
-            , lights56 = lightPair sixth seventh
-            , lights78 = lightPair eigth disabledLight
-            }
+    let
+        ( enabledShadowCasters, disabledShadowCasters ) =
+            List.partition lightCastsShadows
+                [ eraseLight first
+                , eraseLight second
+                , eraseLight third
+                , eraseLight fourth
+                ]
+    in
+    case enabledShadowCasters of
+        [] ->
+            SingleUnshadowedPass
+                { lights12 = lightPair first second
+                , lights34 = lightPair third fourth
+                , lights56 = lightPair fifth sixth
+                , lights78 = lightPair seventh eigth
+                }
 
-    else
-        SingleUnshadowedPass
-            { lights12 = lightPair first second
-            , lights34 = lightPair third fourth
-            , lights56 = lightPair fifth sixth
-            , lights78 = lightPair seventh eigth
-            }
+        _ ->
+            let
+                sortedLights =
+                    enabledShadowCasters ++ disabledShadowCasters
+            in
+            case sortedLights of
+                [ light0, light1, light2, light3 ] ->
+                    MultiplePasses (List.map singleLight enabledShadowCasters)
+                        { lights12 = lightPair light0 light1
+                        , lights34 = lightPair light2 light3
+                        , lights56 = lightPair fifth sixth
+                        , lights78 = lightPair seventh eigth
+                        }
+
+                _ ->
+                    -- Can't happen
+                    noLights
 
 
 type CastsShadows a
@@ -855,18 +905,18 @@ transparentBackgroundColor transparentColor =
 ----- RENDERING -----
 
 
-type alias RenderPass =
-    LightMatrices -> List WebGL.Settings.Setting -> WebGL.Entity
+type alias RenderPass lights =
+    lights -> List WebGL.Settings.Setting -> WebGL.Entity
 
 
 type alias RenderPasses =
-    { meshes : List RenderPass
-    , shadows : List RenderPass
-    , points : List RenderPass
+    { meshes : List (RenderPass ( LightMatrices, Vec4 ))
+    , shadows : List (RenderPass Mat4)
+    , points : List (RenderPass ( LightMatrices, Vec4 ))
     }
 
 
-createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction -> RenderPass
+createRenderPass : Mat4 -> Mat4 -> Mat4 -> Transformation -> DrawFunction lights -> RenderPass lights
 createRenderPass sceneProperties viewMatrix projectionMatrix transformation drawFunction =
     let
         normalSign =
@@ -1041,10 +1091,9 @@ createShadowStencil =
     ]
 
 
-call : List RenderPass -> LightMatrices -> List WebGL.Settings.Setting -> List WebGL.Entity
-call renderPasses lightMatrices settings =
-    renderPasses
-        |> List.map (\renderPass -> renderPass lightMatrices settings)
+call : List (RenderPass lights) -> lights -> List WebGL.Settings.Setting -> List WebGL.Entity
+call renderPasses lights settings =
+    List.map (\renderPass -> renderPass lights settings) renderPasses
 
 
 updateViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Float -> Float -> Bounds -> Maybe (BoundingBox3d Meters viewCoordinates) -> Maybe (BoundingBox3d Meters viewCoordinates)
@@ -1407,7 +1456,7 @@ toWebGLEntities arguments drawables =
             case arguments.lights of
                 SingleUnshadowedPass lightMatrices ->
                     List.concat
-                        [ call renderPasses.meshes lightMatrices depthTestDefault
+                        [ call renderPasses.meshes ( lightMatrices, allLightsEnabled ) depthTestDefault
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
 
@@ -1415,21 +1464,63 @@ toWebGLEntities arguments drawables =
                     List.concat
                         [ call renderPasses.meshes lightingDisabled depthTestDefault
                         , [ initStencil ]
-                        , call renderPasses.shadows lightMatrices createShadowStencil
+                        , call renderPasses.shadows lightMatrices.lights12 createShadowStencil
                         , [ storeStencilValue 0 ]
-                        , call renderPasses.meshes lightMatrices outsideStencil
+                        , call renderPasses.meshes ( lightMatrices, allLightsEnabled ) outsideStencil
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
 
-                TwoPasses allLightMatrices unshadowedLightMatrices ->
+                MultiplePasses shadowCasters allLightMatrices ->
                     List.concat
-                        [ call renderPasses.meshes allLightMatrices depthTestDefault
+                        [ call renderPasses.meshes ( allLightMatrices, allLightsEnabled ) depthTestDefault
                         , [ initStencil ]
-                        , call renderPasses.shadows allLightMatrices createShadowStencil
-                        , [ storeStencilValue 0 ]
-                        , call renderPasses.meshes unshadowedLightMatrices (insideStencil (singleLightMask 0))
+                        , createShadows renderPasses.shadows shadowCasters
+                        , renderWithinShadows renderPasses.meshes allLightMatrices (List.length shadowCasters)
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
+
+
+createShadows : List (RenderPass Mat4) -> List Mat4 -> List WebGL.Entity
+createShadows shadowRenderPasses shadowCasters =
+    List.concat (List.indexedMap (createShadow shadowRenderPasses) shadowCasters)
+
+
+createShadow : List (RenderPass Mat4) -> Int -> Mat4 -> List WebGL.Entity
+createShadow shadowRenderPasses lightIndex lightMatrix =
+    List.concat
+        [ call shadowRenderPasses lightMatrix createShadowStencil
+        , [ storeStencilValue lightIndex, resetStencil ]
+        ]
+
+
+enabledFlag : Int -> Int -> Float
+enabledFlag lightMask lightIndex =
+    if (lightMask |> Bitwise.shiftRightBy lightIndex |> Bitwise.and 1) == 1 then
+        0
+
+    else
+        1
+
+
+renderWithinShadows : List (RenderPass ( LightMatrices, Vec4 )) -> LightMatrices -> Int -> List WebGL.Entity
+renderWithinShadows meshRenderPasses lightMatrices numShadowingLights =
+    List.range 1 ((2 ^ numShadowingLights) - 1)
+        |> List.map
+            (\lightMask ->
+                let
+                    stencilMask =
+                        lightMask |> Bitwise.shiftLeftBy 4
+
+                    enabledLights =
+                        Math.Vector4.vec4
+                            (enabledFlag lightMask 0)
+                            (enabledFlag lightMask 1)
+                            (enabledFlag lightMask 2)
+                            (enabledFlag lightMask 3)
+                in
+                call meshRenderPasses ( lightMatrices, enabledLights ) (insideStencil stencilMask)
+            )
+        |> List.concat
 
 
 toHtml :
