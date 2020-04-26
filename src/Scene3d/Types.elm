@@ -145,23 +145,23 @@ type alias LightMatrices =
     }
 
 
-type alias DrawFunction =
+type alias DrawFunction lights =
     Mat4 -- scene properties
     -> Vec4 -- model scale
     -> Mat4 -- model matrix
     -> Bool -- model matrix is right-handed
     -> Mat4 -- view matrix
     -> Mat4 -- projection matrix
-    -> LightMatrices -- lights
+    -> lights -- lights
     -> List WebGL.Settings.Setting -- stencil, depth, blend etc.
     -> WebGL.Entity
 
 
 type Node
     = EmptyNode
-    | MeshNode Bounds DrawFunction
-    | ShadowNode DrawFunction
-    | PointNode Bounds DrawFunction
+    | MeshNode Bounds (DrawFunction ( LightMatrices, Vec4 ))
+    | ShadowNode (DrawFunction Mat4)
+    | PointNode Bounds (DrawFunction ( LightMatrices, Vec4 ))
     | Group (List Node)
     | Transformed Transformation Node
 

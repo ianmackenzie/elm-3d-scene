@@ -991,7 +991,7 @@ bulb light =
                     [ Sphere3d.atOrigin (Length.centimeters 2)
                         |> Scene3d.sphere (Scene3d.castsShadows False)
                             (if light.intensity > 600 then
-                                Material.emissive (Color.fromRGB ( 255, 255, 255 ))
+                                Material.emissive Scene3d.daylight
                                     (Luminance.nits light.intensity)
 
                              else

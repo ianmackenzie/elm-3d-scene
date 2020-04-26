@@ -689,7 +689,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                 Types.LambertianMaterial Types.UseMeshUvs materialColorTexture normalMapTexture ->
                     case resolveLambertian materialColorTexture normalMapTexture of
                         ConstantLambertianMaterial (LinearRgb materialColor) ->
-                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
                                     Shaders.smoothQuadVertex
@@ -700,6 +700,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights34 = lights.lights34
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
+                                    , enabledLights = enabledLights
                                     , materialColor = materialColor
                                     , sceneProperties = sceneProperties
                                     , modelScale = modelScale
@@ -709,7 +710,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
                         TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( normalMapData, useNormalMap ) ->
-                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
                                     Shaders.texturedQuadVertex
@@ -723,6 +724,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights34 = lights.lights34
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
+                                    , enabledLights = enabledLights
                                     , sceneProperties = sceneProperties
                                     , modelScale = modelScale
                                     , modelMatrix = modelMatrix
@@ -733,7 +735,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                 Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
                     case resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture of
                         ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
-                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
                                     Shaders.smoothQuadVertex
@@ -744,6 +746,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights34 = lights.lights34
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
+                                    , enabledLights = enabledLights
                                     , baseColor = baseColor
                                     , roughness = roughness
                                     , metallic = metallic
@@ -755,7 +758,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
                         TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, roughnessChannel ) ( metallicData, metallicChannel ) ( normalMapData, useNormalMap ) ->
-                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
                                     Shaders.texturedQuadVertex
@@ -766,6 +769,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights34 = lights.lights34
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
+                                    , enabledLights = enabledLights
                                     , baseColorTexture = baseColorData
                                     , constantBaseColor = constantBaseColor
                                     , roughnessTexture = roughnessData
@@ -807,7 +811,7 @@ sphereShadow : Sphere3d Meters coordinates -> Entity coordinates
 sphereShadow givenSphere =
     Types.Entity <|
         Types.ShadowNode <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix shadowLight settings ->
                 -- Note that the way the sphere shadow mesh is constructed in the vertex shaders, it
                 -- will always form proper right-handed triangles regardless of the current model
                 -- matrix handedness
@@ -820,7 +824,7 @@ sphereShadow givenSphere =
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
                     , projectionMatrix = projectionMatrix
-                    , shadowLight = lights.lights12
+                    , shadowLight = shadowLight
                     , constantColor = Math.Vector3.vec3 0 0 1
                     }
 
@@ -969,7 +973,7 @@ shadow givenShadow =
             empty
 
 
-shadowDrawFunction : Types.Shadow coordinates -> Maybe Types.DrawFunction
+shadowDrawFunction : Types.Shadow coordinates -> Maybe (Types.DrawFunction Mat4)
 shadowDrawFunction givenShadow =
     case givenShadow of
         Types.EmptyShadow ->
@@ -977,7 +981,7 @@ shadowDrawFunction givenShadow =
 
         Types.Shadow _ _ webGLMesh ->
             Just <|
-                \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix shadowLight settings ->
                     WebGL.entityWith (shadowSettings isRightHanded settings)
                         Shaders.shadowVertex
                         Shaders.shadowFragment
@@ -987,7 +991,7 @@ shadowDrawFunction givenShadow =
                         , modelMatrix = modelMatrix
                         , viewMatrix = viewMatrix
                         , projectionMatrix = projectionMatrix
-                        , shadowLight = lights.lights12
+                        , shadowLight = shadowLight
                         }
 
 
@@ -1032,7 +1036,7 @@ quadShadow :
 quadShadow firstPoint secondPoint thirdPoint fourthPoint =
     Types.Entity <|
         Types.ShadowNode <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix shadowLight settings ->
                 WebGL.entityWith (shadowSettings isRightHanded settings)
                     Shaders.quadShadowVertex
                     Shaders.shadowFragment
@@ -1043,7 +1047,7 @@ quadShadow firstPoint secondPoint thirdPoint fourthPoint =
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
                     , projectionMatrix = projectionMatrix
-                    , shadowLight = lights.lights12
+                    , shadowLight = shadowLight
                     }
 
 
@@ -1074,38 +1078,38 @@ meshSettings isRightHanded backFaceSetting settings =
 rightHandedStencilTest : WebGL.Settings.Setting
 rightHandedStencilTest =
     StencilTest.testSeparate
-        { ref = 1
-        , mask = 0xFF
-        , writeMask = 0xFF
+        { ref = 0
+        , mask = 0
+        , writeMask = 0x0F
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.incrementWrap
+        , zpass = StencilTest.increment
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.decrementWrap
+        , zpass = StencilTest.decrement
         }
 
 
 leftHandedStencilTest : WebGL.Settings.Setting
 leftHandedStencilTest =
     StencilTest.testSeparate
-        { ref = 1
-        , mask = 0xFF
-        , writeMask = 0xFF
+        { ref = 0
+        , mask = 0
+        , writeMask = 0x0F
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.decrementWrap
+        , zpass = StencilTest.decrement
         }
         { test = StencilTest.always
         , fail = StencilTest.keep
         , zfail = StencilTest.keep
-        , zpass = StencilTest.incrementWrap
+        , zpass = StencilTest.increment
         }
 
 
@@ -1241,7 +1245,7 @@ lambertianMesh : Vec3 -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Ve
 lambertianMesh color bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.uniformVertex
@@ -1253,6 +1257,7 @@ lambertianMesh color bounds webGLMesh backFaceSetting =
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
                     , lights78 = lights.lights78
+                    , enabledLights = enabledLights
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -1264,7 +1269,7 @@ texturedLambertianMesh : WebGL.Texture.Texture -> Bounds -> WebGL.Mesh { a | pos
 texturedLambertianMesh materialColorData bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.texturedVertex
@@ -1278,6 +1283,7 @@ texturedLambertianMesh materialColorData bounds webGLMesh backFaceSetting =
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
                     , lights78 = lights.lights78
+                    , enabledLights = enabledLights
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -1289,7 +1295,7 @@ normalMappedLambertianMesh : WebGL.Texture.Texture -> WebGL.Texture.Texture -> F
 normalMappedLambertianMesh materialColorData normalMapData useNormalMap bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.normalMappedVertex
@@ -1303,6 +1309,7 @@ normalMappedLambertianMesh materialColorData normalMapData useNormalMap bounds w
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
                     , lights78 = lights.lights78
+                    , enabledLights = enabledLights
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -1314,7 +1321,7 @@ physicalMesh : Vec3 -> Float -> Float -> Bounds -> WebGL.Mesh { a | position : V
 physicalMesh color roughness metallic bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.uniformVertex
@@ -1328,6 +1335,7 @@ physicalMesh color roughness metallic bounds webGLMesh backFaceSetting =
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
                     , lights78 = lights.lights78
+                    , enabledLights = enabledLights
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -1339,7 +1347,7 @@ texturedPhysicalMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture ->
 texturedPhysicalMesh baseColorData constantBaseColor roughnessData roughnessChannel metallicData metallicChannel bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.texturedVertex
@@ -1358,6 +1366,7 @@ texturedPhysicalMesh baseColorData constantBaseColor roughnessData roughnessChan
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
                     , lights78 = lights.lights78
+                    , enabledLights = enabledLights
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
@@ -1369,7 +1378,7 @@ normalMappedPhysicalMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Textur
 normalMappedPhysicalMesh baseColorData constantBaseColor roughnessData roughnessChannel metallicData metallicChannel normalMapData useNormalMap bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
-            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.normalMappedVertex
@@ -1388,6 +1397,7 @@ normalMappedPhysicalMesh baseColorData constantBaseColor roughnessData roughness
                     , lights34 = lights.lights34
                     , lights56 = lights.lights56
                     , lights78 = lights.lights78
+                    , enabledLights = enabledLights
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix

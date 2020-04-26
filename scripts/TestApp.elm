@@ -1328,7 +1328,7 @@ entity model testCase =
         Emissive ->
             let
                 material =
-                    Material.emissive Tango.orange2 (Luminance.nits 250)
+                    Material.emissive (Scene3d.chromaticity Tango.orange2) (Luminance.nits 250)
             in
             case testCase.mesh of
                 Points ->
@@ -1686,15 +1686,15 @@ transformation testCase =
 lights : TestCase -> Scene3d.Lights WorldCoordinates
 lights testCase =
     let
-        pointLight castsShadows =
-            Scene3d.pointLight castsShadows
+        pointLight =
+            Scene3d.pointLight (Scene3d.castsShadows testCase.shadows)
                 { chromaticity = Scene3d.fluorescentLighting
                 , position = Point3d.meters 0 -4 4
                 , intensity = LuminousFlux.lumens 20000
                 }
 
-        directionalLight castsShadows =
-            Scene3d.directionalLight castsShadows
+        directionalLight =
+            Scene3d.directionalLight (Scene3d.castsShadows testCase.shadows)
                 { chromaticity = Scene3d.colorTemperature (Temperature.kelvins 2200)
                 , intensity = Illuminance.lux 60
                 , direction = Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -30)
@@ -1716,30 +1716,25 @@ lights testCase =
             Scene3d.noLights
 
         ( True, False, False ) ->
-            Scene3d.oneLight (pointLight shadowSetting)
+            Scene3d.oneLight pointLight
 
         ( False, True, False ) ->
-            Scene3d.oneLight (directionalLight shadowSetting)
+            Scene3d.oneLight directionalLight
 
         ( True, True, False ) ->
-            Scene3d.twoLights
-                (directionalLight shadowSetting)
-                (pointLight Scene3d.neverCastsShadows)
+            Scene3d.twoLights pointLight directionalLight
 
         ( False, False, True ) ->
             Scene3d.oneLight softLighting
 
         ( True, False, True ) ->
-            Scene3d.twoLights (pointLight shadowSetting) softLighting
+            Scene3d.twoLights pointLight softLighting
 
         ( False, True, True ) ->
-            Scene3d.twoLights (directionalLight shadowSetting) softLighting
+            Scene3d.twoLights directionalLight softLighting
 
         ( True, True, True ) ->
-            Scene3d.threeLights
-                (directionalLight shadowSetting)
-                (pointLight Scene3d.neverCastsShadows)
-                softLighting
+            Scene3d.threeLights pointLight directionalLight softLighting
 
 
 camera : TestCase -> Camera3d Meters WorldCoordinates
