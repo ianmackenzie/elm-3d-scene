@@ -68,14 +68,20 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
+{-| TODO
+-}
 type alias Mesh coordinates attributes =
     Types.Mesh coordinates attributes
 
 
+{-| TODO
+-}
 type Yes
     = Yes
 
 
+{-| TODO
+-}
 type No
     = No
 
@@ -121,10 +127,14 @@ type alias Anisotropic coordinates =
     Mesh coordinates { normals : Yes, uvs : No, tangents : Yes }
 
 
+{-| TODO
+-}
 type alias Shadow coordinates =
     Types.Shadow coordinates
 
 
+{-| TODO
+-}
 empty : Mesh coordinates attributes
 empty =
     Types.EmptyMesh
@@ -169,6 +179,8 @@ facetAttributes triangle =
     )
 
 
+{-| TODO
+-}
 triangles : List (Triangle3d Meters coordinates) -> Plain coordinates
 triangles givenTriangles =
     case givenTriangles of
@@ -186,6 +198,8 @@ triangles givenTriangles =
             Types.Triangles bounds givenTriangles webGLMesh KeepBackFaces
 
 
+{-| TODO
+-}
 facets : List (Triangle3d Meters coordinates) -> Uniform coordinates
 facets givenTriangles =
     case givenTriangles of
@@ -265,6 +279,8 @@ plainBounds first rest =
     plainBoundsHelp x x y y z z rest
 
 
+{-| TODO
+-}
 plain : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
 plain givenMesh =
     let
@@ -354,6 +370,8 @@ vertexBounds first rest =
     vertexBoundsHelp x x y y z z rest
 
 
+{-| TODO
+-}
 uniform :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
     -> Uniform coordinates
@@ -392,6 +410,8 @@ collectTextured { position, uv } accumulated =
         :: accumulated
 
 
+{-| TODO
+-}
 unlit :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
     -> Unlit coordinates
@@ -430,6 +450,8 @@ collectSmoothTextured { position, normal, uv } accumulated =
         :: accumulated
 
 
+{-| TODO
+-}
 textured :
     TriangularMesh
         { position : Point3d Meters coordinates
@@ -511,6 +533,8 @@ lineSegmentAttributes givenSegment =
     ( plainVertex p1, plainVertex p2 )
 
 
+{-| TODO
+-}
 lineSegments : List (LineSegment3d Meters coordinates) -> Plain coordinates
 lineSegments givenSegments =
     case givenSegments of
@@ -528,6 +552,8 @@ lineSegments givenSegments =
             Types.LineSegments bounds givenSegments webGLMesh
 
 
+{-| TODO
+-}
 polyline : Polyline3d Meters coordinates -> Plain coordinates
 polyline givenPolyline =
     let
@@ -549,6 +575,8 @@ polyline givenPolyline =
             Types.Polyline bounds givenPolyline webGLMesh
 
 
+{-| TODO
+-}
 points :
     { radius : Quantity Float Pixels }
     -> List (Point3d Meters coordinates)
@@ -569,6 +597,8 @@ points { radius } givenPoints =
             Types.Points bounds (inPixels radius) givenPoints webGLMesh
 
 
+{-| TODO
+-}
 shadow : Mesh coordinates attributes -> Shadow coordinates
 shadow mesh =
     case mesh of
@@ -830,6 +860,8 @@ joinEdge p1 p2 start end neighborDict ( shadowFaceIndices, extraShadowVertices, 
             )
 
 
+{-| TODO
+-}
 cullBackFaces : Mesh coordinates attributes -> Mesh coordinates attributes
 cullBackFaces mesh =
     case mesh of

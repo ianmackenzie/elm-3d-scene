@@ -513,6 +513,8 @@ lightCastsShadows (Types.Light properties) =
     properties.castsShadows
 
 
+{-| TODO
+-}
 oneLight : Light coordinates castsShadows -> Lights coordinates
 oneLight light =
     let
@@ -530,6 +532,8 @@ oneLight light =
         SingleUnshadowedPass lightMatrices
 
 
+{-| TODO
+-}
 twoLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -546,6 +550,8 @@ twoLights first second =
         disabledLight
 
 
+{-| TODO
+-}
 threeLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -563,6 +569,8 @@ threeLights first second third =
         disabledLight
 
 
+{-| TODO
+-}
 fourLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -581,6 +589,8 @@ fourLights first second third fourth =
         disabledLight
 
 
+{-| TODO
+-}
 fiveLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -600,6 +610,8 @@ fiveLights first second third fourth fifth =
         disabledLight
 
 
+{-| TODO
+-}
 sixLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -620,6 +632,8 @@ sixLights first second third fourth fifth sixth =
         disabledLight
 
 
+{-| TODO
+-}
 sevenLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -646,6 +660,8 @@ eraseLight (Types.Light light) =
     Types.Light light
 
 
+{-| TODO
+-}
 eightLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -694,20 +710,28 @@ eightLights first second third fourth fifth sixth seventh eigth =
                     noLights
 
 
+{-| TODO
+-}
 type CastsShadows a
     = CastsShadows Bool
 
 
+{-| TODO
+-}
 castsShadows : Bool -> CastsShadows Bool
 castsShadows flag =
     CastsShadows flag
 
 
+{-| TODO
+-}
 neverCastsShadows : CastsShadows Never
 neverCastsShadows =
     CastsShadows False
 
 
+{-| TODO
+-}
 directionalLight :
     CastsShadows castsShadows
     ->
@@ -740,6 +764,8 @@ directionalLight (CastsShadows shadowFlag) light =
         }
 
 
+{-| TODO
+-}
 pointLight :
     CastsShadows castsShadows
     ->
@@ -772,6 +798,8 @@ pointLight (CastsShadows shadowFlag) light =
         }
 
 
+{-| TODO
+-}
 softLighting :
     { upDirection : Direction3d coordinates
     , chromaticity : Chromaticity
@@ -821,6 +849,8 @@ softLighting light =
             }
 
 
+{-| TODO
+-}
 overheadLighting :
     { upDirection : Direction3d coordinates
     , chromaticity : Chromaticity
@@ -836,6 +866,8 @@ overheadLighting arguments =
         }
 
 
+{-| TODO
+-}
 ambientLighting :
     { chromaticity : Chromaticity
     , intensity : Illuminance
@@ -854,10 +886,14 @@ ambientLighting arguments =
 ----- BACKGROUND -----
 
 
+{-| TODO
+-}
 type Background coordinates
     = BackgroundColor Color.Transparent.Color
 
 
+{-| TODO
+-}
 transparentBackground : Background coordinates
 transparentBackground =
     BackgroundColor <|
@@ -869,6 +905,8 @@ transparentBackground =
             }
 
 
+{-| TODO
+-}
 blackBackground : Background coordinates
 blackBackground =
     BackgroundColor <|
@@ -880,6 +918,8 @@ blackBackground =
             }
 
 
+{-| TODO
+-}
 whiteBackground : Background coordinates
 whiteBackground =
     BackgroundColor <|
@@ -891,11 +931,15 @@ whiteBackground =
             }
 
 
+{-| TODO
+-}
 backgroundColor : Color -> Background coordinates
 backgroundColor color =
     BackgroundColor (Color.Transparent.fromColor Color.Transparent.opaque color)
 
 
+{-| TODO
+-}
 transparentBackgroundColor : Color.Transparent.Color -> Background coordinates
 transparentBackgroundColor transparentColor =
     BackgroundColor transparentColor
@@ -1321,6 +1365,8 @@ storeStencilValue lightIndex =
         }
 
 
+{-| TODO
+-}
 toWebGLEntities :
     { lights : Lights coordinates
     , camera : Camera3d Meters coordinates
@@ -1523,6 +1569,8 @@ renderWithinShadows meshRenderPasses lightMatrices numShadowingLights =
         |> List.concat
 
 
+{-| TODO
+-}
 toHtml :
     { lights : Lights coordinates
     , camera : Camera3d Meters coordinates
@@ -1750,21 +1798,29 @@ chromaticity color =
 ----- EXPOSURE -----
 
 
+{-| TODO
+-}
 type Exposure
     = Exposure Luminance
 
 
+{-| TODO
+-}
 exposureValue : Float -> Exposure
 exposureValue ev100 =
     -- from https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/course-notes-moving-frostbite-to-pbr-v2.pdf
     Exposure (Luminance.nits (1.2 * 2 ^ ev100))
 
 
+{-| TODO
+-}
 maxLuminance : Luminance -> Exposure
 maxLuminance givenMaxLuminance =
     Exposure (Quantity.abs givenMaxLuminance)
 
 
+{-| TODO
+-}
 photographicExposure : { fStop : Float, shutterSpeed : Duration, isoSpeed : Float } -> Exposure
 photographicExposure { fStop, shutterSpeed, isoSpeed } =
     let
@@ -1779,15 +1835,21 @@ photographicExposure { fStop, shutterSpeed, isoSpeed } =
 ----- TONE MAPPING -----
 
 
+{-| TODO
+-}
 type ToneMapping
     = ToneMapping Float
 
 
+{-| TODO
+-}
 noToneMapping : ToneMapping
 noToneMapping =
     ToneMapping 1
 
 
+{-| TODO
+-}
 reinhardToneMapping : Float -> ToneMapping
 reinhardToneMapping maxOverExposure =
     ToneMapping (abs maxOverExposure)
@@ -1797,22 +1859,30 @@ reinhardToneMapping maxOverExposure =
 ----- ANTIALIASING -----
 
 
+{-| TODO
+-}
 type Antialiasing
     = NoAntialiasing
     | Multisampling
     | Supersampling Float
 
 
+{-| TODO
+-}
 noAntialiasing : Antialiasing
 noAntialiasing =
     NoAntialiasing
 
 
+{-| TODO
+-}
 multisampling : Antialiasing
 multisampling =
     Multisampling
 
 
+{-| TODO
+-}
 supersampling : Float -> Antialiasing
 supersampling factor =
     Supersampling factor
@@ -1822,6 +1892,8 @@ supersampling factor =
 ----- PRESETS -----
 
 
+{-| TODO
+-}
 unlit :
     { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
     , camera : Camera3d Meters coordinates
@@ -1845,6 +1917,8 @@ unlit arguments entities =
         entities
 
 
+{-| TODO
+-}
 sunny :
     { upDirection : Direction3d coordinates
     , sunlightDirection : Direction3d coordinates
@@ -1896,6 +1970,8 @@ sunny arguments entities =
         entities
 
 
+{-| TODO
+-}
 cloudy :
     { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
     , upDirection : Direction3d coordinates
@@ -1927,6 +2003,8 @@ cloudy arguments entities =
         entities
 
 
+{-| TODO
+-}
 office :
     { upDirection : Direction3d coordinates
     , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )

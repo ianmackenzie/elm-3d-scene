@@ -43,15 +43,21 @@ import Task exposing (Task)
 import WebGL.Texture
 
 
+{-| TODO
+-}
 type alias Material coordinates attributes =
     Types.Material coordinates attributes
 
 
+{-| TODO
+-}
 color : Color -> Material coordinates attributes
 color givenColor =
     Types.UnlitMaterial Types.UseMeshUvs (Types.Constant (toVec3 givenColor))
 
 
+{-| TODO
+-}
 matte : Color -> Material coordinates { a | normals : Yes }
 matte materialColor =
     Types.LambertianMaterial Types.UseMeshUvs
@@ -59,6 +65,8 @@ matte materialColor =
         (Types.Constant Types.VerticalNormal)
 
 
+{-| TODO
+-}
 emissive : Chromaticity -> Luminance -> Material coordinates attributes
 emissive givenChromaticity brightness =
     Types.EmissiveMaterial Types.UseMeshUvs
@@ -66,16 +74,22 @@ emissive givenChromaticity brightness =
         (Luminance.inNits brightness)
 
 
+{-| TODO
+-}
 metal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : Yes }
 metal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 1 }
 
 
+{-| TODO
+-}
 nonmetal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : Yes }
 nonmetal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 0 }
 
 
+{-| TODO
+-}
 pbr :
     { baseColor : Color, roughness : Float, metallic : Float }
     -> Material coordinates { a | normals : Yes }
@@ -87,39 +101,55 @@ pbr { baseColor, roughness, metallic } =
         (Types.Constant Types.VerticalNormal)
 
 
+{-| TODO
+-}
 type alias Texture value =
     Types.Texture value
 
 
+{-| TODO
+-}
 constant : value -> Texture value
 constant givenValue =
     Types.Constant givenValue
 
 
+{-| TODO
+-}
 load : String -> Task WebGL.Texture.Error (Texture value)
 load url =
     loadWith WebGL.Texture.defaultOptions url
 
 
+{-| TODO
+-}
 loadWith : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
 loadWith options url =
     loadImpl options Channel.luminance url
 
 
+{-| TODO
+-}
 type alias Channel =
     Channel.Channel
 
 
+{-| TODO
+-}
 loadChannel : Channel -> String -> Task WebGL.Texture.Error (Texture Float)
 loadChannel channel url =
     loadChannelWith WebGL.Texture.defaultOptions channel url
 
 
+{-| TODO
+-}
 loadChannelWith : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture Float)
 loadChannelWith options channel url =
     loadImpl options channel url
 
 
+{-| TODO
+-}
 loadImpl : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture value)
 loadImpl options (Types.Channel channel) url =
     WebGL.Texture.loadWith options url
@@ -153,11 +183,15 @@ toVec3 givenColor =
     Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
 
 
+{-| TODO
+-}
 texturedColor : Texture Color -> Material coordinates { a | uvs : Yes }
 texturedColor colorTexture =
     Types.UnlitMaterial Types.UseMeshUvs (map toVec3 colorTexture)
 
 
+{-| TODO
+-}
 texturedMatte : Texture Color -> Material coordinates { a | normals : Yes, uvs : Yes }
 texturedMatte colorTexture =
     Types.LambertianMaterial Types.UseMeshUvs
@@ -165,6 +199,8 @@ texturedMatte colorTexture =
         (Types.Constant Types.VerticalNormal)
 
 
+{-| TODO
+-}
 texturedEmissive : Texture Color -> Luminance -> Material coordinates { a | uvs : Yes }
 texturedEmissive colorTexture brightness =
     Types.EmissiveMaterial Types.UseMeshUvs
@@ -172,6 +208,8 @@ texturedEmissive colorTexture brightness =
         (Luminance.inNits brightness)
 
 
+{-| TODO
+-}
 texturedMetal :
     { baseColor : Texture Color
     , roughness : Texture Float
@@ -185,6 +223,8 @@ texturedMetal { baseColor, roughness } =
         }
 
 
+{-| TODO
+-}
 texturedNonmetal :
     { baseColor : Texture Color
     , roughness : Texture Float
@@ -198,6 +238,8 @@ texturedNonmetal { baseColor, roughness } =
         }
 
 
+{-| TODO
+-}
 texturedPbr :
     { baseColor : Texture Color
     , roughness : Texture Float
@@ -317,21 +359,29 @@ type alias NormalMapped coordinates =
     Material coordinates { normals : Yes, uvs : Yes, tangents : Yes }
 
 
+{-| TODO
+-}
 plain : Plain coordinates -> Material coordinates attributes
 plain =
     coerce
 
 
+{-| TODO
+-}
 uniform : Uniform coordinates -> Material coordinates { a | normals : Yes }
 uniform =
     coerce
 
 
+{-| TODO
+-}
 unlit : Unlit coordinates -> Material coordinates { a | uvs : Yes }
 unlit =
     coerce
 
 
+{-| TODO
+-}
 textured : Textured coordinates -> Material coordinates { a | normals : Yes, uvs : Yes }
 textured =
     coerce
