@@ -8,7 +8,7 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting, disabledLight
+    , Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting
     , CastsShadows, castsShadows, neverCastsShadows
     , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , Chromaticity
@@ -108,7 +108,7 @@ directional lights to provide highlights.
 
 ## Lights
 
-@docs Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting, disabledLight
+@docs Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting
 
 @docs CastsShadows, castsShadows, neverCastsShadows
 
