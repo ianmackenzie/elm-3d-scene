@@ -1,7 +1,7 @@
 module Scene3d.Material exposing
     ( Material
     , color, emissive, matte, metal, nonmetal, pbr
-    , Texture, constant, load, loadWith, loadChannel, loadChannelWith
+    , Texture, constant, load, loadWith
     , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
     , Plain, Unlit, Uniform, Textured
     , plain, unlit, uniform
@@ -19,7 +19,7 @@ module Scene3d.Material exposing
 
 # Textured materials
 
-@docs Texture, constant, load, loadWith, loadChannel, loadChannelWith
+@docs Texture, constant, load, loadWith
 
 @docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
 
@@ -36,7 +36,6 @@ import Color exposing (Color)
 import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
 import Scene3d.ColorConversions as ColorConversions
-import Scene3d.Material.Channel as Channel exposing (Channel)
 import Scene3d.Mesh exposing (No, Yes)
 import Scene3d.Types as Types exposing (Chromaticity, LinearRgb(..))
 import Task exposing (Task)
@@ -125,33 +124,13 @@ load url =
 -}
 loadWith : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
 loadWith options url =
-    loadImpl options Channel.luminance url
+    loadImpl options url
 
 
 {-| TODO
 -}
-type alias Channel =
-    Channel.Channel
-
-
-{-| TODO
--}
-loadChannel : Channel -> String -> Task WebGL.Texture.Error (Texture Float)
-loadChannel channel url =
-    loadChannelWith WebGL.Texture.defaultOptions channel url
-
-
-{-| TODO
--}
-loadChannelWith : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture Float)
-loadChannelWith options channel url =
-    loadImpl options channel url
-
-
-{-| TODO
--}
-loadImpl : WebGL.Texture.Options -> Channel -> String -> Task WebGL.Texture.Error (Texture value)
-loadImpl options (Types.Channel channel) url =
+loadImpl : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
+loadImpl options url =
     WebGL.Texture.loadWith options url
         |> Task.map
             (\data ->
@@ -159,7 +138,6 @@ loadImpl options (Types.Channel channel) url =
                     { url = url
                     , options = options
                     , data = data
-                    , channel = channel
                     }
             )
 

@@ -1970,9 +1970,9 @@ physicalTexturesFragment :
             , baseColorTexture : Texture
             , constantBaseColor : Vec4
             , roughnessTexture : Texture
-            , roughnessChannel : Vec4
+            , constantRoughness : Vec2
             , metallicTexture : Texture
-            , metallicChannel : Vec4
+            , constantMetallic : Vec2
             , normalMapTexture : Texture
             , useNormalMap : Float
         }
@@ -1995,9 +1995,9 @@ physicalTexturesFragment =
         uniform mediump sampler2D baseColorTexture;
         uniform lowp vec4 constantBaseColor;
         uniform mediump sampler2D roughnessTexture;
-        uniform lowp vec4 roughnessChannel;
+        uniform lowp vec2 constantRoughness;
         uniform mediump sampler2D metallicTexture;
-        uniform lowp vec4 metallicChannel;
+        uniform lowp vec2 constantMetallic;
         uniform mediump sampler2D normalMapTexture;
         uniform lowp float useNormalMap;
         
@@ -2014,12 +2014,13 @@ physicalTexturesFragment =
         const lowp float kDisabledLight = 0.0;
         const lowp float kSoftLighting = 3.0;
         
-        float getChannelValue(sampler2D texture, vec2 uv, vec4 channel) {
-            float constantValue = channel.a;
-            float useConstant = float(channel.rgb == vec3(0.0, 0.0, 0.0));
-            float useTexture = 1.0 - useConstant;
-            float textureValue = dot(texture2D(texture, uv).rgb, channel.rgb);
-            return clamp(textureValue * useTexture + constantValue * useConstant, 0.0, 1.0);
+        float getFloatValue(sampler2D texture, vec2 uv, vec2 constantValue) {
+            if (constantValue.x == 1.0) {
+                return constantValue.y;
+            } else {
+                vec4 textureColor = texture2D(texture, uv);
+                return dot(textureColor, vec4(0.2126, 0.7152, 0.0722, 0.0));
+            }
         }
         
         vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
@@ -2305,8 +2306,8 @@ physicalTexturesFragment =
         
         void main() {
             vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
-            float roughness = getChannelValue(roughnessTexture, interpolatedUv, roughnessChannel);
-            float metallic = getChannelValue(metallicTexture, interpolatedUv, metallicChannel);
+            float roughness = getFloatValue(roughnessTexture, interpolatedUv, constantRoughness);
+            float metallic = getFloatValue(metallicTexture, interpolatedUv, constantMetallic);
         
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
             float normalSign = getNormalSign();

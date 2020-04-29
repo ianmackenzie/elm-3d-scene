@@ -101,7 +101,6 @@ type Texture value
         { url : String
         , options : WebGL.Texture.Options
         , data : WebGL.Texture.Texture
-        , channel : Vec4
         }
 
 

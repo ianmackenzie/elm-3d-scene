@@ -142,9 +142,9 @@ roughnessTexture =
     Glsl.uniform Glsl.mediump Glsl.sampler2D "roughnessTexture"
 
 
-roughnessChannel : Glsl.Uniform
-roughnessChannel =
-    Glsl.uniform Glsl.lowp Glsl.vec4 "roughnessChannel"
+constantRoughness : Glsl.Uniform
+constantRoughness =
+    Glsl.uniform Glsl.lowp Glsl.vec2 "constantRoughness"
 
 
 metallic : Glsl.Uniform
@@ -157,9 +157,9 @@ metallicTexture =
     Glsl.uniform Glsl.mediump Glsl.sampler2D "metallicTexture"
 
 
-metallicChannel : Glsl.Uniform
-metallicChannel =
-    Glsl.uniform Glsl.lowp Glsl.vec4 "metallicChannel"
+constantMetallic : Glsl.Uniform
+constantMetallic =
+    Glsl.uniform Glsl.lowp Glsl.vec2 "constantMetallic"
 
 
 normalMapTexture : Glsl.Uniform
@@ -518,16 +518,17 @@ getDirectionToCamera =
         """
 
 
-getChannelValue : Glsl.Function
-getChannelValue =
+getFloatValue : Glsl.Function
+getFloatValue =
     Glsl.function { dependencies = [], constants = [] }
         """
-        float getChannelValue(sampler2D texture, vec2 uv, vec4 channel) {
-            float constantValue = channel.a;
-            float useConstant = float(channel.rgb == vec3(0.0, 0.0, 0.0));
-            float useTexture = 1.0 - useConstant;
-            float textureValue = dot(texture2D(texture, uv).rgb, channel.rgb);
-            return clamp(textureValue * useTexture + constantValue * useConstant, 0.0, 1.0);
+        float getFloatValue(sampler2D texture, vec2 uv, vec2 constantValue) {
+            if (constantValue.y == 1.0) {
+                return constantValue.x;
+            } else {
+                vec4 textureColor = texture2D(texture, uv);
+                return dot(textureColor, vec4(0.2126, 0.7152, 0.0722, 0.0));
+            }
         }
         """
 
@@ -1693,9 +1694,9 @@ physicalTexturesFragmentShader =
             , baseColorTexture
             , constantBaseColor
             , roughnessTexture
-            , roughnessChannel
+            , constantRoughness
             , metallicTexture
-            , metallicChannel
+            , constantMetallic
             , normalMapTexture
             , useNormalMap
             ]
@@ -1706,7 +1707,7 @@ physicalTexturesFragmentShader =
             , interpolatedTangent
             ]
         , functions =
-            [ getChannelValue
+            [ getFloatValue
             , getLocalNormal
             , getNormalSign
             , getMappedNormal
@@ -1720,8 +1721,8 @@ physicalTexturesFragmentShader =
         """
         void main() {
             vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
-            float roughness = getChannelValue(roughnessTexture, interpolatedUv, roughnessChannel);
-            float metallic = getChannelValue(metallicTexture, interpolatedUv, metallicChannel);
+            float roughness = getFloatValue(roughnessTexture, interpolatedUv, constantRoughness);
+            float metallic = getFloatValue(metallicTexture, interpolatedUv, constantMetallic);
 
             vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
             float normalSign = getNormalSign();
