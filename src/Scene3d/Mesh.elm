@@ -3,7 +3,8 @@ module Scene3d.Mesh exposing
     , Plain, Uniform, Unlit, Textured
     , points, lineSegments, polyline
     , triangles, facets
-    , plain, uniform, unlit, textured
+    , indexedTriangles, indexedFacets, indexedFaces
+    , texturedTriangles, texturedFacets, texturedFaces
     , Shadow, shadow
     , cullBackFaces
     )
@@ -24,7 +25,9 @@ module Scene3d.Mesh exposing
 
 @docs triangles, facets
 
-@docs plain, uniform, unlit, textured
+@docs indexedTriangles, indexedFacets, indexedFaces
+
+@docs texturedTriangles, texturedFacets, texturedFaces
 
 
 # Shadows
@@ -156,6 +159,22 @@ triangleAttributes triangle =
     ( plainVertex p1, plainVertex p2, plainVertex p3 )
 
 
+triangleNormal :
+    Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Vector3d Unitless coordinates
+triangleNormal p1 p2 p3 =
+    let
+        v1 =
+            Vector3d.from p1 p2
+
+        v2 =
+            Vector3d.from p2 p3
+    in
+    Vector3d.normalize (v1 |> Vector3d.cross v2)
+
+
 facetAttributes :
     Triangle3d Meters coordinates
     -> ( VertexWithNormal, VertexWithNormal, VertexWithNormal )
@@ -164,14 +183,8 @@ facetAttributes triangle =
         ( p1, p2, p3 ) =
             Triangle3d.vertices triangle
 
-        e1 =
-            Vector3d.from p1 p2
-
-        e2 =
-            Vector3d.from p2 p3
-
         normal =
-            Vector3d.toVec3 (Vector3d.normalize (e1 |> Vector3d.cross e2))
+            Vector3d.toVec3 (triangleNormal p1 p2 p3)
     in
     ( { position = Point3d.toVec3 p1, normal = normal }
     , { position = Point3d.toVec3 p2, normal = normal }
@@ -281,8 +294,8 @@ plainBounds first rest =
 
 {-| TODO
 -}
-plain : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
-plain givenMesh =
+indexedTriangles : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
+indexedTriangles givenMesh =
     let
         collectedVertices =
             Array.foldr collectPlain [] (TriangularMesh.vertices givenMesh)
@@ -302,6 +315,11 @@ plain givenMesh =
                         (TriangularMesh.faceIndices givenMesh)
             in
             Types.Indexed bounds givenMesh webGLMesh KeepBackFaces
+
+
+indexedFacets : TriangularMesh (Point3d Meters coordinates) -> Uniform coordinates
+indexedFacets givenMesh =
+    facets (List.map Triangle3d.fromVertices (TriangularMesh.faceVertices givenMesh))
 
 
 collectSmooth :
@@ -372,10 +390,10 @@ vertexBounds first rest =
 
 {-| TODO
 -}
-uniform :
+indexedFaces :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
     -> Uniform coordinates
-uniform givenMesh =
+indexedFaces givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmooth [] (TriangularMesh.vertices givenMesh)
@@ -412,10 +430,10 @@ collectTextured { position, uv } accumulated =
 
 {-| TODO
 -}
-unlit :
+texturedTriangles :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
     -> Unlit coordinates
-unlit givenMesh =
+texturedTriangles givenMesh =
     let
         collectedVertices =
             Array.foldr collectTextured [] (TriangularMesh.vertices givenMesh)
@@ -437,6 +455,74 @@ unlit givenMesh =
             Types.MeshWithUvs bounds givenMesh webGLMesh KeepBackFaces
 
 
+type alias TexturedTriangleVertex coordinates =
+    { position : Point3d Meters coordinates
+    , uv : ( Float, Float )
+    }
+
+
+type alias TexturedFacetVertex coordinates =
+    { position : Point3d Meters coordinates
+    , uv : ( Float, Float )
+    , normal : Vector3d Unitless coordinates
+    }
+
+
+collectTexturedFacetVertices :
+    ( TexturedTriangleVertex coordinates, TexturedTriangleVertex coordinates, TexturedTriangleVertex coordinates )
+    -> List (TexturedFacetVertex coordinates)
+    -> List (TexturedFacetVertex coordinates)
+collectTexturedFacetVertices ( tv1, tv2, tv3 ) accumulated =
+    let
+        normal =
+            triangleNormal tv1.position tv2.position tv3.position
+
+        fv1 =
+            { position = tv1.position
+            , uv = tv1.uv
+            , normal = normal
+            }
+
+        fv2 =
+            { position = tv2.position
+            , uv = tv2.uv
+            , normal = normal
+            }
+
+        fv3 =
+            { position = tv3.position
+            , uv = tv3.uv
+            , normal = normal
+            }
+    in
+    fv1 :: fv2 :: fv3 :: accumulated
+
+
+texturedFacetFaceIndices : Int -> List ( Int, Int, Int ) -> List ( Int, Int, Int )
+texturedFacetFaceIndices count accumulated =
+    if count <= 0 then
+        accumulated
+
+    else
+        texturedFacetFaceIndices (count - 3) (( count - 3, count - 2, count - 1 ) :: accumulated)
+
+
+texturedFacets :
+    TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
+    -> Textured coordinates
+texturedFacets givenMesh =
+    let
+        collectedVertices =
+            Array.fromList <|
+                List.foldr collectTexturedFacetVertices [] <|
+                    TriangularMesh.faceVertices givenMesh
+
+        faceIndices =
+            texturedFacetFaceIndices (Array.length collectedVertices) []
+    in
+    texturedFaces (TriangularMesh.indexed collectedVertices faceIndices)
+
+
 collectSmoothTextured :
     { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ) }
     -> List VertexWithNormalAndUv
@@ -452,14 +538,14 @@ collectSmoothTextured { position, normal, uv } accumulated =
 
 {-| TODO
 -}
-textured :
+texturedFaces :
     TriangularMesh
         { position : Point3d Meters coordinates
         , normal : Vector3d Unitless coordinates
         , uv : ( Float, Float )
         }
     -> Textured coordinates
-textured givenMesh =
+texturedFaces givenMesh =
     let
         collectedVertices =
             Array.foldr collectSmoothTextured [] (TriangularMesh.vertices givenMesh)
@@ -689,10 +775,7 @@ collectShadowVertices getPosition ( mv1, mv2, mv3 ) accumulated =
             getPosition mv3
 
         faceNormal =
-            Vector3d.from p1 p2
-                |> Vector3d.cross (Vector3d.from p1 p3)
-                |> Vector3d.normalize
-                |> Vector3d.toVec3
+            Vector3d.toVec3 (triangleNormal p1 p2 p3)
 
         sv1 =
             { position = Point3d.toVec3 p1, normal = faceNormal }

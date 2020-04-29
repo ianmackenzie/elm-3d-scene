@@ -64,6 +64,7 @@ type Mesh
     | Uniform
     | Unlit
     | Textured
+    | TexturedFacets
     | Quad
     | Block
     | Sphere
@@ -142,6 +143,9 @@ toggleMesh mesh =
             Textured
 
         Textured ->
+            TexturedFacets
+
+        TexturedFacets ->
             Quad
 
         Quad ->
@@ -243,6 +247,9 @@ parseMesh string =
 
         "Textured" ->
             Ok Textured
+
+        "TexturedFacets" ->
+            Ok TexturedFacets
 
         "Quad" ->
             Ok Quad
@@ -653,6 +660,8 @@ type alias LoadedModel =
     , unlitShadow : Mesh.Shadow WorldCoordinates
     , texturedMesh : Mesh.Textured WorldCoordinates
     , texturedShadow : Mesh.Shadow WorldCoordinates
+    , texturedFacetsMesh : Mesh.Textured WorldCoordinates
+    , texturedFacetsShadow : Mesh.Shadow WorldCoordinates
     }
 
 
@@ -1170,24 +1179,31 @@ checkIfLoaded loadingModel =
                     Mesh.facets triangles
 
                 plainMesh =
-                    Mesh.plain plainTriangularMesh
+                    Mesh.indexedTriangles plainTriangularMesh
 
                 uniformMesh =
-                    Mesh.uniform
+                    Mesh.indexedFaces
                         (TriangularMesh.mapVertices
                             (\{ position, normal } -> { position = position, normal = normal })
                             duckMesh
                         )
 
                 unlitMesh =
-                    Mesh.unlit
+                    Mesh.texturedTriangles
                         (TriangularMesh.mapVertices
                             (\{ position, uv } -> { position = position, uv = uv })
                             duckMesh
                         )
 
                 texturedMesh =
-                    Mesh.textured duckMesh
+                    Mesh.texturedFaces duckMesh
+
+                texturedFacetsMesh =
+                    Mesh.texturedFacets
+                        (TriangularMesh.mapVertices
+                            (\{ position, uv } -> { position = position, uv = uv })
+                            duckMesh
+                        )
             in
             { testCases = testCaseArray testCases
             , testCaseIndex = loadingModel.testCaseIndex
@@ -1209,6 +1225,8 @@ checkIfLoaded loadingModel =
             , unlitShadow = Mesh.shadow unlitMesh
             , texturedMesh = texturedMesh
             , texturedShadow = Mesh.shadow texturedMesh
+            , texturedFacetsMesh = texturedFacetsMesh
+            , texturedFacetsShadow = Mesh.shadow texturedFacetsMesh
             }
         )
         |> Maybe.andMap loadingModel.testCases
@@ -1313,6 +1331,9 @@ entity model testCase =
                 Textured ->
                     Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
+                TexturedFacets ->
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+
                 Quad ->
                     Just (quadEntity testCase material)
 
@@ -1358,6 +1379,9 @@ entity model testCase =
                 Textured ->
                     Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
+                TexturedFacets ->
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+
                 Quad ->
                     Just (quadEntity testCase material)
 
@@ -1402,6 +1426,9 @@ entity model testCase =
 
                 Textured ->
                     Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
+
+                TexturedFacets ->
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
 
                 Quad ->
                     Just (quadEntity testCase material)
@@ -1451,6 +1478,9 @@ entity model testCase =
                 Textured ->
                     Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
 
+                TexturedFacets ->
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+
                 Quad ->
                     Just (quadEntity testCase material)
 
@@ -1498,6 +1528,9 @@ entity model testCase =
 
                 Textured ->
                     Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+
+                TexturedFacets ->
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
@@ -1547,6 +1580,9 @@ entity model testCase =
                 Textured ->
                     Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
 
+                TexturedFacets ->
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
+
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
 
@@ -1594,6 +1630,9 @@ entity model testCase =
 
                 Textured ->
                     Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+
+                TexturedFacets ->
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
@@ -1650,6 +1689,9 @@ entity model testCase =
 
                 Textured ->
                     Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+
+                TexturedFacets ->
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
@@ -1836,6 +1878,9 @@ meshDescription mesh =
 
         Textured ->
             "Textured"
+
+        TexturedFacets ->
+            "Textured facets"
 
         Quad ->
             "Quad"
@@ -2045,7 +2090,7 @@ viewTestCase model testCase =
                             , background = Scene3d.transparentBackground
                             , camera = camera testCase
                             , clipDepth = Length.meters 1
-                            , dimensions = ( Pixels.pixels 480, Pixels.pixels 360 )
+                            , dimensions = ( Pixels.pixels 1024, Pixels.pixels 768 )
                             , antialiasing = antialiasing testCase
                             , exposure = Scene3d.exposureValue 4
                             , toneMapping = toneMapping testCase
@@ -2055,14 +2100,15 @@ viewTestCase model testCase =
                             , axes
                             , validEntity |> transformation testCase
                             ]
-                , Element.image
-                    [ Element.width (Element.px 480)
-                    , Element.height (Element.px 360)
-                    , Element.Events.onClick Next
-                    ]
-                    { src = "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/test-v2/test" ++ String.fromInt (model.testCaseIndex + 1) ++ ".png"
-                    , description = "Reference render"
-                    }
+
+                -- , Element.image
+                --     [ Element.width (Element.px 480)
+                --     , Element.height (Element.px 360)
+                --     , Element.Events.onClick Next
+                --     ]
+                --     { src = "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/test-v2/test" ++ String.fromInt (model.testCaseIndex + 1) ++ ".png"
+                --     , description = "Reference render"
+                --     }
                 , Element.column []
                     [ Element.row [] <|
                         [ button

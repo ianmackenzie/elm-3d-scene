@@ -1,4 +1,4 @@
-Mesh: Points, LineSegments, Polyline, Triangles, Facets, Plain, Uniform, Unlit, Textured, Quad, Block, Sphere, Cylinder
+Mesh: Points, LineSegments, Polyline, Triangles, Facets, Plain, Uniform, Unlit, Textured, TexturedFacets, Quad, Block, Sphere, Cylinder
 Material: Color, Emissive, Matte, Pbr, TexturedColor, TexturedEmissive, TexturedMatte, TexturedPbr
 Shadows: NoShadows, Shadows
 Transformation: NoTransformation, Translation, Rotation, Scale, Mirror

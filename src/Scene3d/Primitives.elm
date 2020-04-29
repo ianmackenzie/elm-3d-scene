@@ -119,7 +119,7 @@ sphere =
                     )
                 |> List.concat
     in
-    Mesh.textured (TriangularMesh.indexed vertices faces)
+    Mesh.texturedFaces (TriangularMesh.indexed vertices faces)
         |> Mesh.cullBackFaces
 
 
@@ -226,7 +226,7 @@ cylinder =
         triangularMesh =
             TriangularMesh.triangles (List.concat wedges)
     in
-    Mesh.uniform triangularMesh |> Mesh.cullBackFaces
+    Mesh.indexedFaces triangularMesh |> Mesh.cullBackFaces
 
 
 block : Mesh.Uniform coordinates
