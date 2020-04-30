@@ -19,10 +19,11 @@ module Scene3d.ColorConversions exposing
 
 import Color exposing (Color)
 import Math.Vector3 as Vector3 exposing (vec3)
+import Quantity exposing (Quantity(..), Unitless)
 import Scene3d.Types as Types exposing (Chromaticity(..), CieXyz(..), LinearRgb(..))
 
 
-colorToLinearRgb : Color -> LinearRgb
+colorToLinearRgb : Color -> LinearRgb Unitless
 colorToLinearRgb color =
     let
         ( red, green, blue ) =
@@ -35,7 +36,7 @@ colorToLinearRgb color =
             (inverseGamma (blue / 255))
 
 
-linearRgbToColor : LinearRgb -> Color
+linearRgbToColor : LinearRgb Unitless -> Color
 linearRgbToColor (LinearRgb linearRgb) =
     Color.fromRGB
         ( 255 * gammaCorrect (Vector3.getX linearRgb)
@@ -44,17 +45,17 @@ linearRgbToColor (LinearRgb linearRgb) =
         )
 
 
-colorToCieXyz : Color -> CieXyz
+colorToCieXyz : Color -> CieXyz Unitless
 colorToCieXyz color =
     color |> colorToLinearRgb |> linearRgbToCieXyz
 
 
-cieXyzToColor : CieXyz -> Color
+cieXyzToColor : CieXyz Unitless -> Color
 cieXyzToColor xyz =
     xyz |> cieXyzToLinearRgb |> linearRgbToColor
 
 
-cieXyzToLinearRgb : CieXyz -> LinearRgb
+cieXyzToLinearRgb : CieXyz units -> LinearRgb units
 cieXyzToLinearRgb (CieXyz bigX bigY bigZ) =
     LinearRgb <|
         vec3
@@ -63,7 +64,7 @@ cieXyzToLinearRgb (CieXyz bigX bigY bigZ) =
             (0.0557 * bigX - 0.204 * bigY + 1.057 * bigZ)
 
 
-linearRgbToCieXyz : LinearRgb -> CieXyz
+linearRgbToCieXyz : LinearRgb units -> CieXyz units
 linearRgbToCieXyz (LinearRgb linearRgb) =
     let
         linearR =
@@ -101,11 +102,11 @@ inverseGamma u =
             ((u + 0.055) / 1.055) ^ 2.4
 
 
-chromaticityToCieXyz : Chromaticity -> CieXyz
-chromaticityToCieXyz (Types.Chromaticity { x, y }) =
-    CieXyz (x / y) 1 ((1 - x - y) / y)
+chromaticityToCieXyz : Quantity Float units -> Chromaticity -> CieXyz units
+chromaticityToCieXyz (Quantity intensity) (Types.Chromaticity { x, y }) =
+    CieXyz (intensity * x / y) intensity (intensity * (1 - x - y) / y)
 
 
-chromaticityToLinearRgb : Chromaticity -> LinearRgb
-chromaticityToLinearRgb chromaticity =
-    cieXyzToLinearRgb (chromaticityToCieXyz chromaticity)
+chromaticityToLinearRgb : Quantity Float units -> Chromaticity -> LinearRgb units
+chromaticityToLinearRgb intensity chromaticity =
+    cieXyzToLinearRgb (chromaticityToCieXyz intensity chromaticity)

@@ -35,6 +35,7 @@ module Scene3d.Material exposing
 import Color exposing (Color)
 import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
+import Quantity
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Mesh exposing (No, Yes)
 import Scene3d.Types as Types exposing (Chromaticity, LinearRgb(..))
@@ -69,8 +70,8 @@ matte materialColor =
 emissive : Chromaticity -> Luminance -> Material coordinates attributes
 emissive givenChromaticity brightness =
     Types.EmissiveMaterial Types.UseMeshUvs
-        (Types.Constant (ColorConversions.chromaticityToLinearRgb givenChromaticity))
-        (Luminance.inNits brightness)
+        (Types.Constant (ColorConversions.chromaticityToLinearRgb (Quantity.float 1) givenChromaticity))
+        brightness
 
 
 {-| TODO
@@ -183,7 +184,7 @@ texturedEmissive : Texture Color -> Luminance -> Material coordinates { a | uvs 
 texturedEmissive colorTexture brightness =
     Types.EmissiveMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb colorTexture)
-        (Luminance.inNits brightness)
+        brightness
 
 
 {-| TODO

@@ -410,12 +410,12 @@ mesh givenMaterial givenMesh =
 
 
 type ResolvedLambertianMaterial
-    = ConstantLambertianMaterial LinearRgb
+    = ConstantLambertianMaterial (LinearRgb Unitless)
     | TexturedLambertianMaterial ( WebGL.Texture.Texture, Vec4 ) ( WebGL.Texture.Texture, Float )
 
 
 type ResolvedPbrMaterial
-    = ConstantPbrMaterial LinearRgb Float Float
+    = ConstantPbrMaterial (LinearRgb Unitless) Float Float
     | TexturedPbrMaterial ( WebGL.Texture.Texture, Vec4 ) ( WebGL.Texture.Texture, Vec2 ) ( WebGL.Texture.Texture, Vec2 ) ( WebGL.Texture.Texture, Float )
 
 
@@ -443,7 +443,7 @@ enabledVec3 vector =
         1
 
 
-vec3Tuple : WebGL.Texture.Texture -> Texture LinearRgb -> ( WebGL.Texture.Texture, Vec4 )
+vec3Tuple : WebGL.Texture.Texture -> Texture (LinearRgb Unitless) -> ( WebGL.Texture.Texture, Vec4 )
 vec3Tuple fallbackData texture =
     case texture of
         Types.Constant (LinearRgb baseColor) ->
@@ -477,7 +477,7 @@ type Tuple4 a b c d
     = Tuple4 a b c d
 
 
-resolvePbr : Texture LinearRgb -> Texture Float -> Texture Float -> Texture NormalMap -> ResolvedPbrMaterial
+resolvePbr : Texture (LinearRgb Unitless) -> Texture Float -> Texture Float -> Texture NormalMap -> ResolvedPbrMaterial
 resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture =
     case Tuple4 baseColorTexture roughnessTexture metallicTexture normalMapTexture of
         Tuple4 (Types.Constant baseColor) (Types.Constant roughness) (Types.Constant metallic) (Types.Constant Types.VerticalNormal) ->
@@ -512,7 +512,7 @@ resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture =
                 ( data, 1.0 )
 
 
-resolveLambertian : Texture LinearRgb -> Texture NormalMap -> ResolvedLambertianMaterial
+resolveLambertian : Texture (LinearRgb Unitless) -> Texture NormalMap -> ResolvedLambertianMaterial
 resolveLambertian materialColorTexture normalMapTexture =
     case ( materialColorTexture, normalMapTexture ) of
         ( Types.Constant materialColor, Types.Constant Types.VerticalNormal ) ->
@@ -671,7 +671,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
                             , backlight = backlight
-                            , emissiveColor = Math.Vector3.scale backlight emissiveColor
+                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -687,7 +687,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             Shaders.emissiveTextureFragment
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
-                            , backlight = backlight
+                            , backlight = Luminance.inNits backlight
                             , colorTexture = data
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
@@ -1192,7 +1192,7 @@ constantPointMesh color radius bounds webGLMesh =
                     }
 
 
-emissiveMesh : Vec3 -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
+emissiveMesh : Vec3 -> Luminance -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
 emissiveMesh color backlight bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
@@ -1202,7 +1202,7 @@ emissiveMesh color backlight bounds webGLMesh backFaceSetting =
                     Shaders.plainVertex
                     Shaders.emissiveFragment
                     webGLMesh
-                    { emissiveColor = Math.Vector3.scale backlight color
+                    { emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -1211,7 +1211,7 @@ emissiveMesh color backlight bounds webGLMesh backFaceSetting =
                     }
 
 
-texturedEmissiveMesh : WebGL.Texture.Texture -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
+texturedEmissiveMesh : WebGL.Texture.Texture -> Luminance -> Bounds -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
 texturedEmissiveMesh colorData backlight bounds webGLMesh backFaceSetting =
     Types.Entity <|
         MeshNode bounds <|
@@ -1222,7 +1222,7 @@ texturedEmissiveMesh colorData backlight bounds webGLMesh backFaceSetting =
                     Shaders.emissiveTextureFragment
                     webGLMesh
                     { colorTexture = colorData
-                    , backlight = backlight
+                    , backlight = Luminance.inNits backlight
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -1231,7 +1231,7 @@ texturedEmissiveMesh colorData backlight bounds webGLMesh backFaceSetting =
                     }
 
 
-emissivePointMesh : Vec3 -> Float -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
+emissivePointMesh : Vec3 -> Luminance -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
 emissivePointMesh color backlight radius bounds webGLMesh =
     Types.Entity <|
         PointNode bounds <|
@@ -1241,7 +1241,7 @@ emissivePointMesh color backlight radius bounds webGLMesh =
                     Shaders.pointVertex
                     Shaders.emissivePointFragment
                     webGLMesh
-                    { emissiveColor = Math.Vector3.scale backlight color
+                    { emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
                     , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale

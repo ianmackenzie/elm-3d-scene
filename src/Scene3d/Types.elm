@@ -7,6 +7,7 @@ import Frame3d exposing (Frame3d)
 import Illuminance exposing (Lux)
 import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
+import Luminance exposing (Luminance)
 import LuminousFlux exposing (Lumens)
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
@@ -86,9 +87,9 @@ type alias VertexWithTangent =
 
 type Material coordinates attributes
     = UnlitMaterial TextureMap (Texture Vec3)
-    | EmissiveMaterial TextureMap (Texture LinearRgb) Float
-    | LambertianMaterial TextureMap (Texture LinearRgb) (Texture NormalMap)
-    | PbrMaterial TextureMap (Texture LinearRgb) (Texture Float) (Texture Float) (Texture NormalMap)
+    | EmissiveMaterial TextureMap (Texture (LinearRgb Unitless)) Luminance
+    | LambertianMaterial TextureMap (Texture (LinearRgb Unitless)) (Texture NormalMap)
+    | PbrMaterial TextureMap (Texture (LinearRgb Unitless)) (Texture Float) (Texture Float) (Texture NormalMap)
 
 
 type NormalMap
@@ -173,11 +174,11 @@ type Chromaticity
     = Chromaticity { x : Float, y : Float }
 
 
-type CieXyz
+type CieXyz units
     = CieXyz Float Float Float
 
 
-type LinearRgb
+type LinearRgb units
     = LinearRgb Vec3
 
 

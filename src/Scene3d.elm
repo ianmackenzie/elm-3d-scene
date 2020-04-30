@@ -746,10 +746,7 @@ directionalLight (CastsShadows shadowFlag) light =
             Direction3d.unwrap light.direction
 
         (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb light.chromaticity
-
-        lux =
-            Illuminance.inLux light.intensity
+            ColorConversions.chromaticityToLinearRgb light.intensity light.chromaticity
     in
     Types.Light
         { type_ = 1
@@ -757,9 +754,9 @@ directionalLight (CastsShadows shadowFlag) light =
         , x = -x
         , y = -y
         , z = -z
-        , r = lux * Math.Vector3.getX rgb
-        , g = lux * Math.Vector3.getY rgb
-        , b = lux * Math.Vector3.getZ rgb
+        , r = Math.Vector3.getX rgb
+        , g = Math.Vector3.getY rgb
+        , b = Math.Vector3.getZ rgb
         , parameter = 0
         }
 
@@ -777,10 +774,7 @@ pointLight :
 pointLight (CastsShadows shadowFlag) light =
     let
         (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb light.chromaticity
-
-        lumens =
-            LuminousFlux.inLumens light.intensity
+            ColorConversions.chromaticityToLinearRgb light.intensity light.chromaticity
 
         { x, y, z } =
             Point3d.unwrap light.position
@@ -791,9 +785,9 @@ pointLight (CastsShadows shadowFlag) light =
         , x = x
         , y = y
         , z = z
-        , r = lumens * Math.Vector3.getX rgb
-        , g = lumens * Math.Vector3.getY rgb
-        , b = lumens * Math.Vector3.getZ rgb
+        , r = Math.Vector3.getX rgb
+        , g = Math.Vector3.getY rgb
+        , b = Math.Vector3.getZ rgb
         , parameter = 0
         }
 
@@ -825,7 +819,7 @@ softLighting light =
     else
         let
             (LinearRgb rgb) =
-                ColorConversions.chromaticityToLinearRgb light.chromaticity
+                ColorConversions.chromaticityToLinearRgb (Quantity.float 1) light.chromaticity
 
             nitsAbove =
                 abs (Illuminance.inLux light.intensityAbove / pi)
@@ -1455,8 +1449,11 @@ toWebGLEntities arguments drawables =
                             |> Direction3d.reverse
                             |> Direction3d.unwrap
 
-                (LinearRgb linearRgb) =
-                    ColorConversions.chromaticityToLinearRgb arguments.whiteBalance
+                (Exposure exposureLuminance) =
+                    arguments.exposure
+
+                (LinearRgb referenceWhite) =
+                    ColorConversions.chromaticityToLinearRgb exposureLuminance arguments.whiteBalance
 
                 (Exposure (Quantity nits)) =
                     arguments.exposure
@@ -1474,9 +1471,9 @@ toWebGLEntities arguments drawables =
                         , m22 = eyePointOrDirectionToCamera.y
                         , m32 = eyePointOrDirectionToCamera.z
                         , m42 = projectionType
-                        , m13 = nits * Math.Vector3.getX linearRgb
-                        , m23 = nits * Math.Vector3.getY linearRgb
-                        , m33 = nits * Math.Vector3.getZ linearRgb
+                        , m13 = Math.Vector3.getX referenceWhite
+                        , m23 = Math.Vector3.getY referenceWhite
+                        , m33 = Math.Vector3.getZ referenceWhite
                         , m43 = dynamicRange
                         , m14 = arguments.supersampling
                         , m24 = Length.inMeters sceneDiameter
