@@ -979,7 +979,7 @@ cylinder material =
         Point3d.origin
         Direction3d.z
         { radius = Length.centimeters 8, length = Length.centimeters 20 }
-        |> Scene3d.cylinder (Scene3d.castsShadows True) material
+        |> Scene3d.cone (Scene3d.castsShadows True) material
 
 
 bulb : DirectLight -> Maybe (Scene3d.Entity SceneCoordinates)

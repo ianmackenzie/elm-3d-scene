@@ -1,6 +1,7 @@
 module Scene3d.Entity exposing
     ( Entity
     , block
+    , cone
     , cylinder
     , empty
     , group
@@ -964,6 +965,33 @@ cylinder castsShadow givenMaterial givenCylinder =
         untransformedEntity =
             if castsShadow then
                 group [ baseEntity, shadow Primitives.cylinderShadow ]
+
+            else
+                baseEntity
+    in
+    untransformedEntity
+        |> transformBy (Transformation.preScale radius radius length)
+        |> placeIn centerFrame
+
+
+cone : Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cone castsShadow givenMaterial givenCone =
+    let
+        (Quantity radius) =
+            Cylinder3d.radius givenCone
+
+        (Quantity length) =
+            Cylinder3d.length givenCone
+
+        centerFrame =
+            Frame3d.fromZAxis (Cylinder3d.axis givenCone)
+
+        baseEntity =
+            mesh givenMaterial Primitives.cone
+
+        untransformedEntity =
+            if castsShadow then
+                group [ baseEntity, shadow Primitives.coneShadow ]
 
             else
                 baseEntity

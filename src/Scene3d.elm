@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( toHtml, unlit, sunny, cloudy, office
     , Entity
-    , quad, block, sphere, cylinder
+    , quad, block, sphere, cylinder, cone
     , mesh
     , group, nothing
     , shadow, withShadow
@@ -51,7 +51,7 @@ specify a material to use. However, different shapes support different kinds of
 materials; `quad`s and `sphere`s support all materials, while `block`s and
 `cylinder`s only support uniform (non-textured) materials.
 
-@docs quad, block, sphere, cylinder
+@docs quad, block, sphere, cylinder, cone
 
 
 ## Meshes
@@ -273,6 +273,14 @@ type from `elm-geometry`.
 cylinder : CastsShadows Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
     Entity.cylinder shadowFlag givenMaterial givenCylinder
+
+
+{-| Draw a cone using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cone3d)
+type from `elm-geometry`.
+-}
+cone : CastsShadows Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cone (CastsShadows shadowFlag) givenMaterial givenCone =
+    Entity.cone shadowFlag givenMaterial givenCone
 
 
 {-| Draw the given mesh (shape) with the given material. Check out the [`Mesh`](Scene3d-Mesh)

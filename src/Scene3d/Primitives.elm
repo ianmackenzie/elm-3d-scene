@@ -1,6 +1,8 @@
 module Scene3d.Primitives exposing
     ( block
     , blockShadow
+    , cone
+    , coneShadow
     , cylinder
     , cylinderShadow
     , sphere
@@ -229,6 +231,103 @@ cylinder =
     Mesh.indexedFaces triangularMesh |> Mesh.cullBackFaces
 
 
+cone : Mesh.Uniform coordinates
+cone =
+    let
+        radius =
+            Length.meters 1
+
+        subdivisions =
+            72
+
+        elevationAngle =
+            Angle.degrees 45
+
+        wedgeAngle =
+            Angle.turns 1 |> Quantity.divideBy (toFloat subdivisions)
+
+        negativeZVector =
+            Direction3d.negativeZ |> Direction3d.toVector
+
+        positiveZVector =
+            Direction3d.positiveZ |> Direction3d.toVector
+
+        bottomZ =
+            Quantity.zero
+
+        topZ =
+            Length.meters 1
+
+        basePoint =
+            Point3d.xyz zero zero bottomZ
+
+        tipPoint =
+            Point3d.xyz zero zero topZ
+
+        wedge startIndex =
+            let
+                startAngle =
+                    wedgeAngle |> Quantity.multiplyBy (toFloat startIndex)
+
+                endIndex =
+                    startIndex + 1 |> modBy subdivisions
+
+                endAngle =
+                    wedgeAngle |> Quantity.multiplyBy (toFloat endIndex)
+
+                tipAngle =
+                    wedgeAngle |> Quantity.multiplyBy (toFloat endIndex - 0.5)
+
+                startX =
+                    radius |> Quantity.multiplyBy (Angle.cos startAngle)
+
+                endX =
+                    radius |> Quantity.multiplyBy (Angle.cos endAngle)
+
+                startY =
+                    radius |> Quantity.multiplyBy (Angle.sin startAngle)
+
+                endY =
+                    radius |> Quantity.multiplyBy (Angle.sin endAngle)
+
+                p0 =
+                    Point3d.xyz startX startY bottomZ
+
+                p1 =
+                    Point3d.xyz endX endY bottomZ
+
+                startNormal =
+                    Direction3d.xyZ startAngle elevationAngle
+                        |> Direction3d.toVector
+
+                endNormal =
+                    Direction3d.xyZ endAngle elevationAngle
+                        |> Direction3d.toVector
+
+                tipNormal =
+                    Direction3d.xyZ tipAngle elevationAngle
+                        |> Direction3d.toVector
+            in
+            [ ( { position = basePoint, normal = negativeZVector }
+              , { position = p1, normal = negativeZVector }
+              , { position = p0, normal = negativeZVector }
+              )
+            , ( { position = p0, normal = startNormal }
+              , { position = p1, normal = endNormal }
+              , { position = tipPoint, normal = tipNormal }
+              )
+            ]
+
+        wedges =
+            List.range 0 (subdivisions - 1)
+                |> List.map wedge
+
+        triangularMesh =
+            TriangularMesh.triangles (List.concat wedges)
+    in
+    Mesh.indexedFaces triangularMesh |> Mesh.cullBackFaces
+
+
 block : Mesh.Uniform coordinates
 block =
     let
@@ -308,3 +407,8 @@ blockShadow =
 cylinderShadow : Mesh.Shadow coordinates
 cylinderShadow =
     Mesh.shadow cylinder
+
+
+coneShadow : Mesh.Shadow coordinates
+coneShadow =
+    Mesh.shadow cone
