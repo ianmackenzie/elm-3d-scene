@@ -153,15 +153,16 @@ uniformVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
         }
     |]
 
@@ -209,15 +210,16 @@ texturedVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = uv;
             interpolatedTangent = vec3(0.0, 0.0, 0.0);
         }
@@ -269,21 +271,22 @@ normalMappedVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
-        vec3 getWorldTangent(vec3 modelTangent, mat4 modelMatrix) {
-            return (modelMatrix * vec4(modelTangent, 0.0)).xyz;
+        vec3 getWorldTangent(vec3 modelTangent, vec4 modelScale, mat4 modelMatrix) {
+            return (modelMatrix * vec4(normalize(modelScale.xyz * modelTangent), 0.0)).xyz;
         }
         
         void main () {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = uv;
-            interpolatedTangent = getWorldTangent(tangent, modelMatrix);
+            interpolatedTangent = getWorldTangent(tangent, modelScale, modelMatrix);
         }
     |]
 
@@ -496,8 +499,9 @@ smoothQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main() {
@@ -508,7 +512,7 @@ smoothQuadVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
         }
     |]
 
@@ -581,8 +585,9 @@ texturedQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main() {
@@ -593,7 +598,7 @@ texturedQuadVertex =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedPosition = worldPosition.xyz;
-            interpolatedNormal = getWorldNormal(normal, modelMatrix, modelScale);
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = quadVertex.xy;
             interpolatedTangent = tangent;
         }
@@ -678,8 +683,9 @@ shadowVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_parameter) {
@@ -696,7 +702,7 @@ shadowVertex =
         
         vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 projectionMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
+            vec3 worldNormal = getWorldNormal(normal, vec4(modelScale.xyz, 1.0), modelMatrix);
             vec4 xyz_type = shadowLight[0];
             vec4 rgb_parameter = shadowLight[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_parameter);
@@ -790,8 +796,9 @@ quadShadowVertex =
             return modelMatrix * scaledPosition;
         }
         
-        vec3 getWorldNormal(vec3 modelNormal, mat4 modelMatrix, vec4 modelScale) {
-            return (modelMatrix * vec4(modelNormal, 0.0)).xyz * modelScale.w;
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_parameter) {
@@ -808,7 +815,7 @@ quadShadowVertex =
         
         vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 projectionMatrix, mat4 sceneProperties) {
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            vec3 worldNormal = getWorldNormal(normal, modelMatrix, vec4(1.0, 1.0, 1.0, 1.0));
+            vec3 worldNormal = getWorldNormal(normal, vec4(modelScale.xyz, 1.0), modelMatrix);
             vec4 xyz_type = shadowLight[0];
             vec4 rgb_parameter = shadowLight[1];
             vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_parameter);
@@ -2015,8 +2022,8 @@ physicalTexturesFragment =
         const lowp float kSoftLighting = 3.0;
         
         float getFloatValue(sampler2D texture, vec2 uv, vec2 constantValue) {
-            if (constantValue.x == 1.0) {
-                return constantValue.y;
+            if (constantValue.y == 1.0) {
+                return constantValue.x;
             } else {
                 vec4 textureColor = texture2D(texture, uv);
                 return dot(textureColor, vec4(0.2126, 0.7152, 0.0722, 0.0));
