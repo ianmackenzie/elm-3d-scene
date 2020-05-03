@@ -276,7 +276,7 @@ cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
     Entity.cylinder shadowFlag givenMaterial givenCylinder
 
 
-{-| Draw a cone using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cone3d)
+{-| Draw a cone using the [`Cone3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cone3d)
 type from `elm-geometry`.
 -}
 cone : CastsShadows Bool -> Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
