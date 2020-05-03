@@ -16,6 +16,7 @@ module Scene3d.Entity exposing
     , sphere
     , translateBy
     , translateIn
+    , triangle
     )
 
 import Angle exposing (Angle)
@@ -531,6 +532,63 @@ resolveLambertian materialColorTexture normalMapTexture =
                 (normalMapTuple data normalMapTexture)
 
 
+triangle :
+    Bool
+    -> Material.Uniform coordinates
+    -> Triangle3d Meters coordinates
+    -> Entity coordinates
+triangle castsShadow givenMaterial givenTriangle =
+    let
+        meshEntity =
+            triangleMesh givenMaterial givenTriangle
+    in
+    if castsShadow then
+        group [ meshEntity, triangleShadow givenTriangle ]
+
+    else
+        meshEntity
+
+
+triangleVertices : WebGL.Mesh { triangleVertex : Float }
+triangleVertices =
+    WebGL.triangles [ ( { triangleVertex = 0 }, { triangleVertex = 1 }, { triangleVertex = 2 } ) ]
+
+
+triangleVertexPositions : Triangle3d Meters coordinates -> Mat4
+triangleVertexPositions givenTriangle =
+    let
+        ( firstPoint, secondPoint, thirdPoint ) =
+            Triangle3d.vertices givenTriangle
+
+        p1 =
+            Point3d.toMeters firstPoint
+
+        p2 =
+            Point3d.toMeters secondPoint
+
+        p3 =
+            Point3d.toMeters thirdPoint
+    in
+    Math.Matrix4.fromRecord
+        { m11 = p1.x
+        , m21 = p1.y
+        , m31 = p1.z
+        , m41 = 0
+        , m12 = p2.x
+        , m22 = p2.y
+        , m32 = p2.z
+        , m42 = 0
+        , m13 = p3.x
+        , m23 = p3.y
+        , m33 = p3.z
+        , m43 = 0
+        , m14 = 0
+        , m24 = 0
+        , m34 = 0
+        , m44 = 0
+        }
+
+
 quad :
     Bool
     -> Material.Textured coordinates
@@ -612,6 +670,118 @@ toBounds boundingBox =
     , halfY = yDimension / 2
     , halfZ = zDimension / 2
     }
+
+
+triangleMesh : Material.Uniform coordinates -> Triangle3d Meters coordinates -> Entity coordinates
+triangleMesh givenMaterial givenTriangle =
+    let
+        boundingBox =
+            Triangle3d.boundingBox givenTriangle
+
+        bounds =
+            toBounds boundingBox
+    in
+    case givenMaterial of
+        Types.UnlitMaterial _ (Types.Constant color) ->
+            Types.Entity <|
+                MeshNode bounds <|
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.plainTriangleVertex
+                            Shaders.constantFragment
+                            triangleVertices
+                            { triangleVertexPositions = triangleVertexPositions givenTriangle
+                            , constantColor = color
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            , projectionMatrix = projectionMatrix
+                            }
+
+        Types.UnlitMaterial Types.UseMeshUvs (Types.Texture { data }) ->
+            empty
+
+        Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
+            Types.Entity <|
+                MeshNode bounds <|
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                        WebGL.entityWith
+                            (meshSettings isRightHanded Types.KeepBackFaces settings)
+                            Shaders.plainTriangleVertex
+                            Shaders.emissiveFragment
+                            triangleVertices
+                            { triangleVertexPositions = triangleVertexPositions givenTriangle
+                            , backlight = backlight
+                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) emissiveColor
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            , projectionMatrix = projectionMatrix
+                            }
+
+        Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
+            empty
+
+        Types.LambertianMaterial Types.UseMeshUvs materialColorTexture normalMapTexture ->
+            case resolveLambertian materialColorTexture normalMapTexture of
+                ConstantLambertianMaterial (LinearRgb materialColor) ->
+                    Types.Entity <|
+                        MeshNode bounds <|
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
+                                WebGL.entityWith
+                                    (meshSettings isRightHanded Types.KeepBackFaces settings)
+                                    Shaders.smoothTriangleVertex
+                                    Shaders.lambertianFragment
+                                    triangleVertices
+                                    { triangleVertexPositions = triangleVertexPositions givenTriangle
+                                    , lights12 = lights.lights12
+                                    , lights34 = lights.lights34
+                                    , lights56 = lights.lights56
+                                    , lights78 = lights.lights78
+                                    , enabledLights = enabledLights
+                                    , materialColor = materialColor
+                                    , sceneProperties = sceneProperties
+                                    , modelScale = modelScale
+                                    , modelMatrix = modelMatrix
+                                    , viewMatrix = viewMatrix
+                                    , projectionMatrix = projectionMatrix
+                                    }
+
+                TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( normalMapData, useNormalMap ) ->
+                    empty
+
+        Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
+            case resolvePbr baseColorTexture roughnessTexture metallicTexture normalMapTexture of
+                ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ->
+                    Types.Entity <|
+                        MeshNode bounds <|
+                            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
+                                WebGL.entityWith
+                                    (meshSettings isRightHanded Types.KeepBackFaces settings)
+                                    Shaders.smoothTriangleVertex
+                                    Shaders.physicalFragment
+                                    triangleVertices
+                                    { triangleVertexPositions = triangleVertexPositions givenTriangle
+                                    , lights12 = lights.lights12
+                                    , lights34 = lights.lights34
+                                    , lights56 = lights.lights56
+                                    , lights78 = lights.lights78
+                                    , enabledLights = enabledLights
+                                    , baseColor = baseColor
+                                    , roughness = roughness
+                                    , metallic = metallic
+                                    , sceneProperties = sceneProperties
+                                    , modelScale = modelScale
+                                    , modelMatrix = modelMatrix
+                                    , viewMatrix = viewMatrix
+                                    , projectionMatrix = projectionMatrix
+                                    }
+
+                TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, constantRoughness ) ( metallicData, constantMetallic ) ( normalMapData, useNormalMap ) ->
+                    empty
 
 
 quadMesh :
@@ -1032,6 +1202,51 @@ shadowDrawFunction givenShadow =
                         , projectionMatrix = projectionMatrix
                         , shadowLight = shadowLight
                         }
+
+
+triangleShadowMesh : WebGL.Mesh { triangleShadowVertex : Vec2 }
+triangleShadowMesh =
+    let
+        triangleShadowVertices =
+            [ { triangleShadowVertex = Math.Vector2.vec2 0 1 } -- 0
+            , { triangleShadowVertex = Math.Vector2.vec2 1 1 } -- 1
+            , { triangleShadowVertex = Math.Vector2.vec2 2 1 } -- 2
+            , { triangleShadowVertex = Math.Vector2.vec2 0 -1 } -- 3
+            , { triangleShadowVertex = Math.Vector2.vec2 1 -1 } -- 4
+            , { triangleShadowVertex = Math.Vector2.vec2 2 -1 } -- 5
+            ]
+
+        triangleShadowFaces =
+            [ ( 0, 1, 2 ) -- top
+            , ( 3, 5, 4 ) -- bottom
+            , ( 3, 4, 1 ) -- side 1
+            , ( 3, 1, 0 )
+            , ( 4, 5, 2 ) -- side 2
+            , ( 4, 2, 1 )
+            , ( 5, 3, 0 ) -- side 3
+            , ( 5, 0, 2 )
+            ]
+    in
+    WebGL.indexedTriangles triangleShadowVertices triangleShadowFaces
+
+
+triangleShadow : Triangle3d Meters coordinates -> Entity coordinates
+triangleShadow givenTriangle =
+    Types.Entity <|
+        Types.ShadowNode <|
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix shadowLight settings ->
+                WebGL.entityWith (shadowSettings isRightHanded settings)
+                    Shaders.triangleShadowVertex
+                    Shaders.shadowFragment
+                    triangleShadowMesh
+                    { triangleVertexPositions = triangleVertexPositions givenTriangle
+                    , sceneProperties = sceneProperties
+                    , modelScale = modelScale
+                    , modelMatrix = modelMatrix
+                    , viewMatrix = viewMatrix
+                    , projectionMatrix = projectionMatrix
+                    , shadowLight = shadowLight
+                    }
 
 
 quadShadowMesh : WebGL.Mesh { quadShadowVertex : Vec2 }

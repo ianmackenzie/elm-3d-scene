@@ -43,6 +43,16 @@ quadShadowVertex =
     Glsl.attribute Glsl.highp Glsl.vec2 "quadShadowVertex"
 
 
+triangleVertex : Glsl.Attribute
+triangleVertex =
+    Glsl.attribute Glsl.highp Glsl.float "triangleVertex"
+
+
+triangleShadowVertex : Glsl.Attribute
+triangleShadowVertex =
+    Glsl.attribute Glsl.highp Glsl.vec2 "triangleShadowVertex"
+
+
 angle : Glsl.Attribute
 angle =
     Glsl.attribute Glsl.highp Glsl.float "angle"
@@ -215,6 +225,11 @@ constantMaterialColor =
 quadVertexPositions : Glsl.Uniform
 quadVertexPositions =
     Glsl.uniform Glsl.highp Glsl.mat4 "quadVertexPositions"
+
+
+triangleVertexPositions : Glsl.Uniform
+triangleVertexPositions =
+    Glsl.uniform Glsl.highp Glsl.mat4 "triangleVertexPositions"
 
 
 planarMap : Glsl.Uniform
@@ -950,6 +965,23 @@ getQuadVertex =
         """
 
 
+getTriangleVertex : Glsl.Function
+getTriangleVertex =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        void getTriangleVertex(int triangleVertexIndex, mat4 triangleVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 p1 = triangleVertexPositions[0].xyz;
+            vec3 p2 = triangleVertexPositions[1].xyz;
+            vec3 p3 = triangleVertexPositions[2].xyz;
+            normal = normalize(cross(p2 - p1, p3 - p2));
+            float t1 = float(triangleVertexIndex == 0);
+            float t2 = float(triangleVertexIndex == 1);
+            float t3 = float(triangleVertexIndex == 2);
+            position = t1 * p1 + t2 * p2 + t3 * p3;
+        }
+        """
+
+
 shadowVertexPosition : Glsl.Function
 shadowVertexPosition =
     Glsl.function
@@ -1172,6 +1204,33 @@ normalMappedVertexShader =
         """
 
 
+plainTriangleVertexShader : Glsl.Shader
+plainTriangleVertexShader =
+    Glsl.vertexShader "plainTriangleVertex"
+        { attributes = [ triangleVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , projectionMatrix
+            , sceneProperties
+            , triangleVertexPositions
+            ]
+        , varyings = []
+        , constants = []
+        , functions = [ getTriangleVertex, getWorldPosition ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getTriangleVertex(int(triangleVertex), triangleVertexPositions, position, normal);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
+        }
+        """
+
+
 plainQuadVertexShader : Glsl.Shader
 plainQuadVertexShader =
     Glsl.vertexShader "plainQuadVertex"
@@ -1225,6 +1284,35 @@ unlitQuadVertexShader =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedUv = quadVertex.xy;
+        }
+        """
+
+
+smoothTriangleVertexShader : Glsl.Shader
+smoothTriangleVertexShader =
+    Glsl.vertexShader "smoothTriangleVertex"
+        { attributes = [ triangleVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , projectionMatrix
+            , sceneProperties
+            , triangleVertexPositions
+            ]
+        , varyings = [ interpolatedPosition, interpolatedNormal ]
+        , constants = []
+        , functions = [ getTriangleVertex, getWorldPosition, getWorldNormal ]
+        }
+        """
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getTriangleVertex(int(triangleVertex), triangleVertexPositions, position, normal);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
         }
         """
 
@@ -1321,6 +1409,43 @@ shadowVertexShader =
         }
         """
         void main () {
+            gl_Position = shadowVertexPosition(
+                position,
+                normal,
+                shadowLight,
+                modelScale,
+                modelMatrix,
+                viewMatrix,
+                projectionMatrix,
+                sceneProperties
+            );
+        }
+        """
+
+
+triangleShadowVertexShader : Glsl.Shader
+triangleShadowVertexShader =
+    Glsl.vertexShader "triangleShadowVertex"
+        { attributes = [ triangleShadowVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , projectionMatrix
+            , sceneProperties
+            , shadowLight
+            , triangleVertexPositions
+            ]
+        , varyings = []
+        , constants = []
+        , functions = [ getTriangleVertex, shadowVertexPosition ]
+        }
+        """
+        void main () {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getTriangleVertex(int(triangleShadowVertex.x), triangleVertexPositions, position, normal);
+            normal *= triangleShadowVertex.y;
             gl_Position = shadowVertexPosition(
                 position,
                 normal,
@@ -1885,12 +2010,15 @@ script { workingDirectory, userPrivileges } =
             , uniformVertexShader
             , texturedVertexShader
             , normalMappedVertexShader
+            , plainTriangleVertexShader
             , plainQuadVertexShader
             , unlitQuadVertexShader
+            , smoothTriangleVertexShader
             , smoothQuadVertexShader
             , texturedQuadVertexShader
             , pointVertexShader
             , shadowVertexShader
+            , triangleShadowVertexShader
             , quadShadowVertexShader
             , sphereShadowVertexShader
             , shadowFragmentShader

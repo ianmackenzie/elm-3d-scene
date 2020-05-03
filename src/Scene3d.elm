@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( toHtml, unlit, sunny, cloudy, office
     , Entity
-    , quad, block, sphere, cylinder, cone
+    , triangle, quad, block, sphere, cylinder, cone
     , mesh
     , group, nothing
     , shadow, withShadow
@@ -51,7 +51,7 @@ specify a material to use. However, different shapes support different kinds of
 materials; `quad`s and `sphere`s support all materials, while `block`s and
 `cylinder`s only support uniform (non-textured) materials.
 
-@docs quad, block, sphere, cylinder, cone
+@docs triangle, quad, block, sphere, cylinder, cone
 
 
 ## Meshes
@@ -188,6 +188,7 @@ import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (Bounds, DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
 import Sphere3d exposing (Sphere3d)
 import Temperature exposing (Temperature)
+import Triangle3d exposing (Triangle3d)
 import Vector3d exposing (Vector3d)
 import Viewpoint3d exposing (Viewpoint3d)
 import WebGL
@@ -214,6 +215,22 @@ type alias Entity coordinates =
 nothing : Entity coordinates
 nothing =
     Entity.empty
+
+
+{-| Draw a single triangle! Note that you _could_ render an entire mesh by
+mapping this function over a list of triangles, but this would be inefficient;
+if you have a large number of triangles it is much better to create a mesh
+using [`Mesh.triangles`](Scene3d-Mesh#triangles) or [`Mesh.facets`](Scene3d-Mesh#facets)
+or similar, store that mesh either in your model or as a top-level constant, and
+thenrender it using [`Scene3d.mesh`](#mesh).
+-}
+triangle :
+    CastsShadows Bool
+    -> Material.Uniform coordinates
+    -> Triangle3d Meters coordinates
+    -> Entity coordinates
+triangle (CastsShadows shadowFlag) givenMaterial givenTriangle =
+    Entity.triangle shadowFlag givenMaterial givenTriangle
 
 
 {-| Draw a 'quad' such as a rectangle, rhombus or parallelogram by providing its
