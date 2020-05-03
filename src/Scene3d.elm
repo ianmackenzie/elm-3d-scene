@@ -229,7 +229,7 @@ rectangle basically the way you would expect.
 
 -}
 quad :
-    CastsShadows a
+    CastsShadows Bool
     -> Material.Textured coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
