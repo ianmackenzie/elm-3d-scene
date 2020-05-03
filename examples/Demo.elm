@@ -8,6 +8,7 @@ import Browser.Dom
 import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color
+import Cone3d
 import Cylinder3d
 import Direction3d exposing (Direction3d)
 import Frame3d exposing (Frame3d)
@@ -171,7 +172,7 @@ initialModel =
         [ { material = Nonmetal
           , roughness = 0.4
           , color = "#FF5555"
-          , kind = Cylinder
+          , kind = Cone
           , position = Frame3d.atPoint (Point3d.centimeters -15 -3 71.6)
           }
         , { material = Matte
@@ -217,7 +218,7 @@ type alias Object =
 
 type ObjectKind
     = Sphere
-    | Cylinder
+    | Cone
     | Cube
 
 
@@ -503,8 +504,8 @@ objectPanel index obj =
             Cube ->
                 "Cube"
 
-            Cylinder ->
-                "Cylinder"
+            Cone ->
+                "Cone"
         )
         [ materials (OnObjectMaterialChanged index) obj.material
         , colorPicker (OnObjectColorChanged index) "Color" obj.color
@@ -957,8 +958,8 @@ object { kind, position, material, color, roughness } =
         Cube ->
             Scene3d.placeIn position (cube objectMaterial)
 
-        Cylinder ->
-            Scene3d.placeIn position (cylinder objectMaterial)
+        Cone ->
+            Scene3d.placeIn position (cone objectMaterial)
 
 
 cube : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
@@ -973,12 +974,12 @@ sphere material =
         |> Scene3d.sphere (Scene3d.castsShadows True) material
 
 
-cylinder : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
-cylinder material =
-    Cylinder3d.startingAt
+cone : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
+cone material =
+    Cone3d.startingAt
         Point3d.origin
         Direction3d.z
-        { radius = Length.centimeters 8, length = Length.centimeters 20 }
+        { radius = Length.centimeters 8, length = Length.centimeters 25 }
         |> Scene3d.cone (Scene3d.castsShadows True) material
 
 

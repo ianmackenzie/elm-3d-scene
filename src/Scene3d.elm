@@ -157,6 +157,7 @@ import BoundingBox3d exposing (BoundingBox3d)
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
 import Color.Transparent
+import Cone3d exposing (Cone3d)
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
 import Duration exposing (Duration)
@@ -278,7 +279,7 @@ cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
 {-| Draw a cone using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cone3d)
 type from `elm-geometry`.
 -}
-cone : CastsShadows Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cone : CastsShadows Bool -> Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
 cone (CastsShadows shadowFlag) givenMaterial givenCone =
     Entity.cone shadowFlag givenMaterial givenCone
 

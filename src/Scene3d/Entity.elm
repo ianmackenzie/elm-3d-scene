@@ -24,6 +24,7 @@ import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
 import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
+import Cone3d exposing (Cone3d)
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
 import Float.Extra as Float
@@ -974,17 +975,17 @@ cylinder castsShadow givenMaterial givenCylinder =
         |> placeIn centerFrame
 
 
-cone : Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cone : Bool -> Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
 cone castsShadow givenMaterial givenCone =
     let
         (Quantity radius) =
-            Cylinder3d.radius givenCone
+            Cone3d.radius givenCone
 
         (Quantity length) =
-            Cylinder3d.length givenCone
+            Cone3d.length givenCone
 
-        centerFrame =
-            Frame3d.fromZAxis (Cylinder3d.axis givenCone)
+        baseFrame =
+            Frame3d.fromZAxis (Cone3d.axis givenCone)
 
         baseEntity =
             mesh givenMaterial Primitives.cone
@@ -998,7 +999,7 @@ cone castsShadow givenMaterial givenCone =
     in
     untransformedEntity
         |> transformBy (Transformation.preScale radius radius length)
-        |> placeIn centerFrame
+        |> placeIn baseFrame
 
 
 shadow : Shadow coordinates -> Entity coordinates
