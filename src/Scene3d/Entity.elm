@@ -1,6 +1,7 @@
 module Scene3d.Entity exposing
     ( Entity
     , block
+    , cone
     , cylinder
     , empty
     , group
@@ -23,6 +24,7 @@ import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
 import BoundingBox3d exposing (BoundingBox3d)
 import Color exposing (Color)
+import Cone3d exposing (Cone3d)
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
 import Float.Extra as Float
@@ -971,6 +973,33 @@ cylinder castsShadow givenMaterial givenCylinder =
     untransformedEntity
         |> transformBy (Transformation.preScale radius radius length)
         |> placeIn centerFrame
+
+
+cone : Bool -> Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
+cone castsShadow givenMaterial givenCone =
+    let
+        (Quantity radius) =
+            Cone3d.radius givenCone
+
+        (Quantity length) =
+            Cone3d.length givenCone
+
+        baseFrame =
+            Frame3d.fromZAxis (Cone3d.axis givenCone)
+
+        baseEntity =
+            mesh givenMaterial Primitives.cone
+
+        untransformedEntity =
+            if castsShadow then
+                group [ baseEntity, shadow Primitives.coneShadow ]
+
+            else
+                baseEntity
+    in
+    untransformedEntity
+        |> transformBy (Transformation.preScale radius radius length)
+        |> placeIn baseFrame
 
 
 shadow : Shadow coordinates -> Entity coordinates
