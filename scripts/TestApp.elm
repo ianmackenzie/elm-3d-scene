@@ -10,6 +10,7 @@ import Browser.Events
 import Browser.Navigation as Navigation
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
+import Cone3d exposing (Cone3d)
 import Cylinder3d exposing (Cylinder3d)
 import Dict
 import Direction3d exposing (Direction3d)
@@ -69,6 +70,8 @@ type Mesh
     | Block
     | Sphere
     | Cylinder
+    | Cone
+    | Triangle
 
 
 type Material
@@ -158,6 +161,12 @@ toggleMesh mesh =
             Cylinder
 
         Cylinder ->
+            Cone
+
+        Cone ->
+            Triangle
+
+        Triangle ->
             Points
 
 
@@ -262,6 +271,12 @@ parseMesh string =
 
         "Cylinder" ->
             Ok Cylinder
+
+        "Cone" ->
+            Ok Cone
+
+        "Triangle" ->
+            Ok Triangle
 
         _ ->
             Err ("Unrecognized mesh type '" ++ string ++ "'")
@@ -612,6 +627,25 @@ cylinderEntity { shadows } material =
             , end = Length.meters 2
             , radius = Length.meters 1
             }
+
+
+coneEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
+coneEntity { shadows } material =
+    Scene3d.cone (Scene3d.castsShadows shadows) material <|
+        Cone3d.along Axis3d.z
+            { base = Length.meters 1
+            , tip = Length.meters 3
+            , radius = Length.meters 1
+            }
+
+
+triangleEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
+triangleEntity { shadows } material =
+    Scene3d.triangle (Scene3d.castsShadows shadows) material <|
+        Triangle3d.from
+            (Point3d.meters 0 -1 1)
+            (Point3d.meters 3 0 1)
+            (Point3d.meters 0 1 1)
 
 
 main : Program () Model Msg
@@ -1346,6 +1380,12 @@ entity model testCase =
                 Cylinder ->
                     Just (cylinderEntity testCase material)
 
+                Cone ->
+                    Just (coneEntity testCase material)
+
+                Triangle ->
+                    Just (triangleEntity testCase material)
+
         Emissive ->
             let
                 material =
@@ -1394,6 +1434,12 @@ entity model testCase =
                 Cylinder ->
                     Just (cylinderEntity testCase material)
 
+                Cone ->
+                    Just (coneEntity testCase material)
+
+                Triangle ->
+                    Just (triangleEntity testCase material)
+
         Matte ->
             let
                 material =
@@ -1441,6 +1487,12 @@ entity model testCase =
 
                 Cylinder ->
                     Just (cylinderEntity testCase material)
+
+                Cone ->
+                    Just (coneEntity testCase material)
+
+                Triangle ->
+                    Just (triangleEntity testCase material)
 
         Pbr ->
             let
@@ -1493,6 +1545,12 @@ entity model testCase =
                 Cylinder ->
                     Just (cylinderEntity testCase material)
 
+                Cone ->
+                    Just (coneEntity testCase material)
+
+                Triangle ->
+                    Just (triangleEntity testCase material)
+
         TexturedColor ->
             let
                 metalMaterial =
@@ -1542,6 +1600,12 @@ entity model testCase =
                     Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
+                    Nothing
+
+                Cone ->
+                    Nothing
+
+                Triangle ->
                     Nothing
 
         TexturedEmissive ->
@@ -1595,6 +1659,12 @@ entity model testCase =
                 Cylinder ->
                     Nothing
 
+                Cone ->
+                    Nothing
+
+                Triangle ->
+                    Nothing
+
         TexturedMatte ->
             let
                 metalMaterial =
@@ -1644,6 +1714,12 @@ entity model testCase =
                     Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
+                    Nothing
+
+                Cone ->
+                    Nothing
+
+                Triangle ->
                     Nothing
 
         TexturedPbr ->
@@ -1703,6 +1779,12 @@ entity model testCase =
                     Just (sphereEntity testCase metalMaterial)
 
                 Cylinder ->
+                    Nothing
+
+                Cone ->
+                    Nothing
+
+                Triangle ->
                     Nothing
 
 
@@ -1893,6 +1975,12 @@ meshDescription mesh =
 
         Cylinder ->
             "Cylinder"
+
+        Cone ->
+            "Cone"
+
+        Triangle ->
+            "Triangle"
 
 
 materialDescription : Material -> String
