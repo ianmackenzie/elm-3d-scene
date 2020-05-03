@@ -10,6 +10,7 @@ module Scene3d.UnoptimizedShaders exposing
     , emissiveTextureFragment
     , lambertianFragment
     , lambertianTextureFragment
+    , lineSegmentVertex
     , normalMappedVertex
     , physicalFragment
     , physicalTexturesFragment
@@ -20,6 +21,7 @@ module Scene3d.UnoptimizedShaders exposing
     , quadShadowVertex
     , shadowFragment
     , shadowVertex
+    , singlePointVertex
     , smoothQuadVertex
     , smoothTriangleVertex
     , sphereShadowVertex
@@ -314,6 +316,91 @@ normalMappedVertex =
             interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = uv;
             interpolatedTangent = getWorldTangent(tangent, modelScale, modelMatrix);
+        }
+    |]
+
+
+singlePointVertex :
+    WebGL.Shader
+        { attributes
+            | dummyAttribute : Float
+        }
+        { uniforms
+            | modelScale : Vec4
+            , modelMatrix : Mat4
+            , pointRadius : Float
+            , viewMatrix : Mat4
+            , projectionMatrix : Mat4
+            , sceneProperties : Mat4
+            , pointPosition : Vec3
+        }
+        {}
+singlePointVertex =
+    [glsl|
+        precision highp float;
+        
+        attribute lowp float dummyAttribute;
+        
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform lowp float pointRadius;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp vec3 pointPosition;
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        void main () {
+            vec4 worldPosition = getWorldPosition(pointPosition, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
+            float supersampling = sceneProperties[3][0];
+            gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
+        }
+    |]
+
+
+lineSegmentVertex :
+    WebGL.Shader
+        { attributes
+            | lineSegmentVertex : Float
+        }
+        { uniforms
+            | modelScale : Vec4
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , projectionMatrix : Mat4
+            , sceneProperties : Mat4
+            , lineSegmentStartPoint : Vec3
+            , lineSegmentEndPoint : Vec3
+        }
+        {}
+lineSegmentVertex =
+    [glsl|
+        precision highp float;
+        
+        attribute lowp float lineSegmentVertex;
+        
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp vec3 lineSegmentStartPoint;
+        uniform highp vec3 lineSegmentEndPoint;
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        void main() {
+            vec3 position = (1.0 - lineSegmentVertex) * lineSegmentStartPoint + lineSegmentVertex * lineSegmentEndPoint;
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
         }
     |]
 

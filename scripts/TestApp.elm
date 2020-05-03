@@ -71,7 +71,9 @@ type Mesh
     | Sphere
     | Cylinder
     | Cone
-    | Triangle
+    | Facet
+    | LineSegment
+    | Point
 
 
 type Material
@@ -164,9 +166,15 @@ toggleMesh mesh =
             Cone
 
         Cone ->
-            Triangle
+            Facet
 
-        Triangle ->
+        Facet ->
+            LineSegment
+
+        LineSegment ->
+            Point
+
+        Point ->
             Points
 
 
@@ -275,8 +283,14 @@ parseMesh string =
         "Cone" ->
             Ok Cone
 
-        "Triangle" ->
-            Ok Triangle
+        "Facet" ->
+            Ok Facet
+
+        "LineSegment" ->
+            Ok LineSegment
+
+        "Point" ->
+            Ok Point
 
         _ ->
             Err ("Unrecognized mesh type '" ++ string ++ "'")
@@ -639,13 +653,24 @@ coneEntity { shadows } material =
             }
 
 
-triangleEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
-triangleEntity { shadows } material =
-    Scene3d.triangle (Scene3d.castsShadows shadows) material <|
+facetEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
+facetEntity { shadows } material =
+    Scene3d.facet (Scene3d.castsShadows shadows) material <|
         Triangle3d.from
             (Point3d.meters 0 -1 1)
             (Point3d.meters 3 0 1)
             (Point3d.meters 0 1 1)
+
+
+lineSegmentEntity : Material.Plain WorldCoordinates -> Entity WorldCoordinates
+lineSegmentEntity givenMaterial =
+    Scene3d.lineSegment givenMaterial <|
+        LineSegment3d.from (Point3d.meters 1 0 1) (Point3d.meters 3 0 1)
+
+
+pointEntity : Material.Plain WorldCoordinates -> Entity WorldCoordinates
+pointEntity givenMaterial =
+    Scene3d.point { radius = Pixels.pixels 10 } givenMaterial (Point3d.meters 2 0 1)
 
 
 main : Program () Model Msg
@@ -1383,8 +1408,14 @@ entity model testCase =
                 Cone ->
                     Just (coneEntity testCase material)
 
-                Triangle ->
-                    Just (triangleEntity testCase material)
+                Facet ->
+                    Just (facetEntity testCase material)
+
+                LineSegment ->
+                    Just (lineSegmentEntity material)
+
+                Point ->
+                    Just (pointEntity material)
 
         Emissive ->
             let
@@ -1437,8 +1468,14 @@ entity model testCase =
                 Cone ->
                     Just (coneEntity testCase material)
 
-                Triangle ->
-                    Just (triangleEntity testCase material)
+                Facet ->
+                    Just (facetEntity testCase material)
+
+                LineSegment ->
+                    Just (lineSegmentEntity material)
+
+                Point ->
+                    Just (pointEntity material)
 
         Matte ->
             let
@@ -1491,8 +1528,14 @@ entity model testCase =
                 Cone ->
                     Just (coneEntity testCase material)
 
-                Triangle ->
-                    Just (triangleEntity testCase material)
+                Facet ->
+                    Just (facetEntity testCase material)
+
+                LineSegment ->
+                    Nothing
+
+                Point ->
+                    Nothing
 
         Pbr ->
             let
@@ -1548,8 +1591,14 @@ entity model testCase =
                 Cone ->
                     Just (coneEntity testCase material)
 
-                Triangle ->
-                    Just (triangleEntity testCase material)
+                Facet ->
+                    Just (facetEntity testCase material)
+
+                LineSegment ->
+                    Nothing
+
+                Point ->
+                    Nothing
 
         TexturedColor ->
             let
@@ -1605,7 +1654,13 @@ entity model testCase =
                 Cone ->
                     Nothing
 
-                Triangle ->
+                Facet ->
+                    Nothing
+
+                LineSegment ->
+                    Nothing
+
+                Point ->
                     Nothing
 
         TexturedEmissive ->
@@ -1662,7 +1717,13 @@ entity model testCase =
                 Cone ->
                     Nothing
 
-                Triangle ->
+                Facet ->
+                    Nothing
+
+                LineSegment ->
+                    Nothing
+
+                Point ->
                     Nothing
 
         TexturedMatte ->
@@ -1719,7 +1780,13 @@ entity model testCase =
                 Cone ->
                     Nothing
 
-                Triangle ->
+                Facet ->
+                    Nothing
+
+                LineSegment ->
+                    Nothing
+
+                Point ->
                     Nothing
 
         TexturedPbr ->
@@ -1784,7 +1851,13 @@ entity model testCase =
                 Cone ->
                     Nothing
 
-                Triangle ->
+                Facet ->
+                    Nothing
+
+                LineSegment ->
+                    Nothing
+
+                Point ->
                     Nothing
 
 
@@ -1979,8 +2052,14 @@ meshDescription mesh =
         Cone ->
             "Cone"
 
-        Triangle ->
-            "Triangle"
+        Facet ->
+            "Facet"
+
+        LineSegment ->
+            "Line segment"
+
+        Point ->
+            "Point"
 
 
 materialDescription : Material -> String

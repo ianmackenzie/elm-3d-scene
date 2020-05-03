@@ -1,7 +1,7 @@
 module Scene3d exposing
     ( toHtml, unlit, sunny, cloudy, office
     , Entity
-    , triangle, quad, block, sphere, cylinder, cone
+    , point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
     , mesh
     , group, nothing
     , shadow, withShadow
@@ -51,7 +51,7 @@ specify a material to use. However, different shapes support different kinds of
 materials; `quad`s and `sphere`s support all materials, while `block`s and
 `cylinder`s only support uniform (non-textured) materials.
 
-@docs triangle, quad, block, sphere, cylinder, cone
+@docs point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
 
 
 ## Meshes
@@ -169,6 +169,7 @@ import Html.Attributes
 import Html.Keyed
 import Illuminance exposing (Illuminance)
 import Length exposing (Length, Meters)
+import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
 import LuminousFlux exposing (LuminousFlux)
 import Math.Matrix4 exposing (Mat4)
@@ -217,19 +218,42 @@ nothing =
     Entity.empty
 
 
-{-| Draw a single triangle! Note that you _could_ render an entire mesh by
-mapping this function over a list of triangles, but this would be inefficient;
-if you have a large number of triangles it is much better to create a mesh
-using [`Mesh.triangles`](Scene3d-Mesh#triangles) or [`Mesh.facets`](Scene3d-Mesh#facets)
-or similar, store that mesh either in your model or as a top-level constant, and
-thenrender it using [`Scene3d.mesh`](#mesh).
+point :
+    { radius : Quantity Float Pixels }
+    -> Material.Plain coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+point { radius } givenMaterial givenPoint =
+    Entity.point radius givenMaterial givenPoint
+
+
+lineSegment : Material.Plain coordinates -> LineSegment3d Meters coordinates -> Entity coordinates
+lineSegment givenMaterial givenLineSegment =
+    Entity.lineSegment givenMaterial givenLineSegment
+
+
+{-| Draw a single triangle with a given color. Note that you _could_ render an
+entire mesh by mapping this function over a list of triangles, but this would be
+inefficient; if you have a large number of triangles it is much better to create
+a mesh using [`Mesh.triangles`](Scene3d-Mesh#triangles) or similar, store that
+mesh either in your model or as a top-level constant, and then render it using
+[`Scene3d.mesh`](#mesh).
 -}
 triangle :
+    CastsShadows Bool
+    -> Material.Plain coordinates
+    -> Triangle3d Meters coordinates
+    -> Entity coordinates
+triangle shadowSetting givenMaterial givenTriangle =
+    facet shadowSetting (Material.plain givenMaterial) givenTriangle
+
+
+facet :
     CastsShadows Bool
     -> Material.Uniform coordinates
     -> Triangle3d Meters coordinates
     -> Entity coordinates
-triangle (CastsShadows shadowFlag) givenMaterial givenTriangle =
+facet (CastsShadows shadowFlag) givenMaterial givenTriangle =
     Entity.triangle shadowFlag givenMaterial givenTriangle
 
 

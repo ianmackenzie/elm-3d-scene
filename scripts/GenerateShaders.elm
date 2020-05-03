@@ -53,6 +53,16 @@ triangleShadowVertex =
     Glsl.attribute Glsl.highp Glsl.vec2 "triangleShadowVertex"
 
 
+lineSegmentVertex : Glsl.Attribute
+lineSegmentVertex =
+    Glsl.attribute Glsl.lowp Glsl.float "lineSegmentVertex"
+
+
+dummyAttribute : Glsl.Attribute
+dummyAttribute =
+    Glsl.attribute Glsl.lowp Glsl.float "dummyAttribute"
+
+
 angle : Glsl.Attribute
 angle =
     Glsl.attribute Glsl.highp Glsl.float "angle"
@@ -230,6 +240,21 @@ quadVertexPositions =
 triangleVertexPositions : Glsl.Uniform
 triangleVertexPositions =
     Glsl.uniform Glsl.highp Glsl.mat4 "triangleVertexPositions"
+
+
+lineSegmentStartPoint : Glsl.Uniform
+lineSegmentStartPoint =
+    Glsl.uniform Glsl.highp Glsl.vec3 "lineSegmentStartPoint"
+
+
+lineSegmentEndPoint : Glsl.Uniform
+lineSegmentEndPoint =
+    Glsl.uniform Glsl.highp Glsl.vec3 "lineSegmentEndPoint"
+
+
+pointPosition : Glsl.Uniform
+pointPosition =
+    Glsl.uniform Glsl.highp Glsl.vec3 "pointPosition"
 
 
 planarMap : Glsl.Uniform
@@ -1204,6 +1229,32 @@ normalMappedVertexShader =
         """
 
 
+lineSegmentVertexShader : Glsl.Shader
+lineSegmentVertexShader =
+    Glsl.vertexShader "lineSegmentVertex"
+        { attributes = [ lineSegmentVertex ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , viewMatrix
+            , projectionMatrix
+            , sceneProperties
+            , lineSegmentStartPoint
+            , lineSegmentEndPoint
+            ]
+        , varyings = []
+        , constants = []
+        , functions = [ getWorldPosition ]
+        }
+        """
+        void main() {
+            vec3 position = (1.0 - lineSegmentVertex) * lineSegmentStartPoint + lineSegmentVertex * lineSegmentEndPoint;
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
+        }
+        """
+
+
 plainTriangleVertexShader : Glsl.Shader
 plainTriangleVertexShader =
     Glsl.vertexShader "plainTriangleVertex"
@@ -1375,6 +1426,33 @@ texturedQuadVertexShader =
             interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = quadVertex.xy;
             interpolatedTangent = tangent;
+        }
+        """
+
+
+singlePointVertexShader : Glsl.Shader
+singlePointVertexShader =
+    Glsl.vertexShader "singlePointVertex"
+        { attributes = [ dummyAttribute ]
+        , uniforms =
+            [ modelScale
+            , modelMatrix
+            , pointRadius
+            , viewMatrix
+            , projectionMatrix
+            , sceneProperties
+            , pointPosition
+            ]
+        , varyings = []
+        , constants = []
+        , functions = [ getWorldPosition ]
+        }
+        """
+        void main () {
+            vec4 worldPosition = getWorldPosition(pointPosition, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
+            float supersampling = sceneProperties[3][0];
+            gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
         }
         """
 
@@ -2010,6 +2088,8 @@ script { workingDirectory, userPrivileges } =
             , uniformVertexShader
             , texturedVertexShader
             , normalMappedVertexShader
+            , singlePointVertexShader
+            , lineSegmentVertexShader
             , plainTriangleVertexShader
             , plainQuadVertexShader
             , unlitQuadVertexShader

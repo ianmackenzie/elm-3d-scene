@@ -5,9 +5,11 @@ module Scene3d.Entity exposing
     , cylinder
     , empty
     , group
+    , lineSegment
     , mesh
     , mirrorAcross
     , placeIn
+    , point
     , quad
     , relativeTo
     , rotateAround
@@ -30,6 +32,7 @@ import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
 import Float.Extra as Float
 import Frame3d exposing (Frame3d)
+import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
@@ -37,6 +40,7 @@ import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
+import Pixels exposing (Pixels)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
@@ -530,6 +534,141 @@ resolveLambertian materialColorTexture normalMapTexture =
             TexturedLambertianMaterial
                 (vec3Tuple data materialColorTexture)
                 (normalMapTuple data normalMapTexture)
+
+
+point : Quantity Float Pixels -> Material.Plain coordinates -> Point3d Meters coordinates -> Entity coordinates
+point givenRadius givenMaterial givenPoint =
+    let
+        boundingBox =
+            BoundingBox3d.singleton givenPoint
+
+        bounds =
+            toBounds boundingBox
+    in
+    case givenMaterial of
+        Types.UnlitMaterial _ (Types.Constant color) ->
+            Types.Entity <|
+                PointNode bounds <|
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                        WebGL.entityWith
+                            settings
+                            Shaders.singlePointVertex
+                            Shaders.constantPointFragment
+                            dummyVertex
+                            { pointPosition = Point3d.toVec3 givenPoint
+                            , pointRadius = Pixels.inPixels givenRadius
+                            , constantColor = color
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            , projectionMatrix = projectionMatrix
+                            }
+
+        Types.UnlitMaterial _ (Types.Texture { data }) ->
+            empty
+
+        Types.EmissiveMaterial _ (Types.Constant (LinearRgb color)) backlight ->
+            Types.Entity <|
+                PointNode bounds <|
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                        WebGL.entityWith
+                            settings
+                            Shaders.singlePointVertex
+                            Shaders.emissivePointFragment
+                            dummyVertex
+                            { pointPosition = Point3d.toVec3 givenPoint
+                            , pointRadius = Pixels.inPixels givenRadius
+                            , sceneProperties = sceneProperties
+                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            , projectionMatrix = projectionMatrix
+                            }
+
+        Types.EmissiveMaterial _ (Types.Texture _) backlight ->
+            empty
+
+        Types.LambertianMaterial _ _ _ ->
+            empty
+
+        Types.PbrMaterial _ _ _ _ _ ->
+            empty
+
+
+dummyVertex : WebGL.Mesh { dummyAttribute : Float }
+dummyVertex =
+    WebGL.points [ { dummyAttribute = 0 } ]
+
+
+lineSegment : Material.Plain coordinates -> LineSegment3d Meters coordinates -> Entity coordinates
+lineSegment givenMaterial givenLineSegment =
+    let
+        boundingBox =
+            LineSegment3d.boundingBox givenLineSegment
+
+        bounds =
+            toBounds boundingBox
+
+        ( p1, p2 ) =
+            LineSegment3d.endpoints givenLineSegment
+    in
+    case givenMaterial of
+        Types.UnlitMaterial _ (Types.Constant color) ->
+            Types.Entity <|
+                MeshNode bounds <|
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                        WebGL.entityWith
+                            settings
+                            Shaders.lineSegmentVertex
+                            Shaders.constantFragment
+                            lineSegmentVertices
+                            { lineSegmentStartPoint = Point3d.toVec3 p1
+                            , lineSegmentEndPoint = Point3d.toVec3 p2
+                            , constantColor = color
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            , projectionMatrix = projectionMatrix
+                            }
+
+        Types.UnlitMaterial Types.UseMeshUvs (Types.Texture { data }) ->
+            empty
+
+        Types.EmissiveMaterial _ (Types.Constant (LinearRgb color)) backlight ->
+            Types.Entity <|
+                MeshNode bounds <|
+                    \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+                        WebGL.entityWith
+                            settings
+                            Shaders.lineSegmentVertex
+                            Shaders.emissiveFragment
+                            lineSegmentVertices
+                            { lineSegmentStartPoint = Point3d.toVec3 p1
+                            , lineSegmentEndPoint = Point3d.toVec3 p2
+                            , sceneProperties = sceneProperties
+                            , modelScale = modelScale
+                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
+                            , modelMatrix = modelMatrix
+                            , viewMatrix = viewMatrix
+                            , projectionMatrix = projectionMatrix
+                            }
+
+        Types.EmissiveMaterial _ (Types.Texture _) backlight ->
+            empty
+
+        Types.LambertianMaterial _ _ _ ->
+            empty
+
+        Types.PbrMaterial _ _ _ _ _ ->
+            empty
+
+
+lineSegmentVertices : WebGL.Mesh { lineSegmentVertex : Float }
+lineSegmentVertices =
+    WebGL.lines [ ( { lineSegmentVertex = 0 }, { lineSegmentVertex = 1 } ) ]
 
 
 triangle :
@@ -1730,5 +1869,5 @@ placeIn frame givenDrawable =
 
 
 scaleAbout : Point3d Meters coordinates -> Float -> Entity coordinates -> Entity coordinates
-scaleAbout point scale givenDrawable =
-    transformBy (Transformation.scaleAbout point scale) givenDrawable
+scaleAbout centerPoint scale givenDrawable =
+    transformBy (Transformation.scaleAbout centerPoint scale) givenDrawable
