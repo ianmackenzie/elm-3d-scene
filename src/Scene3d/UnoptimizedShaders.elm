@@ -336,7 +336,7 @@ plainTriangleVertex =
     [glsl|
         precision highp float;
         
-        attribute highp float triangleVertex;
+        attribute lowp float triangleVertex;
         
         uniform highp vec4 modelScale;
         uniform highp mat4 modelMatrix;
@@ -535,7 +535,7 @@ smoothTriangleVertex =
     [glsl|
         precision highp float;
         
-        attribute highp float triangleVertex;
+        attribute lowp float triangleVertex;
         
         uniform highp vec4 modelScale;
         uniform highp mat4 modelMatrix;
