@@ -45,7 +45,7 @@ quadShadowVertex =
 
 triangleVertex : Glsl.Attribute
 triangleVertex =
-    Glsl.attribute Glsl.highp Glsl.float "triangleVertex"
+    Glsl.attribute Glsl.lowp Glsl.float "triangleVertex"
 
 
 triangleShadowVertex : Glsl.Attribute
