@@ -1829,7 +1829,7 @@ lights testCase =
                 { upDirection = Direction3d.z
                 , chromaticity = Scene3d.incandescentLighting
                 , intensityAbove = Illuminance.lux 15
-                , intensityBelow = Illuminance.lux 0
+                , intensityBelow = Illuminance.lux 3
                 }
 
         shadowSetting =
