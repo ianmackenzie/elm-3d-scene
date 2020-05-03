@@ -1999,7 +1999,7 @@ materialDescription material =
             "PBR"
 
         TexturedColor ->
-            "TexturedColor"
+            "Textured color"
 
         TexturedEmissive ->
             "Textured emissive"
