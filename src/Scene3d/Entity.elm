@@ -713,7 +713,6 @@ triangleMesh givenMaterial givenTriangle =
                             Shaders.emissiveFragment
                             triangleVertices
                             { triangleVertexPositions = triangleVertexPositions givenTriangle
-                            , backlight = backlight
                             , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
