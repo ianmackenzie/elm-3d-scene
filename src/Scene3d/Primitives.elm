@@ -249,9 +249,6 @@ cone =
         negativeZVector =
             Direction3d.negativeZ |> Direction3d.toVector
 
-        positiveZVector =
-            Direction3d.positiveZ |> Direction3d.toVector
-
         bottomZ =
             Quantity.zero
 
