@@ -14,15 +14,18 @@ module Scene3d.UnoptimizedShaders exposing
     , physicalFragment
     , physicalTexturesFragment
     , plainQuadVertex
+    , plainTriangleVertex
     , plainVertex
     , pointVertex
     , quadShadowVertex
     , shadowFragment
     , shadowVertex
     , smoothQuadVertex
+    , smoothTriangleVertex
     , sphereShadowVertex
     , texturedQuadVertex
     , texturedVertex
+    , triangleShadowVertex
     , uniformVertex
     , unlitQuadVertex
     , unlitVertex
@@ -153,9 +156,17 @@ uniformVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main () {
@@ -210,9 +221,17 @@ texturedVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main () {
@@ -271,13 +290,21 @@ normalMappedVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         vec3 getWorldTangent(vec3 modelTangent, vec4 modelScale, mat4 modelMatrix) {
-            return (modelMatrix * vec4(normalize(modelScale.xyz * modelTangent), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(modelScale.xyz * modelTangent), 0.0)).xyz;
         }
         
         void main () {
@@ -287,6 +314,59 @@ normalMappedVertex =
             interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = uv;
             interpolatedTangent = getWorldTangent(tangent, modelScale, modelMatrix);
+        }
+    |]
+
+
+plainTriangleVertex :
+    WebGL.Shader
+        { attributes
+            | triangleVertex : Float
+        }
+        { uniforms
+            | modelScale : Vec4
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , projectionMatrix : Mat4
+            , sceneProperties : Mat4
+            , triangleVertexPositions : Mat4
+        }
+        {}
+plainTriangleVertex =
+    [glsl|
+        precision highp float;
+        
+        attribute highp float triangleVertex;
+        
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 triangleVertexPositions;
+        
+        void getTriangleVertex(int triangleVertexIndex, mat4 triangleVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 p1 = triangleVertexPositions[0].xyz;
+            vec3 p2 = triangleVertexPositions[1].xyz;
+            vec3 p3 = triangleVertexPositions[2].xyz;
+            normal = normalize(cross(p2 - p1, p3 - p2));
+            float t1 = float(triangleVertexIndex == 0);
+            float t2 = float(triangleVertexIndex == 1);
+            float t3 = float(triangleVertexIndex == 2);
+            position = t1 * p1 + t2 * p2 + t3 * p3;
+        }
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getTriangleVertex(int(triangleVertex), triangleVertexPositions, position, normal);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
         }
     |]
 
@@ -435,6 +515,79 @@ unlitQuadVertex =
     |]
 
 
+smoothTriangleVertex :
+    WebGL.Shader
+        { attributes
+            | triangleVertex : Float
+        }
+        { uniforms
+            | modelScale : Vec4
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , projectionMatrix : Mat4
+            , sceneProperties : Mat4
+            , triangleVertexPositions : Mat4
+        }
+        { interpolatedPosition : Vec3
+        , interpolatedNormal : Vec3
+        }
+smoothTriangleVertex =
+    [glsl|
+        precision highp float;
+        
+        attribute highp float triangleVertex;
+        
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 triangleVertexPositions;
+        
+        varying highp vec3 interpolatedPosition;
+        varying highp vec3 interpolatedNormal;
+        
+        void getTriangleVertex(int triangleVertexIndex, mat4 triangleVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 p1 = triangleVertexPositions[0].xyz;
+            vec3 p2 = triangleVertexPositions[1].xyz;
+            vec3 p3 = triangleVertexPositions[2].xyz;
+            normal = normalize(cross(p2 - p1, p3 - p2));
+            float t1 = float(triangleVertexIndex == 0);
+            float t2 = float(triangleVertexIndex == 1);
+            float t3 = float(triangleVertexIndex == 2);
+            position = t1 * p1 + t2 * p2 + t3 * p3;
+        }
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
+        }
+        
+        void main() {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getTriangleVertex(int(triangleVertex), triangleVertexPositions, position, normal);
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
+            interpolatedPosition = worldPosition.xyz;
+            interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
+        }
+    |]
+
+
 smoothQuadVertex :
     WebGL.Shader
         { attributes
@@ -499,9 +652,17 @@ smoothQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main() {
@@ -585,9 +746,17 @@ texturedQuadVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         void main() {
@@ -683,9 +852,17 @@ shadowVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_parameter) {
@@ -718,6 +895,115 @@ shadowVertex =
         }
         
         void main () {
+            gl_Position = shadowVertexPosition(
+                position,
+                normal,
+                shadowLight,
+                modelScale,
+                modelMatrix,
+                viewMatrix,
+                projectionMatrix,
+                sceneProperties
+            );
+        }
+    |]
+
+
+triangleShadowVertex :
+    WebGL.Shader
+        { attributes
+            | triangleShadowVertex : Vec2
+        }
+        { uniforms
+            | modelScale : Vec4
+            , modelMatrix : Mat4
+            , viewMatrix : Mat4
+            , projectionMatrix : Mat4
+            , sceneProperties : Mat4
+            , shadowLight : Mat4
+            , triangleVertexPositions : Mat4
+        }
+        {}
+triangleShadowVertex =
+    [glsl|
+        precision highp float;
+        
+        attribute highp vec2 triangleShadowVertex;
+        
+        uniform highp vec4 modelScale;
+        uniform highp mat4 modelMatrix;
+        uniform highp mat4 viewMatrix;
+        uniform highp mat4 projectionMatrix;
+        uniform highp mat4 sceneProperties;
+        uniform highp mat4 shadowLight;
+        uniform highp mat4 triangleVertexPositions;
+        
+        const lowp float kDirectionalLight = 1.0;
+        const lowp float kPointLight = 2.0;
+        
+        void getTriangleVertex(int triangleVertexIndex, mat4 triangleVertexPositions, out vec3 position, out vec3 normal) {
+            vec3 p1 = triangleVertexPositions[0].xyz;
+            vec3 p2 = triangleVertexPositions[1].xyz;
+            vec3 p3 = triangleVertexPositions[2].xyz;
+            normal = normalize(cross(p2 - p1, p3 - p2));
+            float t1 = float(triangleVertexIndex == 0);
+            float t2 = float(triangleVertexIndex == 1);
+            float t3 = float(triangleVertexIndex == 2);
+            position = t1 * p1 + t2 * p2 + t3 * p3;
+        }
+        
+        vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
+            vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
+            return modelMatrix * scaledPosition;
+        }
+        
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
+        vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
+            vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
+        }
+        
+        vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_parameter) {
+            float lightType = xyz_type.w;
+            if (lightType == kDirectionalLight) {
+                return xyz_type.xyz;
+            } else if (lightType == kPointLight) {
+                vec3 lightPosition = xyz_type.xyz;
+                return normalize(lightPosition - surfacePosition);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
+        vec4 shadowVertexPosition(vec3 position, vec3 normal, mat4 shadowLight, vec4 modelScale, mat4 modelMatrix, mat4 viewMatrix, mat4 projectionMatrix, mat4 sceneProperties) {
+            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
+            vec3 worldNormal = getWorldNormal(normal, vec4(modelScale.xyz, 1.0), modelMatrix);
+            vec4 xyz_type = shadowLight[0];
+            vec4 rgb_parameter = shadowLight[1];
+            vec3 directionToLight = getDirectionToLight(worldPosition.xyz, xyz_type, rgb_parameter);
+            vec3 offset = vec3(0.0, 0.0, 0.0);
+            float sceneDiameter = sceneProperties[3][1];
+            if (dot(directionToLight, worldNormal) <= 0.0) {
+                offset = -sceneDiameter * directionToLight;
+            } else {
+                offset = -0.001 * sceneDiameter * directionToLight;
+            }
+            vec4 offsetPosition = worldPosition + vec4(offset, 0.0);
+            return projectionMatrix * (viewMatrix * offsetPosition);
+        }
+        
+        void main () {
+            vec3 position = vec3(0.0, 0.0, 0.0);
+            vec3 normal = vec3(0.0, 0.0, 0.0);
+            getTriangleVertex(int(triangleShadowVertex.x), triangleVertexPositions, position, normal);
+            normal *= triangleShadowVertex.y;
             gl_Position = shadowVertexPosition(
                 position,
                 normal,
@@ -796,9 +1082,17 @@ quadShadowVertex =
             return modelMatrix * scaledPosition;
         }
         
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
         vec3 getDirectionToLight(vec3 surfacePosition, vec4 xyz_type, vec4 rgb_parameter) {
