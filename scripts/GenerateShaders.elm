@@ -394,6 +394,20 @@ pointAlpha =
         """
 
 
+safeNormalize : Glsl.Function
+safeNormalize =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 safeNormalize(vec3 vector) {
+            if (vector == vec3(0.0, 0.0, 0.0)) {
+                return vector;
+            } else {
+                return normalize(vector);
+            }
+        }
+        """
+
+
 getWorldPosition : Glsl.Function
 getWorldPosition =
     Glsl.function { dependencies = [], constants = [] }
@@ -407,21 +421,21 @@ getWorldPosition =
 
 getWorldTangent : Glsl.Function
 getWorldTangent =
-    Glsl.function { dependencies = [], constants = [] }
+    Glsl.function { dependencies = [ safeNormalize ], constants = [] }
         """
         vec3 getWorldTangent(vec3 modelTangent, vec4 modelScale, mat4 modelMatrix) {
-            return (modelMatrix * vec4(normalize(modelScale.xyz * modelTangent), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(modelScale.xyz * modelTangent), 0.0)).xyz;
         }
         """
 
 
 getWorldNormal : Glsl.Function
 getWorldNormal =
-    Glsl.function { dependencies = [], constants = [] }
+    Glsl.function { dependencies = [ safeNormalize ], constants = [] }
         """
         vec3 getWorldNormal(vec3 modelNormal, vec4 modelScale, mat4 modelMatrix) {
             vec3 normalScale = vec3(modelScale.w / modelScale.x, modelScale.w / modelScale.y, modelScale.w / modelScale.z);
-            return (modelMatrix * vec4(normalize(normalScale * modelNormal), 0.0)).xyz;
+            return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         """
 

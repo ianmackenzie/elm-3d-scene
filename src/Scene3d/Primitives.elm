@@ -302,8 +302,7 @@ cone =
                         |> Direction3d.toVector
 
                 tipNormal =
-                    Direction3d.xyZ tipAngle elevationAngle
-                        |> Direction3d.toVector
+                    Vector3d.zero
             in
             [ ( { position = basePoint, normal = negativeZVector }
               , { position = p1, normal = negativeZVector }
