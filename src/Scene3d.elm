@@ -225,6 +225,8 @@ nothing =
     Entity.empty
 
 
+{-| TODO
+-}
 point :
     { radius : Quantity Float Pixels }
     -> Material.Plain coordinates
@@ -234,6 +236,8 @@ point { radius } givenMaterial givenPoint =
     Entity.point radius givenMaterial givenPoint
 
 
+{-| TODO
+-}
 lineSegment : Material.Plain coordinates -> LineSegment3d Meters coordinates -> Entity coordinates
 lineSegment givenMaterial givenLineSegment =
     Entity.lineSegment givenMaterial givenLineSegment

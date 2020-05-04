@@ -317,6 +317,8 @@ indexedTriangles givenMesh =
             Types.Indexed bounds givenMesh webGLMesh KeepBackFaces
 
 
+{-| TODO
+-}
 indexedFacets : TriangularMesh (Point3d Meters coordinates) -> Uniform coordinates
 indexedFacets givenMesh =
     facets (List.map Triangle3d.fromVertices (TriangularMesh.faceVertices givenMesh))
@@ -507,6 +509,8 @@ texturedFacetFaceIndices count accumulated =
         texturedFacetFaceIndices (count - 3) (( count - 3, count - 2, count - 1 ) :: accumulated)
 
 
+{-| TODO
+-}
 texturedFacets :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
     -> Textured coordinates
