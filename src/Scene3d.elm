@@ -10,7 +10,8 @@ module Scene3d exposing
     , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
     , Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting
     , CastsShadows, castsShadows, neverCastsShadows
-    , Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
+    , Lights, noLights
+    , oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , Chromaticity
     , chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
     , Exposure
@@ -112,7 +113,13 @@ directional lights to provide highlights.
 
 @docs CastsShadows, castsShadows, neverCastsShadows
 
-@docs Lights, noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
+@docs Lights, noLights
+
+The following functions let you set up lighting using up to eight lights. Note
+that only up to the first four lights can cast shadows; any light past the
+fourth must have been constructed using [`Scene3d.neverCastsShadows`](#neverCastsShadows).
+
+@docs oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
 
 ## Chromaticity
@@ -232,12 +239,12 @@ lineSegment givenMaterial givenLineSegment =
     Entity.lineSegment givenMaterial givenLineSegment
 
 
-{-| Draw a single triangle with a given color. Note that you _could_ render an
-entire mesh by mapping this function over a list of triangles, but this would be
-inefficient; if you have a large number of triangles it is much better to create
-a mesh using [`Mesh.triangles`](Scene3d-Mesh#triangles) or similar, store that
-mesh either in your model or as a top-level constant, and then render it using
-[`Scene3d.mesh`](#mesh).
+{-| Draw a single triangle with a given plain material (generally a constant
+color). Note that you _could_ render an entire mesh by mapping this function
+over a list of triangles, but this would be inefficient; if you have a large
+number of triangles it is much better to create a mesh using [`Mesh.triangles`](Scene3d-Mesh#triangles)
+or similar, store that mesh either in your model or as a top-level constant,
+and then render it using [`Scene3d.mesh`](#mesh).
 -}
 triangle :
     CastsShadows Bool
@@ -248,6 +255,9 @@ triangle shadowSetting givenMaterial givenTriangle =
     facet shadowSetting (Material.plain givenMaterial) givenTriangle
 
 
+{-| Like `Scene3d.triangle`, but also generates a normal vector so that matte
+and physically-based materials (materials that require lighting) can be used.
+-}
 facet :
     CastsShadows Bool
     -> Material.Uniform coordinates
@@ -563,8 +573,7 @@ lightCastsShadows (Types.Light properties) =
     properties.castsShadows
 
 
-{-| TODO
--}
+{-| -}
 oneLight : Light coordinates castsShadows -> Lights coordinates
 oneLight light =
     let
@@ -582,8 +591,7 @@ oneLight light =
         SingleUnshadowedPass lightMatrices
 
 
-{-| TODO
--}
+{-| -}
 twoLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -600,8 +608,7 @@ twoLights first second =
         disabledLight
 
 
-{-| TODO
--}
+{-| -}
 threeLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -619,8 +626,7 @@ threeLights first second third =
         disabledLight
 
 
-{-| TODO
--}
+{-| -}
 fourLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -639,8 +645,7 @@ fourLights first second third fourth =
         disabledLight
 
 
-{-| TODO
--}
+{-| -}
 fiveLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -660,8 +665,7 @@ fiveLights first second third fourth fifth =
         disabledLight
 
 
-{-| TODO
--}
+{-| -}
 sixLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -682,8 +686,7 @@ sixLights first second third fourth fifth sixth =
         disabledLight
 
 
-{-| TODO
--}
+{-| -}
 sevenLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -710,8 +713,7 @@ eraseLight (Types.Light light) =
     Types.Light light
 
 
-{-| TODO
--}
+{-| -}
 eightLights :
     Light coordinates castsShadows1
     -> Light coordinates castsShadows2
@@ -760,27 +762,56 @@ eightLights first second third fourth fifth sixth seventh eigth =
                     noLights
 
 
-{-| TODO
+{-| The `CastsShadows` type is used to indicate either whether an _object_ such
+as a [sphere](#sphere) or [block](#block) casts shadows, or whether a given
+_light_ casts shadows.
+
+For objects, the type parameter `a` will always be `Bool`; a `CastsShadows Bool`
+value is really just a thin wrapper around a `Bool` flag that indicates whether
+an object casts a shadow or not.
+
+Lights can also usually be constructed using a `CastsShadows Bool` value, but if
+you want to use more than four lights in a scene then the extra lights must
+be constructed with the special [`Scene3d.neverCastsShadows`](#neverCastsShadows)
+value. This value is of type `CastsShadows Never`, which allows the Elm type
+system to verify that the extra lights do not cast shadows (a `CastsShadows
+Bool` value may be true _or_ false at runtime, while a `CastsShadows Never` is
+guaranteed to always be false.)
+
 -}
 type CastsShadows a
     = CastsShadows Bool
 
 
-{-| TODO
+{-| Construct a `CastsShadows Bool` value used to indicate whether a given
+object or light casts shadows.
 -}
 castsShadows : Bool -> CastsShadows Bool
 castsShadows flag =
     CastsShadows flag
 
 
-{-| TODO
+{-| Construct a special `CastsShadows Never` value used to indicate that a given
+light never casts shadows.
 -}
 neverCastsShadows : CastsShadows Never
 neverCastsShadows =
     CastsShadows False
 
 
-{-| TODO
+{-| Create a directional light given its chromaticity, intensity, direction, and
+whether or not it casts shadows:
+
+    sunlightAtNoon =
+        Scene3d.directionalLight (Scene3d.castsShadows True)
+            { chromaticity = Scene3d.sunlight
+            , intensity = Illuminance.lux 80000
+            , direction = Direction3d.negativeZ
+            }
+
+Note that the `direction` is the direction the light is traveling (the direction
+_of_ the light, not the direction _to_ the light source).
+
 -}
 directionalLight :
     CastsShadows castsShadows
@@ -811,7 +842,16 @@ directionalLight (CastsShadows shadowFlag) light =
         }
 
 
-{-| TODO
+{-| Create a point light given its chromaticity, intensity, position, and
+whether or not it casts shadows:
+
+    tableLamp =
+        Scene3d.pointLight (Scene3d.castsShadows True)
+            { chromaticity = Scene3d.incandescentLighting
+            , intensity = LuminousFlux.lumens 500
+            , position = Point3d.centimeters 40 50 30
+            }
+
 -}
 pointLight :
     CastsShadows castsShadows
