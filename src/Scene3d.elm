@@ -1,5 +1,6 @@
 module Scene3d exposing
-    ( toHtml, unlit, sunny, cloudy, office
+    ( toHtml
+    , unlit, sunny, cloudy, office
     , Entity
     , point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
     , mesh
@@ -7,8 +8,8 @@ module Scene3d exposing
     , shadow, withShadow
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
-    , transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting
+    , Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
+    , Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting
     , CastsShadows, castsShadows, neverCastsShadows
     , Lights, noLights
     , oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
@@ -34,7 +35,18 @@ contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
 module is 'expensive'; meshes should generally be created once and then stored
 in your model.
 
-@docs toHtml, unlit, sunny, cloudy, office
+@docs toHtml
+
+
+## Presets
+
+These 'preset' scenes are simplified versions of `toHtml` that let you get
+started quickly with some reasonable defaults. Scene lighting, exposure and
+white balance will generally be set for you. However, in all cases you still
+have to specify a camera position/orientation, a clip depth, a background color
+and the dimensions with which to render the scene.
+
+@docs unlit, sunny, cloudy, office
 
 
 # Entities
@@ -46,11 +58,25 @@ in your model.
 
 `elm-3d-scene` includes a handful of basic shapes which you can draw directly
 without having to create and store a separate [`Mesh`](Scene3d-Mesh). In
-general, for all of the basic shapes you can specify whether or not it should
+general, for most of the basic shapes you can specify whether or not it should
 cast a shadow (assuming there is shadow-casting light in the scene!) and can
 specify a material to use. However, different shapes support different kinds of
-materials; `quad`s and `sphere`s support all materials, while `block`s and
-`cylinder`s only support uniform (non-textured) materials.
+materials:
+
+  - `quad`s and `sphere`s support all materials
+  - `block`s, `cylinder`s, `cone`s and `facet`s only support uniform
+    (non-textured) materials
+  - `point`s, `lineSegment`s and `triangle`s only support plain materials
+    (solid colors or emissive materials)
+
+Note that you _could_ render complex shapes by (for example) mapping
+`Scene3d.triangle` over a list of triangles, but this would be inefficient; if
+you have a large number of triangles it is much better to create a mesh using
+[`Mesh.triangles`](Scene3d-Mesh#triangles) or similar, store that mesh either in
+your model or as a top-level constant, and then render it using [`Scene3d.mesh`](#mesh).
+For up to a few dozen individual entities (points, line segments, triangles etc)
+it should be fine to use these convenience functions, but for much more than
+that you will likely want to switch to using a proper mesh for efficiency.
 
 @docs point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
 
@@ -89,35 +115,19 @@ when setting up more complex scenes.
 
 # Background
 
-@docs transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
+@docs Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
 
 
 # Lighting
 
-Lighting in `elm-3d-scene` is a combination of _direct_ and _environmental_
-(indirect, ambient) lighting. Direct lighting comes from specific lights like
-the sun or a light bulb; you can currently have up to eight separate lights
-in a scene. Environmental lighting accounts for light coming from all around an
-object; for example, if you are outside, you might be getting direct light from
-the sun but you're also getting light reflected from other surfaces around you.
-
-Generally, direct lighting gives nice highlights but can be very harsh; it's
-usually best to use a combination of some soft indirect lighting to ensure the
-scene as a whole is reasonably well lit, and then use one or more point or
-directional lights to provide highlights.
-
-
-## Lights
-
-@docs Light, directionalLight, pointLight, overheadLighting, ambientLighting, softLighting
+@docs Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting
 
 @docs CastsShadows, castsShadows, neverCastsShadows
 
 @docs Lights, noLights
 
 The following functions let you set up lighting using up to eight lights. Note
-that only up to the first four lights can cast shadows; any light past the
-fourth must have been constructed using [`Scene3d.neverCastsShadows`](#neverCastsShadows).
+that any light past the fourth must be constructed using [`Scene3d.neverCastsShadows`](#neverCastsShadows).
 
 @docs oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
@@ -225,7 +235,7 @@ nothing =
     Entity.empty
 
 
-{-| TODO
+{-| Draw a single point as a circular dot with the given radius.
 -}
 point :
     { radius : Quantity Float Pixels }
@@ -236,19 +246,14 @@ point { radius } givenMaterial givenPoint =
     Entity.point radius givenMaterial givenPoint
 
 
-{-| TODO
+{-| Draw a single line segment.
 -}
 lineSegment : Material.Plain coordinates -> LineSegment3d Meters coordinates -> Entity coordinates
 lineSegment givenMaterial givenLineSegment =
     Entity.lineSegment givenMaterial givenLineSegment
 
 
-{-| Draw a single triangle with a given plain material (generally a constant
-color). Note that you _could_ render an entire mesh by mapping this function
-over a list of triangles, but this would be inefficient; if you have a large
-number of triangles it is much better to create a mesh using [`Mesh.triangles`](Scene3d-Mesh#triangles)
-or similar, store that mesh either in your model or as a top-level constant,
-and then render it using [`Scene3d.mesh`](#mesh).
+{-| Draw a single triangle.
 -}
 triangle :
     CastsShadows Bool
@@ -363,8 +368,8 @@ group entities =
 
 
 {-| Draw the _shadow_ of an object. Note that this means you can choose to
-render an object and its shadow, and object without its shadow, or even render
-an object's shadow without the object itself for [maximum creepiness](https://en.wikipedia.org/wiki/Identity_Crisis_(Star_Trek:_The_Next_Generation)).
+render an object and its shadow, an object without its shadow, or even render an
+object's shadow without rendering the object itself.
 -}
 shadow : Mesh.Shadow coordinates -> Entity coordinates
 shadow givenShadow =
@@ -475,7 +480,7 @@ type alias Light coordinates castsShadows =
 couple of current limitations to note in `elm-3d-scene`:
 
   - No more than eight lights can exist in the scene
-  - Only _one_ of those lights can cast shadows
+  - Only the first four of those lights can cast shadows
 
 (The reason there is a separate `Lights` type, instead of just using a list of
 `Light` values, is so that the type system can be used to guarantee these
@@ -886,7 +891,24 @@ pointLight (CastsShadows shadowFlag) light =
         }
 
 
-{-| TODO
+{-| Add some 'soft' indirect/environmental lighting to a scene: this is a rough
+approximation for light coming from all different directions, such as light
+coming from the sky (as opposed to direct sunlight) or indirect lighting
+reflected from surrounding surfaces. The intensity of the light will vary
+smoothly from a given intensity 'above' to 'below', based on given 'up'
+direction and with a given chromaticity.
+
+For example, a decent approximation to indoors office lighting might be:
+
+    Scene3d.softLighting
+        { upDirection = Direction3d.positiveZ
+        , chromaticity = Scene3d.fluorescentLighting
+        , intensityAbove = Illuminance.lux 400
+        , intensityBelow = Illuminance.lux 100
+        }
+
+Soft lighting does not cast shadows.
+
 -}
 softLighting :
     { upDirection : Direction3d coordinates
@@ -937,7 +959,30 @@ softLighting light =
             }
 
 
-{-| TODO
+{-| A slightly simplified version of `softLighting` with the given intensity
+above and zero intensity below. This can be useful if you want _color_
+(chromaticity) to also vary from above to below; for example, for and outdoors
+scene you might use two 'overhead' lights with different chromaticities to
+represent light from the blue sky plus some more neutral-colored light reflected
+from the surrounding environment:
+
+    sky =
+        Scene3d.overheadLighting
+            { upDirection = Direction3d.positiveZ
+            , chromaticity = Scene3d.blueSky
+            , intensity = Illuminance.lux 20000
+            }
+
+    environment =
+        Scene3d.overheadLighting
+            { upDirection = Direction3d.negativeZ
+            , chromaticity = Scene3d.daylight
+            , intensity = Illuminance.lux 15000
+            }
+
+Note that the `environment` light has the 'up' direction set to _negative_ Z
+since that light mostly comes from below (reflected from the ground) than above.
+
 -}
 overheadLighting :
     { upDirection : Direction3d coordinates
@@ -954,7 +999,9 @@ overheadLighting arguments =
         }
 
 
-{-| TODO
+{-| A simple version of `softLighting` with constant intensity in every
+direction. Provided for completeness, but you generally won't want to use this
+as it tends to result in very flat, unrealistic-looking scenes.
 -}
 ambientLighting :
     { chromaticity : Chromaticity
@@ -974,13 +1021,16 @@ ambientLighting arguments =
 ----- BACKGROUND -----
 
 
-{-| TODO
+{-| Specifies the background used when rendering a scene. Currently only
+constant background colors are supported, but eventually this will be expanded
+to support more fancy things like skybox textures or backgrounds based on the
+current environmental lighting.
 -}
 type Background coordinates
     = BackgroundColor Color.Transparent.Color
 
 
-{-| TODO
+{-| A fully transparent background.
 -}
 transparentBackground : Background coordinates
 transparentBackground =
@@ -993,7 +1043,7 @@ transparentBackground =
             }
 
 
-{-| TODO
+{-| An opaque black background.
 -}
 blackBackground : Background coordinates
 blackBackground =
@@ -1006,7 +1056,7 @@ blackBackground =
             }
 
 
-{-| TODO
+{-| An opaque white background.
 -}
 whiteBackground : Background coordinates
 whiteBackground =
@@ -1019,14 +1069,14 @@ whiteBackground =
             }
 
 
-{-| TODO
+{-| A custom opaque background color.
 -}
 backgroundColor : Color -> Background coordinates
 backgroundColor color =
     BackgroundColor (Color.Transparent.fromColor Color.Transparent.opaque color)
 
 
-{-| TODO
+{-| A custom background color with transparency.
 -}
 transparentBackgroundColor : Color.Transparent.Color -> Background coordinates
 transparentBackgroundColor transparentColor =
@@ -1453,7 +1503,32 @@ storeStencilValue lightIndex =
         }
 
 
-{-| TODO
+{-| This function lets you convert a list of `elm-3d-scene` entities into a list
+of plain `elm-explorations/webgl` entities, so that you can combine objects
+rendered with `elm-3d-scene` with custom objects you render yourself.
+
+Note that the arguments are not exactly the same as `toHtml`; there are no
+`background`, `dimensions` or `antialiasing` arguments since those are
+properties that must be set at the top level, so you will have to handle those
+yourself when calling [`WebGL.toHtml`](https://package.elm-lang.org/packages/elm-explorations/webgl/latest/WebGL#toHtml).
+However, there are a couple of additional arguments:
+
+  - You must specify the `aspectRatio` (width over height) that the scene is
+    being rendered at, so that projection matrices can be computed correctly.
+    (In `Scene3d.toHtml`, that is computed from the given dimensions.)
+  - You must specify the current supersampling factor being used, if any. This
+    allows the circular dots used to render points to have the same radius
+    whether or not supersampling is used (e.g. if using 2x supersampling, then
+    points must be rendered at twice the pixel radius internally so that the
+    final result has the same visual size).
+
+This function is called internally by `toHtml` but has not actually been tested
+in combination with other custom WebGL code, so there is a high chance of weird
+interaction bugs. (In particular, if you use the stencil buffer you will likely
+want to clear it explicitly after rendering `elm-3d-scene` entities.) If you
+encounter bugs when using `toWebGLEntities` in combination with your own custom
+rendering code, please [open an issue](https://github.com/ianmackenzie/elm-3d-scene/issues/new).
+
 -}
 toWebGLEntities :
     { lights : Lights coordinates
@@ -1660,7 +1735,27 @@ renderWithinShadows meshRenderPasses lightMatrices numShadowingLights =
         |> List.concat
 
 
-{-| TODO
+{-| Actually render a scene! You need to specify:
+
+  - The lights used to render the scene.
+  - The position and orientation of the camera.
+  - A clip depth (anything closer to the camera than this value will be clipped
+    and not shown).
+  - The overall [`exposure`](#Exposure) level to use.
+  - What kind of [tone mapping](#ToneMapping) to apply, if any.
+  - The white balance to use: this the chromaticity that will show up as white in
+    the final rendered scene. `Scene3d.daylight` is a good default value, but for
+    indoors scenes `Scene3d.fluorescentLighting` or `Scene3d.incandescentLighting`
+    may be more appropriate.
+  - What kind of [antialiasing](#Antialiasing) to use, if any.
+  - The overall dimensions in pixels of the scene.
+  - What background color to use.
+  - A list of entities to render!
+
+This allows full customization of how the scene is rendered; there are also some
+simpler rendering [presets](#presets) to let you get started quickly with (for
+example) a basic ['sunny day'](#sunny) scene.
+
 -}
 toHtml :
     { lights : Lights coordinates
@@ -1889,13 +1984,18 @@ chromaticity color =
 ----- EXPOSURE -----
 
 
-{-| TODO
+{-| Exposure controls the overall brightness of a scene; just like a physical
+camera, adjusting exposure can lead to a scene being under-exposed (very dark
+everywhere) or over-exposed (very bright, potentially with some pure-white areas
+where the scene has been 'blown out').
 -}
 type Exposure
     = Exposure Luminance
 
 
-{-| TODO
+{-| Set exposure based on an [exposure value](https://en.wikipedia.org/wiki/Exposure_value)
+for an ISO speed of 100. Typical exposure values range from 5 for home interiors
+to 15 for sunny outdoor scenes; you can find some typical values [here](https://en.wikipedia.org/wiki/Exposure_value#Tabulated_exposure_values).
 -}
 exposureValue : Float -> Exposure
 exposureValue ev100 =
@@ -1903,14 +2003,17 @@ exposureValue ev100 =
     Exposure (Luminance.nits (1.2 * 2 ^ ev100))
 
 
-{-| TODO
+{-| Set exposure based on the luminance of the brightest white that can be
+displayed without overexposure. Scene luminance covers a large range of values;
+some sample values can be found [here](https://en.wikipedia.org/wiki/Orders_of_magnitude_%28luminance%29).
 -}
 maxLuminance : Luminance -> Exposure
 maxLuminance givenMaxLuminance =
     Exposure (Quantity.abs givenMaxLuminance)
 
 
-{-| TODO
+{-| Set exposure based on photographic parameters: F-stop, shutter speed and
+ISO film speed.
 -}
 photographicExposure : { fStop : Float, shutterSpeed : Duration, isoSpeed : Float } -> Exposure
 photographicExposure { fStop, shutterSpeed, isoSpeed } =
@@ -1926,20 +2029,34 @@ photographicExposure { fStop, shutterSpeed, isoSpeed } =
 ----- TONE MAPPING -----
 
 
-{-| TODO
+{-| Tone mapping is, roughly speaking, a way to render scenes that contain both
+very dark and very bright areas. It works by mapping a large range of brightness
+(luminance) values into a more limited set of values that can actually be
+displayed on a computer monitor.
 -}
 type ToneMapping
     = ToneMapping Float
 
 
-{-| TODO
+{-| No tone mapping at all! In this case, the brightness of every point in the
+scene will simply be scaled by the overall scene [exposure](#Exposure) setting
+and the resulting color will be displayed on the screen. For scenes with bright
+reflective highlights or a mix of dark and bright portions, this means that
+some parts of the scene may be underexposed (nearly black) or overexposed
+(pure white).
 -}
 noToneMapping : ToneMapping
 noToneMapping =
     ToneMapping 1
 
 
-{-| TODO
+{-| Apply a simple [extended Reinhard](https://64.github.io/tonemapping/#extended-reinhard)
+tone mapping, by providing a 'maximum overexposure' parameter. For example,
+`Scene3d.reinhardToneMapping 5` will mean that you will be able to display up to
+5 times the maximum brightness than you would otherwise be able to based on the
+current [`exposure`](#Exposure) value, at the cost of other colors in the scene
+becoming slightly more muted. This is very scene dependent, so try playing
+around with values between 2 and 10.
 -}
 reinhardToneMapping : Float -> ToneMapping
 reinhardToneMapping maxOverExposure =
@@ -1950,7 +2067,9 @@ reinhardToneMapping maxOverExposure =
 ----- ANTIALIASING -----
 
 
-{-| TODO
+{-| An `Antialiasing` value defines what (if any) kind of [antialiasing](https://en.wikipedia.org/wiki/Spatial_anti-aliasing)
+is used when rendering a scene. Different types of antialiasing have different
+tradeoffs between quality and rendering speed.
 -}
 type Antialiasing
     = NoAntialiasing
@@ -1958,21 +2077,37 @@ type Antialiasing
     | Supersampling Float
 
 
-{-| TODO
+{-| No antialiasing at all. This is the fastest to render, but often results in
+very visible jagged/pixelated edges.
 -}
 noAntialiasing : Antialiasing
 noAntialiasing =
     NoAntialiasing
 
 
-{-| TODO
+{-| [Multisample](https://en.wikipedia.org/wiki/Multisample_anti-aliasing)
+antialiasing. This is generally a decent tradeoff between performance and
+image quality. Using multisampling means that _edges_ of objects will generally
+be smooth, but jaggedness _inside_ objects resulting from lighting or texturing
+may still occur.
 -}
 multisampling : Antialiasing
 multisampling =
     Multisampling
 
 
-{-| TODO
+{-| Supersampling refers to a brute-force version of antialiasing: render the
+entire scene at a higher resolution, then scale down. For example, using
+`Scene3d.supersampling 2` will render at 2x dimensions in both X and Y (so
+four times the total number of pixels) and then scale back down to the given
+dimensions; this means that every pixel in the final result will be the average
+of a 2x2 block of rendered pixels.
+
+This is generally the highest-quality antialiasing but also the highest cost.
+For simple cases supersampling is often indistinguishable from multisampling,
+but supersampling is also capable of handling cases like small bright lighting
+highlights that multisampling does not address.
+
 -}
 supersampling : Float -> Antialiasing
 supersampling factor =
@@ -1983,7 +2118,9 @@ supersampling factor =
 ----- PRESETS -----
 
 
-{-| TODO
+{-| Render a simple scene without any lighting. This means all objects in the
+scene should use [plain colors](Material#color) - without any lighting, other
+material types will always be completely black!
 -}
 unlit :
     { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
@@ -2008,7 +2145,11 @@ unlit arguments entities =
         entities
 
 
-{-| TODO
+{-| Render an outdoors 'sunny day' scene given the overall global up direction
+(usually `Direction3d.z` or `Direction3d.y` depending on how you've set up your
+scene), the direction of incoming sunlight (e.g. `Direction3d.negativeZ` if
+positive Z is up and the sun is directly overhead) and whether or not sunlight
+should cast shadows.
 -}
 sunny :
     { upDirection : Direction3d coordinates
@@ -2061,7 +2202,9 @@ sunny arguments entities =
         entities
 
 
-{-| TODO
+{-| Render an outdoors 'cloudy day' scene. You must still provide a global up
+direction since even on a cloudy day more light comes from above than
+around/below a given object, but no direct sunlight means no shadows.
 -}
 cloudy :
     { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
@@ -2094,7 +2237,8 @@ cloudy arguments entities =
         entities
 
 
-{-| TODO
+{-| Render an indoors office scene. Like `Scene3d.cloudy`, you will still need
+to specify a global up direction.
 -}
 office :
     { upDirection : Direction3d coordinates
