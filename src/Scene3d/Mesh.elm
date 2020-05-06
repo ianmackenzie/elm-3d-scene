@@ -14,7 +14,7 @@ module Scene3d.Mesh exposing
 @docs Mesh
 
 
-## Specific mesh types
+## Types
 
 @docs Plain, Uniform, Unlit, Textured
 
@@ -124,7 +124,7 @@ type alias Shadow coordinates =
     Types.Shadow coordinates
 
 
-{-| TODO
+{-| A dummy mesh for which nothing will be drawn.
 -}
 empty : Mesh coordinates attributes
 empty =
@@ -180,7 +180,7 @@ facetAttributes triangle =
     )
 
 
-{-| TODO
+{-| Construct a plain mesh from a list of triangles.
 -}
 triangles : List (Triangle3d Meters coordinates) -> Plain coordinates
 triangles givenTriangles =
@@ -199,7 +199,11 @@ triangles givenTriangles =
             Types.Triangles bounds givenTriangles webGLMesh KeepBackFaces
 
 
-{-| TODO
+{-| Construct a mesh from a list of triangles, but generate a normal vector for
+each triangle so that [`matte`](Material#matte) and [`pbr`](Material#pbr)
+(materials that react to light) can be used. Note that normal vectors will _not_
+be smoothed, so the resulting mesh will appear to have flat [facets](https://en.wikipedia.org/wiki/Facet),
+hence the name.
 -}
 facets : List (Triangle3d Meters coordinates) -> Uniform coordinates
 facets givenTriangles =
