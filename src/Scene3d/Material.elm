@@ -130,8 +130,6 @@ loadWith options url =
     loadImpl options url
 
 
-{-| TODO
--}
 loadImpl : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
 loadImpl options url =
     WebGL.Texture.loadWith options url
