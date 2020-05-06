@@ -69,9 +69,11 @@ matte materialColor =
 -}
 emissive : Chromaticity -> Luminance -> Material coordinates attributes
 emissive givenChromaticity brightness =
-    Types.EmissiveMaterial Types.UseMeshUvs
-        (Types.Constant (ColorConversions.chromaticityToLinearRgb (Quantity.float 1) givenChromaticity))
-        brightness
+    let
+        baseColor =
+            ColorConversions.chromaticityToLinearRgb (Quantity.float 1) givenChromaticity
+    in
+    Types.EmissiveMaterial Types.UseMeshUvs (Types.Constant baseColor) brightness
 
 
 {-| TODO
