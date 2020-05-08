@@ -18,7 +18,7 @@ module Scene3d exposing
     , Exposure
     , exposureValue, maxLuminance, photographicExposure
     , ToneMapping
-    , noToneMapping, reinhardToneMapping
+    , noToneMapping, reinhardToneMapping, filmicToneMapping, acesToneMapping
     , Antialiasing
     , noAntialiasing, multisampling, supersampling
     , toWebGLEntities
@@ -150,7 +150,7 @@ that any light past the fourth must be constructed using [`Scene3d.neverCastsSha
 
 @docs ToneMapping
 
-@docs noToneMapping, reinhardToneMapping
+@docs noToneMapping, reinhardToneMapping, filmicToneMapping, acesToneMapping
 
 
 # Antialiasing
@@ -1225,7 +1225,7 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix currentTransform
 -- [ clipDistance  cameraX         whiteR        supersampling ]
 -- [ aspectRatio   cameraY         whiteG        *             ]
 -- [ kc            cameraZ         whiteB        *             ]
--- [ kz            projectionType  dynamicRange  *             ]
+-- [ kz            projectionType  toneMapping   *             ]
 
 
 defaultBlend : WebGL.Settings.Setting
@@ -1643,8 +1643,19 @@ toWebGLEntities arguments drawables =
                 (Exposure (Quantity nits)) =
                     arguments.exposure
 
-                (ToneMapping dynamicRange) =
-                    arguments.toneMapping
+                toneMapping =
+                    case arguments.toneMapping of
+                        NoToneMapping ->
+                            0
+
+                        ReinhardToneMapping ->
+                            1
+
+                        FilmicToneMapping ->
+                            2
+
+                        AcesToneMapping ->
+                            3
 
                 sceneProperties =
                     Math.Matrix4.fromRecord
@@ -1659,7 +1670,7 @@ toWebGLEntities arguments drawables =
                         , m13 = Math.Vector3.getX referenceWhite
                         , m23 = Math.Vector3.getY referenceWhite
                         , m33 = Math.Vector3.getZ referenceWhite
-                        , m43 = dynamicRange
+                        , m43 = toneMapping
                         , m14 = arguments.supersampling
                         , m24 = Length.inMeters sceneDiameter
                         , m34 = 0
@@ -2051,7 +2062,10 @@ very dark and very bright areas. It works by mapping a large range of brightness
 displayed on a computer monitor.
 -}
 type ToneMapping
-    = ToneMapping Float
+    = NoToneMapping
+    | ReinhardToneMapping
+    | FilmicToneMapping
+    | AcesToneMapping
 
 
 {-| No tone mapping at all! In this case, the brightness of every point in the
@@ -2063,20 +2077,25 @@ some parts of the scene may be underexposed (nearly black) or overexposed
 -}
 noToneMapping : ToneMapping
 noToneMapping =
-    ToneMapping 1
+    NoToneMapping
 
 
-{-| Apply a simple [extended Reinhard](https://64.github.io/tonemapping/#extended-reinhard)
-tone mapping, by providing a 'maximum overexposure' parameter. For example,
-`Scene3d.reinhardToneMapping 5` will mean that you will be able to display up to
-5 times the maximum brightness than you would otherwise be able to based on the
-current [`exposure`](#Exposure) value, at the cost of other colors in the scene
-becoming slightly more muted. This is very scene dependent, so try playing
-around with values between 2 and 10.
+{-| Apply a simple [Reinhard](https://64.github.io/tonemapping/#reinhard) tone
+mapping.
 -}
-reinhardToneMapping : Float -> ToneMapping
-reinhardToneMapping maxOverExposure =
-    ToneMapping (abs maxOverExposure)
+reinhardToneMapping : ToneMapping
+reinhardToneMapping =
+    ReinhardToneMapping
+
+
+filmicToneMapping : ToneMapping
+filmicToneMapping =
+    FilmicToneMapping
+
+
+acesToneMapping : ToneMapping
+acesToneMapping =
+    AcesToneMapping
 
 
 

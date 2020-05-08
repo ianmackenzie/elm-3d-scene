@@ -5,7 +5,7 @@ Transformation: NoTransformation, Translation, Rotation, Scale, Mirror
 PointLight: PointLight, NoPointLight
 DirectionalLight: DirectionalLight, NoDirectionalLight
 SoftLighting: SoftLighting, NoSoftLighting
-DynamicRange: 1, 2, 5, 10
+ToneMapping: NoToneMapping, Reinhard, Filmic, Aces
 Antialiasing: NoAntialiasing, Multisampling, Supersampling
 Projection: Perspective, Orthographic
 

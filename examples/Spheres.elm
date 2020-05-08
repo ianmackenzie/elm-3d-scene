@@ -1,6 +1,7 @@
 module Spheres exposing (main)
 
 import Angle
+import Array
 import Axis3d
 import Block3d
 import Browser
@@ -116,17 +117,24 @@ type Antialiasing
     | Supersampling
 
 
+type ToneMapping
+    = NoToneMapping
+    | Reinhard
+    | Filmic
+    | Aces
+
+
 type alias Model =
     { antialiasing : Antialiasing
     , ev100 : Float
-    , dynamicRange : Float
+    , toneMapping : ToneMapping
     }
 
 
 type Msg
     = ToggleAntialiasing
     | SetEv100 Float
-    | SetDynamicRange Float
+    | SetToneMapping ToneMapping
 
 
 update : Msg -> Model -> Model
@@ -149,8 +157,8 @@ update message model =
         SetEv100 value ->
             { model | ev100 = value }
 
-        SetDynamicRange value ->
-            { model | dynamicRange = value }
+        SetToneMapping value ->
+            { model | toneMapping = value }
 
 
 slider :
@@ -192,6 +200,50 @@ slider attributes { min, max } =
             []
 
 
+comboBox : List (Html.Attribute a) -> (a -> String) -> List a -> a -> Html a
+comboBox attributes toStr allItems =
+    let
+        itemsArray =
+            Array.fromList allItems
+
+        selectedIndexDecoder =
+            Decode.at [ "target", "selectedIndex" ] Decode.int
+
+        newSelectionDecoder currentItem =
+            selectedIndexDecoder
+                |> Decode.andThen
+                    (\selectedIndex ->
+                        case Array.get selectedIndex itemsArray of
+                            Just newItem ->
+                                if newItem /= currentItem then
+                                    Decode.succeed newItem
+
+                                else
+                                    Decode.fail "selected item did not change"
+
+                            Nothing ->
+                                Decode.fail "selected index out of range"
+                    )
+    in
+    \currentItem ->
+        let
+            decoder =
+                newSelectionDecoder currentItem
+
+            onChange =
+                Html.Events.on "change" decoder
+
+            onKeyUp =
+                Html.Events.on "keyup" decoder
+
+            toOption item =
+                Html.option [ Html.Attributes.selected (item == currentItem) ]
+                    [ Html.text (toStr item) ]
+        in
+        Html.select (onChange :: onKeyUp :: attributes)
+            (List.map toOption allItems)
+
+
 antialiasString : Antialiasing -> String
 antialiasString antialiasing =
     case antialiasing of
@@ -205,13 +257,45 @@ antialiasString antialiasing =
             "Supersampling"
 
 
+toneMappingDescription : ToneMapping -> String
+toneMappingDescription toneMapping =
+    case toneMapping of
+        NoToneMapping ->
+            "No tone mapping"
+
+        Reinhard ->
+            "Reinhard"
+
+        Filmic ->
+            "Filmic"
+
+        Aces ->
+            "ACES"
+
+
+toneMappingOptions : List ToneMapping
+toneMappingOptions =
+    [ NoToneMapping
+    , Reinhard
+    , Filmic
+    , Aces
+    ]
+
+
 main : Program () Model Msg
 main =
     Browser.element
-        { init = always ( { antialiasing = Multisampling, ev100 = 14, dynamicRange = 1 }, Cmd.none )
+        { init =
+            always
+                ( { antialiasing = Multisampling
+                  , ev100 = 14
+                  , toneMapping = NoToneMapping
+                  }
+                , Cmd.none
+                )
         , update = \message model -> ( update message model, Cmd.none )
         , view =
-            \{ antialiasing, ev100, dynamicRange } ->
+            \{ antialiasing, ev100, toneMapping } ->
                 Html.div []
                     [ Html.div []
                         [ Scene3d.toHtml
@@ -230,7 +314,19 @@ main =
                                     NoAntialiasing ->
                                         Scene3d.noAntialiasing
                             , exposure = Scene3d.exposureValue ev100
-                            , toneMapping = Scene3d.reinhardToneMapping dynamicRange
+                            , toneMapping =
+                                case toneMapping of
+                                    NoToneMapping ->
+                                        Scene3d.noToneMapping
+
+                                    Reinhard ->
+                                        Scene3d.reinhardToneMapping
+
+                                    Filmic ->
+                                        Scene3d.filmicToneMapping
+
+                                    Aces ->
+                                        Scene3d.acesToneMapping
                             , whiteBalance = Scene3d.fluorescentLighting
                             , background = Scene3d.transparentBackground
                             }
@@ -254,8 +350,8 @@ main =
                         ]
                     , Html.div []
                         [ Html.text "Dynamic range:"
-                        , slider [] { min = 1, max = 10 } dynamicRange
-                            |> Html.map SetDynamicRange
+                        , comboBox [] toneMappingDescription toneMappingOptions toneMapping
+                            |> Html.map SetToneMapping
                         ]
                     , Html.button [ Html.Events.onClick ToggleAntialiasing ] [ Html.text (antialiasString antialiasing) ]
                     ]

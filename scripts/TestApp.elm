@@ -95,6 +95,13 @@ type Transformation
     | Mirror
 
 
+type ToneMapping
+    = NoToneMapping
+    | Reinhard
+    | Filmic
+    | Aces
+
+
 type Antialiasing
     = NoAntialiasing
     | Multisampling
@@ -114,7 +121,7 @@ type alias TestCase =
     , pointLight : Bool
     , directionalLight : Bool
     , softLighting : Bool
-    , dynamicRange : Float
+    , toneMapping : ToneMapping
     , antialiasing : Antialiasing
     , projection : Projection
     }
@@ -220,19 +227,20 @@ toggleAntialiasing currentAntialiasing =
             NoAntialiasing
 
 
-toggleDynamicRange : Float -> Float
-toggleDynamicRange currentDynamicRange =
-    if currentDynamicRange == 1 then
-        2
+toggleToneMapping : ToneMapping -> ToneMapping
+toggleToneMapping currentToneMapping =
+    case currentToneMapping of
+        NoToneMapping ->
+            Reinhard
 
-    else if currentDynamicRange == 2 then
-        5
+        Reinhard ->
+            Filmic
 
-    else if currentDynamicRange == 5 then
-        10
+        Filmic ->
+            Aces
 
-    else
-        1
+        Aces ->
+            NoToneMapping
 
 
 parseMesh : String -> Result String Mesh
@@ -401,14 +409,23 @@ parseSoftLighting string =
             Err ("Unrecognized soft lighting type '" ++ string ++ "'")
 
 
-parseDynamicRange : String -> Result String Float
-parseDynamicRange string =
-    case String.toFloat string of
-        Just value ->
-            Ok value
+parseToneMapping : String -> Result String ToneMapping
+parseToneMapping string =
+    case string of
+        "NoToneMapping" ->
+            Ok NoToneMapping
 
-        Nothing ->
-            Err ("Expected floating-point value for dynamic range, got '" ++ string ++ "'")
+        "Reinhard" ->
+            Ok Reinhard
+
+        "Filmic" ->
+            Ok Filmic
+
+        "Aces" ->
+            Ok Aces
+
+        _ ->
+            Err ("Unrecognized tone mapping type '" ++ string ++ "'")
 
 
 parseAntialiasing : String -> Result String Antialiasing
@@ -447,7 +464,7 @@ parseTestCase line =
             String.split "\t" line
     in
     case items of
-        [ meshString, materialString, shadowString, transformationString, pointLightString, directionalLightString, softLightingString, dynamicRangeString, antialiasingString, projectionString ] ->
+        [ meshString, materialString, shadowString, transformationString, pointLightString, directionalLightString, softLightingString, toneMappingString, antialiasingString, projectionString ] ->
             Ok TestCase
                 |> Result.Extra.andMap (parseMesh meshString)
                 |> Result.Extra.andMap (parseMaterial materialString)
@@ -456,7 +473,7 @@ parseTestCase line =
                 |> Result.Extra.andMap (parsePointLight pointLightString)
                 |> Result.Extra.andMap (parseDirectionalLight directionalLightString)
                 |> Result.Extra.andMap (parseSoftLighting softLightingString)
-                |> Result.Extra.andMap (parseDynamicRange dynamicRangeString)
+                |> Result.Extra.andMap (parseToneMapping toneMappingString)
                 |> Result.Extra.andMap (parseAntialiasing antialiasingString)
                 |> Result.Extra.andMap (parseProjection projectionString)
 
@@ -810,7 +827,7 @@ type Msg
     | ToggleSoftLighting
     | ToggleProjection
     | ToggleAntialiasing
-    | ToggleDynamicRange
+    | ToggleToneMapping
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -1041,11 +1058,11 @@ update msg model =
                     }
                 )
 
-        ToggleDynamicRange ->
+        ToggleToneMapping ->
             updateCurrentTestCase
                 (\testCase ->
                     { testCase
-                        | dynamicRange = toggleDynamicRange testCase.dynamicRange
+                        | toneMapping = toggleToneMapping testCase.toneMapping
                     }
                 )
 
@@ -1990,7 +2007,18 @@ antialiasing testCase =
 
 toneMapping : TestCase -> Scene3d.ToneMapping
 toneMapping testCase =
-    Scene3d.reinhardToneMapping testCase.dynamicRange
+    case testCase.toneMapping of
+        NoToneMapping ->
+            Scene3d.noToneMapping
+
+        Reinhard ->
+            Scene3d.reinhardToneMapping
+
+        Filmic ->
+            Scene3d.filmicToneMapping
+
+        Aces ->
+            Scene3d.acesToneMapping
 
 
 button : { onPress : Maybe Msg, label : Element Msg } -> Element Msg
@@ -2145,6 +2173,22 @@ softLightingDescription softLighting =
         "No soft lighting"
 
 
+toneMappingDescription : ToneMapping -> String
+toneMappingDescription givenToneMapping =
+    case givenToneMapping of
+        NoToneMapping ->
+            "No tone mapping"
+
+        Reinhard ->
+            "Reinhard"
+
+        Filmic ->
+            "Filmic"
+
+        Aces ->
+            "ACES"
+
+
 antialiasingDescription : Antialiasing -> String
 antialiasingDescription givenAntialiasing =
     case givenAntialiasing of
@@ -2180,7 +2224,7 @@ viewTestCaseProperties testCaseIndex numTestCases testCase =
             , ( "Point light:", pointLightDescription testCase.pointLight, Just TogglePointLight )
             , ( "Directional light:", directionalLightDescription testCase.directionalLight, Just ToggleDirectionalLight )
             , ( "Soft lighting:", softLightingDescription testCase.softLighting, Just ToggleSoftLighting )
-            , ( "Dynamic range:", String.fromFloat testCase.dynamicRange, Just ToggleDynamicRange )
+            , ( "Tone mapping:", toneMappingDescription testCase.toneMapping, Just ToggleToneMapping )
             , ( "Antialiasing:", antialiasingDescription testCase.antialiasing, Just ToggleAntialiasing )
             , ( "Projection:", projectionDescription testCase.projection, Just ToggleProjection )
             ]

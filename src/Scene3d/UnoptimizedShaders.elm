@@ -1441,10 +1441,6 @@ emissiveFragment =
         uniform mediump vec3 emissiveColor;
         uniform highp mat4 sceneProperties;
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -1453,19 +1449,49 @@ emissiveFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         void main () {
@@ -1509,10 +1535,6 @@ emissiveTextureFragment =
             );
         }
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -1521,19 +1543,49 @@ emissiveTextureFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         void main () {
@@ -1559,10 +1611,6 @@ emissivePointFragment =
         uniform lowp float pointRadius;
         uniform highp mat4 sceneProperties;
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -1571,19 +1619,49 @@ emissivePointFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         float pointAlpha(float pointRadius, vec2 pointCoord) {
@@ -1751,10 +1829,6 @@ lambertianFragment =
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -1763,19 +1837,49 @@ lambertianFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         void main() {
@@ -1975,10 +2079,6 @@ lambertianTextureFragment =
             );
         }
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -1987,19 +2087,49 @@ lambertianTextureFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         void main() {
@@ -2294,10 +2424,6 @@ physicalFragment =
             return litColor1 + litColor2 + litColor3 + litColor4 + litColor5 + litColor6 + litColor7 + litColor8;
         }
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -2306,19 +2432,49 @@ physicalFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         void main() {
@@ -2665,10 +2821,6 @@ physicalTexturesFragment =
             );
         }
         
-        float toneMap(float y, float yMax) {
-            return y * (1.0 + (y / (yMax * yMax))) / (1.0 + y);
-        }
-        
         float gammaCorrect(float u) {
             if (u <= 0.0031308) {
                 return 12.92 * u;
@@ -2677,19 +2829,49 @@ physicalTexturesFragment =
             }
         }
         
+        vec3 linearToneMap(vec3 color) {
+            float red = gammaCorrect(color.r);
+            float green = gammaCorrect(color.g);
+            float blue = gammaCorrect(color.b);
+            return vec3(red, green, blue);
+        }
+        
+        vec3 reinhardToneMap(vec3 color) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scale = 1.0 / (1.0 + luminance);
+            return linearToneMap(color / (color + 1.0));
+        }
+        
+        vec3 filmicToneMap(vec3 color) {
+            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
+            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        }
+        
+        vec3 acesToneMap(vec3 color) {
+            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        }
+        
+        vec3 toneMap(vec3 color, float toneMapping) {
+            if (toneMapping == 0.0) {
+                return linearToneMap(color);
+            } else if (toneMapping == 1.0) {
+                return reinhardToneMap(color);
+            } else if (toneMapping == 2.0) {
+                return filmicToneMap(color);
+            } else if (toneMapping == 3.0) {
+                return acesToneMap(color);
+            } else {
+                return vec3(0.0, 0.0, 0.0);
+            }
+        }
+        
         vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float linearR = linearColor.r / referenceWhite.r;
-            float linearG = linearColor.g / referenceWhite.g;
-            float linearB = linearColor.b / referenceWhite.b;
-            float luminance = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB;
-            float dynamicRange = sceneProperties[2].a;
-            float toneMappedLuminance = toneMap(luminance, dynamicRange);
-            float toneMapScale = toneMappedLuminance / luminance;
-            float red = gammaCorrect(linearR * toneMapScale);
-            float green = gammaCorrect(linearG * toneMapScale);
-            float blue = gammaCorrect(linearB * toneMapScale);
-            return vec4(red, green, blue, 1.0);
+            float unitR = linearColor.r / referenceWhite.r;
+            float unitG = linearColor.g / referenceWhite.g;
+            float unitB = linearColor.b / referenceWhite.b;
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            return vec4(toneMapped, 1.0);
         }
         
         void main() {
