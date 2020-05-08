@@ -9,7 +9,7 @@ module Scene3d exposing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
     , placeIn, relativeTo
     , Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting
+    , Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting, disabledLight
     , CastsShadows, castsShadows, neverCastsShadows
     , Lights, noLights
     , oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
@@ -120,7 +120,7 @@ when setting up more complex scenes.
 
 # Lighting
 
-@docs Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting
+@docs Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting, disabledLight
 
 @docs CastsShadows, castsShadows, neverCastsShadows
 
@@ -493,6 +493,22 @@ type Lights coordinates
     | MultiplePasses (List Mat4) LightMatrices
 
 
+{-| A 'light' that does not actually do anything. Can be useful if you have
+some conditional logic that decides whether a particular light is on or off:
+
+    lamp =
+        if model.lampIsOn then
+            Scene3d.pointLight (Scene3d.castsShadows True)
+                { position = model.lampPosition
+                , chromaticity =
+                    Scene3d.incandescentLighting
+                , intensity = LuminousFlux.lumens 400
+                }
+
+        else
+            Scene3d.disabledLight
+
+-}
 disabledLight : Light coordinates castsShadows
 disabledLight =
     Types.Light
