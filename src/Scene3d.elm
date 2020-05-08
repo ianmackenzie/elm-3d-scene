@@ -599,7 +599,7 @@ lightCastsShadows (Types.Light properties) =
 
 
 {-| -}
-oneLight : Light coordinates castsShadows -> Lights coordinates
+oneLight : Light coordinates a -> Lights coordinates
 oneLight light =
     let
         lightMatrices =
@@ -618,8 +618,8 @@ oneLight light =
 
 {-| -}
 twoLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
+    Light coordinates a
+    -> Light coordinates b
     -> Lights coordinates
 twoLights first second =
     eightLights
@@ -635,9 +635,9 @@ twoLights first second =
 
 {-| -}
 threeLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
-    -> Light coordinates castsShadows3
+    Light coordinates a
+    -> Light coordinates b
+    -> Light coordinates c
     -> Lights coordinates
 threeLights first second third =
     eightLights
@@ -653,10 +653,10 @@ threeLights first second third =
 
 {-| -}
 fourLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
-    -> Light coordinates castsShadows3
-    -> Light coordinates castsShadows4
+    Light coordinates a
+    -> Light coordinates b
+    -> Light coordinates c
+    -> Light coordinates d
     -> Lights coordinates
 fourLights first second third fourth =
     eightLights
@@ -672,10 +672,10 @@ fourLights first second third fourth =
 
 {-| -}
 fiveLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
-    -> Light coordinates castsShadows3
-    -> Light coordinates castsShadows4
+    Light coordinates a
+    -> Light coordinates b
+    -> Light coordinates c
+    -> Light coordinates d
     -> Light coordinates Never
     -> Lights coordinates
 fiveLights first second third fourth fifth =
@@ -692,10 +692,10 @@ fiveLights first second third fourth fifth =
 
 {-| -}
 sixLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
-    -> Light coordinates castsShadows3
-    -> Light coordinates castsShadows4
+    Light coordinates a
+    -> Light coordinates b
+    -> Light coordinates c
+    -> Light coordinates d
     -> Light coordinates Never
     -> Light coordinates Never
     -> Lights coordinates
@@ -713,10 +713,10 @@ sixLights first second third fourth fifth sixth =
 
 {-| -}
 sevenLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
-    -> Light coordinates castsShadows3
-    -> Light coordinates castsShadows4
+    Light coordinates a
+    -> Light coordinates b
+    -> Light coordinates c
+    -> Light coordinates d
     -> Light coordinates Never
     -> Light coordinates Never
     -> Light coordinates Never
@@ -740,10 +740,10 @@ eraseLight (Types.Light light) =
 
 {-| -}
 eightLights :
-    Light coordinates castsShadows1
-    -> Light coordinates castsShadows2
-    -> Light coordinates castsShadows3
-    -> Light coordinates castsShadows4
+    Light coordinates a
+    -> Light coordinates b
+    -> Light coordinates c
+    -> Light coordinates d
     -> Light coordinates Never
     -> Light coordinates Never
     -> Light coordinates Never
