@@ -586,7 +586,7 @@ allLightsEnabled =
 
 {-| No lights at all! You don't need lights if you're only using materials
 like [`color`](Material#color) or [`emissive`](Material#emissive) (since those
-materials don't react to light anyways).
+materials don't react to external light anyways).
 -}
 noLights : Lights coordinates
 noLights =
