@@ -1,36 +1,71 @@
 module Scene3d.Mesh exposing
     ( Mesh
     , Plain, Uniform, Unlit, Textured
-    , points, lineSegments, polyline
-    , triangles, facets
+    , points, lineSegments, polyline, triangles, facets
     , indexedTriangles, indexedFacets, indexedFaces
     , texturedTriangles, texturedFacets, texturedFaces
     , Shadow, shadow
     , cullBackFaces
     )
 
-{-|
+{-| This module lets you create object shapes which you can later render with
+[`Scene3d.mesh`](Scene3d#mesh) by applying a desired [material](Scene3d-Material).
+
+**IMPORTANT**: `Mesh` (and `Shadow`) values should _not_ be created dynamically
+in your `view` function, since this can lead to low frame rates or even
+out-of-memory errors. Instead, they should be created only as needed (in your
+`init` or `update` function), stored in your model and then reused from frame to
+frame. In some cases, you can simply create meshes as top-level constants in
+your program.
+
+Note that this does _not_ mean that objects can't move around or change color -
+you can freely change the material applied to a mesh from frame to frame, and
+you can use the various provided [transformation functions](Scene3d#transformations)
+to move meshes around without having to recreate them.
 
 @docs Mesh
 
 
-## Types
+## Type aliases
+
+These type aliases make it easier to write down type annotations for meshes you
+store in your model or return from a function.
 
 @docs Plain, Uniform, Unlit, Textured
 
 
 # Constructors
 
-@docs points, lineSegments, polyline
 
-@docs triangles, facets
+## Simple meshes
+
+@docs points, lineSegments, polyline, triangles, facets
+
+
+## Indexed meshes
+
+These functions all use the `TriangularMesh` type from the
+[`ianmackenzie/elm-triangular-mesh`](https://package.elm-lang.org/packages/ianmackenzie/elm-triangular-mesh/latest/)
+package to allow the creation of _indexed_ meshes, where vertices can be shared
+between adjacent faces to save on space.
 
 @docs indexedTriangles, indexedFacets, indexedFaces
+
+
+## Textured meshes
+
+These functions behave just like their corresponding `indexed` versions but
+additionally require each vertex to include UV (texture) coordinates to allow
+textured materials to be used.
 
 @docs texturedTriangles, texturedFacets, texturedFaces
 
 
 # Shadows
+
+In `elm-3d-scene`, shadows are just another 'thing' you draw: to render an
+object and its shadow, you would render the object itself using [`Scene3d.mesh`](Scene3d#mesh)
+and then render its shadow using [`Scene3d.shadow`](Scene3d#shadow).
 
 @docs Shadow, shadow
 
@@ -71,7 +106,21 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
-{-| TODO
+{-| A `Mesh` defines the shape of an object. It consists of a number of
+_vertices_ (points that may have additional associated data like normal vectors
+and texture coordinates) joined together into triangles or line segments (or
+sometimes just displayed as dots).
+
+The two type parameters of the `Mesh` type define what coordinate system a mesh
+is defined in, and what attributes (in addition to position) are present on each
+vertex. For example, a
+
+    Mesh WorldCoordinates { normals : () }
+
+refers to a mesh defined in `WorldCoordinates` (a type you would typicaly
+define yourself) that has position and normal vector defined at each vertex.
+(The `()` type isn't significant; you can think of it as meaning 'present'.)
+
 -}
 type alias Mesh coordinates attributes =
     Types.Mesh coordinates attributes
@@ -118,14 +167,12 @@ type alias Anisotropic coordinates =
     Mesh coordinates { normals : (), tangents : () }
 
 
-{-| TODO
+{-| Represents the shadow of a particular object.
 -}
 type alias Shadow coordinates =
     Types.Shadow coordinates
 
 
-{-| A dummy mesh for which nothing will be drawn.
--}
 empty : Mesh coordinates attributes
 empty =
     Types.EmptyMesh
@@ -284,7 +331,7 @@ plainBounds first rest =
     plainBoundsHelp x x y y z z rest
 
 
-{-| TODO
+{-| Construct a mesh from a `TriangularMesh` of plain positions.
 -}
 indexedTriangles : TriangularMesh (Point3d Meters coordinates) -> Plain coordinates
 indexedTriangles givenMesh =
@@ -309,7 +356,8 @@ indexedTriangles givenMesh =
             Types.Indexed bounds givenMesh webGLMesh KeepBackFaces
 
 
-{-| TODO
+{-| Construct a mesh from a `TriangularMesh` of plain positions, but also
+compute a normal vector for each triangle just like with [`facets`](#facets).
 -}
 indexedFacets : TriangularMesh (Point3d Meters coordinates) -> Uniform coordinates
 indexedFacets givenMesh =
@@ -382,7 +430,8 @@ vertexBounds first rest =
     vertexBoundsHelp x x y y z z rest
 
 
-{-| TODO
+{-| Construct a mesh from a `TriangularMesh` of vertices with positions and
+normal vectors.
 -}
 indexedFaces :
     TriangularMesh { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates }
@@ -422,7 +471,8 @@ collectTextured { position, uv } accumulated =
         :: accumulated
 
 
-{-| TODO
+{-| Construct a mesh from a `TriangularMesh` of vertices with positions and
+texture coordinates.
 -}
 texturedTriangles :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
@@ -501,7 +551,8 @@ texturedFacetFaceIndices count accumulated =
         texturedFacetFaceIndices (count - 3) (( count - 3, count - 2, count - 1 ) :: accumulated)
 
 
-{-| TODO
+{-| Construct a mesh from a `TriangularMesh` of vertices with positions and
+texture coordinates, but additionally compute a normal vector for each triangle.
 -}
 texturedFacets :
     TriangularMesh { position : Point3d Meters coordinates, uv : ( Float, Float ) }
@@ -532,7 +583,8 @@ collectSmoothTextured { position, normal, uv } accumulated =
         :: accumulated
 
 
-{-| TODO
+{-| Construct a mesh from a `TriangularMesh` of vertices with positions, normal
+vectors and texture coordinates.
 -}
 texturedFaces :
     TriangularMesh
@@ -615,7 +667,7 @@ lineSegmentAttributes givenSegment =
     ( plainVertex p1, plainVertex p2 )
 
 
-{-| TODO
+{-| Construct a mesh from a list of line segments.
 -}
 lineSegments : List (LineSegment3d Meters coordinates) -> Plain coordinates
 lineSegments givenSegments =
@@ -634,7 +686,7 @@ lineSegments givenSegments =
             Types.LineSegments bounds givenSegments webGLMesh
 
 
-{-| TODO
+{-| Construct a mesh from a single polyline.
 -}
 polyline : Polyline3d Meters coordinates -> Plain coordinates
 polyline givenPolyline =
@@ -657,7 +709,8 @@ polyline givenPolyline =
             Types.Polyline bounds givenPolyline webGLMesh
 
 
-{-| TODO
+{-| Construct a mesh from a list of points that that will be displayed as
+separate circular dots, given a particular dot radius in pixels.
 -}
 points :
     { radius : Quantity Float Pixels }
@@ -679,7 +732,9 @@ points { radius } givenPoints =
             Types.Points bounds (inPixels radius) givenPoints webGLMesh
 
 
-{-| TODO
+{-| Construct the shadow of a given mesh. This is an expensive operations,
+so `Shadow` values (like `Mesh` values) should be stored in your model (or as
+top-level constants) instead of constructed dynamically in your `view` function.
 -}
 shadow : Mesh coordinates attributes -> Shadow coordinates
 shadow mesh =
@@ -939,7 +994,22 @@ joinEdge p1 p2 start end neighborDict ( shadowFaceIndices, extraShadowVertices, 
             )
 
 
-{-| TODO
+{-| [Back face culling](https://en.wikipedia.org/wiki/Back-face_culling) is a
+rendering optimization that cuts down on the number of triangles drawn by not
+drawing any triangles that are facing away from the viewer (camera). However,
+this only really works if the mesh in question is a closed volume with all faces
+having the correct (counterclockwise) [winding order](https://cmichel.io/understanding-front-faces-winding-order-and-normals).
+For example, if render a simple curved surface which might get viewed from
+either side, then you wouldn't want to enable back face culling because then the
+surface would be invisible from one side! As a result, in `elm-3d-scene` back
+face culling is disabled by default but you can enable it per-mesh as an
+optimization where it is valid.
+
+Note that `cullBackFaces` doesn't actually strip out any faces from the mesh,
+since which faces are culled depends on the (dynamic) viewing diretion - it
+simply sets a flag on the mesh that indicates that back face culling should be
+performed during rendering.
+
 -}
 cullBackFaces : Mesh coordinates attributes -> Mesh coordinates attributes
 cullBackFaces mesh =

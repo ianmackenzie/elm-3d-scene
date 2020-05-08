@@ -48,6 +48,33 @@ by a texture image instead of being restricted to constant values.
 
 # Type annotations
 
+The functions in this module all return values with a type parameter - for
+example, the return type of `Material.matte` is
+
+    Material coordinates { a | normals : () }
+
+This makes most code simpler (it means that such a material can work with any
+kind of mesh that has normal vectors, even if that mesh _also_ has texture
+coordinates) but makes it tricky to store a `Material` value in your own data
+structures without those data structures _also_ needing a type parameter. The
+`coordinates` type parameter can usually be set to just `WorldCoordinates` (a
+type you will need to define yourself), but the `a` is a bit trickier.
+
+The type aliases and functions below help deal with this problem in a convenient
+way. To store a material in a data structure, you can use one of the type
+aliases below. For example, the material above might be stored as a
+
+    Material.Uniform WorldCoordinates
+
+Then, if you need to turn this value _back_ into a
+
+    Material coordinates { a | normals : () }
+
+(so that you could apply it to a textured mesh, for example) you can use
+`Material.uniform` to do so. You can think of `Material.uniform material` as
+saying "yes, I know this is a uniform material, but I still want to apply it to
+this textured mesh".
+
 @docs Plain, Unlit, Uniform, Textured
 
 @docs plain, unlit, uniform
@@ -349,36 +376,30 @@ normalMappedPbr { baseColor, roughness, metallic, normalMap } =
         normalMap
 
 
-{-| A simple material that doesn't require any particular vertex attributes to
-be present and so can be applied to any mesh. The only possibilities here are
-[`color`](#color) and [`emissive`](#emissive).
+{-| A material that doesn't require any particular vertex attributes. The only
+possibilities here are [`color`](#color) and [`emissive`](#emissive).
 -}
 type alias Plain coordinates =
     Material coordinates {}
 
 
-{-| A material that can be applied to an [`Uniform`](Scene3d-Mesh#Uniform) mesh
-that has normal vectors but no UV coordinates. This includes the `Plain`
-materials plus [`matte`](#matte), [`metal`](#metal), [`nonmetal`](#nonmetal) and
-[`pbr`](#pbr).
+{-| A material that requires normal vectors but no UV coordinates: [`matte`](#matte),
+[`metal`](#metal), [`nonmetal`](#nonmetal) or [`pbr`](#pbr).
 -}
 type alias Uniform coordinates =
     Material coordinates { normals : () }
 
 
-{-| A material that can be applied to an [`Unlit`](Scene3d-Mesh#Unlit) mesh that
-has UV coordinates but no normal vectors. This includes the `Plain` materials
-plus their textured versions [`texturedColor`](#texturedColor) and
-[`texturedEmissive`](#texturedEmissive).
+{-| A material that requires UV (texture) coordinates but no normal vectors:
+[`texturedColor`](#texturedColor) or [`texturedEmissive`](#texturedEmissive).
 -}
 type alias Unlit coordinates =
     Material coordinates { uvs : () }
 
 
-{-| A material that can be applied to a [`Textured`](Scene3d-Mesh#Textured) mesh
-that has normal vectors and UV coordinates. This includes all the `Unlit` and
-`Uniform` materials plus the textured versions of the `Uniform` materials
-([`texturedMatte`](#texturedMatte), [`texturedMetal`](#texturedMetal) etc.)
+{-| A material that requires both normal vectors and UV coordinates:
+[`texturedMatte`](#texturedMatte), [`texturedMetal`](#texturedMetal),
+[`texturedNonmetal`](#texturedNonmetal) or [`texturedPbr`](#texturedPbr).
 -}
 type alias Textured coordinates =
     Material coordinates { normals : (), uvs : () }
@@ -398,29 +419,31 @@ type alias NormalMapped coordinates =
     Material coordinates { normals : (), uvs : (), tangents : () }
 
 
-{-| TODO
+{-| Convert a `Plain` material (that can only be applied to a [`Plain`](Scene3d-Mesh#Plain)
+mesh) back into one that can be applied to _any_ mesh.
 -}
 plain : Plain coordinates -> Material coordinates attributes
 plain =
     coerce
 
 
-{-| TODO
+{-| Convert a `Uniform` material (one that can only be applied to a [`Uniform`](Scene3d-Mesh#Uniform)
+mesh) back into one that can be applied to _any_ mesh that has normal vectors.
 -}
 uniform : Uniform coordinates -> Material coordinates { a | normals : () }
 uniform =
     coerce
 
 
-{-| TODO
+{-| Convert an `Unlit` material (one that can only be applied to an [`Unlit`](Scene3d-Mesh#Unlit)
+mesh) back into one that can be applied to _any_ mesh that has texture
+coordinates.
 -}
 unlit : Unlit coordinates -> Material coordinates { a | uvs : () }
 unlit =
     coerce
 
 
-{-| TODO
--}
 textured : Textured coordinates -> Material coordinates { a | normals : (), uvs : () }
 textured =
     coerce
