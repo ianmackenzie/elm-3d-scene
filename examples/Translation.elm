@@ -63,9 +63,10 @@ main =
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
+        , entities =
+            [ squareAtHeight (Length.meters 0)
+            , squareAtHeight (Length.meters 0.5)
+            , squareAtHeight (Length.meters 1)
+            , squareAtHeight (Length.meters 1.5)
+            ]
         }
-        [ squareAtHeight (Length.meters 0)
-        , squareAtHeight (Length.meters 0.5)
-        , squareAtHeight (Length.meters 1)
-        , squareAtHeight (Length.meters 1.5)
-        ]

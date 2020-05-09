@@ -219,8 +219,8 @@ view { world, width, height } =
             , whiteBalance = Scene3d.daylight
             , clipDepth = meters 0.1
             , background = Scene3d.transparentBackground
+            , entities = drawables
             }
-            drawables
         ]
 
 

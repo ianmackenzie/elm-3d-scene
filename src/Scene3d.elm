@@ -21,7 +21,7 @@ module Scene3d exposing
     , noToneMapping, reinhardToneMapping, reinhardPerChannelToneMapping, hableFilmicToneMapping
     , Antialiasing
     , noAntialiasing, multisampling, supersampling
-    , toWebGLEntities
+    , composite, toWebGLEntities
     )
 
 {-| Top-level functionality for rendering a 3D scene.
@@ -162,7 +162,7 @@ that any light past the fourth must be constructed using [`Scene3d.neverCastsSha
 
 # Advanced
 
-@docs toWebGLEntities
+@docs composite, toWebGLEntities
 
 -}
 
@@ -1542,16 +1542,16 @@ toWebGLEntities :
     , whiteBalance : Chromaticity
     , aspectRatio : Float
     , supersampling : Float
+    , entities : List (Entity coordinates)
     }
-    -> List (Entity coordinates)
     -> List WebGL.Entity
-toWebGLEntities arguments drawables =
+toWebGLEntities arguments =
     let
         viewpoint =
             Camera3d.viewpoint arguments.camera
 
         (Types.Entity rootNode) =
-            Entity.group drawables
+            Entity.group arguments.entities
 
         viewFrame =
             Frame3d.unsafe
@@ -1794,10 +1794,43 @@ toHtml :
     , antialiasing : Antialiasing
     , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
     , background : Background coordinates
+    , entities : List (Entity coordinates)
     }
-    -> List (Entity coordinates)
     -> Html msg
-toHtml arguments drawables =
+toHtml arguments =
+    composite
+        { camera = arguments.camera
+        , clipDepth = arguments.clipDepth
+        , antialiasing = arguments.antialiasing
+        , dimensions = arguments.dimensions
+        , background = arguments.background
+        }
+        [ { lights = arguments.lights
+          , exposure = arguments.exposure
+          , toneMapping = arguments.toneMapping
+          , whiteBalance = arguments.whiteBalance
+          , entities = arguments.entities
+          }
+        ]
+
+
+composite :
+    { camera : Camera3d Meters coordinates
+    , clipDepth : Length
+    , antialiasing : Antialiasing
+    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , background : Background coordinates
+    }
+    ->
+        List
+            { lights : Lights coordinates
+            , exposure : Exposure
+            , toneMapping : ToneMapping
+            , whiteBalance : Chromaticity
+            , entities : List (Entity coordinates)
+            }
+    -> Html msg
+composite arguments scenes =
     let
         ( width, height ) =
             arguments.dimensions
@@ -1839,6 +1872,26 @@ toHtml arguments drawables =
 
         heightCss =
             Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
+
+        aspectRatio =
+            Quantity.ratio width height
+
+        webGLEntities =
+            scenes
+                |> List.concatMap
+                    (\scene ->
+                        toWebGLEntities
+                            { lights = scene.lights
+                            , camera = arguments.camera
+                            , clipDepth = arguments.clipDepth
+                            , exposure = scene.exposure
+                            , toneMapping = scene.toneMapping
+                            , whiteBalance = scene.whiteBalance
+                            , aspectRatio = aspectRatio
+                            , supersampling = scalingFactor
+                            , entities = scene.entities
+                            }
+                    )
     in
     Html.Keyed.node "div" [ Html.Attributes.style "padding" "0px", widthCss, heightCss ] <|
         [ ( key
@@ -1850,18 +1903,7 @@ toHtml arguments drawables =
                 , Html.Attributes.style "display" "block"
                 , Html.Attributes.style "background-color" backgroundColorString
                 ]
-                (toWebGLEntities
-                    { lights = arguments.lights
-                    , camera = arguments.camera
-                    , clipDepth = arguments.clipDepth
-                    , exposure = arguments.exposure
-                    , toneMapping = arguments.toneMapping
-                    , whiteBalance = arguments.whiteBalance
-                    , aspectRatio = Quantity.ratio width height
-                    , supersampling = scalingFactor
-                    }
-                    drawables
-                )
+                webGLEntities
           )
         ]
 
@@ -2172,10 +2214,10 @@ unlit :
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , background : Background coordinates
+    , entities : List (Entity coordinates)
     }
-    -> List (Entity coordinates)
     -> Html msg
-unlit arguments entities =
+unlit arguments =
     toHtml
         { lights = noLights
         , camera = arguments.camera
@@ -2186,8 +2228,8 @@ unlit arguments entities =
         , dimensions = arguments.dimensions
         , background = arguments.background
         , toneMapping = noToneMapping
+        , entities = arguments.entities
         }
-        entities
 
 
 {-| Render an outdoors 'sunny day' scene given the overall global up direction
@@ -2204,10 +2246,10 @@ sunny :
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , background : Background coordinates
+    , entities : List (Entity coordinates)
     }
-    -> List (Entity coordinates)
     -> Html msg
-sunny arguments entities =
+sunny arguments =
     let
         sun =
             directionalLight (castsShadows arguments.shadows)
@@ -2243,8 +2285,8 @@ sunny arguments entities =
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
+        , entities = arguments.entities
         }
-        entities
 
 
 {-| Render an outdoors 'cloudy day' scene. You must still provide a global up
@@ -2257,10 +2299,10 @@ cloudy :
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , background : Background coordinates
+    , entities : List (Entity coordinates)
     }
-    -> List (Entity coordinates)
     -> Html msg
-cloudy arguments entities =
+cloudy arguments =
     toHtml
         { lights =
             oneLight <|
@@ -2278,8 +2320,8 @@ cloudy arguments entities =
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
+        , entities = arguments.entities
         }
-        entities
 
 
 {-| Render an indoors office scene. Like `Scene3d.cloudy`, you will still need
@@ -2291,10 +2333,10 @@ office :
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , background : Background coordinates
+    , entities : List (Entity coordinates)
     }
-    -> List (Entity coordinates)
     -> Html msg
-office arguments entities =
+office arguments =
     toHtml
         { lights =
             oneLight <|
@@ -2312,5 +2354,5 @@ office arguments entities =
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
+        , entities = arguments.entities
         }
-        entities

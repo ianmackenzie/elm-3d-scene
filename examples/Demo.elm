@@ -262,20 +262,20 @@ view model =
                         (Color.fromHex model.backgroundColor
                             |> Result.withDefault (Color.fromRGB ( 0, 0, 0 ))
                         )
+                , entities =
+                    [ table |> Scene3d.placeIn Frame3d.atOrigin
+                    , floor |> Scene3d.placeIn Frame3d.atOrigin
+                    , chair
+                        |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
+                        |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
+                    , chair
+                        |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
+                        |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
+                        |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
+                    ]
+                        ++ List.map object model.objects
+                        ++ List.filterMap bulb model.lights
                 }
-                ([ table |> Scene3d.placeIn Frame3d.atOrigin
-                 , floor |> Scene3d.placeIn Frame3d.atOrigin
-                 , chair
-                    |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
-                    |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
-                 , chair
-                    |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
-                    |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
-                    |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
-                 ]
-                    ++ List.map object model.objects
-                    ++ List.filterMap bulb model.lights
-                )
             ]
         ]
 

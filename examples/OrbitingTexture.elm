@@ -149,14 +149,15 @@ view model =
                     , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
                     , background = Scene3d.backgroundColor Tango.plum1
                     , clipDepth = Length.meters 0.1
+                    , entities =
+                        [ Scene3d.quad (Scene3d.castsShadows False)
+                            (Material.texturedColor texture)
+                            (Point3d.meters 0 0 0)
+                            (Point3d.meters 1 0 0)
+                            (Point3d.meters 1 1 0)
+                            (Point3d.meters 0 1 0)
+                        ]
                     }
-                    [ Scene3d.quad (Scene3d.castsShadows False)
-                        (Material.texturedColor texture)
-                        (Point3d.meters 0 0 0)
-                        (Point3d.meters 1 0 0)
-                        (Point3d.meters 1 1 0)
-                        (Point3d.meters 0 1 0)
-                    ]
                 ]
 
             Nothing ->

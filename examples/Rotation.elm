@@ -74,5 +74,5 @@ main =
         , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.transparentBackground
+        , entities = List.map rotatedSquare angles
         }
-        (List.map rotatedSquare angles)

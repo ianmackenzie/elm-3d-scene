@@ -252,11 +252,12 @@ view model =
                 , toneMapping = Scene3d.hableFilmicToneMapping
                 , whiteBalance = Scene3d.daylight
                 , background = Scene3d.transparentBackground
+                , entities =
+                    [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
+                        |> Scene3d.sphere (Scene3d.castsShadows False) material
+                        |> Scene3d.placeIn sphereFrame
+                    ]
                 }
-                [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
-                    |> Scene3d.sphere (Scene3d.castsShadows False) material
-                    |> Scene3d.placeIn sphereFrame
-                ]
 
         Loading _ ->
             Html.text "Loading..."

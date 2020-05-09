@@ -291,5 +291,5 @@ view { width, height, elapsedTime, azimuth, elevation } =
         , antialiasing = Scene3d.multisampling
         , dimensions = ( width, height )
         , background = Scene3d.backgroundColor Tango.skyBlue1
+        , entities = [ plane, firstBox, secondBox, firstLightBall, secondLightBall ]
         }
-        [ plane, firstBox, secondBox, firstLightBall, secondLightBall ]

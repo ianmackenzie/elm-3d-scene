@@ -145,15 +145,16 @@ main =
                             , toneMapping = Scene3d.noToneMapping
                             , whiteBalance = Scene3d.daylight
                             , background = Scene3d.transparentBackground
+                            , entities =
+                                [ floor
+                                , initialGroup
+                                , initialGroup |> Scene3d.mirrorAcross Plane3d.zx
+                                , initialGroup |> Scene3d.rotateAround Axis3d.z (Angle.degrees 75)
+                                , initialGroup
+                                    |> Scene3d.mirrorAcross Plane3d.zx
+                                    |> Scene3d.mirrorAcross Plane3d.yz
+                                ]
                             }
-                            [ floor
-                            , initialGroup
-                            , initialGroup |> Scene3d.mirrorAcross Plane3d.zx
-                            , initialGroup |> Scene3d.rotateAround Axis3d.z (Angle.degrees 75)
-                            , initialGroup
-                                |> Scene3d.mirrorAcross Plane3d.zx
-                                |> Scene3d.mirrorAcross Plane3d.yz
-                            ]
                         ]
                     ]
         , subscriptions = always (Browser.Events.onClick (Decode.succeed ()))

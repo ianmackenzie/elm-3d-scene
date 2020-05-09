@@ -43,5 +43,5 @@ main =
         , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.transparentBackground
+        , entities = [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]
         }
-        [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]

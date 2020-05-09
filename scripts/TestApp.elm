@@ -2306,11 +2306,12 @@ viewTestCase model testCase =
                             , exposure = Scene3d.exposureValue 4
                             , toneMapping = toneMapping testCase
                             , whiteBalance = Scene3d.incandescentLighting
+                            , entities =
+                                [ floor
+                                , axes
+                                , validEntity |> transformation testCase
+                                ]
                             }
-                            [ floor
-                            , axes
-                            , validEntity |> transformation testCase
-                            ]
 
                 -- , Element.image
                 --     [ Element.width (Element.px 480)

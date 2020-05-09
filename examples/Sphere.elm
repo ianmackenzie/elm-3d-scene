@@ -79,7 +79,8 @@ main =
         , toneMapping = Scene3d.noToneMapping
         , whiteBalance = Scene3d.daylight
         , background = Scene3d.transparentBackground
+        , entities =
+            [ Scene3d.sphere (Scene3d.castsShadows False) (Material.uniform material) <|
+                Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
+            ]
         }
-        [ Scene3d.sphere (Scene3d.castsShadows False) (Material.uniform material) <|
-            Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
-        ]
