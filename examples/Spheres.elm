@@ -1,6 +1,6 @@
 module Spheres exposing (main)
 
-import Angle
+import Angle exposing (Angle)
 import Array
 import Axis3d
 import Block3d
@@ -13,16 +13,18 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Illuminance exposing (lux)
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Length exposing (Meters, meters)
 import Luminance
 import LuminousFlux exposing (lumens)
 import Pixels exposing (pixels)
 import Point3d
+import Quantity
 import Scene3d
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
+import SketchPlane3d exposing (SketchPlane3d)
 import Sphere3d
 import Vector3d
 import Viewpoint3d
@@ -69,14 +71,16 @@ whitePlasticSphere =
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0)
 
 
-camera : Camera3d Meters World
-camera =
+camera : Model -> Camera3d Meters World
+camera model =
     Camera3d.perspective
         { viewpoint =
-            Viewpoint3d.lookAt
+            Viewpoint3d.orbit
                 { focalPoint = Point3d.meters 0 0 -2
-                , eyePoint = Point3d.meters 10 10 10
-                , upDirection = Direction3d.positiveZ
+                , groundPlane = SketchPlane3d.xy
+                , azimuth = model.azimuth
+                , elevation = model.elevation
+                , distance = Length.meters 20
                 }
         , verticalFieldOfView = Angle.degrees 30
         }
@@ -111,54 +115,65 @@ overheadLighting =
         }
 
 
-type Antialiasing
-    = NoAntialiasing
-    | Multisampling
-    | Supersampling
-
-
 type ToneMapping
     = NoToneMapping
     | Reinhard
-    | Filmic
-    | Aces
+    | ReinhardPerChannel
+    | HableFilmic
 
 
 type alias Model =
-    { antialiasing : Antialiasing
-    , ev100 : Float
+    { exposureValue : Float
     , toneMapping : ToneMapping
+    , azimuth : Angle
+    , elevation : Angle
+    , orbiting : Bool
     }
 
 
 type Msg
-    = ToggleAntialiasing
-    | SetEv100 Float
+    = SetExposureValue Float
     | SetToneMapping ToneMapping
+    | MouseDown
+    | MouseUp
+    | MouseMove Float Float
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
-        ToggleAntialiasing ->
-            { model
-                | antialiasing =
-                    case model.antialiasing of
-                        NoAntialiasing ->
-                            Multisampling
-
-                        Multisampling ->
-                            Supersampling
-
-                        Supersampling ->
-                            NoAntialiasing
-            }
-
-        SetEv100 value ->
-            { model | ev100 = value }
+        SetExposureValue value ->
+            ( { model | exposureValue = value }, Cmd.none )
 
         SetToneMapping value ->
-            { model | toneMapping = value }
+            ( { model | toneMapping = value }, Cmd.none )
+
+        MouseDown ->
+            ( { model | orbiting = True }, Cmd.none )
+
+        MouseUp ->
+            ( { model | orbiting = False }, Cmd.none )
+
+        MouseMove dx dy ->
+            if model.orbiting then
+                let
+                    rotation numPixels =
+                        Angle.degrees (0.25 * numPixels)
+
+                    newAzimuth =
+                        model.azimuth |> Quantity.minus (rotation dx)
+
+                    newElevation =
+                        model.elevation
+                            |> Quantity.plus (rotation dy)
+                            |> Quantity.clamp (Angle.degrees -90) (Angle.degrees 90)
+                in
+                ( { model | azimuth = newAzimuth, elevation = newElevation }
+                , Cmd.none
+                )
+
+            else
+                ( model, Cmd.none )
 
 
 slider :
@@ -244,19 +259,6 @@ comboBox attributes toStr allItems =
             (List.map toOption allItems)
 
 
-antialiasString : Antialiasing -> String
-antialiasString antialiasing =
-    case antialiasing of
-        NoAntialiasing ->
-            "No antialiasing"
-
-        Multisampling ->
-            "Multisampling"
-
-        Supersampling ->
-            "Supersampling"
-
-
 toneMappingDescription : ToneMapping -> String
 toneMappingDescription toneMapping =
     case toneMapping of
@@ -266,94 +268,112 @@ toneMappingDescription toneMapping =
         Reinhard ->
             "Reinhard"
 
-        Filmic ->
-            "Filmic"
+        ReinhardPerChannel ->
+            "Reinhard per channel"
 
-        Aces ->
-            "ACES"
+        HableFilmic ->
+            "Hable filmic"
 
 
 toneMappingOptions : List ToneMapping
 toneMappingOptions =
     [ NoToneMapping
     , Reinhard
-    , Filmic
-    , Aces
+    , ReinhardPerChannel
+    , HableFilmic
     ]
+
+
+init : () -> ( Model, Cmd Msg )
+init () =
+    ( { exposureValue = 14
+      , toneMapping = NoToneMapping
+      , azimuth = Angle.degrees 45
+      , elevation = Angle.degrees 40
+      , orbiting = False
+      }
+    , Cmd.none
+    )
+
+
+view : Model -> Html Msg
+view model =
+    Html.div []
+        [ Html.div [ Html.Events.onMouseDown MouseDown ]
+            [ Scene3d.toHtml
+                { lights = Scene3d.twoLights lightBulb overheadLighting
+                , camera = camera model
+                , clipDepth = meters 0.1
+                , dimensions = ( pixels 1024, pixels 768 )
+                , antialiasing = Scene3d.multisampling
+                , exposure = Scene3d.exposureValue model.exposureValue
+                , toneMapping =
+                    case model.toneMapping of
+                        NoToneMapping ->
+                            Scene3d.noToneMapping
+
+                        Reinhard ->
+                            Scene3d.reinhardToneMapping 4
+
+                        ReinhardPerChannel ->
+                            Scene3d.reinhardPerChannelToneMapping 4
+
+                        HableFilmic ->
+                            Scene3d.hableFilmicToneMapping
+                , whiteBalance = Scene3d.fluorescentLighting
+                , background = Scene3d.transparentBackground
+                , entities =
+                    [ goldSphere
+                    , aluminumSphere
+                    , blackPlasticSphere
+                    , whitePlasticSphere
+                    , floor
+                    , Scene3d.quad (Scene3d.castsShadows True)
+                        (Material.uniform Materials.aluminum)
+                        (Point3d.meters 1 1 -0.5)
+                        (Point3d.meters -1 1 0)
+                        (Point3d.meters -1 -1 0.5)
+                        (Point3d.meters 1 -1 0)
+                    ]
+                }
+            ]
+        , Html.div []
+            [ Html.text "Exposure value:"
+            , slider [] { min = 10, max = 18 } model.exposureValue
+                |> Html.map SetExposureValue
+            ]
+        , Html.div []
+            [ Html.text "Tone mapping:"
+            , comboBox [] toneMappingDescription toneMappingOptions model.toneMapping
+                |> Html.map SetToneMapping
+            ]
+        ]
+
+
+decodeMouseMove : Decoder Msg
+decodeMouseMove =
+    Decode.map2 MouseMove
+        (Decode.field "movementX" Decode.float)
+        (Decode.field "movementY" Decode.float)
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    if model.orbiting then
+        Sub.batch
+            [ Browser.Events.onMouseMove decodeMouseMove
+            , Browser.Events.onMouseUp (Decode.succeed MouseUp)
+            ]
+
+    else
+        Sub.none
 
 
 main : Program () Model Msg
 main =
     Browser.element
-        { init =
-            always
-                ( { antialiasing = Multisampling
-                  , ev100 = 14
-                  , toneMapping = NoToneMapping
-                  }
-                , Cmd.none
-                )
-        , update = \message model -> ( update message model, Cmd.none )
-        , view =
-            \{ antialiasing, ev100, toneMapping } ->
-                Html.div []
-                    [ Html.div []
-                        [ Scene3d.toHtml
-                            { lights = Scene3d.twoLights lightBulb overheadLighting
-                            , camera = camera
-                            , clipDepth = meters 0.1
-                            , dimensions = ( pixels 1024, pixels 768 )
-                            , antialiasing =
-                                case antialiasing of
-                                    Multisampling ->
-                                        Scene3d.multisampling
-
-                                    Supersampling ->
-                                        Scene3d.supersampling 2
-
-                                    NoAntialiasing ->
-                                        Scene3d.noAntialiasing
-                            , exposure = Scene3d.exposureValue ev100
-                            , toneMapping =
-                                case toneMapping of
-                                    NoToneMapping ->
-                                        Scene3d.noToneMapping
-
-                                    Reinhard ->
-                                        Scene3d.reinhardToneMapping
-
-                                    Filmic ->
-                                        Scene3d.filmicToneMapping
-
-                                    Aces ->
-                                        Scene3d.acesToneMapping
-                            , whiteBalance = Scene3d.fluorescentLighting
-                            , background = Scene3d.transparentBackground
-                            }
-                            [ goldSphere
-                            , aluminumSphere
-                            , blackPlasticSphere
-                            , whitePlasticSphere
-                            , floor
-                            , Scene3d.quad (Scene3d.castsShadows True)
-                                (Material.uniform Materials.aluminum)
-                                (Point3d.meters 1 1 -0.5)
-                                (Point3d.meters -1 1 0)
-                                (Point3d.meters -1 -1 0.5)
-                                (Point3d.meters 1 -1 0)
-                            ]
-                        ]
-                    , Html.div []
-                        [ Html.text "EV100:"
-                        , slider [] { min = 10, max = 18 } ev100
-                            |> Html.map SetEv100
-                        ]
-                    , Html.div []
-                        [ Html.text "Dynamic range:"
-                        , comboBox [] toneMappingDescription toneMappingOptions toneMapping
-                            |> Html.map SetToneMapping
-                        ]
-                    , Html.button [ Html.Events.onClick ToggleAntialiasing ] [ Html.text (antialiasString antialiasing) ]
-                    ]
-        , subscriptions = always Sub.none
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
         }
