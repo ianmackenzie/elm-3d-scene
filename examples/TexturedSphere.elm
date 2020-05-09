@@ -249,7 +249,7 @@ view model =
                 , antialiasing = Scene3d.multisampling
                 , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
-                , toneMapping = Scene3d.reinhardToneMapping 2
+                , toneMapping = Scene3d.hableFilmicToneMapping
                 , whiteBalance = Scene3d.daylight
                 , background = Scene3d.transparentBackground
                 }

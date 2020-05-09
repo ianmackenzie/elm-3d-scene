@@ -98,8 +98,8 @@ type Transformation
 type ToneMapping
     = NoToneMapping
     | Reinhard
-    | Filmic
-    | Aces
+    | ReinhardPerChannel
+    | HableFilmic
 
 
 type Antialiasing
@@ -234,12 +234,12 @@ toggleToneMapping currentToneMapping =
             Reinhard
 
         Reinhard ->
-            Filmic
+            ReinhardPerChannel
 
-        Filmic ->
-            Aces
+        ReinhardPerChannel ->
+            HableFilmic
 
-        Aces ->
+        HableFilmic ->
             NoToneMapping
 
 
@@ -418,11 +418,11 @@ parseToneMapping string =
         "Reinhard" ->
             Ok Reinhard
 
-        "Filmic" ->
-            Ok Filmic
+        "ReinhardPerChannel" ->
+            Ok ReinhardPerChannel
 
-        "Aces" ->
-            Ok Aces
+        "HableFilmic" ->
+            Ok HableFilmic
 
         _ ->
             Err ("Unrecognized tone mapping type '" ++ string ++ "'")
@@ -2012,13 +2012,13 @@ toneMapping testCase =
             Scene3d.noToneMapping
 
         Reinhard ->
-            Scene3d.reinhardToneMapping
+            Scene3d.reinhardToneMapping 5
 
-        Filmic ->
-            Scene3d.filmicToneMapping
+        ReinhardPerChannel ->
+            Scene3d.reinhardPerChannelToneMapping 5
 
-        Aces ->
-            Scene3d.acesToneMapping
+        HableFilmic ->
+            Scene3d.hableFilmicToneMapping
 
 
 button : { onPress : Maybe Msg, label : Element Msg } -> Element Msg
@@ -2182,11 +2182,11 @@ toneMappingDescription givenToneMapping =
         Reinhard ->
             "Reinhard"
 
-        Filmic ->
-            "Filmic"
+        ReinhardPerChannel ->
+            "Reinhard per channel"
 
-        Aces ->
-            "ACES"
+        HableFilmic ->
+            "Hable filmic"
 
 
 antialiasingDescription : Antialiasing -> String

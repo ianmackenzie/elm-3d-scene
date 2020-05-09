@@ -18,7 +18,7 @@ module Scene3d exposing
     , Exposure
     , exposureValue, maxLuminance, photographicExposure
     , ToneMapping
-    , noToneMapping, reinhardToneMapping, filmicToneMapping, acesToneMapping
+    , noToneMapping, reinhardToneMapping, reinhardPerChannelToneMapping, hableFilmicToneMapping
     , Antialiasing
     , noAntialiasing, multisampling, supersampling
     , toWebGLEntities
@@ -150,7 +150,7 @@ that any light past the fourth must be constructed using [`Scene3d.neverCastsSha
 
 @docs ToneMapping
 
-@docs noToneMapping, reinhardToneMapping, filmicToneMapping, acesToneMapping
+@docs noToneMapping, reinhardToneMapping, reinhardPerChannelToneMapping, hableFilmicToneMapping
 
 
 # Antialiasing
@@ -1215,19 +1215,6 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix currentTransform
                 childNodes
 
 
-
--- ## Overall scene Properties
---
--- projectionType:
---   0: perspective (camera XYZ is eye position)
---   1: orthographic (camera XYZ is direction to screen)
---
--- [ clipDistance  cameraX         whiteR        supersampling ]
--- [ aspectRatio   cameraY         whiteG        *             ]
--- [ kc            cameraZ         whiteB        *             ]
--- [ kz            projectionType  toneMapping   *             ]
-
-
 defaultBlend : WebGL.Settings.Setting
 defaultBlend =
     Blend.custom
@@ -1643,20 +1630,33 @@ toWebGLEntities arguments drawables =
                 (Exposure (Quantity nits)) =
                     arguments.exposure
 
-                toneMapping =
+                ( toneMapType, toneMapParam ) =
                     case arguments.toneMapping of
                         NoToneMapping ->
-                            0
+                            ( 0, 0 )
 
-                        ReinhardToneMapping ->
-                            1
+                        ReinhardLuminanceToneMapping ->
+                            ( 1, 0 )
 
-                        FilmicToneMapping ->
-                            2
+                        ReinhardPerChannelToneMapping ->
+                            ( 2, 0 )
 
-                        AcesToneMapping ->
-                            3
+                        ExtendedReinhardLuminanceToneMapping overexposureLimit ->
+                            ( 3, overexposureLimit )
 
+                        ExtendedReinhardPerChannelToneMapping overexposureLimit ->
+                            ( 4, overexposureLimit )
+
+                        HableFilmicToneMapping ->
+                            ( 5, 0 )
+
+                -- ## Overall scene Properties
+                --
+                -- [ *  cameraX         whiteR  supersampling ]
+                -- [ *  cameraY         whiteG  sceneDiameter ]
+                -- [ *  cameraZ         whiteB  toneMapType   ]
+                -- [ *  projectionType  *       toneMapParam  ]
+                --
                 sceneProperties =
                     Math.Matrix4.fromRecord
                         { m11 = 0
@@ -1670,11 +1670,11 @@ toWebGLEntities arguments drawables =
                         , m13 = Math.Vector3.getX referenceWhite
                         , m23 = Math.Vector3.getY referenceWhite
                         , m33 = Math.Vector3.getZ referenceWhite
-                        , m43 = toneMapping
+                        , m43 = 0
                         , m14 = arguments.supersampling
                         , m24 = Length.inMeters sceneDiameter
-                        , m34 = 0
-                        , m44 = 0
+                        , m34 = toneMapType
+                        , m44 = toneMapParam
                         }
 
                 viewMatrix =
@@ -2063,9 +2063,11 @@ displayed on a computer monitor.
 -}
 type ToneMapping
     = NoToneMapping
-    | ReinhardToneMapping
-    | FilmicToneMapping
-    | AcesToneMapping
+    | ReinhardLuminanceToneMapping
+    | ReinhardPerChannelToneMapping
+    | ExtendedReinhardLuminanceToneMapping Float
+    | ExtendedReinhardPerChannelToneMapping Float
+    | HableFilmicToneMapping
 
 
 {-| No tone mapping at all! In this case, the brightness of every point in the
@@ -2083,19 +2085,27 @@ noToneMapping =
 {-| Apply a simple [Reinhard](https://64.github.io/tonemapping/#reinhard) tone
 mapping.
 -}
-reinhardToneMapping : ToneMapping
-reinhardToneMapping =
-    ReinhardToneMapping
+reinhardToneMapping : Float -> ToneMapping
+reinhardToneMapping maxOverexposure =
+    if isInfinite maxOverexposure then
+        ReinhardLuminanceToneMapping
+
+    else
+        ExtendedReinhardLuminanceToneMapping maxOverexposure
 
 
-filmicToneMapping : ToneMapping
-filmicToneMapping =
-    FilmicToneMapping
+reinhardPerChannelToneMapping : Float -> ToneMapping
+reinhardPerChannelToneMapping maxOverexposure =
+    if isInfinite maxOverexposure then
+        ReinhardPerChannelToneMapping
+
+    else
+        ExtendedReinhardPerChannelToneMapping maxOverexposure
 
 
-acesToneMapping : ToneMapping
-acesToneMapping =
-    AcesToneMapping
+hableFilmicToneMapping : ToneMapping
+hableFilmicToneMapping =
+    HableFilmicToneMapping
 
 
 

@@ -353,11 +353,11 @@ gammaCorrect =
         """
 
 
-linearToneMap : Glsl.Function
-linearToneMap =
+gammaCorrectedColor : Glsl.Function
+gammaCorrectedColor =
     Glsl.function { dependencies = [ gammaCorrect ], constants = [] }
         """
-        vec3 linearToneMap(vec3 color) {
+        vec3 gammaCorrectedColor(vec3 color) {
             float red = gammaCorrect(color.r);
             float green = gammaCorrect(color.g);
             float blue = gammaCorrect(color.b);
@@ -366,55 +366,121 @@ linearToneMap =
         """
 
 
-reinhardToneMap : Glsl.Function
-reinhardToneMap =
-    Glsl.function { dependencies = [ linearToneMap ], constants = [] }
+reinhardLuminanceToneMap : Glsl.Function
+reinhardLuminanceToneMap =
+    Glsl.function { dependencies = [ gammaCorrectedColor ], constants = [] }
         """
-        vec3 reinhardToneMap(vec3 color) {
+        vec3 reinhardLuminanceToneMap(vec3 color) {
             float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
             float scale = 1.0 / (1.0 + luminance);
-            return linearToneMap(color / (color + 1.0));
+            return gammaCorrectedColor(color * scale);
         }
         """
 
 
-filmicToneMap : Glsl.Function
-filmicToneMap =
+reinhardPerChannelToneMap : Glsl.Function
+reinhardPerChannelToneMap =
+    Glsl.function { dependencies = [ gammaCorrectedColor ], constants = [] }
+        """
+        vec3 reinhardPerChannelToneMap(vec3 color) {
+            return gammaCorrectedColor(color / (color + 1.0));
+        }
+        """
+
+
+extendedReinhardToneMap : Glsl.Function
+extendedReinhardToneMap =
     Glsl.function { dependencies = [], constants = [] }
         """
-        vec3 filmicToneMap(vec3 color) {
-            vec3 clamped = max(vec3(0.0, 0.0, 0.0), color - 0.004);
-            return (clamped * (6.2 * clamped + 0.5)) / (clamped * (6.2 * clamped + 1.7) + 0.06);
+        float extendedReinhardToneMap(float x, float xMax) {
+            return x * (1.0 + (x / (xMax * xMax))) / (1.0 + x);
         }
         """
 
 
-acesToneMap : Glsl.Function
-acesToneMap =
-    Glsl.function { dependencies = [ linearToneMap ], constants = [] }
+extendedReinhardLuminanceToneMap : Glsl.Function
+extendedReinhardLuminanceToneMap =
+    Glsl.function { dependencies = [ extendedReinhardToneMap, gammaCorrectedColor ], constants = [] }
         """
-        vec3 acesToneMap(vec3 color) {
-            return linearToneMap((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14));
+        vec3 extendedReinhardLuminanceToneMap(vec3 color, float overexposureLimit) {
+            float luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+            float scaledLuminance = extendedReinhardToneMap(luminance, overexposureLimit);
+            float scale = scaledLuminance / luminance;
+            return gammaCorrectedColor(color * scale);
         }
         """
+
+
+extendedReinhardPerChannelToneMap : Glsl.Function
+extendedReinhardPerChannelToneMap =
+    Glsl.function { dependencies = [ extendedReinhardToneMap, gammaCorrectedColor ], constants = [] }
+        """
+        vec3 extendedReinhardPerChannelToneMap(vec3 color, float overexposureLimit) {
+            float red = extendedReinhardToneMap(color.r, overexposureLimit);
+            float green = extendedReinhardToneMap(color.g, overexposureLimit);
+            float blue = extendedReinhardToneMap(color.b, overexposureLimit);
+            return gammaCorrectedColor(vec3(red, green, blue));
+        }
+        """
+
+
+hableFilmicHelper : Glsl.Function
+hableFilmicHelper =
+    Glsl.function { dependencies = [], constants = [] }
+        """
+        vec3 hableFilmicHelper(vec3 color) {
+            float a = 0.15;
+            float b = 0.5;
+            float c = 0.1;
+            float d = 0.2;
+            float e = 0.02;
+            float f = 0.3;
+            return (color * (a * color + c * b) + d * e) / (color * (a * color + b) + d * f) - e / f;
+        }
+        """
+
+
+hableFilmicToneMap : Glsl.Function
+hableFilmicToneMap =
+    Glsl.function { dependencies = [ hableFilmicHelper, gammaCorrectedColor ], constants = [] }
+        """
+        vec3 hableFilmicToneMap(vec3 color) {
+            float exposureBias = 2.0;
+            vec3 unscaled = hableFilmicHelper(exposureBias * color);
+            vec3 scale = 1.0 / hableFilmicHelper(vec3(11.2));
+            return gammaCorrectedColor(scale * unscaled);
+        }
+        """
+
 
 
 toneMap : Glsl.Function
 toneMap =
     Glsl.function
-        { dependencies = [ linearToneMap, reinhardToneMap, filmicToneMap, acesToneMap ]
+        { dependencies =
+            [ gammaCorrectedColor
+            , reinhardLuminanceToneMap
+            , reinhardPerChannelToneMap
+            , extendedReinhardLuminanceToneMap
+            , extendedReinhardPerChannelToneMap
+            , hableFilmicToneMap
+            ]
         , constants = []
         }
         """
-        vec3 toneMap(vec3 color, float toneMapping) {
-            if (toneMapping == 0.0) {
-                return linearToneMap(color);
-            } else if (toneMapping == 1.0) {
-                return reinhardToneMap(color);
-            } else if (toneMapping == 2.0) {
-                return filmicToneMap(color);
-            } else if (toneMapping == 3.0) {
-                return acesToneMap(color);
+        vec3 toneMap(vec3 color, float toneMapType, float toneMapParam) {
+            if (toneMapType == 0.0) {
+                return gammaCorrectedColor(color);
+            } else if (toneMapType == 1.0) {
+                return reinhardLuminanceToneMap(color);
+            } else if (toneMapType == 2.0) {
+                return reinhardPerChannelToneMap(color);
+            } else if (toneMapType == 3.0) {
+                return extendedReinhardLuminanceToneMap(color, toneMapParam);
+            } else if (toneMapType == 4.0) {
+                return extendedReinhardPerChannelToneMap(color, toneMapParam);
+            } else if (toneMapType == 5.0) {
+                return hableFilmicToneMap(color);
             } else {
                 return vec3(0.0, 0.0, 0.0);
             }
@@ -431,7 +497,9 @@ toSrgb =
             float unitR = linearColor.r / referenceWhite.r;
             float unitG = linearColor.g / referenceWhite.g;
             float unitB = linearColor.b / referenceWhite.b;
-            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), sceneProperties[2].a);
+            float toneMapType = sceneProperties[3][2];
+            float toneMapParam = sceneProperties[3][3];
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
             return vec4(toneMapped, 1.0);
         }
         """
