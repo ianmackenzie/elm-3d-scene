@@ -586,7 +586,9 @@ allLightsEnabled =
 
 {-| No lights at all! You don't need lights if you're only using materials
 like [`color`](Material#color) or [`emissive`](Material#emissive) (since those
-materials don't react to external light anyways).
+materials don't react to external light anyways). But in that case it might be
+simplest to use [`Scene3d.unlit`](Scene3d#unlit) instead of [`Scene3d.toHtml`](Scene3d#toHtml)
+so that you don't have to explicitly provide a `Lights` value at all.
 -}
 noLights : Lights coordinates
 noLights =
