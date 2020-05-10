@@ -1627,9 +1627,6 @@ toWebGLEntities arguments =
                 (LinearRgb referenceWhite) =
                     ColorConversions.chromaticityToLinearRgb exposureLuminance arguments.whiteBalance
 
-                (Exposure (Quantity nits)) =
-                    arguments.exposure
-
                 ( toneMapType, toneMapParam ) =
                     case arguments.toneMapping of
                         NoToneMapping ->
