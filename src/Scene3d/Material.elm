@@ -143,7 +143,9 @@ emissive givenChromaticity brightness =
     Types.EmissiveMaterial Types.UseMeshUvs (Types.Constant baseColor) brightness
 
 
-{-| A metal material such as steel, aluminum, gold etc.
+{-| A metal material such as steel, aluminum, gold etc. See [here](https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/PhysicallyBased/index.html)
+and [here](https://www.chaosgroup.com/blog/understanding-metalness) for base
+colors of different metals.
 -}
 metal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : () }
 metal { baseColor, roughness } =
