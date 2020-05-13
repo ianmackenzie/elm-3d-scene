@@ -2130,6 +2130,11 @@ and the resulting color will be displayed on the screen. For scenes with bright
 reflective highlights or a mix of dark and bright portions, this means that
 some parts of the scene may be underexposed (nearly black) or overexposed
 (pure white).
+
+That said, it's often best to start with `noToneMapping` for simplicity, and
+only experiment with other tone mapping methods if you end up with very bright,
+harsh highlights that need to be toned down.
+
 -}
 noToneMapping : ToneMapping
 noToneMapping =
