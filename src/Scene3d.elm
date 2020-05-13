@@ -1772,8 +1772,9 @@ renderWithinShadows meshRenderPasses lightMatrices numShadowingLights =
   - The overall [`exposure`](#Exposure) level to use.
   - What kind of [tone mapping](#ToneMapping) to apply, if any.
   - The white balance to use: this the chromaticity that will show up as white in
-    the final rendered scene. `Scene3d.daylight` is a good default value, but for
-    indoors scenes `Scene3d.fluorescentLighting` or `Scene3d.incandescentLighting`
+    the final rendered scene. It should generally be the dominant light color
+    in the scene. `Scene3d.daylight` is a good default value, but for indoors
+    scenes `Scene3d.fluorescentLighting` or `Scene3d.incandescentLighting`
     may be more appropriate.
   - What kind of [antialiasing](#Antialiasing) to use, if any.
   - The overall dimensions in pixels of the scene.
