@@ -729,9 +729,10 @@ points { radius } givenPoints =
             Types.Points bounds (inPixels radius) givenPoints webGLMesh
 
 
-{-| Construct the shadow of a given mesh. This is an expensive operations,
-so `Shadow` values (like `Mesh` values) should be stored in your model (or as
-top-level constants) instead of constructed dynamically in your `view` function.
+{-| Construct a `Shadow` value from a given mesh. This is an expensive
+operation, so `Shadow` values (like `Mesh` values) should be stored in your
+model (or as top-level constants) instead of constructed dynamically in your
+`view` function.
 -}
 shadow : Mesh coordinates attributes -> Shadow coordinates
 shadow mesh =
