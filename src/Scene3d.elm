@@ -2076,7 +2076,7 @@ type Exposure
 
 {-| Set exposure based on an [exposure value](https://en.wikipedia.org/wiki/Exposure_value)
 for an ISO speed of 100. Typical exposure values range from 5 for home interiors
-to 15 for sunny outdoor scenes; you can find some typical values [here](https://en.wikipedia.org/wiki/Exposure_value#Tabulated_exposure_values).
+to 15 for sunny outdoor scenes; you can find some reference values [here](https://en.wikipedia.org/wiki/Exposure_value#Tabulated_exposure_values).
 -}
 exposureValue : Float -> Exposure
 exposureValue ev100 =
