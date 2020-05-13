@@ -26,8 +26,8 @@ materials such as metals and plastics. `elm-3d-scene` uses a fairly simple,
 common variant of PBR where materials have three main parameters:
 
   - Base color
-  - Roughness, with 0 meaning perfectly smooth (shiny) and 1 meaning as rough
-    (matte) as possible
+  - Roughness, with 0 meaning perfectly smooth (shiny) and 1 meaning very rough
+    (matte)
   - 'Metallicness', usually either 0 or 1, with 0 meaning non-metal and 1
     meaning metal
 
@@ -48,8 +48,8 @@ by a texture image instead of being restricted to constant values.
 
 # Type annotations
 
-The functions in this module all return values with a type parameter - for
-example, the return type of `Material.matte` is
+The functions in this module all return values with a 'free' type parameter -
+for example, the return type of `Material.matte` is
 
     Material coordinates { a | normals : () }
 
@@ -101,15 +101,15 @@ can be applied to any mesh that has normals".
 
 The `coordinates` type parameter is currently unused but will be used in the
 future for things like [procedural textures](https://en.wikipedia.org/wiki/Procedural_texture)
-defined in a particular coordinate system; those textures can then only be
-applied to objects defined in the same coordinate system.
+defined in a particular coordinate system; those textures will then only be able
+to be applied to objects defined in the same coordinate system.
 
 -}
 type alias Material coordinates attributes =
     Types.Material coordinates attributes
 
 
-{-| A simple 'constant color' material. This material can be applied to _any_
+{-| A simple constant color material. This material can be applied to any
 object and ignores lighting entirely - the entire object will have exactly the
 given color regardless of lights or scene exposure/white balance settings.
 -}
@@ -195,8 +195,7 @@ constant givenValue =
 {-| Load a texture from a given URL. Note that the resulting value can be used
 as either a `Texture Color` _or_ a `Texture Float` - if used as a
 `Texture Float` then it will be the greyscale value of each pixel that is used
-(more precisely, its [luminance](https://en.wikipedia.org/wiki/Relative_luminance)
-value).
+(more precisely, its [luminance](https://en.wikipedia.org/wiki/Relative_luminance)).
 -}
 load : String -> Task WebGL.Texture.Error (Texture value)
 load url =
@@ -383,14 +382,14 @@ type alias Plain coordinates =
     Material coordinates {}
 
 
-{-| A material that requires normal vectors but no UV coordinates: [`matte`](#matte),
+{-| A material that requires normal vectors but not UV coordinates: [`matte`](#matte),
 [`metal`](#metal), [`nonmetal`](#nonmetal) or [`pbr`](#pbr).
 -}
 type alias Uniform coordinates =
     Material coordinates { normals : () }
 
 
-{-| A material that requires UV (texture) coordinates but no normal vectors:
+{-| A material that requires UV (texture) coordinates but not normal vectors:
 [`texturedColor`](#texturedColor) or [`texturedEmissive`](#texturedEmissive).
 -}
 type alias Unlit coordinates =
