@@ -2183,6 +2183,13 @@ reinhardPerChannelToneMapping maxOverexposure =
         ExtendedReinhardPerChannelToneMapping maxOverexposure
 
 
+{-| A popular 'filmic' tone mapping method developed by John Hable for Uncharted
+2 and documented [here](http://filmicworlds.com/blog/filmic-tonemapping-operators/).
+It attempts to approximately reproduce how real film reacts to light. The
+results are fairly similar to `reinhardPerChannelToneMapping 5`, but will tend
+to have deeper blacks for a slightly less washed-out look. This is a good
+default choice for realistic-looking scenes.
+-}
 hableFilmicToneMapping : ToneMapping
 hableFilmicToneMapping =
     HableFilmicToneMapping
