@@ -2168,6 +2168,12 @@ reinhardToneMapping maxOverexposure =
         ExtendedReinhardLuminanceToneMapping maxOverexposure
 
 
+{-| A variant of `reinhardToneMapping` which applies the scaling operation to
+red, green and blue channels separately instead of scaling overall luminance.
+This will tend to desaturate bright colors, but this can end up being looking
+realistic since very bright colored lights do in fact appear fairly white to our
+eyes.
+-}
 reinhardPerChannelToneMapping : Float -> ToneMapping
 reinhardPerChannelToneMapping maxOverexposure =
     if isInfinite maxOverexposure then
