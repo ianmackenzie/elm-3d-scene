@@ -1816,6 +1816,16 @@ toHtml arguments =
         ]
 
 
+{-| Render a 'composite' scene where different subsets of entities in the scene
+can use different lighting. This can let you do things like:
+
+  - Work around the eight-light limitation by breaking a scene up into multiple
+    sub-scenes that use different sets of lights
+  - Render very high dynamic range scenes such as an interior room with a window
+    out to a bright sunny day, by rendering different parts of the scene with
+    different exposure/tone mapping settings
+
+-}
 composite :
     { camera : Camera3d Meters coordinates
     , clipDepth : Length
