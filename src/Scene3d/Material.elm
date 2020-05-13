@@ -406,16 +406,10 @@ type alias Textured coordinates =
     Material coordinates { normals : (), uvs : () }
 
 
-{-| A mesh with normal and tangent vectors but no UV coordinates, allowing for
-some specialized material models such as brushed metal but no texturing.
--}
 type alias Anisotropic coordinates =
     Material coordinates { normals : (), tangents : () }
 
 
-{-| A mesh with normal vectors, UV coordinates and tangent vectors at each
-vertex, allowing for full texturing including normal maps.
--}
 type alias NormalMapped coordinates =
     Material coordinates { normals : (), uvs : (), tangents : () }
 
