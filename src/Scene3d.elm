@@ -1533,7 +1533,8 @@ in combination with other custom WebGL code, so there is a high chance of weird
 interaction bugs. (In particular, if you use the stencil buffer you will likely
 want to clear it explicitly after rendering `elm-3d-scene` entities.) If you
 encounter bugs when using `toWebGLEntities` in combination with your own custom
-rendering code, please [open an issue](https://github.com/ianmackenzie/elm-3d-scene/issues/new).
+rendering code, please [open an issue](https://github.com/ianmackenzie/elm-3d-scene/issues/new)
+or reach out to **@ianmackenzie** on the [Elm Slack](http://elmlang.herokuapp.com/).
 
 -}
 toWebGLEntities :
