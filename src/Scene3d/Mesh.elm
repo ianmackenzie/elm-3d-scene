@@ -36,9 +36,6 @@ store in your model or return from a function.
 
 # Constructors
 
-
-## Simple meshes
-
 @docs points, lineSegments, polyline, triangles, facets
 
 
