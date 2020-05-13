@@ -2141,8 +2141,23 @@ noToneMapping =
     NoToneMapping
 
 
-{-| Apply a simple [Reinhard](https://64.github.io/tonemapping/#reinhard) tone
-mapping.
+{-| Apply [Reinhard](https://64.github.io/tonemapping/#reinhard) tone mapping
+given the maximum allowed overexposure. This will apply a non-linear scaling to
+scene luminance (brightness) values such that darker colors will not be affected
+very much (meaning the brightness of the scene as a whole will not be changed
+dramatically), but very bright colors will be toned down to avoid
+'blowout'/overexposure.
+
+The given parameter specifies how much 'extra range' the tone mapping gives you;
+for example,
+
+    Scene3d.reinhardToneMapping 5
+
+will mean that parts of the scene can be 5x brighter than normal before becoming
+'overexposed' and pure white. (You could also accomplish that by changing the
+overall `exposure` parameter to `Scene3d.toHtml`, but then the entire scene
+would appear much darker.)
+
 -}
 reinhardToneMapping : Float -> ToneMapping
 reinhardToneMapping maxOverexposure =
