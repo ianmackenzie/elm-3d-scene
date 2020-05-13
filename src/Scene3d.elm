@@ -1525,7 +1525,8 @@ However, there are a couple of additional arguments:
     allows the circular dots used to render points to have the same radius
     whether or not supersampling is used (e.g. if using 2x supersampling, then
     points must be rendered at twice the pixel radius internally so that the
-    final result has the same visual size).
+    final result has the same visual size). If you're not using supersampling,
+    set this value to 1.
 
 This function is called internally by `toHtml` but has not actually been tested
 in combination with other custom WebGL code, so there is a high chance of weird
