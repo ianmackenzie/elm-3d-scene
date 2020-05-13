@@ -479,12 +479,12 @@ type alias Light coordinates castsShadows =
 {-| A `Lights` value represents the set of all lights in a scene. There are a
 couple of current limitations to note in `elm-3d-scene`:
 
-  - No more than eight lights can exist in the scene
-  - Only the first four of those lights can cast shadows
+  - No more than eight lights can exist in the scene.
+  - Only the first four of those lights can cast shadows.
 
-(The reason there is a separate `Lights` type, instead of just using a list of
+The reason there is a separate `Lights` type, instead of just using a list of
 `Light` values, is so that the type system can be used to guarantee these
-constraints are satisfied.)
+constraints are satisfied.
 
 -}
 type Lights coordinates
