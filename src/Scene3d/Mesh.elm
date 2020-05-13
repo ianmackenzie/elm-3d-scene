@@ -114,7 +114,7 @@ vertex. For example, a
 
     Mesh WorldCoordinates { normals : () }
 
-refers to a mesh defined in `WorldCoordinates` (a type you would typicaly
+refers to a mesh defined in `WorldCoordinates` (a type you would typically
 define yourself) that has position and normal vector defined at each vertex.
 (The `()` type isn't significant; you can think of it as meaning 'present'.)
 
