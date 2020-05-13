@@ -1520,7 +1520,7 @@ However, there are a couple of additional arguments:
 
   - You must specify the `aspectRatio` (width over height) that the scene is
     being rendered at, so that projection matrices can be computed correctly.
-    (In `Scene3d.toHtml`, that is computed from the given dimensions.)
+    (In `Scene3d.toHtml`, aspect ratio is computed from the given dimensions.)
   - You must specify the current supersampling factor being used, if any. This
     allows the circular dots used to render points to have the same radius
     whether or not supersampling is used (e.g. if using 2x supersampling, then
