@@ -1004,7 +1004,7 @@ face culling is disabled by default but you can enable it per-mesh as an
 optimization where it is valid.
 
 Note that `cullBackFaces` doesn't actually strip out any faces from the mesh,
-since which faces are culled depends on the (dynamic) viewing diretion - it
+since which faces are culled depends on the (dynamic) viewing direction - it
 simply sets a flag on the mesh that indicates that back face culling should be
 performed during rendering.
 
