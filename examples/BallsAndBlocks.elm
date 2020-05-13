@@ -26,6 +26,7 @@ import Pixels exposing (pixels)
 import Point3d
 import Random
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material
 import Sphere3d
 import Task
@@ -106,16 +107,16 @@ view { world, screenWidth, screenHeight } =
             List.map getTransformedDrawable (World.bodies world)
 
         sunlight =
-            Scene3d.directionalLight (Scene3d.castsShadows True)
-                { chromaticity = Scene3d.sunlight
+            Light.directional (Light.castsShadows True)
+                { chromaticity = Light.sunlight
                 , intensity = Illuminance.lux 10000
                 , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
                 }
 
         daylight =
-            Scene3d.overheadLighting
+            Light.overhead
                 { upDirection = Direction3d.z
-                , chromaticity = Scene3d.daylight
+                , chromaticity = Light.daylight
                 , intensity = Illuminance.lux 15000
                 }
     in
@@ -131,7 +132,7 @@ view { world, screenWidth, screenHeight } =
             , lights = Scene3d.twoLights sunlight daylight
             , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
             , toneMapping = Scene3d.noToneMapping
-            , whiteBalance = Scene3d.daylight
+            , whiteBalance = Light.daylight
             , background = Scene3d.transparentBackground
             , clipDepth = meters 0.1
             , entities = drawables
@@ -267,9 +268,7 @@ floor =
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere (Scene3d.castsShadows False)
-        (Material.uniform Materials.aluminum)
-        shape
+    Scene3d.sphere (Material.uniform Materials.aluminum) shape
         |> Body.sphere shape
         |> Body.moveTo
             (Point3d.meters
@@ -291,7 +290,7 @@ box material =
             Block3d.centeredOn Frame3d.atOrigin
                 ( boxSize, boxSize, boxSize )
     in
-    Scene3d.block (Scene3d.castsShadows True) material shape
+    Scene3d.blockWithShadow material shape
         |> Body.block shape
         |> Body.withBehavior (Body.dynamic (Mass.kilograms 5))
 
@@ -307,7 +306,7 @@ sphere material =
         shape =
             Sphere3d.atOrigin sphereRadius
     in
-    Scene3d.sphere (Scene3d.castsShadows True) material shape
+    Scene3d.sphereWithShadow material shape
         |> Body.sphere shape
         |> Body.withBehavior (Body.dynamic (Mass.kilograms 2.5))
 

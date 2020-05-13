@@ -9,7 +9,8 @@ module Scene3d.Mesh exposing
     )
 
 {-| This module lets you create object shapes which you can later render with
-[`Scene3d.mesh`](Scene3d#mesh) by applying a desired [material](Scene3d-Material).
+[`Scene3d.mesh`](Scene3d#mesh) or [`Scene3d.meshWithShadow`](Scene3d#meshWithShadow)
+by applying a desired [material](Scene3d-Material).
 
 **IMPORTANT**: `Mesh` (and `Shadow`) values should _not_ be created dynamically
 in your `view` function, since this is a relatively expensive operations can
@@ -60,9 +61,9 @@ textured materials to be used.
 
 # Shadows
 
-In `elm-3d-scene`, shadows are just another 'thing' you draw: to render an
-object and its shadow, you would render the object itself using [`Scene3d.mesh`](Scene3d#mesh)
-and then render its shadow using [`Scene3d.shadow`](Scene3d#shadow).
+In `elm-3d-scene`, to render an object with its shadow you will first need to
+construct (and save somewhere) a `Shadow` value for that object. You can then
+render the object with its shadow using [`Scene3d.meshWithShadow`](Scene3d#meshWithShadow).
 
 @docs Shadow, shadow
 

@@ -19,6 +19,7 @@ import Pixels exposing (pixels)
 import Plane3d
 import Point3d
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
@@ -42,26 +43,25 @@ floorMaterial =
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block (Scene3d.castsShadows False) floorMaterial <|
+    Scene3d.block floorMaterial <|
         Block3d.from (Point3d.meters -7.5 -7.5 -0.2) (Point3d.meters 7.5 7.5 0)
 
 
 initialBlock : Scene3d.Entity World
 initialBlock =
-    Scene3d.block (Scene3d.castsShadows True) objectMaterial <|
+    Scene3d.blockWithShadow objectMaterial <|
         Block3d.from (Point3d.meters 1 1 1) (Point3d.meters 2.5 2.5 2.5)
 
 
 initialSphere : Scene3d.Entity World
 initialSphere =
-    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform objectMaterial) <|
+    Scene3d.sphereWithShadow (Material.uniform objectMaterial) <|
         Sphere3d.withRadius (Length.meters 1) (Point3d.meters 4 1.5 1.5)
 
 
 initialQuad : Scene3d.Entity World
 initialQuad =
-    Scene3d.quad (Scene3d.castsShadows True)
-        (Material.uniform objectMaterial)
+    Scene3d.quadWithShadow (Material.uniform objectMaterial)
         (Point3d.meters 1 3.5 1)
         (Point3d.meters 2.5 3.5 1)
         (Point3d.meters 2.5 5 1)
@@ -87,30 +87,30 @@ camera =
         }
 
 
-sunlight : Scene3d.Light World Bool
+sunlight : Light World Bool
 sunlight =
-    Scene3d.directionalLight (Scene3d.castsShadows True)
-        { chromaticity = Scene3d.daylight
+    Light.directional (Light.castsShadows True)
+        { chromaticity = Light.daylight
         , intensity = lux 20000
         , direction =
             Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -60)
         }
 
 
-lightBulb : Scene3d.Light World Bool
+lightBulb : Light World Bool
 lightBulb =
-    Scene3d.pointLight (Scene3d.castsShadows True)
-        { chromaticity = Scene3d.daylight
+    Light.point (Light.castsShadows True)
+        { chromaticity = Light.daylight
         , intensity = LuminousFlux.lumens 10000000
         , position = Point3d.meters 0 0 5
         }
 
 
-daylight : Scene3d.Light World Never
+daylight : Light World Never
 daylight =
-    Scene3d.overheadLighting
+    Light.overhead
         { upDirection = Direction3d.positiveZ
-        , chromaticity = Scene3d.daylight
+        , chromaticity = Light.daylight
         , intensity = Illuminance.lux 9000
         }
 
@@ -143,7 +143,7 @@ main =
                             , dimensions = ( pixels 1024, pixels 768 )
                             , exposure = Scene3d.exposureValue 14
                             , toneMapping = Scene3d.noToneMapping
-                            , whiteBalance = Scene3d.daylight
+                            , whiteBalance = Light.daylight
                             , background = Scene3d.transparentBackground
                             , entities =
                                 [ floor

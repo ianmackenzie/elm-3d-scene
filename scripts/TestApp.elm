@@ -39,6 +39,7 @@ import Quantity exposing (Quantity, Unitless)
 import Quantity.Interval as Interval exposing (Interval)
 import Result.Extra
 import Scene3d exposing (Entity)
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Set
@@ -503,7 +504,7 @@ type alias Scene =
 addShadowIf : Bool -> Mesh.Shadow WorldCoordinates -> Entity WorldCoordinates -> Entity WorldCoordinates
 addShadowIf shadowSetting shadowMesh givenEntity =
     if shadowSetting then
-        givenEntity |> Scene3d.withShadow shadowMesh
+        Scene3d.group [ givenEntity, Scene3d.meshShadow shadowMesh ]
 
     else
         givenEntity
@@ -633,12 +634,24 @@ quadEntity { shadows } material =
         p4 =
             Point3d.meters -1 -1 1
     in
-    Scene3d.quad (Scene3d.castsShadows shadows) material p1 p2 p3 p4
+    if shadows then
+        Scene3d.quadWithShadow material p1 p2 p3 p4
+
+    else
+        Scene3d.quad material p1 p2 p3 p4
 
 
 blockEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
 blockEntity { shadows } material =
-    Scene3d.block (Scene3d.castsShadows shadows) material <|
+    let
+        drawBlock =
+            if shadows then
+                Scene3d.blockWithShadow
+
+            else
+                Scene3d.block
+    in
+    drawBlock material <|
         Block3d.from
             (Point3d.meters -1 -1 1)
             (Point3d.meters 1 1 2)
@@ -646,13 +659,29 @@ blockEntity { shadows } material =
 
 sphereEntity : { a | shadows : Bool } -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
 sphereEntity { shadows } material =
-    Scene3d.sphere (Scene3d.castsShadows shadows) material <|
+    let
+        drawSphere =
+            if shadows then
+                Scene3d.sphereWithShadow
+
+            else
+                Scene3d.sphere
+    in
+    drawSphere material <|
         Sphere3d.withRadius (Length.meters 1) (Point3d.meters 0 0 2)
 
 
 cylinderEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
 cylinderEntity { shadows } material =
-    Scene3d.cylinder (Scene3d.castsShadows shadows) material <|
+    let
+        drawCylinder =
+            if shadows then
+                Scene3d.cylinderWithShadow
+
+            else
+                Scene3d.cylinder
+    in
+    drawCylinder material <|
         Cylinder3d.along Axis3d.z
             { start = Length.meters 1
             , end = Length.meters 2
@@ -662,7 +691,15 @@ cylinderEntity { shadows } material =
 
 coneEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
 coneEntity { shadows } material =
-    Scene3d.cone (Scene3d.castsShadows shadows) material <|
+    let
+        drawCone =
+            if shadows then
+                Scene3d.coneWithShadow
+
+            else
+                Scene3d.cone
+    in
+    drawCone material <|
         Cone3d.along Axis3d.z
             { base = Length.meters 1
             , tip = Length.meters 3
@@ -672,7 +709,15 @@ coneEntity { shadows } material =
 
 facetEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
 facetEntity { shadows } material =
-    Scene3d.facet (Scene3d.castsShadows shadows) material <|
+    let
+        drawFacet =
+            if shadows then
+                Scene3d.facetWithShadow
+
+            else
+                Scene3d.facet
+    in
+    drawFacet material <|
         Triangle3d.from
             (Point3d.meters 0 -1 1)
             (Point3d.meters 3 0 1)
@@ -1437,7 +1482,7 @@ entity model testCase =
         Emissive ->
             let
                 material =
-                    Material.emissive (Scene3d.chromaticity Tango.orange2) (Luminance.nits 250)
+                    Material.emissive (Light.color Tango.orange2) (Luminance.nits 250)
             in
             case testCase.mesh of
                 Points ->
@@ -1901,29 +1946,26 @@ lights : TestCase -> Scene3d.Lights WorldCoordinates
 lights testCase =
     let
         pointLight =
-            Scene3d.pointLight (Scene3d.castsShadows testCase.shadows)
-                { chromaticity = Scene3d.fluorescentLighting
+            Light.point (Light.castsShadows testCase.shadows)
+                { chromaticity = Light.fluorescent
                 , position = Point3d.meters 0 -4 4
                 , intensity = LuminousFlux.lumens 20000
                 }
 
         directionalLight =
-            Scene3d.directionalLight (Scene3d.castsShadows testCase.shadows)
-                { chromaticity = Scene3d.colorTemperature (Temperature.kelvins 2200)
+            Light.directional (Light.castsShadows testCase.shadows)
+                { chromaticity = Light.colorTemperature (Temperature.kelvins 2200)
                 , intensity = Illuminance.lux 60
                 , direction = Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -30)
                 }
 
         softLighting =
-            Scene3d.softLighting
+            Light.soft
                 { upDirection = Direction3d.z
-                , chromaticity = Scene3d.incandescentLighting
+                , chromaticity = Light.incandescent
                 , intensityAbove = Illuminance.lux 15
                 , intensityBelow = Illuminance.lux 3
                 }
-
-        shadowSetting =
-            Scene3d.castsShadows testCase.shadows
     in
     case ( testCase.pointLight, testCase.directionalLight, testCase.softLighting ) of
         ( False, False, False ) ->
@@ -2281,8 +2323,7 @@ axes =
 
 floor : Entity WorldCoordinates
 floor =
-    Scene3d.quad (Scene3d.castsShadows False)
-        (Material.matte Tango.aluminum3)
+    Scene3d.quad (Material.matte Tango.aluminum3)
         (Point3d.meters 4 -4 0)
         (Point3d.meters 4 4 0)
         (Point3d.meters -4 4 0)
@@ -2305,12 +2346,8 @@ viewTestCase model testCase =
                             , antialiasing = antialiasing testCase
                             , exposure = Scene3d.exposureValue 4
                             , toneMapping = toneMapping testCase
-                            , whiteBalance = Scene3d.incandescentLighting
-                            , entities =
-                                [ floor
-                                , axes
-                                , validEntity |> transformation testCase
-                                ]
+                            , whiteBalance = Light.incandescent
+                            , entities = [ floor, validEntity |> transformation testCase ]
                             }
 
                 -- , Element.image

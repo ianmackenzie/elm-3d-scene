@@ -15,6 +15,7 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
 import Temperature
@@ -34,10 +35,10 @@ viewpoint =
         }
 
 
-sunlight : Scene3d.Light World Bool
+sunlight : Light World Bool
 sunlight =
-    Scene3d.directionalLight (Scene3d.castsShadows False)
-        { chromaticity = Scene3d.sunlight
+    Light.directional (Light.castsShadows False)
+        { chromaticity = Light.sunlight
         , intensity = Illuminance.lux 10000
         , direction = Direction3d.yz (Angle.degrees -120)
         }
@@ -60,10 +61,10 @@ material =
 
 
 overheadLighting =
-    Scene3d.overheadLighting
+    Light.overhead
         { upDirection = Direction3d.positiveZ
         , intensity = Illuminance.lux 15000
-        , chromaticity = Scene3d.daylight
+        , chromaticity = Light.daylight
         }
 
 
@@ -77,10 +78,10 @@ main =
         , lights = Scene3d.twoLights sunlight overheadLighting
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , toneMapping = Scene3d.noToneMapping
-        , whiteBalance = Scene3d.daylight
+        , whiteBalance = Light.daylight
         , background = Scene3d.transparentBackground
         , entities =
-            [ Scene3d.sphere (Scene3d.castsShadows False) (Material.uniform material) <|
+            [ Scene3d.sphere (Material.uniform material) <|
                 Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
             ]
         }

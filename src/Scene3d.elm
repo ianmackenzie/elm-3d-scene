@@ -3,24 +3,21 @@ module Scene3d exposing
     , unlit, sunny, cloudy, office
     , Entity
     , point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
-    , mesh
+    , triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, cylinderWithShadow, coneWithShadow
+    , mesh, meshWithShadow
     , group, nothing
-    , shadow, withShadow
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
-    , placeIn, relativeTo
-    , Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
-    , Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting, disabledLight
-    , CastsShadows, castsShadows, neverCastsShadows
-    , Lights, noLights
-    , oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
-    , Chromaticity
-    , chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
+    , Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, translucentBackground
+    , Antialiasing
+    , noAntialiasing, multisampling, supersampling
+    , Lights
+    , noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
     , Exposure
     , exposureValue, maxLuminance, photographicExposure
     , ToneMapping
     , noToneMapping, reinhardToneMapping, reinhardPerChannelToneMapping, hableFilmicToneMapping
-    , Antialiasing
-    , noAntialiasing, multisampling, supersampling
+    , placeIn, relativeTo
+    , triangleShadow, quadShadow, blockShadow, sphereShadow, cylinderShadow, coneShadow, meshShadow
     , composite, toWebGLEntities
     )
 
@@ -81,19 +78,24 @@ that you will likely want to switch to using a proper mesh for efficiency.
 @docs point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
 
 
+## Shapes with shadows
+
+These functions behave just like their corresponding non-`WithShadow` versions
+but make the given object cast a shadow (or perhaps multiple shadows, if there
+are multiple shadow-casting lights in the scene). Note that no shadows will
+appear if there are no shadow-casting lights!
+
+@docs triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, cylinderWithShadow, coneWithShadow
+
+
 ## Meshes
 
-@docs mesh
+@docs mesh, meshWithShadow
 
 
 ## Grouping and toggling
 
 @docs group, nothing
-
-
-## Shadows
-
-@docs shadow, withShadow
 
 
 ## Transformations
@@ -105,38 +107,26 @@ to change where that mesh gets rendered.
 @docs rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
 
 
-## Coordinate conversions
-
-You're unlikely to need these functions right away but they can be very useful
-when setting up more complex scenes.
-
-@docs placeIn, relativeTo
-
-
 # Background
 
-@docs Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, transparentBackgroundColor
+@docs Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, translucentBackground
+
+
+# Antialiasing
+
+@docs Antialiasing
+
+@docs noAntialiasing, multisampling, supersampling
 
 
 # Lighting
 
-@docs Light, directionalLight, pointLight, softLighting, overheadLighting, ambientLighting, disabledLight
-
-@docs CastsShadows, castsShadows, neverCastsShadows
-
-@docs Lights, noLights
+@docs Lights
 
 The following functions let you set up lighting using up to eight lights. Note
 that any light past the fourth must be constructed using [`Scene3d.neverCastsShadows`](#neverCastsShadows).
 
-@docs oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
-
-
-## Chromaticity
-
-@docs Chromaticity
-
-@docs chromaticity, daylight, sunlight, blueSky, incandescentLighting, fluorescentLighting, colorTemperature, xyChromaticity
+@docs noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
 
 ## Exposure
@@ -153,14 +143,33 @@ that any light past the fourth must be constructed using [`Scene3d.neverCastsSha
 @docs noToneMapping, reinhardToneMapping, reinhardPerChannelToneMapping, hableFilmicToneMapping
 
 
-# Antialiasing
-
-@docs Antialiasing
-
-@docs noAntialiasing, multisampling, supersampling
-
-
 # Advanced
+
+You're unlikely to need these functions right away but they can be very useful
+when setting up more complex scenes.
+
+
+## Coordinate conversions
+
+@docs placeIn, relativeTo
+
+
+## Standalone shadows
+
+In some cases you might want to render the shadow of some object without
+rendering the object itself. This can let you do things like render a high-poly
+door while rendering its shadow using a simpler approximate shape like a quad or
+rectangular block to reduce rendering time (rendering shadows of complex
+meshes can be expensive).
+
+Note that if you do something like this then you will need to be careful to make
+sure that the approximate object fits _inside_ the actual mesh being rendered -
+otherwise you might end up with the object effectively shadowing itself.
+
+@docs triangleShadow, quadShadow, blockShadow, sphereShadow, cylinderShadow, coneShadow, meshShadow
+
+
+## Customized rendering
 
 @docs composite, toWebGLEntities
 
@@ -200,6 +209,7 @@ import Quantity exposing (Quantity(..))
 import Rectangle2d
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Entity as Entity
+import Scene3d.Light as Light exposing (Chromaticity, Light)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Transformation as Transformation exposing (Transformation)
@@ -253,27 +263,54 @@ lineSegment givenMaterial givenLineSegment =
     Entity.lineSegment givenMaterial givenLineSegment
 
 
+dummyMaterial : Material coordinates attributes
+dummyMaterial =
+    Material.color (Color.fromRGB ( 0, 0, 0 ))
+
+
 {-| Draw a single triangle.
 -}
 triangle :
-    CastsShadows Bool
-    -> Material.Plain coordinates
+    Material.Plain coordinates
     -> Triangle3d Meters coordinates
     -> Entity coordinates
-triangle shadowSetting givenMaterial givenTriangle =
-    facet shadowSetting (Material.plain givenMaterial) givenTriangle
+triangle givenMaterial givenTriangle =
+    facet (Material.plain givenMaterial) givenTriangle
+
+
+{-| -}
+triangleWithShadow :
+    Material.Plain coordinates
+    -> Triangle3d Meters coordinates
+    -> Entity coordinates
+triangleWithShadow givenMaterial givenTriangle =
+    facetWithShadow (Material.plain givenMaterial) givenTriangle
+
+
+{-| -}
+triangleShadow : Triangle3d Meters coordinates -> Entity coordinates
+triangleShadow givenTriangle =
+    Entity.triangle False True dummyMaterial givenTriangle
 
 
 {-| Like `Scene3d.triangle`, but also generates a normal vector so that matte
 and physically-based materials (materials that require lighting) can be used.
 -}
 facet :
-    CastsShadows Bool
-    -> Material.Uniform coordinates
+    Material.Uniform coordinates
     -> Triangle3d Meters coordinates
     -> Entity coordinates
-facet (CastsShadows shadowFlag) givenMaterial givenTriangle =
-    Entity.triangle shadowFlag givenMaterial givenTriangle
+facet givenMaterial givenTriangle =
+    Entity.triangle True False givenMaterial givenTriangle
+
+
+{-| -}
+facetWithShadow :
+    Material.Uniform coordinates
+    -> Triangle3d Meters coordinates
+    -> Entity coordinates
+facetWithShadow givenMaterial givenTriangle =
+    Entity.triangle True True givenMaterial givenTriangle
 
 
 {-| Draw a 'quad' such as a rectangle, rhombus or parallelogram by providing its
@@ -289,15 +326,37 @@ rectangle basically the way you would expect.
 
 -}
 quad :
-    CastsShadows Bool
-    -> Material.Textured coordinates
+    Material.Textured coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Entity coordinates
-quad (CastsShadows shadowFlag) givenMaterial p1 p2 p3 p4 =
-    Entity.quad shadowFlag givenMaterial p1 p2 p3 p4
+quad givenMaterial p1 p2 p3 p4 =
+    Entity.quad True False givenMaterial p1 p2 p3 p4
+
+
+{-| -}
+quadWithShadow :
+    Material.Textured coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+quadWithShadow givenMaterial p1 p2 p3 p4 =
+    Entity.quad True True givenMaterial p1 p2 p3 p4
+
+
+{-| -}
+quadShadow :
+    Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Point3d Meters coordinates
+    -> Entity coordinates
+quadShadow p1 p2 p3 p4 =
+    Entity.quad False True dummyMaterial p1 p2 p3 p4
 
 
 {-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
@@ -315,33 +374,81 @@ Note that this projection, while simple, means that the texture used will get
 'squished' near the poles of the sphere.
 
 -}
-sphere : CastsShadows Bool -> Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
-sphere (CastsShadows shadowFlag) givenMaterial givenSphere =
-    Entity.sphere shadowFlag givenMaterial givenSphere
+sphere : Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+sphere givenMaterial givenSphere =
+    Entity.sphere True False givenMaterial givenSphere
+
+
+{-| -}
+sphereWithShadow : Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+sphereWithShadow givenMaterial givenSphere =
+    Entity.sphere True True givenMaterial givenSphere
+
+
+{-| -}
+sphereShadow : Sphere3d Meters coordinates -> Entity coordinates
+sphereShadow givenSphere =
+    Entity.sphere False True dummyMaterial givenSphere
 
 
 {-| Draw a rectangular block using the [`Block3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Block3d)
 type from `elm-geometry`.
 -}
-block : CastsShadows Bool -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
-block (CastsShadows shadowFlag) givenMaterial givenBlock =
-    Entity.block shadowFlag givenMaterial givenBlock
+block : Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
+block givenMaterial givenBlock =
+    Entity.block True False givenMaterial givenBlock
+
+
+{-| -}
+blockWithShadow : Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
+blockWithShadow givenMaterial givenBlock =
+    Entity.block True True givenMaterial givenBlock
+
+
+{-| -}
+blockShadow : Block3d Meters coordinates -> Entity coordinates
+blockShadow givenBlock =
+    Entity.block False True dummyMaterial givenBlock
 
 
 {-| Draw a cylinder using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cylinder3d)
 type from `elm-geometry`.
 -}
-cylinder : CastsShadows Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
-cylinder (CastsShadows shadowFlag) givenMaterial givenCylinder =
-    Entity.cylinder shadowFlag givenMaterial givenCylinder
+cylinder : Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinder givenMaterial givenCylinder =
+    Entity.cylinder True False givenMaterial givenCylinder
+
+
+{-| -}
+cylinderWithShadow : Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
+cylinderWithShadow givenMaterial givenCylinder =
+    Entity.cylinder True True givenMaterial givenCylinder
+
+
+{-| -}
+cylinderShadow : Cylinder3d Meters coordinates -> Entity coordinates
+cylinderShadow givenCylinder =
+    Entity.cylinder False True dummyMaterial givenCylinder
 
 
 {-| Draw a cone using the [`Cone3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cone3d)
 type from `elm-geometry`.
 -}
-cone : CastsShadows Bool -> Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
-cone (CastsShadows shadowFlag) givenMaterial givenCone =
-    Entity.cone shadowFlag givenMaterial givenCone
+cone : Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
+cone givenMaterial givenCone =
+    Entity.cone True False givenMaterial givenCone
+
+
+{-| -}
+coneWithShadow : Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
+coneWithShadow givenMaterial givenCone =
+    Entity.cone True True givenMaterial givenCone
+
+
+{-| -}
+coneShadow : Cone3d Meters coordinates -> Entity coordinates
+coneShadow givenCone =
+    Entity.cone False True dummyMaterial givenCone
 
 
 {-| Draw the given mesh (shape) with the given material. Check out the [`Mesh`](Scene3d-Mesh)
@@ -351,12 +458,47 @@ checked by the compiler; for example, a textured material that requires UV
 coordinates can only be used on a mesh that includes UV coordinates!
 
 If you want to also draw the shadow of a given object, you'll need to use
-[`shadow`](#shadow) or [`withShadow`](#withShadow).
+[`meshWithShadow`](#meshWithShadow).
 
 -}
 mesh : Material coordinates attributes -> Mesh coordinates attributes -> Entity coordinates
 mesh givenMaterial givenMesh =
     Entity.mesh givenMaterial givenMesh
+
+
+{-| Draw a mesh and its shadow. To render an object with a shadow, you would
+generally do something like:
+
+    -- Construct the mesh/shadow in init/update and then
+    -- save them in your model:
+
+    objectMesh =
+        -- Construct a mesh using Mesh.triangles,
+        -- Mesh.indexedFaces etc.
+
+    objectShadow =
+        Mesh.shadow objectMesh
+
+    -- Later, render the mesh/shadow in your view function:
+
+    objectMaterial =
+        -- Construct a material using Material.color,
+        -- Material.metal etc.
+
+    entity =
+        Scene3d.meshWithShadow
+            objectMesh
+            objectMaterial
+            objectShadow
+
+-}
+meshWithShadow :
+    Material coordinates attributes
+    -> Mesh coordinates attributes
+    -> Mesh.Shadow coordinates
+    -> Entity coordinates
+meshWithShadow givenMaterial givenMesh givenShadow =
+    group [ Entity.mesh givenMaterial givenMesh, Entity.shadow givenShadow ]
 
 
 {-| Group a list of entities into a single entity. This combined entity can then
@@ -367,27 +509,10 @@ group entities =
     Entity.group entities
 
 
-{-| Draw the _shadow_ of an object. Note that this means you can choose to
-render an object and its shadow, an object without its shadow, or even render an
-object's shadow without rendering the object itself.
--}
-shadow : Mesh.Shadow coordinates -> Entity coordinates
-shadow givenShadow =
+{-| -}
+meshShadow : Mesh.Shadow coordinates -> Entity coordinates
+meshShadow givenShadow =
     Entity.shadow givenShadow
-
-
-{-| Convenience function for rendering an object and its shadow;
-
-    Scene3d.withShadow shadow entity
-
-is shorthand for
-
-    Scene3d.group [ entity, Scene3d.shadow shadow ]
-
--}
-withShadow : Mesh.Shadow coordinates -> Entity coordinates -> Entity coordinates
-withShadow givenShadow givenEntity =
-    group [ givenEntity, shadow givenShadow ]
 
 
 {-| Rotate an entity around a given axis by a given angle.
@@ -453,29 +578,6 @@ relativeTo frame entity =
     Entity.relativeTo frame entity
 
 
-
------ LIGHT SOURCES -----
---
--- type:
---   0 : disabled
---   1 : directional (XYZ is direction to light, i.e. reversed light direction)
---   2 : point (XYZ is light position)
---   3 : soft lighting (XYZ is up direction, parameter is ratio of below luminance to above)
---
--- [ x_i     r_i          x_j     r_j         ]
--- [ y_i     g_i          y_j     g_j         ]
--- [ z_i     b_i          z_j     b_j         ]
--- [ type_i  parameter_i  type_j  parameter_j ]
-
-
-{-| A `Light` represents a single source of light in the scene, such as the sun
-or a light bulb. Lights are not rendered themselves; they can only be seen by
-how they interact with objects in the scene.
--}
-type alias Light coordinates castsShadows =
-    Types.Light coordinates castsShadows
-
-
 {-| A `Lights` value represents the set of all lights in a scene. There are a
 couple of current limitations to note in `elm-3d-scene`:
 
@@ -491,37 +593,6 @@ type Lights coordinates
     = SingleUnshadowedPass LightMatrices
     | SingleShadowedPass LightMatrices
     | MultiplePasses (List Mat4) LightMatrices
-
-
-{-| A 'light' that does not actually do anything. Can be useful if you have
-some conditional logic that decides whether a particular light is on or off:
-
-    lamp =
-        if model.lampIsOn then
-            Scene3d.pointLight (Scene3d.castsShadows True)
-                { position = model.lampPosition
-                , chromaticity =
-                    Scene3d.incandescentLighting
-                , intensity = LuminousFlux.lumens 400
-                }
-
-        else
-            Scene3d.disabledLight
-
--}
-disabledLight : Light coordinates castsShadows
-disabledLight =
-    Types.Light
-        { type_ = 0
-        , castsShadows = False
-        , x = 0
-        , y = 0
-        , z = 0
-        , r = 0
-        , g = 0
-        , b = 0
-        , parameter = 0
-        }
 
 
 singleLight : Light coordinates castsShadows -> Mat4
@@ -570,10 +641,10 @@ lightPair (Types.Light first) (Types.Light second) =
 
 lightingDisabled : ( LightMatrices, Vec4 )
 lightingDisabled =
-    ( { lights12 = lightPair disabledLight disabledLight
-      , lights34 = lightPair disabledLight disabledLight
-      , lights56 = lightPair disabledLight disabledLight
-      , lights78 = lightPair disabledLight disabledLight
+    ( { lights12 = lightPair Light.disabled Light.disabled
+      , lights34 = lightPair Light.disabled Light.disabled
+      , lights56 = lightPair Light.disabled Light.disabled
+      , lights78 = lightPair Light.disabled Light.disabled
       }
     , Math.Vector4.vec4 0 0 0 0
     )
@@ -605,10 +676,10 @@ oneLight : Light coordinates a -> Lights coordinates
 oneLight light =
     let
         lightMatrices =
-            { lights12 = lightPair light disabledLight
-            , lights34 = lightPair disabledLight disabledLight
-            , lights56 = lightPair disabledLight disabledLight
-            , lights78 = lightPair disabledLight disabledLight
+            { lights12 = lightPair light Light.disabled
+            , lights34 = lightPair Light.disabled Light.disabled
+            , lights56 = lightPair Light.disabled Light.disabled
+            , lights78 = lightPair Light.disabled Light.disabled
             }
     in
     if lightCastsShadows light then
@@ -627,12 +698,12 @@ twoLights first second =
     eightLights
         first
         second
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
+        Light.disabled
+        Light.disabled
+        Light.disabled
+        Light.disabled
+        Light.disabled
+        Light.disabled
 
 
 {-| -}
@@ -646,11 +717,11 @@ threeLights first second third =
         first
         second
         third
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
+        Light.disabled
+        Light.disabled
+        Light.disabled
+        Light.disabled
+        Light.disabled
 
 
 {-| -}
@@ -666,10 +737,10 @@ fourLights first second third fourth =
         second
         third
         fourth
-        disabledLight
-        disabledLight
-        disabledLight
-        disabledLight
+        Light.disabled
+        Light.disabled
+        Light.disabled
+        Light.disabled
 
 
 {-| -}
@@ -687,9 +758,9 @@ fiveLights first second third fourth fifth =
         third
         fourth
         fifth
-        disabledLight
-        disabledLight
-        disabledLight
+        Light.disabled
+        Light.disabled
+        Light.disabled
 
 
 {-| -}
@@ -709,8 +780,8 @@ sixLights first second third fourth fifth sixth =
         fourth
         fifth
         sixth
-        disabledLight
-        disabledLight
+        Light.disabled
+        Light.disabled
 
 
 {-| -}
@@ -732,7 +803,7 @@ sevenLights first second third fourth fifth sixth seventh =
         fifth
         sixth
         seventh
-        disabledLight
+        Light.disabled
 
 
 eraseLight : Light coordinates castsShadows -> Light coordinates ()
@@ -787,252 +858,6 @@ eightLights first second third fourth fifth sixth seventh eigth =
                 _ ->
                     -- Can't happen
                     noLights
-
-
-{-| The `CastsShadows` type is used to indicate either whether an _object_ such
-as a [sphere](#sphere) or [block](#block) casts shadows, or whether a given
-_light_ casts shadows.
-
-For objects, the type parameter `a` will always be `Bool`; a `CastsShadows Bool`
-value is really just a thin wrapper around a `Bool` flag that indicates whether
-an object casts a shadow or not.
-
-Lights can also usually be constructed using a `CastsShadows Bool` value, but if
-you want to use more than four lights in a scene then the extra lights must
-be constructed with the special [`Scene3d.neverCastsShadows`](#neverCastsShadows)
-value. This value is of type `CastsShadows Never`, which allows the Elm type
-system to verify that the extra lights do not cast shadows (a `CastsShadows
-Bool` value may be true _or_ false at runtime, while a `CastsShadows Never` is
-guaranteed to always be false.)
-
--}
-type CastsShadows a
-    = CastsShadows Bool
-
-
-{-| Construct a `CastsShadows Bool` value used to indicate whether a given
-object or light casts shadows.
--}
-castsShadows : Bool -> CastsShadows Bool
-castsShadows flag =
-    CastsShadows flag
-
-
-{-| Construct a special `CastsShadows Never` value used to indicate that a given
-light never casts shadows.
--}
-neverCastsShadows : CastsShadows Never
-neverCastsShadows =
-    CastsShadows False
-
-
-{-| Create a directional light given its chromaticity, intensity, direction, and
-whether or not it casts shadows:
-
-    sunlightAtNoon =
-        Scene3d.directionalLight (Scene3d.castsShadows True)
-            { chromaticity = Scene3d.sunlight
-            , intensity = Illuminance.lux 80000
-            , direction = Direction3d.negativeZ
-            }
-
-Note that the `direction` is the direction the light is traveling (the direction
-_of_ the light, not the direction _to_ the light source).
-
--}
-directionalLight :
-    CastsShadows castsShadows
-    ->
-        { chromaticity : Chromaticity
-        , intensity : Illuminance
-        , direction : Direction3d coordinates
-        }
-    -> Light coordinates castsShadows
-directionalLight (CastsShadows shadowFlag) light =
-    let
-        { x, y, z } =
-            Direction3d.unwrap light.direction
-
-        (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb light.intensity light.chromaticity
-    in
-    Types.Light
-        { type_ = 1
-        , castsShadows = shadowFlag
-        , x = -x
-        , y = -y
-        , z = -z
-        , r = Math.Vector3.getX rgb
-        , g = Math.Vector3.getY rgb
-        , b = Math.Vector3.getZ rgb
-        , parameter = 0
-        }
-
-
-{-| Create a point light given its chromaticity, intensity, position, and
-whether or not it casts shadows:
-
-    tableLamp =
-        Scene3d.pointLight (Scene3d.castsShadows True)
-            { chromaticity = Scene3d.incandescentLighting
-            , intensity = LuminousFlux.lumens 500
-            , position = Point3d.centimeters 40 50 30
-            }
-
--}
-pointLight :
-    CastsShadows castsShadows
-    ->
-        { chromaticity : Chromaticity
-        , intensity : LuminousFlux
-        , position : Point3d Meters coordinates
-        }
-    -> Light coordinates castsShadows
-pointLight (CastsShadows shadowFlag) light =
-    let
-        (LinearRgb rgb) =
-            ColorConversions.chromaticityToLinearRgb light.intensity light.chromaticity
-
-        { x, y, z } =
-            Point3d.unwrap light.position
-    in
-    Types.Light
-        { type_ = 2
-        , castsShadows = shadowFlag
-        , x = x
-        , y = y
-        , z = z
-        , r = Math.Vector3.getX rgb
-        , g = Math.Vector3.getY rgb
-        , b = Math.Vector3.getZ rgb
-        , parameter = 0
-        }
-
-
-{-| Add some 'soft' indirect/environmental lighting to a scene: this is a rough
-approximation for light coming from all different directions, such as light
-coming from the sky (as opposed to direct sunlight) or indirect lighting
-reflected from surrounding surfaces. The intensity of the light will vary
-smoothly from a given intensity 'above' to 'below', based on given 'up'
-direction and with a given chromaticity.
-
-For example, a decent approximation to indoors office lighting might be:
-
-    Scene3d.softLighting
-        { upDirection = Direction3d.positiveZ
-        , chromaticity = Scene3d.fluorescentLighting
-        , intensityAbove = Illuminance.lux 400
-        , intensityBelow = Illuminance.lux 100
-        }
-
-Soft lighting does not cast shadows.
-
--}
-softLighting :
-    { upDirection : Direction3d coordinates
-    , chromaticity : Chromaticity
-    , intensityAbove : Illuminance
-    , intensityBelow : Illuminance
-    }
-    -> Light coordinates Never
-softLighting light =
-    if light.intensityAbove == Quantity.zero && light.intensityBelow == Quantity.zero then
-        disabledLight
-
-    else if
-        Quantity.abs light.intensityBelow
-            |> Quantity.greaterThan (Quantity.abs light.intensityAbove)
-    then
-        softLighting
-            { upDirection = Direction3d.reverse light.upDirection
-            , chromaticity = light.chromaticity
-            , intensityAbove = light.intensityBelow
-            , intensityBelow = light.intensityAbove
-            }
-
-    else
-        let
-            (LinearRgb rgb) =
-                ColorConversions.chromaticityToLinearRgb (Quantity.float 1) light.chromaticity
-
-            nitsAbove =
-                abs (Illuminance.inLux light.intensityAbove / pi)
-
-            nitsBelow =
-                abs (Illuminance.inLux light.intensityBelow / pi)
-
-            { x, y, z } =
-                Direction3d.unwrap light.upDirection
-        in
-        Types.Light
-            { type_ = 3
-            , castsShadows = False
-            , x = x
-            , y = y
-            , z = z
-            , r = nitsAbove * Math.Vector3.getX rgb
-            , g = nitsAbove * Math.Vector3.getY rgb
-            , b = nitsAbove * Math.Vector3.getZ rgb
-            , parameter = nitsBelow / nitsAbove
-            }
-
-
-{-| A slightly simplified version of `softLighting` with the given intensity
-above and zero intensity below. This can be useful if you want _color_
-(chromaticity) to also vary from above to below; for example, for and outdoors
-scene you might use two 'overhead' lights with different chromaticities to
-represent light from the blue sky plus some more neutral-colored light reflected
-from the surrounding environment:
-
-    sky =
-        Scene3d.overheadLighting
-            { upDirection = Direction3d.positiveZ
-            , chromaticity = Scene3d.blueSky
-            , intensity = Illuminance.lux 20000
-            }
-
-    environment =
-        Scene3d.overheadLighting
-            { upDirection = Direction3d.negativeZ
-            , chromaticity = Scene3d.daylight
-            , intensity = Illuminance.lux 15000
-            }
-
-Note that the `environment` light has the 'up' direction set to _negative_ Z
-since that light mostly comes from below (reflected from the ground) than above.
-
--}
-overheadLighting :
-    { upDirection : Direction3d coordinates
-    , chromaticity : Chromaticity
-    , intensity : Illuminance
-    }
-    -> Light coordinates Never
-overheadLighting arguments =
-    softLighting
-        { upDirection = arguments.upDirection
-        , chromaticity = arguments.chromaticity
-        , intensityAbove = arguments.intensity
-        , intensityBelow = Quantity.zero
-        }
-
-
-{-| A simple version of `softLighting` with constant intensity in every
-direction. Provided for completeness, but you generally won't want to use this
-as it tends to result in very flat, unrealistic-looking scenes.
--}
-ambientLighting :
-    { chromaticity : Chromaticity
-    , intensity : Illuminance
-    }
-    -> Light coordinates Never
-ambientLighting arguments =
-    softLighting
-        { upDirection = Direction3d.z
-        , chromaticity = arguments.chromaticity
-        , intensityAbove = arguments.intensity
-        , intensityBelow = arguments.intensity
-        }
 
 
 
@@ -1096,8 +921,8 @@ backgroundColor color =
 
 {-| A custom background color with transparency.
 -}
-transparentBackgroundColor : Color.Transparent.Color -> Background coordinates
-transparentBackgroundColor transparentColor =
+translucentBackground : Color.Transparent.Color -> Background coordinates
+translucentBackground transparentColor =
     BackgroundColor transparentColor
 
 
@@ -1921,147 +1746,6 @@ composite arguments scenes =
 
 
 
------ CHROMATICITY -----
-
-
-{-| [Chromaticity](https://en.wikipedia.org/wiki/Chromaticity) is a precise way
-of describing color independent of brightness. You can think of it as roughly
-hue and saturation without value or lightness.
-
-Chromaticity is used for specifying the color of individual lights as well as
-the white balance to use for the overall scene.
-
--}
-type alias Chromaticity =
-    Types.Chromaticity
-
-
-{-| The approximate chromaticity of noon daylight; this is a combination of
-direct sunlight and blue sky, so is slightly cooler than pure [sunlight](#sunlight).
-As a result, this is a good default choice for white balance, but for _light_
-color you'll likely want to use [`sunlight`](#sunlight), [`incandescentLighting`](#incandescentLighting)
-or [`fluorescentLighting`](#fluorescentLighting) instead.
-
-This is standardized as [Illuminant D65, "Noon Daylight"](https://en.wikipedia.org/wiki/Standard_illuminant),
-and is the 'white' color of a properly-calibrated [sRGB](https://en.wikipedia.org/wiki/SRGB)
-monitor.
-
--}
-daylight : Chromaticity
-daylight =
-    xyChromaticity 0.31271 0.32902
-
-
-{-| An approximate chromaticity value for direct daytime sunlight. This doesn't
-seem to have an offically standardized value, but 'sunlight' film is apparently
-calibrated to a color temperature of 5600 K so that is what is used here. (This
-falls at low end of ['vertical daylight'](https://en.wikipedia.org/wiki/Color_temperature)
-and above 'horizon daylight', so should be a decent representative value.)
--}
-sunlight : Chromaticity
-sunlight =
-    colorTemperature (Temperature.kelvins 5600)
-
-
-{-| An approximate chromaticity value for clear blue sky (12000 K).
--}
-blueSky : Chromaticity
-blueSky =
-    colorTemperature (Temperature.kelvins 12000)
-
-
-{-| The chromaticity of typical incandescent/tungsten lighting. This is
-standardized as [Illuminant A, "Incandescent/Tungsten"](https://en.wikipedia.org/wiki/Standard_illuminant).
--}
-incandescentLighting : Chromaticity
-incandescentLighting =
-    xyChromaticity 0.44757 0.40745
-
-
-{-| The chromaticity of typical fluorescent lighting. This is standardized as
-[Illuminant F2, "Cool White Fluorescent"](https://en.wikipedia.org/wiki/Standard_illuminant).
--}
-fluorescentLighting : Chromaticity
-fluorescentLighting =
-    xyChromaticity 0.37208 0.37529
-
-
-{-| Specify chromaticity by its _xy_ coordinates in the [CIE xyY color space](https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space).
--}
-xyChromaticity : Float -> Float -> Chromaticity
-xyChromaticity x y =
-    Types.Chromaticity { x = x, y = y }
-
-
-{-| Specify chromaticity by providing a [color temperature](https://en.wikipedia.org/wiki/Color_temperature).
-For example, `Scene3d.daylight` is equivalent to
-
-    Scene3d.colorTemperature (Temperature.kelvins 5600)
-
-See [here](https://en.wikipedia.org/wiki/Standard_illuminant#White_points_of_standard_illuminants)
-for the color temperatures of many common sources of light.
-
--}
-colorTemperature : Temperature -> Chromaticity
-colorTemperature temperature =
-    let
-        t =
-            clamp 1667 25000 (Temperature.inKelvins temperature)
-
-        x =
-            if t <= 4000 then
-                (-0.2661239 * 1.0e9 / (t * t * t))
-                    - (0.2343589 * 1.0e6 / (t * t))
-                    + (0.8776956 * 1.0e3 / t)
-                    + 0.17991
-
-            else
-                (-3.0258469 * 1.0e9 / (t * t * t))
-                    + (2.1070379 * 1.0e6 / (t * t))
-                    + (0.2226347 * 1.0e3 / t)
-                    + 0.24039
-
-        y =
-            if t <= 2222 then
-                (-1.1063814 * (x * x * x))
-                    - (1.3481102 * (x * x))
-                    + (2.18555832 * x)
-                    - 0.20219683
-
-            else if t <= 4000 then
-                (-0.9549476 * (x * x * x))
-                    - (1.37418593 * (x * x))
-                    + (2.09137015 * x)
-                    - 0.16748867
-
-            else
-                (3.081758 * (x * x * x))
-                    - (5.8733867 * (x * x))
-                    + (3.75112997 * x)
-                    - 0.37001483
-    in
-    xyChromaticity x y
-
-
-{-| Extract the chromaticity of a given color. Note that this is a lossy
-conversion since it throws away any lightness/brightness information. For
-example, any greyscale color value will have chromaticity equal to
-`Scene3d.daylight` (since that is the standard 'white' chromaticity for the
-sRGB color space).
--}
-chromaticity : Color -> Chromaticity
-chromaticity color =
-    let
-        (Types.CieXyz bigX bigY bigZ) =
-            ColorConversions.colorToCieXyz color
-
-        sum =
-            bigX + bigY + bigZ
-    in
-    xyChromaticity (bigX / sum) (bigY / sum)
-
-
-
 ----- EXPOSURE -----
 
 
@@ -2268,7 +1952,7 @@ unlit arguments =
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
         , exposure = maxLuminance (Luminance.nits 80) -- sRGB standard monitor brightness
-        , whiteBalance = daylight
+        , whiteBalance = Light.daylight
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
@@ -2297,23 +1981,23 @@ sunny :
 sunny arguments =
     let
         sun =
-            directionalLight (castsShadows arguments.shadows)
+            Light.directional (Light.castsShadows arguments.shadows)
                 { direction = arguments.sunlightDirection
                 , intensity = Illuminance.lux 80000
-                , chromaticity = sunlight
+                , chromaticity = Light.sunlight
                 }
 
         sky =
-            overheadLighting
+            Light.overhead
                 { upDirection = arguments.upDirection
-                , chromaticity = blueSky
+                , chromaticity = Light.skylight
                 , intensity = Illuminance.lux 20000
                 }
 
         environment =
-            overheadLighting
+            Light.overhead
                 { upDirection = Direction3d.reverse arguments.upDirection
-                , chromaticity = daylight
+                , chromaticity = Light.daylight
                 , intensity = Illuminance.lux 15000
                 }
 
@@ -2326,7 +2010,7 @@ sunny arguments =
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 15
         , toneMapping = noToneMapping
-        , whiteBalance = daylight
+        , whiteBalance = Light.daylight
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
@@ -2351,9 +2035,9 @@ cloudy arguments =
     toHtml
         { lights =
             oneLight <|
-                softLighting
+                Light.soft
                     { upDirection = arguments.upDirection
-                    , chromaticity = daylight
+                    , chromaticity = Light.daylight
                     , intensityAbove = Illuminance.lux 1000
                     , intensityBelow = Illuminance.lux 200
                     }
@@ -2361,7 +2045,7 @@ cloudy arguments =
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 13
         , toneMapping = noToneMapping
-        , whiteBalance = daylight
+        , whiteBalance = Light.daylight
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
@@ -2385,9 +2069,9 @@ office arguments =
     toHtml
         { lights =
             oneLight <|
-                softLighting
+                Light.soft
                     { upDirection = arguments.upDirection
-                    , chromaticity = fluorescentLighting
+                    , chromaticity = Light.fluorescent
                     , intensityAbove = Illuminance.lux 400
                     , intensityBelow = Illuminance.lux 100
                     }
@@ -2395,7 +2079,7 @@ office arguments =
         , clipDepth = arguments.clipDepth
         , exposure = exposureValue 7
         , toneMapping = noToneMapping
-        , whiteBalance = fluorescentLighting
+        , whiteBalance = Light.fluorescent
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background

@@ -673,19 +673,27 @@ lineSegmentVertices =
 
 triangle :
     Bool
+    -> Bool
     -> Material.Uniform coordinates
     -> Triangle3d Meters coordinates
     -> Entity coordinates
-triangle castsShadow givenMaterial givenTriangle =
+triangle renderObject renderShadow givenMaterial givenTriangle =
     let
         meshEntity =
             triangleMesh givenMaterial givenTriangle
     in
-    if castsShadow then
-        group [ meshEntity, triangleShadow givenTriangle ]
+    case ( renderObject, renderShadow ) of
+        ( True, True ) ->
+            group [ meshEntity, triangleShadow givenTriangle ]
 
-    else
-        meshEntity
+        ( True, False ) ->
+            meshEntity
+
+        ( False, True ) ->
+            triangleShadow givenTriangle
+
+        ( False, False ) ->
+            empty
 
 
 triangleVertices : WebGL.Mesh { triangleVertex : Float }
@@ -730,22 +738,30 @@ triangleVertexPositions givenTriangle =
 
 quad :
     Bool
+    -> Bool
     -> Material.Textured coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Point3d Meters coordinates
     -> Entity coordinates
-quad castsShadow givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
+quad renderObject renderShadow givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
     let
         meshEntity =
             quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint
     in
-    if castsShadow then
-        group [ meshEntity, quadShadow firstPoint secondPoint thirdPoint fourthPoint ]
+    case ( renderObject, renderShadow ) of
+        ( True, True ) ->
+            group [ meshEntity, quadShadow firstPoint secondPoint thirdPoint fourthPoint ]
 
-    else
-        meshEntity
+        ( True, False ) ->
+            meshEntity
+
+        ( False, True ) ->
+            quadShadow firstPoint secondPoint thirdPoint fourthPoint
+
+        ( False, False ) ->
+            empty
 
 
 quadVertices : WebGL.Mesh { quadVertex : Vec3 }
@@ -1106,8 +1122,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     }
 
 
-sphere : Bool -> Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
-sphere castsShadow givenMaterial givenSphere =
+sphere : Bool -> Bool -> Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+sphere renderObject renderShadow givenMaterial givenSphere =
     let
         (Quantity r) =
             Sphere3d.radius givenSphere
@@ -1116,11 +1132,18 @@ sphere castsShadow givenMaterial givenSphere =
             mesh givenMaterial Primitives.sphere
 
         untransformedEntity =
-            if castsShadow then
-                group [ baseEntity, sphereShadow givenSphere ]
+            case ( renderObject, renderShadow ) of
+                ( True, True ) ->
+                    group [ baseEntity, sphereShadow givenSphere ]
 
-            else
-                baseEntity
+                ( True, False ) ->
+                    baseEntity
+
+                ( False, True ) ->
+                    sphereShadow givenSphere
+
+                ( False, False ) ->
+                    empty
     in
     untransformedEntity
         |> transformBy (Transformation.preScale r r r)
@@ -1235,8 +1258,13 @@ buildSphereShadowIndices stripIndex accumulated =
         buildSphereShadowIndices (stripIndex - 1) updated
 
 
-block : Bool -> Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
-block castsShadow givenMaterial givenBlock =
+block :
+    Bool
+    -> Bool
+    -> Material.Uniform coordinates
+    -> Block3d Meters coordinates
+    -> Entity coordinates
+block renderObject renderShadow givenMaterial givenBlock =
     let
         ( Quantity scaleX, Quantity scaleY, Quantity scaleZ ) =
             Block3d.dimensions givenBlock
@@ -1245,19 +1273,31 @@ block castsShadow givenMaterial givenBlock =
             mesh givenMaterial Primitives.block
 
         untransformedEntity =
-            if castsShadow then
-                group [ baseEntity, shadow Primitives.blockShadow ]
+            case ( renderObject, renderShadow ) of
+                ( True, True ) ->
+                    group [ baseEntity, shadow Primitives.blockShadow ]
 
-            else
-                baseEntity
+                ( True, False ) ->
+                    baseEntity
+
+                ( False, True ) ->
+                    shadow Primitives.blockShadow
+
+                ( False, False ) ->
+                    empty
     in
     untransformedEntity
         |> transformBy (Transformation.preScale scaleX scaleY scaleZ)
         |> placeIn (Block3d.axes givenBlock)
 
 
-cylinder : Bool -> Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
-cylinder castsShadow givenMaterial givenCylinder =
+cylinder :
+    Bool
+    -> Bool
+    -> Material.Uniform coordinates
+    -> Cylinder3d Meters coordinates
+    -> Entity coordinates
+cylinder renderObject renderShadow givenMaterial givenCylinder =
     let
         (Quantity radius) =
             Cylinder3d.radius givenCylinder
@@ -1272,19 +1312,31 @@ cylinder castsShadow givenMaterial givenCylinder =
             mesh givenMaterial Primitives.cylinder
 
         untransformedEntity =
-            if castsShadow then
-                group [ baseEntity, shadow Primitives.cylinderShadow ]
+            case ( renderObject, renderShadow ) of
+                ( True, True ) ->
+                    group [ baseEntity, shadow Primitives.cylinderShadow ]
 
-            else
-                baseEntity
+                ( True, False ) ->
+                    baseEntity
+
+                ( False, True ) ->
+                    shadow Primitives.cylinderShadow
+
+                ( False, False ) ->
+                    empty
     in
     untransformedEntity
         |> transformBy (Transformation.preScale radius radius length)
         |> placeIn centerFrame
 
 
-cone : Bool -> Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
-cone castsShadow givenMaterial givenCone =
+cone :
+    Bool
+    -> Bool
+    -> Material.Uniform coordinates
+    -> Cone3d Meters coordinates
+    -> Entity coordinates
+cone renderObject renderShadow givenMaterial givenCone =
     let
         (Quantity radius) =
             Cone3d.radius givenCone
@@ -1299,11 +1351,18 @@ cone castsShadow givenMaterial givenCone =
             mesh givenMaterial Primitives.cone
 
         untransformedEntity =
-            if castsShadow then
-                group [ baseEntity, shadow Primitives.coneShadow ]
+            case ( renderObject, renderShadow ) of
+                ( True, True ) ->
+                    group [ baseEntity, shadow Primitives.coneShadow ]
 
-            else
-                baseEntity
+                ( True, False ) ->
+                    baseEntity
+
+                ( False, True ) ->
+                    shadow Primitives.coneShadow
+
+                ( False, False ) ->
+                    empty
     in
     untransformedEntity
         |> transformBy (Transformation.preScale radius radius length)

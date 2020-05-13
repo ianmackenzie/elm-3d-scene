@@ -23,7 +23,8 @@ import Palette.Tango as Tango
 import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
-import Scene3d exposing (Chromaticity, Entity, Light)
+import Scene3d exposing (Entity)
+import Scene3d.Light as Light exposing (Chromaticity, Light)
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh
 import SketchPlane3d
@@ -181,9 +182,8 @@ pointLight properties =
                 |> Quantity.per (SolidAngle.spats 1)
                 |> Quantity.per surfaceArea
     in
-    ( Scene3d.pointLight (Scene3d.castsShadows True) properties
-    , Scene3d.sphere (Scene3d.castsShadows False)
-        (Material.emissive properties.chromaticity sphereLuminance)
+    ( Light.point (Light.castsShadows True) properties
+    , Scene3d.sphere (Material.emissive properties.chromaticity sphereLuminance)
         (Sphere3d.atPoint properties.position sphereRadius)
     )
 
@@ -194,21 +194,21 @@ view { width, height, elapsedTime, azimuth, elevation } =
         ( firstLight, firstLightBall ) =
             pointLight
                 { position = Point3d.meters -2 -2 3
-                , chromaticity = Scene3d.incandescentLighting
+                , chromaticity = Light.incandescent
                 , intensity = LuminousFlux.lumens 50000
                 }
 
         ( secondLight, secondLightBall ) =
             pointLight
                 { position = Point3d.meters -1 2 5
-                , chromaticity = Scene3d.fluorescentLighting
+                , chromaticity = Light.fluorescent
                 , intensity = LuminousFlux.lumens 50000
                 }
 
         thirdLight =
-            Scene3d.directionalLight (Scene3d.castsShadows True)
+            Light.directional (Light.castsShadows True)
                 { direction = Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -45)
-                , chromaticity = Scene3d.colorTemperature (Temperature.kelvins 2000)
+                , chromaticity = Light.colorTemperature (Temperature.kelvins 2000)
                 , intensity = Illuminance.lux 30
                 }
 
@@ -228,8 +228,7 @@ view { width, height, elapsedTime, azimuth, elevation } =
                 }
 
         plane =
-            Scene3d.quad (Scene3d.castsShadows False)
-                (Material.matte Tango.aluminum2)
+            Scene3d.quad (Material.matte Tango.aluminum2)
                 (Point3d.meters -9 -9 0)
                 (Point3d.meters 9 -9 0)
                 (Point3d.meters 9 9 0)
@@ -251,8 +250,7 @@ view { width, height, elapsedTime, azimuth, elevation } =
             )
 
         firstBox =
-            Scene3d.block (Scene3d.castsShadows True)
-                Materials.aluminum
+            Scene3d.blockWithShadow Materials.aluminum
                 (Block3d.centeredOn Frame3d.atOrigin boxDimensions)
                 |> Scene3d.rotateAround firstBoxRotationAxis
                     (elapsedTime |> Quantity.at firstBoxRotationSpeed)
@@ -267,16 +265,16 @@ view { width, height, elapsedTime, azimuth, elevation } =
             Angle.degrees 30 |> Quantity.per Duration.second
 
         secondBox =
-            Scene3d.block (Scene3d.castsShadows True)
+            Scene3d.blockWithShadow
                 (Material.pbr { baseColor = Tango.skyBlue2, roughness = 0.25, metallic = 0 })
                 (Block3d.centeredOn (Frame3d.atPoint secondBoxCenter) boxDimensions)
                 |> Scene3d.rotateAround secondBoxRotationAxis
                     (elapsedTime |> Quantity.at secondBoxRotationSpeed)
 
         softLighting =
-            Scene3d.softLighting
+            Light.soft
                 { upDirection = Direction3d.positiveZ
-                , chromaticity = Scene3d.fluorescentLighting
+                , chromaticity = Light.fluorescent
                 , intensityAbove = Illuminance.lux 30
                 , intensityBelow = Illuminance.lux 5
                 }
@@ -287,7 +285,7 @@ view { width, height, elapsedTime, azimuth, elevation } =
         , clipDepth = Length.meters 1
         , exposure = Scene3d.exposureValue 6
         , toneMapping = Scene3d.hableFilmicToneMapping
-        , whiteBalance = Scene3d.fluorescentLighting
+        , whiteBalance = Light.fluorescent
         , antialiasing = Scene3d.multisampling
         , dimensions = ( width, height )
         , background = Scene3d.backgroundColor Tango.skyBlue1

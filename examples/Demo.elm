@@ -25,6 +25,7 @@ import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
 import Round
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material
 import SketchPlane3d
 import Sphere3d
@@ -256,7 +257,7 @@ view model =
                 , lights = lights model.lights
                 , exposure = Scene3d.exposureValue model.exposure
                 , toneMapping = Scene3d.reinhardToneMapping model.dynamicRange
-                , whiteBalance = Scene3d.daylight
+                , whiteBalance = Light.daylight
                 , background =
                     Scene3d.backgroundColor
                         (Color.fromHex model.backgroundColor
@@ -324,10 +325,10 @@ lights : List DirectLight -> Scene3d.Lights SceneCoordinates
 lights directLights =
     let
         lightsWithoutShadows =
-            List.filterMap (directLight False Scene3d.neverCastsShadows) directLights
+            List.filterMap (directLight False Light.neverCastsShadows) directLights
 
         lightsWithShadows =
-            List.filterMap (directLight True (Scene3d.castsShadows True)) directLights
+            List.filterMap (directLight True (Light.castsShadows True)) directLights
     in
     case ( List.head lightsWithShadows, lightsWithoutShadows ) of
         ( Nothing, [] ) ->
@@ -358,21 +359,21 @@ lights directLights =
             Scene3d.fourLights light1 light2 light3 light4
 
 
-directLight : Bool -> Scene3d.CastsShadows castsShadows -> DirectLight -> Maybe (Scene3d.Light SceneCoordinates castsShadows)
+directLight : Bool -> Light.CastsShadows castsShadows -> DirectLight -> Maybe (Light SceneCoordinates castsShadows)
 directLight shouldHaveShadows shadows light =
     if (shouldHaveShadows == light.castsShadows) && light.intensity > 0 then
         Just
             (case light.kind of
                 Bulb position ->
-                    Scene3d.pointLight shadows
-                        { chromaticity = Scene3d.colorTemperature (Temperature.kelvins light.temperature)
+                    Light.point shadows
+                        { chromaticity = Light.colorTemperature (Temperature.kelvins light.temperature)
                         , intensity = LuminousFlux.lumens light.intensity
                         , position = position
                         }
 
                 Sun direction ->
-                    Scene3d.directionalLight shadows
-                        { chromaticity = Scene3d.colorTemperature (Temperature.kelvins light.temperature)
+                    Light.directional shadows
+                        { chromaticity = Light.colorTemperature (Temperature.kelvins light.temperature)
                         , intensity = Illuminance.lux light.intensity
                         , direction = direction
                         }
@@ -813,7 +814,7 @@ type EntityCoordinates
 
 floor : Scene3d.Entity EntityCoordinates
 floor =
-    Scene3d.quad (Scene3d.castsShadows False)
+    Scene3d.quad
         (Material.nonmetal
             { baseColor = Color.fromRGB ( 50, 50, 50 )
             , roughness = 0.9
@@ -860,7 +861,7 @@ table =
         (Point3d.centimeters halfWidth halfLength height)
     ]
         |> List.map
-            (Scene3d.block (Scene3d.castsShadows True)
+            (Scene3d.blockWithShadow
                 (Material.nonmetal
                     { baseColor = Color.fromRGB ( 250, 180, 60 )
                     , roughness = 0.8
@@ -917,7 +918,7 @@ chair =
         (Point3d.centimeters (-halfWidth + leg) (-halfDepth + leg) (height - backDistanceFromTop - backHeight))
     ]
         |> List.map
-            (Scene3d.block (Scene3d.castsShadows True)
+            (Scene3d.blockWithShadow
                 (Material.nonmetal
                     { baseColor = Color.fromRGB ( 250, 180, 60 )
                     , roughness = 0.8
@@ -965,13 +966,13 @@ object { kind, position, material, color, roughness } =
 cube : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
 cube material =
     Block3d.from (Point3d.centimeters -7.5 -7.5 15) (Point3d.centimeters 7.5 7.5 0)
-        |> Scene3d.block (Scene3d.castsShadows True) material
+        |> Scene3d.blockWithShadow material
 
 
 sphere : Material.Textured EntityCoordinates -> Scene3d.Entity EntityCoordinates
 sphere material =
     Sphere3d.atPoint (Point3d.centimeters 0 0 7) (Length.centimeters 7)
-        |> Scene3d.sphere (Scene3d.castsShadows True) material
+        |> Scene3d.sphereWithShadow material
 
 
 cone : Material.Uniform EntityCoordinates -> Scene3d.Entity EntityCoordinates
@@ -980,7 +981,7 @@ cone material =
         Point3d.origin
         Direction3d.z
         { radius = Length.centimeters 8, length = Length.centimeters 25 }
-        |> Scene3d.cone (Scene3d.castsShadows True) material
+        |> Scene3d.coneWithShadow material
 
 
 bulb : DirectLight -> Maybe (Scene3d.Entity SceneCoordinates)
@@ -990,9 +991,9 @@ bulb light =
             Just
                 (Scene3d.group
                     [ Sphere3d.atOrigin (Length.centimeters 2)
-                        |> Scene3d.sphere (Scene3d.castsShadows False)
+                        |> Scene3d.sphere
                             (if light.intensity > 600 then
-                                Material.emissive Scene3d.daylight
+                                Material.emissive Light.daylight
                                     (Luminance.nits light.intensity)
 
                              else
@@ -1001,8 +1002,7 @@ bulb light =
                     , Cylinder3d.startingAt (Point3d.centimeters 0 0 2)
                         Direction3d.z
                         { radius = Length.millimeters 2, length = Length.meters 7 }
-                        |> Scene3d.cylinder (Scene3d.castsShadows False)
-                            (Material.matte (Color.fromRGB ( 255, 255, 255 )))
+                        |> Scene3d.cylinder (Material.matte (Color.fromRGB ( 255, 255, 255 )))
                     ]
                     |> Scene3d.placeIn (Frame3d.atPoint position)
                 )

@@ -33,6 +33,7 @@ import Point3d
 import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material
 import Sphere3d
 import Task
@@ -114,7 +115,7 @@ floor =
         { id = Floor
         , entity =
             shape
-                |> Scene3d.block (Scene3d.castsShadows False) (Material.matte Tango.aluminum6)
+                |> Scene3d.block (Material.matte Tango.aluminum6)
                 |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -147,7 +148,7 @@ table =
         entities =
             blocks
                 |> List.map
-                    (Scene3d.block (Scene3d.castsShadows True)
+                    (Scene3d.blockWithShadow
                         (Material.nonmetal
                             { baseColor = Color.fromRGB ( 255, 255, 255 )
                             , roughness = 0.25
@@ -179,16 +180,16 @@ view : Model -> Html Msg
 view { world, width, height } =
     let
         sunlight =
-            Scene3d.directionalLight (Scene3d.castsShadows True)
-                { chromaticity = Scene3d.daylight
+            Light.directional (Light.castsShadows True)
+                { chromaticity = Light.daylight
                 , intensity = Illuminance.lux 10000
                 , direction = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60)
                 }
 
         daylight =
-            Scene3d.overheadLighting
+            Light.overhead
                 { upDirection = Direction3d.z
-                , chromaticity = Scene3d.daylight
+                , chromaticity = Light.daylight
                 , intensity = Illuminance.lux 15000
                 }
 
@@ -216,7 +217,7 @@ view { world, width, height } =
             , lights = Scene3d.twoLights sunlight daylight
             , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
             , toneMapping = Scene3d.noToneMapping
-            , whiteBalance = Scene3d.daylight
+            , whiteBalance = Light.daylight
             , clipDepth = meters 0.1
             , background = Scene3d.transparentBackground
             , entities = drawables
@@ -337,8 +338,7 @@ mouse =
     Body.compound []
         { id = Mouse
         , entity =
-            Scene3d.sphere (Scene3d.castsShadows False)
-                (Material.matte (Color.fromRGB ( 255, 255, 255 )))
+            Scene3d.sphere (Material.matte (Color.fromRGB ( 255, 255, 255 )))
                 (Sphere3d.atOrigin (millimeters 20))
         }
 

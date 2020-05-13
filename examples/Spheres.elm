@@ -22,6 +22,7 @@ import Pixels exposing (pixels)
 import Point3d
 import Quantity
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import SketchPlane3d exposing (SketchPlane3d)
@@ -36,7 +37,7 @@ type World
 
 floor : Scene3d.Entity World
 floor =
-    Scene3d.block (Scene3d.castsShadows False) Materials.aluminum <|
+    Scene3d.block Materials.aluminum <|
         Block3d.with
             { x1 = meters -4
             , x2 = meters 4
@@ -49,25 +50,25 @@ floor =
 
 goldSphere : Scene3d.Entity World
 goldSphere =
-    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.gold) <|
+    Scene3d.sphereWithShadow (Material.uniform Materials.gold) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 2 0)
 
 
 aluminumSphere : Scene3d.Entity World
 aluminumSphere =
-    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.aluminum) <|
+    Scene3d.sphereWithShadow (Material.uniform Materials.aluminum) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters 2 -2 0)
 
 
 blackPlasticSphere : Scene3d.Entity World
 blackPlasticSphere =
-    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.blackPlastic) <|
+    Scene3d.sphereWithShadow (Material.uniform Materials.blackPlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 -2 0)
 
 
 whitePlasticSphere : Scene3d.Entity World
 whitePlasticSphere =
-    Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform Materials.whitePlastic) <|
+    Scene3d.sphereWithShadow (Material.uniform Materials.whitePlastic) <|
         Sphere3d.withRadius (meters 1) (Point3d.meters -2 2 0)
 
 
@@ -86,10 +87,10 @@ camera model =
         }
 
 
-sunlight : Scene3d.Light World Bool
+sunlight : Light World Bool
 sunlight =
-    Scene3d.directionalLight (Scene3d.castsShadows True)
-        { chromaticity = Scene3d.sunlight
+    Light.directional (Light.castsShadows True)
+        { chromaticity = Light.sunlight
         , intensity = lux 20000
         , direction =
             Direction3d.negativeZ
@@ -97,20 +98,20 @@ sunlight =
         }
 
 
-lightBulb : Scene3d.Light World Bool
+lightBulb : Light World Bool
 lightBulb =
-    Scene3d.pointLight (Scene3d.castsShadows True)
-        { chromaticity = Scene3d.incandescentLighting
+    Light.point (Light.castsShadows True)
+        { chromaticity = Light.incandescent
         , intensity = LuminousFlux.lumens 3000000
         , position = Point3d.meters 0 0 3
         }
 
 
-overheadLighting : Scene3d.Light World Never
+overheadLighting : Light World Never
 overheadLighting =
-    Scene3d.overheadLighting
+    Light.overhead
         { upDirection = Direction3d.positiveZ
-        , chromaticity = Scene3d.fluorescentLighting
+        , chromaticity = Light.fluorescent
         , intensity = Illuminance.lux 9000
         }
 
@@ -320,7 +321,7 @@ view model =
 
                         HableFilmic ->
                             Scene3d.hableFilmicToneMapping
-                , whiteBalance = Scene3d.fluorescentLighting
+                , whiteBalance = Light.fluorescent
                 , background = Scene3d.transparentBackground
                 , entities =
                     [ goldSphere
@@ -328,8 +329,7 @@ view model =
                     , blackPlasticSphere
                     , whitePlasticSphere
                     , floor
-                    , Scene3d.quad (Scene3d.castsShadows True)
-                        (Material.uniform Materials.aluminum)
+                    , Scene3d.quadWithShadow (Material.uniform Materials.aluminum)
                         (Point3d.meters 1 1 -0.5)
                         (Point3d.meters -1 1 0)
                         (Point3d.meters -1 -1 0.5)

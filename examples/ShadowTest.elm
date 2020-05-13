@@ -13,6 +13,7 @@ import Pixels
 import Point3d
 import Quantity
 import Scene3d
+import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material
 import Sphere3d
 import Viewpoint3d exposing (Viewpoint3d)
@@ -31,15 +32,14 @@ main =
         , lights = Scene3d.twoLights sunlight daylight
         , exposure = Scene3d.maxLuminance (Luminance.nits 5000)
         , toneMapping = Scene3d.noToneMapping
-        , whiteBalance = Scene3d.daylight
+        , whiteBalance = Light.daylight
         , background = Scene3d.transparentBackground
         , clipDepth = Length.centimeters 0.5
         , entities =
-            [ Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform ballMaterial) <|
+            [ Scene3d.sphereWithShadow (Material.uniform ballMaterial) <|
                 Sphere3d.withRadius (Length.meters 0.1)
                     (Point3d.fromMeters { x = 30, y = 30, z = 0.2 })
-            , Scene3d.quad (Scene3d.castsShadows False)
-                (Material.uniform grassMaterial)
+            , Scene3d.quad (Material.uniform grassMaterial)
                 (Point3d.meters 4 4 0)
                 (Point3d.meters 104 4 0)
                 (Point3d.meters 104 64 0)
@@ -48,13 +48,9 @@ main =
                 (Point3d.fromMeters { x = 20, y = 40, z = 0 })
                 (Point3d.fromMeters { x = 20, y = 40, z = 2 })
                 (Length.meters 1)
-                |> Maybe.map
-                    (Scene3d.cylinder
-                        (Scene3d.castsShadows True)
-                        (Material.uniform playerMaterialA)
-                    )
+                |> Maybe.map (Scene3d.cylinderWithShadow (Material.uniform playerMaterialA))
                 |> Maybe.withDefault
-                    (Scene3d.sphere (Scene3d.castsShadows True) (Material.uniform ballMaterial) <|
+                    (Scene3d.sphereWithShadow (Material.uniform ballMaterial) <|
                         Sphere3d.withRadius (Length.meters 0.35)
                             (Point3d.fromMeters { x = 20, y = 20, z = 0 })
                     )
@@ -71,20 +67,20 @@ viewpoint =
         }
 
 
-sunlight : Scene3d.Light WorldCoordinates Bool
+sunlight : Light WorldCoordinates Bool
 sunlight =
-    Scene3d.directionalLight (Scene3d.castsShadows True)
-        { chromaticity = Scene3d.daylight
+    Light.directional (Light.castsShadows True)
+        { chromaticity = Light.daylight
         , intensity = Illuminance.lux 5000
         , direction = Direction3d.yz (Angle.degrees -150)
         }
 
 
-daylight : Scene3d.Light WorldCoordinates Never
+daylight : Light WorldCoordinates Never
 daylight =
-    Scene3d.overheadLighting
+    Light.overhead
         { upDirection = Direction3d.positiveZ
-        , chromaticity = Scene3d.daylight
+        , chromaticity = Light.daylight
         , intensity = Illuminance.lux 15000
         }
 
