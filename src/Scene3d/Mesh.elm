@@ -12,11 +12,11 @@ module Scene3d.Mesh exposing
 [`Scene3d.mesh`](Scene3d#mesh) by applying a desired [material](Scene3d-Material).
 
 **IMPORTANT**: `Mesh` (and `Shadow`) values should _not_ be created dynamically
-in your `view` function, since this can lead to low frame rates or even
-out-of-memory errors. Instead, they should be created only as needed (in your
-`init` or `update` function), stored in your model and then reused from frame to
-frame. In some cases, you can simply create meshes as top-level constants in
-your program.
+in your `view` function, since this is a relatively expensive operations can
+lead to low frame rates or even out-of-memory errors. Instead, they should be
+created only as needed (in your `init` or `update` function), stored in your
+model and then reused from frame to frame. In some cases, you can simply create
+meshes as top-level constants in your program.
 
 Note that this does _not_ mean that objects can't move around or change color -
 you can freely change the material applied to a mesh from frame to frame, and
