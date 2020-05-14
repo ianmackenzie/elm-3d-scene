@@ -575,10 +575,8 @@ type alias Vertex =
 
 duckTransform : Entity WorldCoordinates -> Entity WorldCoordinates
 duckTransform =
-    Scene3d.scaleAbout Point3d.origin 0.05
-        >> Scene3d.rotateAround Axis3d.z (Angle.degrees 90)
-        >> Scene3d.translateIn Direction3d.x (Length.meters 0.5)
-        >> Scene3d.translateIn Direction3d.negativeZ (Length.centimeters 5)
+    Scene3d.scaleAbout Point3d.origin 1.75
+        >> Scene3d.rotateAround Axis3d.x (Angle.degrees 90)
 
 
 plainEntity :
@@ -836,10 +834,10 @@ init flags initialUrl navigationKey =
             , verticalWrap = WebGL.Texture.repeat
             , flipY = True
             }
-            "https://ianmackenzie.github.io/elm-3d-scene/examples/duck.jpg"
+            "https://ianmackenzie.github.io/elm-3d-scene/examples/duckling.png"
             |> Task.attempt DuckTextureResponse
         , Http.get
-            { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/duck.obj"
+            { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/duckling-medpoly.obj"
             , expect = Http.expectString DuckMeshResponse
             }
         ]
