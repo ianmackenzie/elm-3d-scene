@@ -768,19 +768,13 @@ type alias LoadedModel =
     , metallicTexture : Material.Texture Float
     , duckTexture : Material.Texture Color
     , trianglesMesh : Mesh.Plain WorldCoordinates
-    , trianglesShadow : Mesh.Shadow WorldCoordinates
     , facetsMesh : Mesh.Uniform WorldCoordinates
-    , facetsShadow : Mesh.Shadow WorldCoordinates
     , plainMesh : Mesh.Plain WorldCoordinates
-    , plainShadow : Mesh.Shadow WorldCoordinates
     , uniformMesh : Mesh.Uniform WorldCoordinates
-    , uniformShadow : Mesh.Shadow WorldCoordinates
     , unlitMesh : Mesh.Unlit WorldCoordinates
-    , unlitShadow : Mesh.Shadow WorldCoordinates
     , texturedMesh : Mesh.Textured WorldCoordinates
-    , texturedShadow : Mesh.Shadow WorldCoordinates
     , texturedFacetsMesh : Mesh.Textured WorldCoordinates
-    , texturedFacetsShadow : Mesh.Shadow WorldCoordinates
+    , shadow : Mesh.Shadow WorldCoordinates
     }
 
 
@@ -1350,19 +1344,13 @@ checkIfLoaded loadingModel =
             , metallicTexture = metallicTexture
             , duckTexture = duckTexture
             , trianglesMesh = trianglesMesh
-            , trianglesShadow = Mesh.shadow trianglesMesh
             , facetsMesh = facetsMesh
-            , facetsShadow = Mesh.shadow facetsMesh
             , plainMesh = plainMesh
-            , plainShadow = Mesh.shadow plainMesh
             , uniformMesh = uniformMesh
-            , uniformShadow = Mesh.shadow uniformMesh
             , unlitMesh = unlitMesh
-            , unlitShadow = Mesh.shadow unlitMesh
             , texturedMesh = texturedMesh
-            , texturedShadow = Mesh.shadow texturedMesh
             , texturedFacetsMesh = texturedFacetsMesh
-            , texturedFacetsShadow = Mesh.shadow texturedFacetsMesh
+            , shadow = Mesh.shadow trianglesMesh
             }
         )
         |> Maybe.andMap loadingModel.testCases
@@ -1450,25 +1438,25 @@ entity model testCase =
                     Just (polylineEntity testCase material)
 
                 Triangles ->
-                    Just (plainEntity testCase material model.trianglesMesh model.trianglesShadow)
+                    Just (plainEntity testCase material model.trianglesMesh model.shadow)
 
                 Facets ->
-                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.shadow)
 
                 Plain ->
-                    Just (plainEntity testCase material model.plainMesh model.plainShadow)
+                    Just (plainEntity testCase material model.plainMesh model.shadow)
 
                 Uniform ->
-                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.shadow)
 
                 Unlit ->
-                    Just (unlitEntity testCase material model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase material model.unlitMesh model.shadow)
 
                 Textured ->
-                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase material)
@@ -1510,25 +1498,25 @@ entity model testCase =
                     Just (polylineEntity testCase material)
 
                 Triangles ->
-                    Just (plainEntity testCase material model.trianglesMesh model.trianglesShadow)
+                    Just (plainEntity testCase material model.trianglesMesh model.shadow)
 
                 Facets ->
-                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.shadow)
 
                 Plain ->
-                    Just (plainEntity testCase material model.plainMesh model.plainShadow)
+                    Just (plainEntity testCase material model.plainMesh model.shadow)
 
                 Uniform ->
-                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.shadow)
 
                 Unlit ->
-                    Just (unlitEntity testCase material model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase material model.unlitMesh model.shadow)
 
                 Textured ->
-                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase material)
@@ -1573,22 +1561,22 @@ entity model testCase =
                     Nothing
 
                 Facets ->
-                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.shadow)
 
                 Plain ->
                     Nothing
 
                 Uniform ->
-                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.shadow)
 
                 Unlit ->
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase material)
@@ -1636,22 +1624,22 @@ entity model testCase =
                     Nothing
 
                 Facets ->
-                    Just (uniformEntity testCase material model.facetsMesh model.facetsShadow)
+                    Just (uniformEntity testCase material model.facetsMesh model.shadow)
 
                 Plain ->
                     Nothing
 
                 Uniform ->
-                    Just (uniformEntity testCase material model.uniformMesh model.uniformShadow)
+                    Just (uniformEntity testCase material model.uniformMesh model.shadow)
 
                 Unlit ->
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase material model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase material model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase material model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase material model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase material)
@@ -1708,13 +1696,13 @@ entity model testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase duckMaterial model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase duckMaterial model.unlitMesh model.shadow)
 
                 Textured ->
-                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
@@ -1771,13 +1759,13 @@ entity model testCase =
                     Nothing
 
                 Unlit ->
-                    Just (unlitEntity testCase duckMaterial model.unlitMesh model.unlitShadow)
+                    Just (unlitEntity testCase duckMaterial model.unlitMesh model.shadow)
 
                 Textured ->
-                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
@@ -1837,10 +1825,10 @@ entity model testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
@@ -1908,10 +1896,10 @@ entity model testCase =
                     Nothing
 
                 Textured ->
-                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.texturedShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedMesh model.shadow)
 
                 TexturedFacets ->
-                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.texturedFacetsShadow)
+                    Just (texturedEntity testCase duckMaterial model.texturedFacetsMesh model.shadow)
 
                 Quad ->
                     Just (quadEntity testCase metalMaterial)
