@@ -963,7 +963,7 @@ update msg model =
         DuckMeshResponse (Ok fileContents) ->
             case model of
                 Loading loadingModel ->
-                    ( checkIfLoaded { loadingModel | duckMesh = Just (parseObj fileContents) }
+                    ( checkIfLoaded { loadingModel | duckMesh = Just (trace "Parsing OBJ" (\() -> parseObj fileContents)) }
                     , Cmd.none
                     )
 
@@ -1108,6 +1108,23 @@ update msg model =
                         | toneMapping = toggleToneMapping testCase.toneMapping
                     }
                 )
+
+
+trace : String -> (() -> a) -> a
+trace description callback =
+    let
+        _ =
+            Debug.log "Starting" description
+    in
+    let
+        result =
+            callback ()
+    in
+    let
+        _ =
+            Debug.log "Finished" description
+    in
+    result
 
 
 parseObj : String -> TriangularMesh Vertex
