@@ -367,9 +367,9 @@ compose t1 t2 =
     , kx = t1.kx * t2.ix + t1.ky * t2.jx + t1.kz * t2.kx
     , ky = t1.kx * t2.iy + t1.ky * t2.jy + t1.kz * t2.ky
     , kz = t1.kx * t2.iz + t1.ky * t2.jz + t1.kz * t2.kz
-    , px = t2.px + t1.px * t2.ix + t1.py * t2.jx + t1.pz * t2.kx
-    , py = t2.py + t1.px * t2.iy + t1.py * t2.jy + t1.pz * t2.ky
-    , pz = t2.pz + t1.px * t2.iz + t1.py * t2.jz + t1.pz * t2.kz
+    , px = t2.px + (t1.px * t2.ix + t1.py * t2.jx + t1.pz * t2.kx) * t2.scale
+    , py = t2.py + (t1.px * t2.iy + t1.py * t2.jy + t1.pz * t2.ky) * t2.scale
+    , pz = t2.pz + (t1.px * t2.iz + t1.py * t2.jz + t1.pz * t2.kz) * t2.scale
     , scale = t1.scale * t2.scale
     , isRightHanded = t1.isRightHanded == t2.isRightHanded
     }
