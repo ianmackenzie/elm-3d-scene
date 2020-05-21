@@ -38,9 +38,7 @@ type alias Transformation =
     , px : Float
     , py : Float
     , pz : Float
-    , scaleX : Float
-    , scaleY : Float
-    , scaleZ : Float
+    , scale : Float
     , isRightHanded : Bool
     }
 

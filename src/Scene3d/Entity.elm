@@ -1146,7 +1146,7 @@ sphere renderObject renderShadow givenMaterial givenSphere =
                     empty
     in
     untransformedEntity
-        |> transformBy (Transformation.preScale r r r)
+        |> preScale ( r, r, r )
         |> translateBy (Vector3d.from Point3d.origin (Sphere3d.centerPoint givenSphere))
 
 
@@ -1287,7 +1287,7 @@ block renderObject renderShadow givenMaterial givenBlock =
                     empty
     in
     untransformedEntity
-        |> transformBy (Transformation.preScale scaleX scaleY scaleZ)
+        |> preScale ( scaleX, scaleY, scaleZ )
         |> placeIn (Block3d.axes givenBlock)
 
 
@@ -1326,7 +1326,7 @@ cylinder renderObject renderShadow givenMaterial givenCylinder =
                     empty
     in
     untransformedEntity
-        |> transformBy (Transformation.preScale radius radius length)
+        |> preScale ( radius, radius, length )
         |> placeIn centerFrame
 
 
@@ -1365,7 +1365,7 @@ cone renderObject renderShadow givenMaterial givenCone =
                     empty
     in
     untransformedEntity
-        |> transformBy (Transformation.preScale radius radius length)
+        |> preScale ( radius, radius, length )
         |> placeIn baseFrame
 
 
@@ -1869,6 +1869,68 @@ collectNodes drawables accumulated =
 group : List (Entity coordinates) -> Entity coordinates
 group drawables =
     Types.Entity (Group (collectNodes drawables []))
+
+
+preScale : ( Float, Float, Float ) -> Entity coordinates -> Entity coordinates
+preScale scalingFactors (Types.Entity node) =
+    Types.Entity (preScaleNode scalingFactors node)
+
+
+preScaleNode : ( Float, Float, Float ) -> Types.Node -> Types.Node
+preScaleNode scalingFactors node =
+    case node of
+        EmptyNode ->
+            EmptyNode
+
+        Transformed transformation underlyingNode ->
+            Transformed transformation (preScaleNode scalingFactors underlyingNode)
+
+        MeshNode bounds drawFunction ->
+            MeshNode (preScaleBounds scalingFactors bounds)
+                (preScaleDrawFunction scalingFactors drawFunction)
+
+        PointNode _ _ ->
+            node
+
+        ShadowNode drawFunction ->
+            ShadowNode (preScaleDrawFunction scalingFactors drawFunction)
+
+        Group childNodes ->
+            Group (List.map (preScaleNode scalingFactors) childNodes)
+
+
+preScaleBounds : ( Float, Float, Float ) -> Bounds -> Bounds
+preScaleBounds ( scaleX, scaleY, scaleZ ) bounds =
+    let
+        originalCenterPoint =
+            bounds.centerPoint
+    in
+    { centerPoint =
+        { x = scaleX * originalCenterPoint.x
+        , y = scaleY * originalCenterPoint.y
+        , z = scaleZ * originalCenterPoint.z
+        }
+    , halfX = scaleX * bounds.halfX
+    , halfY = scaleY * bounds.halfY
+    , halfZ = scaleZ * bounds.halfZ
+    }
+
+
+preScaleDrawFunction : ( Float, Float, Float ) -> Types.DrawFunction lights -> Types.DrawFunction lights
+preScaleDrawFunction ( scaleX, scaleY, scaleZ ) originalDrawFunction sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings =
+    let
+        { x, y, z, w } =
+            Math.Vector4.toRecord modelScale
+
+        updatedModelScale =
+            Math.Vector4.fromRecord
+                { x = x * scaleX
+                , y = y * scaleY
+                , z = z * scaleZ
+                , w = w
+                }
+    in
+    originalDrawFunction sceneProperties updatedModelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings
 
 
 transformBy : Transformation -> Entity coordinates1 -> Entity coordinates2

@@ -953,9 +953,9 @@ createRenderPass sceneProperties viewMatrix projectionMatrix transformation draw
 
         modelScale =
             Math.Vector4.vec4
-                transformation.scaleX
-                transformation.scaleY
-                transformation.scaleZ
+                transformation.scale
+                transformation.scale
+                transformation.scale
                 normalSign
     in
     drawFunction
@@ -1108,8 +1108,8 @@ call renderPasses lights settings =
     List.map (\renderPass -> renderPass lights settings) renderPasses
 
 
-updateViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Float -> Float -> Bounds -> Maybe (BoundingBox3d Meters viewCoordinates) -> Maybe (BoundingBox3d Meters viewCoordinates)
-updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current =
+updateViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Bounds -> Maybe (BoundingBox3d Meters viewCoordinates) -> Maybe (BoundingBox3d Meters viewCoordinates)
+updateViewBounds viewFrame scale modelBounds current =
     let
         i =
             Direction3d.unwrap (Frame3d.xDirection viewFrame)
@@ -1121,13 +1121,13 @@ updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current =
             Direction3d.unwrap (Frame3d.zDirection viewFrame)
 
         modelXDimension =
-            2 * modelBounds.halfX * scaleX
+            2 * modelBounds.halfX * scale
 
         modelYDimension =
-            2 * modelBounds.halfY * scaleY
+            2 * modelBounds.halfY * scale
 
         modelZDimension =
-            2 * modelBounds.halfZ * scaleZ
+            2 * modelBounds.halfZ * scale
 
         xDimension =
             abs (modelXDimension * i.x) + abs (modelYDimension * i.y) + abs (modelZDimension * i.z)
@@ -1151,50 +1151,42 @@ updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current =
             Just nodeBounds
 
 
-getViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Float -> Float -> Maybe (BoundingBox3d Meters viewCoordinates) -> List Node -> Maybe (BoundingBox3d Meters viewCoordinates)
-getViewBounds viewFrame scaleX scaleY scaleZ current nodes =
+getViewBounds : Frame3d Meters modelCoordinates { defines : viewCoordinates } -> Float -> Maybe (BoundingBox3d Meters viewCoordinates) -> List Node -> Maybe (BoundingBox3d Meters viewCoordinates)
+getViewBounds viewFrame scale current nodes =
     case nodes of
         first :: rest ->
             case first of
                 Types.EmptyNode ->
-                    getViewBounds viewFrame scaleX scaleY scaleZ current rest
+                    getViewBounds viewFrame scale current rest
 
                 Types.MeshNode modelBounds _ ->
                     let
                         updated =
-                            updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current
+                            updateViewBounds viewFrame scale modelBounds current
                     in
-                    getViewBounds viewFrame scaleX scaleY scaleZ updated rest
+                    getViewBounds viewFrame scale updated rest
 
                 Types.ShadowNode _ ->
-                    getViewBounds viewFrame scaleX scaleY scaleZ current rest
+                    getViewBounds viewFrame scale current rest
 
                 Types.PointNode modelBounds _ ->
                     let
                         updated =
-                            updateViewBounds viewFrame scaleX scaleY scaleZ modelBounds current
+                            updateViewBounds viewFrame scale modelBounds current
                     in
-                    getViewBounds viewFrame scaleX scaleY scaleZ updated rest
+                    getViewBounds viewFrame scale updated rest
 
                 Types.Group childNodes ->
                     getViewBounds
                         viewFrame
-                        scaleX
-                        scaleY
-                        scaleZ
-                        (getViewBounds viewFrame scaleX scaleY scaleZ current childNodes)
+                        scale
+                        (getViewBounds viewFrame scale current childNodes)
                         rest
 
                 Types.Transformed transformation childNode ->
                     let
-                        localScaleX =
-                            scaleX * transformation.scaleX
-
-                        localScaleY =
-                            scaleY * transformation.scaleY
-
-                        localScaleZ =
-                            scaleZ * transformation.scaleZ
+                        localScale =
+                            scale * transformation.scale
 
                         localViewFrame =
                             viewFrame
@@ -1202,17 +1194,8 @@ getViewBounds viewFrame scaleX scaleY scaleZ current nodes =
                     in
                     getViewBounds
                         viewFrame
-                        scaleX
-                        scaleY
-                        scaleZ
-                        (getViewBounds
-                            localViewFrame
-                            localScaleX
-                            localScaleY
-                            localScaleZ
-                            current
-                            [ childNode ]
-                        )
+                        scale
+                        (getViewBounds localViewFrame localScale current [ childNode ])
                         rest
 
         [] ->
@@ -1390,7 +1373,7 @@ toWebGLEntities arguments =
                 , zDirection = Direction3d.reverse (Viewpoint3d.viewDirection viewpoint)
                 }
     in
-    case getViewBounds viewFrame 1 1 1 Nothing [ rootNode ] of
+    case getViewBounds viewFrame 1 Nothing [ rootNode ] of
         Nothing ->
             -- Empty view bounds means there's nothing to render!
             []
