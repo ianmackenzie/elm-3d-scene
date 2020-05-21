@@ -46,20 +46,15 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    let
-        defaultTextureOptions =
-            Texture.defaultOptions
-
-        textureOptions =
-            { defaultTextureOptions | minify = Texture.linear }
-    in
     ( { azimuth = Angle.degrees 45
       , elevation = Angle.degrees 30
       , orbiting = False
       , texture = Nothing
       }
     , Task.attempt GotTexture
-        (Material.loadWith textureOptions "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/512px-Elm_logo.svg.png")
+        (Material.loadWith Material.bilinearFiltering
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/512px-Elm_logo.svg.png"
+        )
     )
 
 
