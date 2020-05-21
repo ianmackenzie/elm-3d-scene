@@ -393,6 +393,7 @@ placeIn frame =
 
 compose : Transformation -> Transformation -> Transformation
 compose t1 t2 =
+    -- t2 * t1 in matrix form
     { ix = t1.ix * t2.ix + t1.iy * t2.jx + t1.iz * t2.kx
     , iy = t1.ix * t2.iy + t1.iy * t2.jy + t1.iz * t2.ky
     , iz = t1.ix * t2.iz + t1.iy * t2.jz + t1.iz * t2.kz
