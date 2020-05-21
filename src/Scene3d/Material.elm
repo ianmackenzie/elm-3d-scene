@@ -53,16 +53,16 @@ for example, the return type of `Material.matte` is
 
     Material coordinates { a | normals : () }
 
-This makes most code simpler (it means that such a material can work with any
-kind of mesh that has normal vectors, even if that mesh _also_ has texture
-coordinates) but makes it tricky to store a `Material` value in your own data
-structures without those data structures _also_ needing a type parameter. The
-`coordinates` type parameter can usually be set to just `WorldCoordinates` (a
-type you will need to define yourself), but the `a` is a bit trickier.
+This makes most code simpler (it means that such a material can work with _any_
+kind of mesh that has normal vectors, even if for example that mesh also has
+texture coordinates) but makes it tricky to store a `Material` value in your own
+data structures without those data structures _also_ needing a type parameter.
+The `coordinates` type parameter can usually be set to just `WorldCoordinates`
+(a type you will need to define yourself), but the `a` is a bit trickier.
 
 The type aliases and functions below help deal with this problem in a convenient
 way. To store a material in a data structure, you can use one of the type
-aliases below. For example, the material above might be stored as a
+aliases. For example, the material above might be stored as a
 
     Material.Uniform WorldCoordinates
 
