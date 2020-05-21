@@ -161,8 +161,8 @@ nonmetal { baseColor, roughness } =
 
 {-| A custom PBR material with a `metallic` parameter that can be anywhere
 between 0 and 1. Values in between 0 and 1 can be used to approximate things
-dusty metal, where a surface can be thought of as partially metal and partially
-non-metal.
+like dusty metal, where a surface can be thought of as partially metal and
+partially non-metal.
 -}
 pbr :
     { baseColor : Color, roughness : Float, metallic : Float }
