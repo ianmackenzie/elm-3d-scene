@@ -1120,6 +1120,18 @@ updateViewBounds viewFrame scale modelBounds current =
         k =
             Direction3d.unwrap (Frame3d.zDirection viewFrame)
 
+        originalCenter =
+            modelBounds.centerPoint
+
+        modelCenterX =
+            originalCenter.x * scale
+
+        modelCenterY =
+            originalCenter.y * scale
+
+        modelCenterZ =
+            originalCenter.z * scale
+
         modelXDimension =
             2 * modelBounds.halfX * scale
 
@@ -1141,7 +1153,7 @@ updateViewBounds viewFrame scale modelBounds current =
         nodeBounds =
             BoundingBox3d.withDimensions
                 ( Quantity xDimension, Quantity yDimension, Quantity zDimension )
-                (Point3d.relativeTo viewFrame (Point3d.fromMeters modelBounds.centerPoint))
+                (Point3d.relativeTo viewFrame (Point3d.meters modelCenterX modelCenterY modelCenterZ))
     in
     case current of
         Just currentBounds ->
