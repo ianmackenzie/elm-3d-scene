@@ -36,8 +36,8 @@ common variant of PBR where materials have three main parameters:
 
 # Textured materials
 
-Textured materials behave just like their non-textured versions above, but
-require a mesh that has [UV](https://learnopengl.com/Getting-started/Textures)
+[Textured](https://en.wikipedia.org/wiki/Texture_mapping) materials behave just
+like their non-textured versions above, but require a mesh that has [UV](https://learnopengl.com/Getting-started/Textures)
 (texture) coordinates. Color, roughness and metallicness can then be controlled
 by a texture image instead of being restricted to constant values.
 
