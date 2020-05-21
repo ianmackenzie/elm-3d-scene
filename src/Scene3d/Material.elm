@@ -186,8 +186,8 @@ type alias Texture value =
 
 {-| A special texture that has the same value everywhere. This can be useful
 with materials like [`texturedPbr`](#texturedPbr) which take multiple `Texture`
-arguments; sometimes you might want to do something like use an actual texture
-for color but a constant value for roughness (or vice versa).
+arguments; sometimes you might want to use an actual texture for color but a
+constant value for roughness (or vice versa).
 -}
 constant : value -> Texture value
 constant givenValue =
