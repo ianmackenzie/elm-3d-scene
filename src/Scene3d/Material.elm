@@ -2,8 +2,9 @@ module Scene3d.Material exposing
     ( Material
     , color, emissive, matte
     , metal, nonmetal, pbr
-    , Texture, constant, load, loadWith
+    , Texture, constant, load
     , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
+    , loadWith, nearestNeighborFiltering, bilinearFiltering, trilinearFiltering
     , Plain, Unlit, Uniform, Textured
     , plain, unlit, uniform
     )
@@ -41,9 +42,14 @@ like their non-textured versions above, but require a mesh that has [UV](https:/
 (texture) coordinates. Color, roughness and metallicness can then be controlled
 by a texture image instead of being restricted to constant values.
 
-@docs Texture, constant, load, loadWith
+@docs Texture, constant, load
 
 @docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
+
+
+## Customized textures
+
+@docs loadWith, nearestNeighborFiltering, bilinearFiltering, trilinearFiltering
 
 
 # Type annotations
@@ -198,16 +204,26 @@ constant givenValue =
 as either a `Texture Color` _or_ a `Texture Float` - if used as a
 `Texture Float` then it will be the greyscale value of each pixel that is used
 (more precisely, its [luminance](https://en.wikipedia.org/wiki/Relative_luminance)).
+
+The loaded texture will use [bilinear texture filtering](#bilinearFiltering). To
+use nearest-neighbor filtering, trilinear filtering or to customize other
+texture options, use [`loadWith`](#loadWith) instead.
+
 -}
 load : String -> Task WebGL.Texture.Error (Texture value)
 load url =
-    loadWith WebGL.Texture.defaultOptions url
+    loadWith bilinearFiltering url
 
 
-{-| Load a texture with particular [options](https://package.elm-lang.org/packages/elm-explorations/webgl/latest/WebGL-Texture#Options).
-If you notice textures getting too jagged or too blurry when zooming in/out or
-viewing them from a shallow angle, try different combinations of the `minify`
-and `magnify` parameters.
+{-| Load a texture with particular [options](https://package.elm-lang.org/packages/elm-explorations/webgl/latest/WebGL-Texture#Options),
+which control things like what form of [texture filtering](https://en.wikipedia.org/wiki/Texture_filtering)
+is used and how out-of-range texture coordinates are interpreted (clamped,
+wrapped around, etc.).
+
+This module contains a few sensible defaults ([`nearestNeighborFiltering`](#nearestNeighborFiltering),
+[`bilinearFiltering`](#bilinearFiltering), and [`trilinearFiltering`](#trilinearFiltering))
+but you can directly construct your own custom options record if desired.
+
 -}
 loadWith : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
 loadWith options url =
@@ -225,6 +241,78 @@ loadImpl options url =
                     , data = data
                     }
             )
+
+
+{-| Don't interpolate between texture pixels at all when rendering; each
+on-screen pixel will simply get the color of the _nearest_ texture pixel. This
+can be useful if you're deliberately going for a 'pixelated' look and want
+texture pixels to show up exactly on screen without any blurring.
+
+    nearestNeighborFiltering =
+        { minify = WebGL.Texture.nearest
+        , magnify = WebGL.Texture.nearest
+        , horizontalWrap = WebGL.Texture.repeat
+        , verticalWrap = WebGL.Texture.repeat
+        , flipY = True
+        }
+
+-}
+nearestNeighborFiltering : WebGL.Texture.Options
+nearestNeighborFiltering =
+    { minify = WebGL.Texture.nearest
+    , magnify = WebGL.Texture.nearest
+    , horizontalWrap = WebGL.Texture.repeat
+    , verticalWrap = WebGL.Texture.repeat
+    , flipY = True
+    }
+
+
+{-| Apply some simple texture smoothing; each on-screen pixel will be a weighted
+average of the four closest texture pixels. No [mipmapping](https://en.wikipedia.org/wiki/Mipmap)
+is used, so some pixelation/aliasing may still occur especially for far-away
+objects where one texture pixel is much smaller than one screen pixel.
+
+    bilinearFiltering =
+        { minify = WebGL.Texture.linear
+        , magnify = WebGL.Texture.linear
+        , horizontalWrap = WebGL.Texture.repeat
+        , verticalWrap = WebGL.Texture.repeat
+        , flipY = True
+        }
+
+-}
+bilinearFiltering : WebGL.Texture.Options
+bilinearFiltering =
+    { minify = WebGL.Texture.linear
+    , magnify = WebGL.Texture.linear
+    , horizontalWrap = WebGL.Texture.repeat
+    , verticalWrap = WebGL.Texture.repeat
+    , flipY = True
+    }
+
+
+{-| Interpolate between nearby texture pixels as with bilinear filtering, but
+_also_ interpolate between the two nearest [mipmap](https://en.wikipedia.org/wiki/Mipmap)
+levels. This will generally give the smoothest possible appearance, but may lead
+to excessive blurriness especially when viewing surfaces at very shallow angles.
+
+    trilinearFiltering =
+        { minify = WebGL.Texture.linearMipmapLinear
+        , magnify = WebGL.Texture.linear
+        , horizontalWrap = WebGL.Texture.repeat
+        , verticalWrap = WebGL.Texture.repeat
+        , flipY = True
+        }
+
+-}
+trilinearFiltering : WebGL.Texture.Options
+trilinearFiltering =
+    { minify = WebGL.Texture.linearMipmapLinear
+    , magnify = WebGL.Texture.linear
+    , horizontalWrap = WebGL.Texture.repeat
+    , verticalWrap = WebGL.Texture.repeat
+    , flipY = True
+    }
 
 
 map : (a -> b) -> Texture a -> Texture b
