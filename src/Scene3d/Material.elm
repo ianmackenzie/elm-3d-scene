@@ -118,6 +118,10 @@ type alias Material coordinates attributes =
 {-| A simple constant color material. This material can be applied to any
 object and ignores lighting entirely - the entire object will have exactly the
 given color regardless of lights or scene exposure/white balance settings.
+Here's a rubber duck model with a constant blue color:
+
+![Duckling with constant color](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/constant-color.png)
+
 -}
 color : Color -> Material coordinates attributes
 color givenColor =
@@ -128,7 +132,13 @@ color givenColor =
 material which reflects light equally in all directions. Lambertian materials
 are faster to render than physically-based materials like `Material.metal` or
 `Material.nonmetal`, so consider using them for large surfaces like floors that
-don't need to be shiny.
+don't need to be shiny:
+
+![Matte duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/matte.png)
+
+(Note that this doesn't appear to be quite the same blue as before, since the
+lights themselves are colored.)
+
 -}
 matte : Color -> Material coordinates { a | normals : () }
 matte materialColor =
@@ -153,14 +163,35 @@ emissive givenChromaticity brightness =
 
 {-| A metal material such as steel, aluminum, gold etc. See [here](https://docs.unrealengine.com/en-US/Engine/Rendering/Materials/PhysicallyBased/index.html)
 and [here](https://www.chaosgroup.com/blog/understanding-metalness) for base
-colors of different metals.
+colors of different metals. Here's what 'blue metal' might look like:
+
+![Rough metal duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/rough-metal.png)
+
+As with nonmetals, roughness can be decreased to get a shinier surface:
+
+![Shiny metal duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/shiny-metal.png)
+
+Note that metals are generally more sensitive to light direction than nonmetals,
+so if you only have directional and/or point lights in your scene then metallic
+objects will often have a couple bright highlights but otherwise be very dark.
+This can usually be addressed by using at least a small amount of [soft lighting](Scene3d-Light#soft)
+so that there is at least a small amount of light coming from _every_ direction.
+
 -}
 metal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : () }
 metal { baseColor, roughness } =
     pbr { baseColor = baseColor, roughness = roughness, metallic = 1 }
 
 
-{-| A non-metal material such as plastic, wood, paper etc.
+{-| A non-metal material such as plastic, wood, paper etc. This allows for some
+nice lighting highlights compared to `matte`:
+
+![Rough plastic duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/rough-plastic.png)
+
+An even shinier version (lower roughness):
+
+![Shiny plastic duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/shiny-plastic.png)
+
 -}
 nonmetal : { baseColor : Color, roughness : Float } -> Material coordinates { a | normals : () }
 nonmetal { baseColor, roughness } =
@@ -170,7 +201,10 @@ nonmetal { baseColor, roughness } =
 {-| A custom PBR material with a `metallic` parameter that can be anywhere
 between 0 and 1. Values in between 0 and 1 can be used to approximate things
 like dusty metal, where a surface can be thought of as partially metal and
-partially non-metal.
+partially non-metal:
+
+![Partially metallic duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/partially-metallic.png)
+
 -}
 pbr :
     { baseColor : Color, roughness : Float, metallic : Float }
@@ -261,7 +295,18 @@ loadImpl options url =
 {-| Don't interpolate between texture pixels at all when rendering; each
 on-screen pixel will simply get the color of the _nearest_ texture pixel. This
 can be useful if you're deliberately going for a 'pixelated' look and want
-texture pixels to show up exactly on screen without any blurring.
+texture pixels to show up exactly on screen without any blurring. In most cases,
+though, using nearest-neighbor filtering will lead to unpleasant jagged edges
+(this is a zoomed-in portion of the Elm logo applied as a texture to a simple
+[quad](Scene3d#quad)):
+
+![Nearest neighbor texture filtering](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/nearest-neighbor-filtering.png)
+
+Note that the upper-right edge is smooth because that's actually the edge of the
+textured quad, instead of an edge between two different colors _within_ the
+texture.
+
+Nearest-neighbor filtering is implemented as:
 
     nearestNeighborFiltering =
         { minify = WebGL.Texture.nearest
@@ -283,9 +328,17 @@ nearestNeighborFiltering =
 
 
 {-| Apply some simple texture smoothing; each on-screen pixel will be a weighted
-average of the four closest texture pixels. No [mipmapping](https://en.wikipedia.org/wiki/Mipmap)
-is used, so some pixelation/aliasing may still occur especially for far-away
-objects where one texture pixel is much smaller than one screen pixel.
+average of the four closest texture pixels. This will generally lead to
+slightly smoother edges than nearest-neighbor filtering, at least for cases
+where one texture pixel is approximately the same size as one screen pixel:
+
+![Bilinear texture filtering](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/bilinear-filtering.png)
+
+No [mipmapping](https://en.wikipedia.org/wiki/Mipmap) is used, so
+pixelation/aliasing may still occur especially for far-away objects where one
+texture pixel is much smaller than one screen pixel.
+
+Bilinear filtering is implemented as:
 
     bilinearFiltering =
         { minify = WebGL.Texture.linear
@@ -308,8 +361,12 @@ bilinearFiltering =
 
 {-| Interpolate between nearby texture pixels as with bilinear filtering, but
 _also_ interpolate between the two nearest [mipmap](https://en.wikipedia.org/wiki/Mipmap)
-levels. This will generally give the smoothest possible appearance, but may lead
-to excessive blurriness especially when viewing surfaces at very shallow angles.
+levels. This will generally give the smoothest possible appearance, but may also
+lead to excessive blurriness:
+
+![Trilinear texture filtering](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/trilinear-filtering.png)
+
+Trilinear filtering is implemented as:
 
     trilinearFiltering =
         { minify = WebGL.Texture.linearMipmapLinear
@@ -350,6 +407,9 @@ toVec3 givenColor =
 
 
 {-| A textured plain-color material, unaffected by lighting.
+
+![Textured color duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-color.png)
+
 -}
 texturedColor : Texture Color -> Material coordinates { a | uvs : () }
 texturedColor colorTexture =
@@ -357,6 +417,9 @@ texturedColor colorTexture =
 
 
 {-| A textured matte material.
+
+![Textured matte duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-matte.png)
+
 -}
 texturedMatte : Texture Color -> Material coordinates { a | normals : (), uvs : () }
 texturedMatte colorTexture =
@@ -375,9 +438,10 @@ texturedEmissive colorTexture brightness =
         brightness
 
 
-{-| A textured metal material. If you only have a texture for one of the two
-parameters (base color and roughness), you can use [`Material.constant`](#constant)
-for the other.
+{-| A textured metal material.
+
+![Textured metal duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-metal.png)
+
 -}
 texturedMetal :
     { baseColor : Texture Color
@@ -392,7 +456,16 @@ texturedMetal { baseColor, roughness } =
         }
 
 
-{-| A textured non-metal material.
+{-| A textured non-metal material. If you only have a texture for one of the two
+parameters (base color and roughness), you can use [`Material.constant`](#constant)
+for the other. Here's a model with a textured base color but constant roughness:
+
+![Rough textured nonmetal duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-nonmetal-rough.png)
+
+The same model but with roughness decreased for a shinier appearance:
+
+![Shiny textured nonmetal duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-nonmetal-shiny.png)
+
 -}
 texturedNonmetal :
     { baseColor : Texture Color
@@ -408,7 +481,20 @@ texturedNonmetal { baseColor, roughness } =
 
 
 {-| A fully custom textured PBR material, where textures can be used to control
-all three parameters.
+all three parameters. As before, you can freely mix and match 'actual' textures
+with [`constant`](#constant) values for any of the three parameters. For
+example, here's a sphere with textured base color and textured metallicness but
+constant roughness:
+
+![Sphere with constant roughness](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/constant-roughness.png)
+
+(You can see the effect of the textured metallicness in the small reddish rusty
+areas on the lower right-hand side.) Here's the same sphere but with a texture
+also used to control roughness - note how the rough scratches catch light that
+would otherwise be reflected away from the camera:
+
+![Sphere with textured roughness](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-roughness.png)
+
 -}
 texturedPbr :
     { baseColor : Texture Color
