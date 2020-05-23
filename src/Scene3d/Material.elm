@@ -235,6 +235,9 @@ wrapped around, etc.).
 This module contains a few reasonable defaults ([`nearestNeighborFiltering`](#nearestNeighborFiltering),
 [`bilinearFiltering`](#bilinearFiltering), and [`trilinearFiltering`](#trilinearFiltering))
 but you can directly construct your own custom options record if desired.
+Unfortunately there's no one set of texture options that works well in all
+cases, so you may need to experiment to see what works best in your particular
+scene.
 
 -}
 loadWith : WebGL.Texture.Options -> String -> Task WebGL.Texture.Error (Texture value)
