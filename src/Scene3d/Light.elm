@@ -134,6 +134,14 @@ whether or not it casts shadows:
 Note that the `direction` is the direction the light is traveling (the direction
 _of_ the light, not the direction _to_ the light source from the scene).
 
+Directional lights cast uniform light across the entire scene and result in
+relatively simple shadows:
+
+![Scene illuminated by a directional light](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/directional-light.png)
+
+(Note that this scene also includes some [soft lighting](#soft) in addition to
+the directional light.)
+
 -}
 directional :
     CastsShadows castsShadows
@@ -173,6 +181,15 @@ whether or not it casts shadows:
             , intensity = LuminousFlux.lumens 500
             , position = Point3d.centimeters 40 50 30
             }
+
+Compared to a directional light, the illumination from a point light varies more
+over the scene (brighter close to the light, less bright further away) and
+results in more interesting shadows:
+
+![Scene illuminated by a point light](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/point-light.png)
+
+(Note that this scene also includes some [soft lighting](#soft) in addition to
+the point light.)
 
 -}
 point :
@@ -220,7 +237,18 @@ For example, a decent approximation to indoors office lighting might be:
         , intensityBelow = Illuminance.lux 100
         }
 
-Note that soft lighting does not cast shadows.
+Note that soft lighting does not cast shadows. Soft lighting is a great way to
+make sure the entire scene has some reasonable illumination; the [point](#point)
+and [directional](#directional) light examples both include a small amount of
+soft lighting to 'fill in' otherwise unlit areas. For example, here's the point
+light example _without_ any additional lighting:
+
+![Scene illuminated by a point light only](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/point-light-only.png)
+
+Conversely, soft lighting by itself can be a bit boring, so in many cases you'll
+want to add one or more point and/or directional lights to add interest:
+
+![Scene illuminated by soft lighting only](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/soft-lighting.png)
 
 -}
 soft :
@@ -314,7 +342,10 @@ overhead arguments =
 
 {-| A simple version of `Light.soft` with constant intensity light in every
 direction. Provided for completeness, but you generally won't want to use this
-as it tends to result in very flat, unrealistic-looking scenes.
+as it tends to result in very flat, unrealistic-looking scenes:
+
+![Scene illuminated by ambient lighting](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/ambient-lighting.png)
+
 -}
 ambient :
     { chromaticity : Chromaticity

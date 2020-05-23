@@ -79,8 +79,8 @@ camera =
     Camera3d.perspective
         { viewpoint =
             Viewpoint3d.lookAt
-                { focalPoint = Point3d.origin
-                , eyePoint = Point3d.meters 20 20 20
+                { focalPoint = Point3d.meters 0 0 -2.5
+                , eyePoint = Point3d.meters 16 16 16
                 , upDirection = Direction3d.positiveZ
                 }
         , verticalFieldOfView = Angle.degrees 30
@@ -129,18 +129,20 @@ main =
                     , Html.div []
                         [ Scene3d.toHtml
                             { lights =
-                                Scene3d.twoLights
-                                    (if usePointLight then
-                                        lightBulb
+                                --Scene3d.oneLight (Light.ambient { chromaticity = Light.daylight, intensity = Illuminance.lux 9000 })
+                                Scene3d.oneLight lightBulb
 
-                                     else
-                                        sunlight
-                                    )
-                                    daylight
+                            -- Scene3d.twoLights
+                            --     (if usePointLight then
+                            --         lightBulb
+                            --      else
+                            --         sunlight
+                            --     )
+                            --     daylight
                             , camera = camera
                             , clipDepth = meters 0.1
                             , antialiasing = Scene3d.multisampling
-                            , dimensions = ( pixels 1024, pixels 768 )
+                            , dimensions = ( pixels 480, pixels 320 )
                             , exposure = Scene3d.exposureValue 14
                             , toneMapping = Scene3d.noToneMapping
                             , whiteBalance = Light.daylight
