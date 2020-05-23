@@ -138,7 +138,9 @@ matte materialColor =
 
 
 {-| An emissive or 'glowing' material, where you specify the [chromaticity](Scene3d#Chromaticity)
-and intensity of the emitted light.
+and intensity of the emitted light. The result will be a constant color, but one
+that (unlike [`Material.color`](#color)) will depend on the exposure and white
+balance settings used when rendering the scene.
 -}
 emissive : Chromaticity -> Luminance -> Material coordinates attributes
 emissive givenChromaticity brightness =
