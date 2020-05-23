@@ -54,7 +54,7 @@ between adjacent faces to save on space.
 
 These functions behave just like their corresponding `indexed` versions but
 additionally require each vertex to include UV (texture) coordinates to allow
-textured materials to be used.
+[textured materials](Scene3d-Material#textured-materials) to be used.
 
 @docs texturedTriangles, texturedFacets, texturedFaces
 
