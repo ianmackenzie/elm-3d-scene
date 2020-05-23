@@ -226,6 +226,9 @@ facetAttributes triangle =
 
 
 {-| Construct a plain mesh from a list of triangles.
+
+![Plain triangles mesh](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/triangles.png)
+
 -}
 triangles : List (Triangle3d Meters coordinates) -> Plain coordinates
 triangles givenTriangles =
@@ -666,6 +669,12 @@ lineSegmentAttributes givenSegment =
 
 
 {-| Construct a mesh from a list of line segments.
+
+![Line segments mesh](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/line-segments.png)
+
+(Note that this particular case, where all the line segments meet end-to-end,
+could be rendered more efficiently as a [polyline](#polyline)).
+
 -}
 lineSegments : List (LineSegment3d Meters coordinates) -> Plain coordinates
 lineSegments givenSegments =
@@ -709,6 +718,9 @@ polyline givenPolyline =
 
 {-| Construct a mesh from a list of points that that will be displayed as
 separate circular dots, given a particular dot radius in pixels.
+
+![Points mesh](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/points.png)
+
 -}
 points :
     { radius : Quantity Float Pixels }
