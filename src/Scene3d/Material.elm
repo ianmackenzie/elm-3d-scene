@@ -232,7 +232,7 @@ which control things like what form of [texture filtering](https://en.wikipedia.
 is used and how out-of-range texture coordinates are interpreted (clamped,
 wrapped around, etc.).
 
-This module contains a few sensible defaults ([`nearestNeighborFiltering`](#nearestNeighborFiltering),
+This module contains a few reasonable defaults ([`nearestNeighborFiltering`](#nearestNeighborFiltering),
 [`bilinearFiltering`](#bilinearFiltering), and [`trilinearFiltering`](#trilinearFiltering))
 but you can directly construct your own custom options record if desired.
 
