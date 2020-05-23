@@ -1,9 +1,9 @@
 module Scene3d.Material exposing
     ( Material
     , color, emissive, matte
-    , metal, nonmetal, pbr
+    , nonmetal, metal, pbr
     , Texture, constant, load
-    , texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
+    , texturedColor, texturedEmissive, texturedMatte, texturedNonmetal, texturedMetal, texturedPbr
     , loadWith, nearestNeighborFiltering, bilinearFiltering, trilinearFiltering
     , Plain, Unlit, Uniform, Textured
     , plain, unlit, uniform
@@ -32,7 +32,7 @@ common variant of PBR where materials have three main parameters:
   - 'Metallicness', usually either 0 or 1, with 0 meaning non-metal and 1
     meaning metal
 
-@docs metal, nonmetal, pbr
+@docs nonmetal, metal, pbr
 
 
 # Textured materials
@@ -44,7 +44,7 @@ by a texture image instead of being restricted to constant values.
 
 @docs Texture, constant, load
 
-@docs texturedColor, texturedEmissive, texturedMatte, texturedMetal, texturedNonmetal, texturedPbr
+@docs texturedColor, texturedEmissive, texturedMatte, texturedNonmetal, texturedMetal, texturedPbr
 
 
 ## Customized textures
