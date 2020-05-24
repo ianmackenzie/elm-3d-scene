@@ -25,7 +25,7 @@ type WorldCoordinates
 
 main : Html msg
 main =
-    Scene3d.toHtml
+    Scene3d.custom
         { camera = camera
         , dimensions = ( Pixels.pixels 1400, Pixels.pixels 900 )
         , antialiasing = Scene3d.multisampling

@@ -243,7 +243,7 @@ view model =
                         , metallic = metallicTexture
                         }
             in
-            Scene3d.toHtml
+            Scene3d.custom
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
                 , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )

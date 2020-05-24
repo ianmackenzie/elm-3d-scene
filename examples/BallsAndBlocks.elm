@@ -125,7 +125,7 @@ view { world, screenWidth, screenHeight } =
         , Html.Attributes.style "left" "0"
         , Html.Attributes.style "top" "0"
         ]
-        [ Scene3d.toHtml
+        [ Scene3d.custom
             { dimensions = ( pixels screenWidth, pixels screenHeight )
             , antialiasing = Scene3d.multisampling
             , camera = camera

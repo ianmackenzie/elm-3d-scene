@@ -301,7 +301,7 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Html.div [ Html.Events.onMouseDown MouseDown ]
-            [ Scene3d.toHtml
+            [ Scene3d.custom
                 { lights = Scene3d.twoLights lightBulb overheadLighting
                 , camera = camera model
                 , clipDepth = meters 0.1

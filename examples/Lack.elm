@@ -210,7 +210,7 @@ view { world, width, height } =
         , Html.Events.on "mousemove" (decodeMouseRay camera width height MouseMove)
         , Html.Events.onMouseUp MouseUp
         ]
-        [ Scene3d.toHtml
+        [ Scene3d.custom
             { dimensions = ( width, height )
             , antialiasing = Scene3d.multisampling
             , camera = camera

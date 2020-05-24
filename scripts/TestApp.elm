@@ -2340,7 +2340,7 @@ viewTestCase model testCase =
             Element.column [ Element.spacing 10 ]
                 [ Element.el [ Element.Events.onClick Next ] <|
                     Element.html <|
-                        Scene3d.toHtml
+                        Scene3d.custom
                             { lights = lights testCase
                             , background = Scene3d.transparentBackground
                             , camera = camera testCase

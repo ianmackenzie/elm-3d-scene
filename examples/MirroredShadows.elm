@@ -127,7 +127,7 @@ main =
                     [ Html.span [ Html.Attributes.style "user-select" "none" ]
                         [ Html.text "Click to toggle between point and directional light" ]
                     , Html.div []
-                        [ Scene3d.toHtml
+                        [ Scene3d.custom
                             { lights =
                                 --Scene3d.oneLight (Light.ambient { chromaticity = Light.daylight, intensity = Illuminance.lux 9000 })
                                 Scene3d.oneLight lightBulb

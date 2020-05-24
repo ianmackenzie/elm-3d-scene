@@ -279,7 +279,7 @@ view { width, height, elapsedTime, azimuth, elevation } =
                 , intensityBelow = Illuminance.lux 5
                 }
     in
-    Scene3d.toHtml
+    Scene3d.custom
         { lights = Scene3d.fourLights firstLight secondLight thirdLight softLighting
         , camera = camera
         , clipDepth = Length.meters 1
