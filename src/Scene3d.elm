@@ -1,6 +1,5 @@
 module Scene3d exposing
-    ( toHtml
-    , unlit, sunny, cloudy, office
+    ( unlit, cloudy, sunny, custom
     , Entity
     , point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
     , triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, cylinderWithShadow, coneWithShadow
@@ -32,18 +31,7 @@ contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
 module is 'expensive'; meshes should generally be created once and then stored
 in your model.
 
-@docs toHtml
-
-
-## Presets
-
-These 'preset' scenes are simplified versions of `toHtml` that let you get
-started quickly with some reasonable defaults. Scene lighting, exposure and
-white balance will generally be set for you. However, in all cases you still
-have to specify a camera position/orientation, a clip depth, a background color
-and the dimensions with which to render the scene.
-
-@docs unlit, sunny, cloudy, office
+@docs unlit, cloudy, sunny, custom
 
 
 # Entities
@@ -60,11 +48,11 @@ cast a shadow (assuming there is shadow-casting light in the scene!) and can
 specify a material to use. However, different shapes support different kinds of
 materials:
 
-  - `quad`s and `sphere`s support all materials
+  - `quad`s and `sphere`s support all materials, including textured ones.
   - `block`s, `cylinder`s, `cone`s and `facet`s only support uniform
-    (non-textured) materials
+    (non-textured) materials.
   - `point`s, `lineSegment`s and `triangle`s only support plain materials
-    (solid colors or emissive materials)
+    (solid colors or emissive materials).
 
 Note that you _could_ render complex shapes by (for example) mapping
 `Scene3d.triangle` over a list of triangles, but this would be inefficient; if
@@ -104,6 +92,18 @@ These transformations are 'cheap' in that they don't actually transform the
 underlying mesh; under the hood they use a WebGL [transformation matrix](https://learnopengl.com/Getting-started/Transformations)
 to change where that mesh gets rendered.
 
+You can use transformations to animate objects over time, or render the same
+object multiple times in different positions/orientations without needing to
+create a separate mesh. For example, you could draw a single entity and then
+draw several more translated versions of it:
+
+![Translation of 3D entities](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/translation.png)
+
+The following examples all use this duckling as the original (untransformed)
+entity:
+
+![Duckling with no transformation](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/duckling-original.png)
+
 @docs rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
 
 
@@ -119,7 +119,7 @@ to change where that mesh gets rendered.
 @docs noAntialiasing, multisampling, supersampling
 
 
-# Lighting
+# Lights
 
 @docs Lights
 
@@ -245,7 +245,10 @@ nothing =
     Entity.empty
 
 
-{-| Draw a single point as a circular dot with the given radius.
+{-| Draw a single point as a circular dot with the given radius in [pixels](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Pixels).
+
+![Single point](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/point.png)
+
 -}
 point :
     { radius : Quantity Float Pixels }
@@ -257,6 +260,9 @@ point { radius } givenMaterial givenPoint =
 
 
 {-| Draw a single line segment.
+
+![Singe line segment](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/line-segment.png)
+
 -}
 lineSegment : Material.Plain coordinates -> LineSegment3d Meters coordinates -> Entity coordinates
 lineSegment givenMaterial givenLineSegment =
@@ -269,6 +275,9 @@ dummyMaterial =
 
 
 {-| Draw a single triangle.
+
+![Single triangle](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/triangle.png)
+
 -}
 triangle :
     Material.Plain coordinates
@@ -278,7 +287,8 @@ triangle givenMaterial givenTriangle =
     facet (Material.plain givenMaterial) givenTriangle
 
 
-{-| -}
+{-| ![Triangle with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/triangle-with-shadows.png)
+-}
 triangleWithShadow :
     Material.Plain coordinates
     -> Triangle3d Meters coordinates
@@ -316,13 +326,17 @@ facetWithShadow givenMaterial givenTriangle =
 {-| Draw a 'quad' such as a rectangle, rhombus or parallelogram by providing its
 four vertices in counterclockwise order.
 
+![Single quad](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/quad.png)
+
 Normal vectors will be automatically computed at each vertex which are
 perpendicular to the two adjoining edges. (The four vertices should usually
 be coplanar, in which case all normal vectors will be the same.) The four
 vertices will also be given the UV (texture) coordinates (0,0), (1,0), (1,1)
 and (0,1) respectively; this means that if you specify vertices counterclockwise
 from the bottom left corner of a rectangle, a texture will map onto the
-rectangle basically the way you would expect.
+rectangle basically the way you would expect:
+
+![Textured quad](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-quad.png)
 
 -}
 quad :
@@ -336,7 +350,8 @@ quad givenMaterial p1 p2 p3 p4 =
     Entity.quad True False givenMaterial p1 p2 p3 p4
 
 
-{-| -}
+{-| ![Quad with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/quad-with-shadows.png)
+-}
 quadWithShadow :
     Material.Textured coordinates
     -> Point3d Meters coordinates
@@ -362,6 +377,8 @@ quadShadow p1 p2 p3 p4 =
 {-| Draw a sphere using the [`Sphere3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Sphere3d)
 type from `elm-geometry`.
 
+![Single sphere](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/sphere.png)
+
 The sphere will have texture (UV) coordinates based on an [equirectangular
 projection](https://wiki.panotools.org/Equirectangular_Projection) where
 positive Z is up. This sounds complex but really just means that U corresponds
@@ -379,7 +396,8 @@ sphere givenMaterial givenSphere =
     Entity.sphere True False givenMaterial givenSphere
 
 
-{-| -}
+{-| ![Sphere with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/sphere-with-shadows.png)
+-}
 sphereWithShadow : Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphereWithShadow givenMaterial givenSphere =
     Entity.sphere True True givenMaterial givenSphere
@@ -393,13 +411,17 @@ sphereShadow givenSphere =
 
 {-| Draw a rectangular block using the [`Block3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Block3d)
 type from `elm-geometry`.
+
+![Single block](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/block.png)
+
 -}
 block : Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
 block givenMaterial givenBlock =
     Entity.block True False givenMaterial givenBlock
 
 
-{-| -}
+{-| ![Block with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/block-with-shadows.png)
+-}
 blockWithShadow : Material.Uniform coordinates -> Block3d Meters coordinates -> Entity coordinates
 blockWithShadow givenMaterial givenBlock =
     Entity.block True True givenMaterial givenBlock
@@ -413,13 +435,17 @@ blockShadow givenBlock =
 
 {-| Draw a cylinder using the [`Cylinder3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cylinder3d)
 type from `elm-geometry`.
+
+![Single cylinder](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cylinder.png)
+
 -}
 cylinder : Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinder givenMaterial givenCylinder =
     Entity.cylinder True False givenMaterial givenCylinder
 
 
-{-| -}
+{-| ![Cylinder with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cylinder-with-shadows.png)
+-}
 cylinderWithShadow : Material.Uniform coordinates -> Cylinder3d Meters coordinates -> Entity coordinates
 cylinderWithShadow givenMaterial givenCylinder =
     Entity.cylinder True True givenMaterial givenCylinder
@@ -433,13 +459,17 @@ cylinderShadow givenCylinder =
 
 {-| Draw a cone using the [`Cone3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Cone3d)
 type from `elm-geometry`.
+
+![Single cone](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cone.png)
+
 -}
 cone : Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
 cone givenMaterial givenCone =
     Entity.cone True False givenMaterial givenCone
 
 
-{-| -}
+{-| ![Cone with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cone-with-shadows.png)
+-}
 coneWithShadow : Material.Uniform coordinates -> Cone3d Meters coordinates -> Entity coordinates
 coneWithShadow givenMaterial givenCone =
     Entity.cone True True givenMaterial givenCone
@@ -457,6 +487,8 @@ materials. Note that the mesh and material types must line up, and this is
 checked by the compiler; for example, a textured material that requires UV
 coordinates can only be used on a mesh that includes UV coordinates!
 
+![Faceted mesh](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/mesh.png)
+
 If you want to also draw the shadow of a given object, you'll need to use
 [`meshWithShadow`](#meshWithShadow).
 
@@ -466,8 +498,12 @@ mesh givenMaterial givenMesh =
     Entity.mesh givenMaterial givenMesh
 
 
-{-| Draw a mesh and its shadow. To render an object with a shadow, you would
-generally do something like:
+{-| Draw a mesh and its shadow (or possibly multiple shadows, if there are
+multiple shadow-casting lights in the scene).
+
+![Mesh with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/mesh-with-shadows.png)
+
+To render an object with a shadow, you would generally do something like:
 
     -- Construct the mesh/shadow in init/update and then
     -- save them in your model:
@@ -502,7 +538,12 @@ meshWithShadow givenMaterial givenMesh givenShadow =
 
 
 {-| Group a list of entities into a single entity. This combined entity can then
-be transformed, grouped with other entities, etc.
+be transformed, grouped with other entities, etc. For example, you might
+combine two different-colored triangles into a single group, then draw several
+different [rotated](#rotateAround) copies of that group:
+
+![Rotated triangles](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/rotation.png)
+
 -}
 group : List (Entity coordinates) -> Entity coordinates
 group entities =
@@ -516,6 +557,9 @@ meshShadow givenShadow =
 
 
 {-| Rotate an entity around a given axis by a given angle.
+
+![Rotated duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/duckling-rotated.png)
+
 -}
 rotateAround : Axis3d Meters coordinates -> Angle -> Entity coordinates -> Entity coordinates
 rotateAround axis angle entity =
@@ -523,6 +567,9 @@ rotateAround axis angle entity =
 
 
 {-| Translate (move) an entity by a given displacement vector.
+
+![Translated duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/duckling-translated.png)
+
 -}
 translateBy : Vector3d Meters coordinates -> Entity coordinates -> Entity coordinates
 translateBy displacement entity =
@@ -540,6 +587,8 @@ translateIn direction distance entity =
 remain fixed in place and all other points on the entity will be stretched away
 from that point (or contract towards that point, if the scale is less than one).
 
+![Scaled duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/duckling-scaled.png)
+
 `elm-3d-scene` tries very hard to do the right thing here even if you use a
 _negative_ scale factor, but that flips the mesh inside out so I don't really
 recommend it.
@@ -551,6 +600,9 @@ scaleAbout centerPoint scale entity =
 
 
 {-| Mirror an entity across a plane.
+
+![Mirrored duckling](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/duckling-mirrored.png)
+
 -}
 mirrorAcross : Plane3d Meters coordinates -> Entity coordinates -> Entity coordinates
 mirrorAcross plane entity =
@@ -1583,30 +1635,28 @@ renderWithinShadows meshRenderPasses lightMatrices numShadowingLights =
         |> List.concat
 
 
-{-| Actually render a scene! You need to specify:
+{-| Render a scene with custom lighting. In addition to camera, clip depth,
+dimensions, background and entities as described above, you will need to
+provide:
 
-  - The lights used to render the scene.
-  - The position and orientation of the camera.
-  - A clip depth (anything closer to the camera than this value will be clipped
-    and not shown).
-  - The overall [`exposure`](#Exposure) level to use.
+  - The [lights](#lights) used to render the scene.
+  - The overall [exposure](#Exposure) level to use.
   - What kind of [tone mapping](#ToneMapping) to apply, if any.
-  - The white balance to use: this the chromaticity that will show up as white in
-    the final rendered scene. It should generally be the dominant light color
-    in the scene. `Scene3d.daylight` is a good default value, but for indoors
-    scenes `Scene3d.fluorescentLighting` or `Scene3d.incandescentLighting`
-    may be more appropriate.
+  - The white balance to use: this the [chromaticity](Scene3d-Light#chromaticity)
+    that will show up as white in the final rendered scene. It should generally
+    be the same as the dominant light color in the scene.
   - What kind of [antialiasing](#Antialiasing) to use, if any.
-  - The overall dimensions in pixels of the scene.
-  - What background color to use.
-  - A list of entities to render!
 
-This allows full customization of how the scene is rendered; there are also some
-simpler rendering [presets](#presets) to let you get started quickly with (for
-example) a basic ['sunny day'](#sunny) scene.
+When starting out, it's usually easiest to pick a single default chromaticity
+such as [daylight](Scene3d-Light#daylight) and then use that for both lights and
+white balance. This will make all light appear white.
+
+Once you're comfortable with that, you can start experimenting with things like
+warm and cool lights. For example, [fluorescent](Scene3d-Light#fluorescent)
+lighting will appear blueish if the white balance is set to [incandescent](Scene3d-Light#incandescent).
 
 -}
-toHtml :
+custom :
     { lights : Lights coordinates
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
@@ -1619,7 +1669,7 @@ toHtml :
     , entities : List (Entity coordinates)
     }
     -> Html msg
-toHtml arguments =
+custom arguments =
     composite
         { camera = arguments.camera
         , clipDepth = arguments.clipDepth
@@ -1808,7 +1858,11 @@ scene will simply be scaled by the overall scene [exposure](#Exposure) setting
 and the resulting color will be displayed on the screen. For scenes with bright
 reflective highlights or a mix of dark and bright portions, this means that
 some parts of the scene may be underexposed (nearly black) or overexposed
-(pure white).
+(pure white). For example, look at how this scene is in general fairly dim but
+still has some overexposed lighting highlights such as at the top of the gold
+sphere:
+
+![No tone mapping](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/no-tone-mapping.png)
 
 That said, it's often best to start with `noToneMapping` for simplicity, and
 only experiment with other tone mapping methods if you end up with very bright,
@@ -1827,6 +1881,12 @@ very much (meaning the brightness of the scene as a whole will not be changed
 dramatically), but very bright colors will be toned down to avoid
 'blowout'/overexposure.
 
+In this example, note how the overall scene brightness is pretty similar to the
+example above using no tone mapping, but the bright highlights on the gold and
+white spheres have been softened considerably:
+
+![Reinhard tone mapping](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/reinhard-tone-mapping.png)
+
 The given parameter specifies how much 'extra range' the tone mapping gives you;
 for example,
 
@@ -1834,7 +1894,7 @@ for example,
 
 will mean that parts of the scene can be 5x brighter than normal before becoming
 'overexposed' and pure white. (You could also accomplish that by changing the
-overall `exposure` parameter to `Scene3d.toHtml`, but then the entire scene
+overall `exposure` parameter to `Scene3d.custom`, but then the entire scene
 would appear much darker.)
 
 -}
@@ -1851,7 +1911,10 @@ reinhardToneMapping maxOverexposure =
 red, green and blue channels separately instead of scaling overall luminance.
 This will tend to desaturate bright colors, but this can end up being looking
 realistic since very bright colored lights do in fact appear fairly white to our
-eyes.
+eyes:
+
+![Reinhard per channel tone mapping](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/reinhard-per-channel-tone-mapping.png)
+
 -}
 reinhardPerChannelToneMapping : Float -> ToneMapping
 reinhardPerChannelToneMapping maxOverexposure =
@@ -1866,8 +1929,19 @@ reinhardPerChannelToneMapping maxOverexposure =
 2 and documented [here](http://filmicworlds.com/blog/filmic-tonemapping-operators/).
 It attempts to approximately reproduce how real film reacts to light. The
 results are fairly similar to `reinhardPerChannelToneMapping 5`, but will tend
-to have deeper blacks for a slightly less washed-out look. This is a good
-default choice for realistic-looking scenes.
+to have deeper blacks for a slightly less washed-out look:
+
+![Hable filmic tone mapping](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/hable-filmic-tone-mapping.png)
+
+Note that by default this can cause the scene to look slightly dark (compare
+the above to the example using [no tone mapping](#noToneMapping)) but that can
+be compensated by adjusting exposure (e.g. by reducing the [exposure value](#exposureValue)
+by 1 or 2) to result in a well-exposed scene without blown-out highlights:
+
+![Hable filmic tone mapping, brightened](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/hable-filmic-tone-mapping-bright.png)
+
+This is a good default choice for realistic-looking scenes.
+
 -}
 hableFilmicToneMapping : ToneMapping
 hableFilmicToneMapping =
@@ -1880,7 +1954,8 @@ hableFilmicToneMapping =
 
 {-| An `Antialiasing` value defines what (if any) kind of [antialiasing](https://en.wikipedia.org/wiki/Spatial_anti-aliasing)
 is used when rendering a scene. Different types of antialiasing have different
-tradeoffs between quality and rendering speed.
+tradeoffs between quality and rendering speed. If you're not sure what to use,
+[`Scene3d.multisampling`](#multisampling) is generally a good choice.
 -}
 type Antialiasing
     = NoAntialiasing
@@ -1932,6 +2007,26 @@ supersampling factor =
 {-| Render a simple scene without any lighting. This means all objects in the
 scene should use [plain colors](Material#color) - without any lighting, other
 material types will always be completely black!
+
+![Unlit scene](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/unlit-scene.png)
+
+You will need to provide:
+
+  - The overall dimensions in [pixels](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Pixels)
+    of the scene (the dimensions of the resulting HTML element).
+  - The [camera](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/)
+    to use when rendering.
+  - A clip depth (anything closer to the camera than this value will be clipped
+    and not shown).
+  - What background color to use.
+  - The list of [entities](#entities) to render!
+
+The clip depth is necessary because of [how WebGL projection matrices are
+constructed](http://www.songho.ca/opengl/gl_projectionmatrix.html). Generally,
+try to choose the largest value you can without actually clipping visible
+geometry. This will improve the accuracy of the [depth buffer](https://www.computerhope.com/jargon/z/zbuffering.htm)
+which in turn reduces [Z-fighting](https://en.wikipedia.org/wiki/Z-fighting).
+
 -}
 unlit :
     { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
@@ -1942,7 +2037,7 @@ unlit :
     }
     -> Html msg
 unlit arguments =
-    toHtml
+    custom
         { lights = noLights
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
@@ -1956,11 +2051,15 @@ unlit arguments =
         }
 
 
-{-| Render an outdoors 'sunny day' scene given the overall global up direction
-(usually `Direction3d.z` or `Direction3d.y` depending on how you've set up your
-scene), the direction of incoming sunlight (e.g. `Direction3d.negativeZ` if
-positive Z is up and the sun is directly overhead) and whether or not sunlight
-should cast shadows.
+{-| Render an outdoors 'sunny day' scene. This adds some [directional](Scene3d-Light#directional)
+sunlight to the scene, so you need to specify:
+
+  - The direction of the incoming sunlight (e.g. `Direction3d.negativeZ` if
+    positive Z is up and the sun is directly overhead).
+  - Whether or not sunlight should cast shadows.
+
+![Sunny scene](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/sunny-scene.png)
+
 -}
 sunny :
     { upDirection : Direction3d coordinates
@@ -1999,7 +2098,7 @@ sunny arguments =
         lights =
             threeLights sun sky environment
     in
-    toHtml
+    custom
         { lights = lights
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
@@ -2013,9 +2112,22 @@ sunny arguments =
         }
 
 
-{-| Render an outdoors 'cloudy day' scene. You must still provide a global up
-direction since even on a cloudy day more light comes from above than
-around/below a given object, but no direct sunlight means no shadows.
+{-| Render an outdoors 'cloudy day' scene. This adds some [soft](Scene3d-Light#soft)
+lighting to the scene (an approximation of the lighting on a cloudy day) so that
+all surfaces are illuminated but upwards-facing surfaces are more brightly
+illuminated than downwards-facing ones:
+
+![Cloudy scene](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cloudy-scene.png)
+
+Note how, for example, the top of the sphere is more brightly lit than the
+bottom, and the sides of objects are not as brightly lit as their top. For this
+to work, you must specify what the global 'up' direction is (usually
+[`Direction3d.positiveZ` or `Direction3d.positiveY`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Direction3d#constants)).
+If the wrong up direction is given, the lighting will look pretty weird - here's
+the same scene with the up direction reversed:
+
+![Cloudy scene with reversed up direction](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cloudy-scene-reversed-up.png)
+
 -}
 cloudy :
     { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
@@ -2027,7 +2139,7 @@ cloudy :
     }
     -> Html msg
 cloudy arguments =
-    toHtml
+    custom
         { lights =
             oneLight <|
                 Light.soft
@@ -2038,43 +2150,9 @@ cloudy arguments =
                     }
         , camera = arguments.camera
         , clipDepth = arguments.clipDepth
-        , exposure = exposureValue 13
+        , exposure = exposureValue 9
         , toneMapping = noToneMapping
         , whiteBalance = Light.daylight
-        , antialiasing = multisampling
-        , dimensions = arguments.dimensions
-        , background = arguments.background
-        , entities = arguments.entities
-        }
-
-
-{-| Render an indoors office scene. Like `Scene3d.cloudy`, you will still need
-to specify a global up direction.
--}
-office :
-    { upDirection : Direction3d coordinates
-    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
-    , camera : Camera3d Meters coordinates
-    , clipDepth : Length
-    , background : Background coordinates
-    , entities : List (Entity coordinates)
-    }
-    -> Html msg
-office arguments =
-    toHtml
-        { lights =
-            oneLight <|
-                Light.soft
-                    { upDirection = arguments.upDirection
-                    , chromaticity = Light.fluorescent
-                    , intensityAbove = Illuminance.lux 400
-                    , intensityBelow = Illuminance.lux 100
-                    }
-        , camera = arguments.camera
-        , clipDepth = arguments.clipDepth
-        , exposure = exposureValue 7
-        , toneMapping = noToneMapping
-        , whiteBalance = Light.fluorescent
         , antialiasing = multisampling
         , dimensions = arguments.dimensions
         , background = arguments.background
