@@ -43,7 +43,7 @@ main =
                 { viewpoint =
                     Viewpoint3d.lookAt
                         { focalPoint = Point3d.meters 0.5 0.5 0.75
-                        , eyePoint = Point3d.meters 4 3 2
+                        , eyePoint = Point3d.meters 4 3 1.8
                         , upDirection = Direction3d.z
                         }
                 , verticalFieldOfView = Angle.degrees 30
@@ -60,7 +60,7 @@ main =
     in
     Scene3d.unlit
         { camera = camera
-        , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+        , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
         , entities =

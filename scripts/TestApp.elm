@@ -338,124 +338,110 @@ parseMaterial string =
 
 parseShadows : String -> Result String Bool
 parseShadows string =
-    case string of
-        "NoShadows" ->
-            Ok False
-
-        "Shadows" ->
-            Ok True
-
-        _ ->
-            Err ("Unrecognized shadows setting '" ++ string ++ "'")
+    -- case string of
+    --     "NoShadows" ->
+    --         Ok False
+    --     "Shadows" ->
+    --         Ok True
+    --     _ ->
+    --         Err ("Unrecognized shadows setting '" ++ string ++ "'")
+    Ok True
 
 
 parseTransformation : String -> Result String Transformation
 parseTransformation string =
-    case string of
-        "NoTransformation" ->
-            Ok NoTransformation
-
-        "Translation" ->
-            Ok Translation
-
-        "Rotation" ->
-            Ok Rotation
-
-        "Scale" ->
-            Ok Scale
-
-        "Mirror" ->
-            Ok Mirror
-
-        _ ->
-            Err ("Unrecognized transformation type '" ++ string ++ "'")
+    -- case string of
+    --     "NoTransformation" ->
+    --         Ok NoTransformation
+    --     "Translation" ->
+    --         Ok Translation
+    --     "Rotation" ->
+    --         Ok Rotation
+    --     "Scale" ->
+    --         Ok Scale
+    --     "Mirror" ->
+    --         Ok Mirror
+    --     _ ->
+    --         Err ("Unrecognized transformation type '" ++ string ++ "'")
+    Ok NoTransformation
 
 
 parsePointLight : String -> Result String Bool
 parsePointLight string =
-    case string of
-        "PointLight" ->
-            Ok True
-
-        "NoPointLight" ->
-            Ok False
-
-        _ ->
-            Err ("Unrecognized point light type '" ++ string ++ "'")
+    -- case string of
+    --     "PointLight" ->
+    --         Ok True
+    --     "NoPointLight" ->
+    --         Ok False
+    --     _ ->
+    --         Err ("Unrecognized point light type '" ++ string ++ "'")
+    Ok True
 
 
 parseDirectionalLight : String -> Result String Bool
 parseDirectionalLight string =
-    case string of
-        "DirectionalLight" ->
-            Ok True
-
-        "NoDirectionalLight" ->
-            Ok False
-
-        _ ->
-            Err ("Unrecognized directional light type '" ++ string ++ "'")
+    -- case string of
+    --     "DirectionalLight" ->
+    --         Ok True
+    --     "NoDirectionalLight" ->
+    --         Ok False
+    --     _ ->
+    --         Err ("Unrecognized directional light type '" ++ string ++ "'")
+    Ok True
 
 
 parseSoftLighting : String -> Result String Bool
 parseSoftLighting string =
-    case string of
-        "SoftLighting" ->
-            Ok True
-
-        "NoSoftLighting" ->
-            Ok False
-
-        _ ->
-            Err ("Unrecognized soft lighting type '" ++ string ++ "'")
+    -- case string of
+    --     "SoftLighting" ->
+    --         Ok True
+    --     "NoSoftLighting" ->
+    --         Ok False
+    --     _ ->
+    --         Err ("Unrecognized soft lighting type '" ++ string ++ "'")
+    Ok True
 
 
 parseToneMapping : String -> Result String ToneMapping
 parseToneMapping string =
-    case string of
-        "NoToneMapping" ->
-            Ok NoToneMapping
-
-        "Reinhard" ->
-            Ok Reinhard
-
-        "ReinhardPerChannel" ->
-            Ok ReinhardPerChannel
-
-        "HableFilmic" ->
-            Ok HableFilmic
-
-        _ ->
-            Err ("Unrecognized tone mapping type '" ++ string ++ "'")
+    -- case string of
+    --     "NoToneMapping" ->
+    --         Ok NoToneMapping
+    --     "Reinhard" ->
+    --         Ok Reinhard
+    --     "ReinhardPerChannel" ->
+    --         Ok ReinhardPerChannel
+    --     "HableFilmic" ->
+    --         Ok HableFilmic
+    --     _ ->
+    --         Err ("Unrecognized tone mapping type '" ++ string ++ "'")
+    Ok HableFilmic
 
 
 parseAntialiasing : String -> Result String Antialiasing
 parseAntialiasing string =
-    case string of
-        "NoAntialiasing" ->
-            Ok NoAntialiasing
-
-        "Multisampling" ->
-            Ok Multisampling
-
-        "Supersampling" ->
-            Ok Supersampling
-
-        _ ->
-            Err ("Unrecognized antialiasing type '" ++ string ++ "'")
+    -- case string of
+    --     "NoAntialiasing" ->
+    --         Ok NoAntialiasing
+    --     "Multisampling" ->
+    --         Ok Multisampling
+    --     "Supersampling" ->
+    --         Ok Supersampling
+    --     _ ->
+    --         Err ("Unrecognized antialiasing type '" ++ string ++ "'")
+    Ok Multisampling
 
 
 parseProjection : String -> Result String Projection
 parseProjection string =
-    case string of
-        "Perspective" ->
-            Ok Perspective
-
-        "Orthographic" ->
-            Ok Orthographic
-
-        _ ->
-            Err ("Unrecognized projection type '" ++ string ++ "'")
+    -- case string of
+    --     "Perspective" ->
+    --         Ok Perspective
+    --     "Orthographic" ->
+    --         Ok Orthographic
+    --     _ ->
+    --         Err ("Unrecognized projection type '" ++ string ++ "'")
+    Ok Perspective
 
 
 parseTestCase : String -> Result String TestCase
@@ -513,11 +499,11 @@ addShadowIf shadowSetting shadowMesh givenEntity =
 polyline : Polyline3d Meters WorldCoordinates
 polyline =
     Polyline3d.fromVertices
-        [ Point3d.meters -1 -1 1
-        , Point3d.meters 0 -1 1
-        , Point3d.meters 0 0 1
-        , Point3d.meters 0 1 1
-        , Point3d.meters 1 1 1
+        [ Point3d.meters -1 -1 0.5
+        , Point3d.meters 0 -1 0.5
+        , Point3d.meters 0 0 0.5
+        , Point3d.meters 0 1 0.5
+        , Point3d.meters 1 1 0.5
         ]
 
 
@@ -621,16 +607,16 @@ quadEntity : { a | shadows : Bool } -> Material.Textured WorldCoordinates -> Ent
 quadEntity { shadows } material =
     let
         p1 =
-            Point3d.meters 1 -1 1
+            Point3d.meters 1 -1 0.5
 
         p2 =
-            Point3d.meters 1 1 1
+            Point3d.meters 1 1 0.5
 
         p3 =
-            Point3d.meters -1 1 1
+            Point3d.meters -1 1 0.5
 
         p4 =
-            Point3d.meters -1 -1 1
+            Point3d.meters -1 -1 0.5
     in
     if shadows then
         Scene3d.quadWithShadow material p1 p2 p3 p4
@@ -651,8 +637,8 @@ blockEntity { shadows } material =
     in
     drawBlock material <|
         Block3d.from
-            (Point3d.meters -1 -1 1)
-            (Point3d.meters 1 1 2)
+            (Point3d.meters -1 -0.75 0.25)
+            (Point3d.meters 1 0.75 1.25)
 
 
 sphereEntity : { a | shadows : Bool } -> Material.Textured WorldCoordinates -> Entity WorldCoordinates
@@ -666,7 +652,7 @@ sphereEntity { shadows } material =
                 Scene3d.sphere
     in
     drawSphere material <|
-        Sphere3d.withRadius (Length.meters 1) (Point3d.meters 0 0 2)
+        Sphere3d.withRadius (Length.meters 1) (Point3d.meters 0 0 1)
 
 
 cylinderEntity : { a | shadows : Bool } -> Material.Uniform WorldCoordinates -> Entity WorldCoordinates
@@ -681,8 +667,8 @@ cylinderEntity { shadows } material =
     in
     drawCylinder material <|
         Cylinder3d.along Axis3d.z
-            { start = Length.meters 1
-            , end = Length.meters 2
+            { start = Length.meters 0.5
+            , end = Length.meters 1.5
             , radius = Length.meters 1
             }
 
@@ -699,8 +685,8 @@ coneEntity { shadows } material =
     in
     drawCone material <|
         Cone3d.along Axis3d.z
-            { base = Length.meters 1
-            , tip = Length.meters 3
+            { base = Length.meters 0.5
+            , tip = Length.meters 2.5
             , radius = Length.meters 1
             }
 
@@ -717,20 +703,20 @@ facetEntity { shadows } material =
     in
     drawFacet material <|
         Triangle3d.from
-            (Point3d.meters 0 -1 1)
-            (Point3d.meters 3 0 1)
-            (Point3d.meters 0 1 1)
+            (Point3d.meters -0.5 -1 0.5)
+            (Point3d.meters 2 0 0.5)
+            (Point3d.meters -0.5 1 0.5)
 
 
 lineSegmentEntity : Material.Plain WorldCoordinates -> Entity WorldCoordinates
 lineSegmentEntity givenMaterial =
     Scene3d.lineSegment givenMaterial <|
-        LineSegment3d.from (Point3d.meters 1 0 1) (Point3d.meters 3 0 1)
+        LineSegment3d.from (Point3d.meters 0 0 1) (Point3d.meters 2 0 1)
 
 
 pointEntity : Material.Plain WorldCoordinates -> Entity WorldCoordinates
 pointEntity givenMaterial =
-    Scene3d.point { radius = Pixels.pixels 10 } givenMaterial (Point3d.meters 2 0 1)
+    Scene3d.point { radius = Pixels.pixels 10 } givenMaterial (Point3d.meters 1 0 1)
 
 
 main : Program () Model Msg
@@ -1936,13 +1922,13 @@ transformation testCase =
             Scene3d.translateIn Direction3d.x (Length.meters 1)
 
         Rotation ->
-            Scene3d.rotateAround Axis3d.z (Angle.degrees 45)
+            Scene3d.rotateAround Axis3d.z (Angle.degrees 135)
 
         Scale ->
-            Scene3d.scaleAbout Point3d.origin (4 / 3)
+            Scene3d.scaleAbout Point3d.origin (2 / 3)
 
         Mirror ->
-            Scene3d.mirrorAcross (Plane3d.yz |> Plane3d.translateIn Direction3d.x (Length.meters -0.5))
+            Scene3d.mirrorAcross Plane3d.zx
 
 
 lights : TestCase -> Scene3d.Lights WorldCoordinates
@@ -1950,24 +1936,24 @@ lights testCase =
     let
         pointLight =
             Light.point (Light.castsShadows testCase.shadows)
-                { chromaticity = Light.fluorescent
-                , position = Point3d.meters 0 -4 4
+                { chromaticity = Light.daylight
+                , position = Point3d.meters -3 4 4
                 , intensity = LuminousFlux.lumens 20000
                 }
 
         directionalLight =
             Light.directional (Light.castsShadows testCase.shadows)
-                { chromaticity = Light.colorTemperature (Temperature.kelvins 2200)
+                { chromaticity = Light.daylight
                 , intensity = Illuminance.lux 60
-                , direction = Direction3d.xyZ (Angle.degrees -90) (Angle.degrees -30)
+                , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -25)
                 }
 
         softLighting =
             Light.soft
                 { upDirection = Direction3d.z
-                , chromaticity = Light.incandescent
-                , intensityAbove = Illuminance.lux 15
-                , intensityBelow = Illuminance.lux 3
+                , chromaticity = Light.daylight
+                , intensityAbove = Illuminance.lux 30
+                , intensityBelow = Illuminance.lux 6
                 }
     in
     case ( testCase.pointLight, testCase.directionalLight, testCase.softLighting ) of
@@ -2003,7 +1989,7 @@ camera testCase =
             Point3d.meters 0 0 0.5
 
         eyePoint =
-            Point3d.meters 10 5 7
+            Point3d.meters 8 4 6
 
         verticalFieldOfView =
             Angle.degrees 30
@@ -2327,10 +2313,10 @@ axes =
 floor : Entity WorldCoordinates
 floor =
     Scene3d.quad (Material.matte Tango.aluminum3)
-        (Point3d.meters 4 -4 0)
-        (Point3d.meters 4 4 0)
-        (Point3d.meters -4 4 0)
-        (Point3d.meters -4 -4 0)
+        (Point3d.meters 2.25 -2.25 0)
+        (Point3d.meters 2.25 2.25 0)
+        (Point3d.meters -2.25 2.25 0)
+        (Point3d.meters -2.25 -2.25 0)
 
 
 viewTestCase : LoadedModel -> TestCase -> Element Msg
@@ -2345,11 +2331,11 @@ viewTestCase model testCase =
                             , background = Scene3d.transparentBackground
                             , camera = camera testCase
                             , clipDepth = Length.meters 1
-                            , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+                            , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
                             , antialiasing = antialiasing testCase
                             , exposure = Scene3d.exposureValue 4
                             , toneMapping = toneMapping testCase
-                            , whiteBalance = Light.incandescent
+                            , whiteBalance = Light.daylight
                             , entities = [ floor, validEntity |> transformation testCase ]
                             }
 

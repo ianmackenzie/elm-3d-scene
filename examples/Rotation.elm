@@ -72,7 +72,7 @@ main =
     Scene3d.unlit
         { camera = camera
         , clipDepth = Length.meters 0.1
-        , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+        , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
         , entities = List.map rotatedSquare angles
         }

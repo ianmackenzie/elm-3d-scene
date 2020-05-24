@@ -233,6 +233,116 @@ type Material
 -- VIEW
 
 
+unlitScene : Model -> Html Msg
+unlitScene model =
+    Scene3d.unlit
+        { dimensions = ( Pixels.pixels 360, Pixels.pixels 300 )
+        , camera = camera model.distance model.azimuth model.elevation
+        , clipDepth = Length.meters 0.1
+        , background = Scene3d.transparentBackground
+        , entities =
+            [ table |> Scene3d.placeIn Frame3d.atOrigin
+
+            --, floor |> Scene3d.placeIn Frame3d.atOrigin
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
+            ]
+                ++ List.map object model.objects
+        }
+
+
+sunnyScene : Model -> Html Msg
+sunnyScene model =
+    Scene3d.sunny
+        { dimensions = ( Pixels.pixels 360, Pixels.pixels 300 )
+        , camera = camera model.distance model.azimuth model.elevation
+        , clipDepth = Length.meters 0.1
+        , background = Scene3d.transparentBackground
+        , entities =
+            [ table |> Scene3d.placeIn Frame3d.atOrigin
+
+            --, floor |> Scene3d.placeIn Frame3d.atOrigin
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
+            ]
+                ++ List.map object model.objects
+        , shadows = True
+        , upDirection = Direction3d.positiveZ
+        , sunlightDirection = Direction3d.xyZ (Angle.degrees 135) (Angle.degrees -60)
+        }
+
+
+cloudyScene : Model -> Html Msg
+cloudyScene model =
+    Scene3d.cloudy
+        { dimensions = ( Pixels.pixels 360, Pixels.pixels 300 )
+        , camera = camera model.distance model.azimuth model.elevation
+        , clipDepth = Length.meters 0.1
+        , background = Scene3d.transparentBackground
+        , entities =
+            [ table |> Scene3d.placeIn Frame3d.atOrigin
+
+            --, floor |> Scene3d.placeIn Frame3d.atOrigin
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
+            ]
+                ++ List.map object model.objects
+        , upDirection = Direction3d.negativeZ
+        }
+
+
+customScene : Model -> Html Msg
+customScene model =
+    Scene3d.custom
+        { dimensions = model.dimensions
+        , antialiasing =
+            if model.multisampling then
+                Scene3d.multisampling
+
+            else
+                Scene3d.supersampling model.supersampling
+        , camera = camera model.distance model.azimuth model.elevation
+        , clipDepth = Length.meters 0.1
+        , lights = lights model.lights
+        , exposure = Scene3d.exposureValue model.exposure
+        , toneMapping = Scene3d.reinhardToneMapping model.dynamicRange
+        , whiteBalance = Light.daylight
+        , background =
+            Scene3d.backgroundColor
+                (Color.fromHex model.backgroundColor
+                    |> Result.withDefault (Color.fromRGB ( 0, 0, 0 ))
+                )
+        , entities =
+            [ table |> Scene3d.placeIn Frame3d.atOrigin
+            , floor |> Scene3d.placeIn Frame3d.atOrigin
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
+            , chair
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
+                |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
+                |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
+            ]
+                ++ List.map object model.objects
+                ++ List.filterMap bulb model.lights
+        }
+
+
 view : Model -> Html Msg
 view model =
     Html.div []
@@ -244,39 +354,9 @@ view model =
                 :: Html.Attributes.style "top" "0"
                 :: events model.orbiting
             )
-            [ Scene3d.toHtml
-                { dimensions = model.dimensions
-                , antialiasing =
-                    if model.multisampling then
-                        Scene3d.multisampling
-
-                    else
-                        Scene3d.supersampling model.supersampling
-                , camera = camera model.distance model.azimuth model.elevation
-                , clipDepth = Length.meters 0.1
-                , lights = lights model.lights
-                , exposure = Scene3d.exposureValue model.exposure
-                , toneMapping = Scene3d.reinhardToneMapping model.dynamicRange
-                , whiteBalance = Light.daylight
-                , background =
-                    Scene3d.backgroundColor
-                        (Color.fromHex model.backgroundColor
-                            |> Result.withDefault (Color.fromRGB ( 0, 0, 0 ))
-                        )
-                , entities =
-                    [ table |> Scene3d.placeIn Frame3d.atOrigin
-                    , floor |> Scene3d.placeIn Frame3d.atOrigin
-                    , chair
-                        |> Scene3d.rotateAround Axis3d.z (Angle.degrees -10)
-                        |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.4 0))
-                    , chair
-                        |> Scene3d.rotateAround Axis3d.z (Angle.degrees 60)
-                        |> Scene3d.placeIn (Frame3d.atPoint (Point3d.meters 0 -0.6 0))
-                        |> Scene3d.rotateAround Axis3d.z (Angle.degrees 180)
-                    ]
-                        ++ List.map object model.objects
-                        ++ List.filterMap bulb model.lights
-                }
+            [ sunnyScene model
+            , cloudyScene model
+            , unlitScene model
             ]
         ]
 
@@ -815,15 +895,16 @@ type EntityCoordinates
 floor : Scene3d.Entity EntityCoordinates
 floor =
     Scene3d.quad
+        --(Material.color (Color.fromRGB ( 50, 50, 50 )))
         (Material.nonmetal
             { baseColor = Color.fromRGB ( 50, 50, 50 )
             , roughness = 0.9
             }
         )
-        (Point3d.meters -1.5 -1.5 0)
-        (Point3d.meters 1.5 -1.5 0)
-        (Point3d.meters 1.5 1.5 0)
-        (Point3d.meters -1.5 1.5 0)
+        (Point3d.meters -1.5 -3 0)
+        (Point3d.meters 1.5 -3 0)
+        (Point3d.meters 1.5 3 0)
+        (Point3d.meters -1.5 3 0)
 
 
 table : Scene3d.Entity EntityCoordinates
@@ -862,6 +943,7 @@ table =
     ]
         |> List.map
             (Scene3d.blockWithShadow
+                --(Material.color (Color.fromRGB ( 250, 180, 60 )))
                 (Material.nonmetal
                     { baseColor = Color.fromRGB ( 250, 180, 60 )
                     , roughness = 0.8
@@ -919,8 +1001,9 @@ chair =
     ]
         |> List.map
             (Scene3d.blockWithShadow
+                --(Material.color (Color.fromRGB ( 250, 180, 60 ) |> Color.blacken 25))
                 (Material.nonmetal
-                    { baseColor = Color.fromRGB ( 250, 180, 60 )
+                    { baseColor = Color.fromRGB ( 250, 180, 60 ) |> Color.blacken 25
                     , roughness = 0.8
                     }
                 )
@@ -936,6 +1019,7 @@ object { kind, position, material, color, roughness } =
                 |> Result.withDefault (Color.fromRGB ( 255, 255, 255 ))
 
         objectMaterial =
+            --Material.color objectColor
             case material of
                 Matte ->
                     Material.matte objectColor

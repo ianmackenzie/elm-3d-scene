@@ -46,14 +46,15 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { azimuth = Angle.degrees 45
+    ( { azimuth = Angle.degrees 30
       , elevation = Angle.degrees 30
       , orbiting = False
       , texture = Nothing
       }
     , Task.attempt GotTexture
-        (Material.loadWith Material.bilinearFiltering
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/512px-Elm_logo.svg.png"
+        (Material.loadWith Material.trilinearFiltering
+            "https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/blue-elm-logo.png"
+         --"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/512px-Elm_logo.svg.png"
         )
     )
 
@@ -122,11 +123,11 @@ view model =
     let
         viewpoint =
             Viewpoint3d.orbit
-                { focalPoint = Point3d.meters 0.5 0.5 0
+                { focalPoint = Point3d.meters 0.5 0.5 -0.15
                 , groundPlane = SketchPlane3d.xy
                 , azimuth = model.azimuth
                 , elevation = model.elevation
-                , distance = Length.meters 3
+                , distance = Length.meters 2
                 }
 
         camera =
@@ -141,8 +142,8 @@ view model =
             Just texture ->
                 [ Scene3d.unlit
                     { camera = camera
-                    , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-                    , background = Scene3d.backgroundColor Tango.plum1
+                    , dimensions = ( Pixels.pixels 320, Pixels.pixels 230 )
+                    , background = Scene3d.transparentBackground --Scene3d.backgroundColor Tango.plum1
                     , clipDepth = Length.meters 0.1
                     , entities =
                         [ Scene3d.quad (Material.texturedColor texture)

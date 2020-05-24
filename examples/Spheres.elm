@@ -39,10 +39,10 @@ floor : Scene3d.Entity World
 floor =
     Scene3d.block Materials.aluminum <|
         Block3d.with
-            { x1 = meters -4
-            , x2 = meters 4
-            , y1 = meters -4
-            , y2 = meters 4
+            { x1 = meters -3.5
+            , x2 = meters 3.5
+            , y1 = meters -3.5
+            , y2 = meters 3.5
             , z1 = meters -2.2
             , z2 = meters -2
             }
@@ -81,7 +81,7 @@ camera model =
                 , groundPlane = SketchPlane3d.xy
                 , azimuth = model.azimuth
                 , elevation = model.elevation
-                , distance = Length.meters 20
+                , distance = Length.meters 17
                 }
         , verticalFieldOfView = Angle.degrees 30
         }
@@ -305,7 +305,7 @@ view model =
                 { lights = Scene3d.twoLights lightBulb overheadLighting
                 , camera = camera model
                 , clipDepth = meters 0.1
-                , dimensions = ( pixels 1024, pixels 768 )
+                , dimensions = ( pixels 480, pixels 320 )
                 , antialiasing = Scene3d.multisampling
                 , exposure = Scene3d.exposureValue model.exposureValue
                 , toneMapping =

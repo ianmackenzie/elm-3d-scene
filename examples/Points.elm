@@ -22,7 +22,7 @@ main =
     let
         mesh =
             Mesh.points { radius = Pixels.pixels 5 } <|
-                Parameter1d.steps 20 <|
+                Parameter1d.steps 12 <|
                     Point3d.interpolateFrom
                         (Point3d.meters 1 0 -1)
                         (Point3d.meters -1 0 1)
@@ -40,8 +40,8 @@ main =
     in
     Scene3d.unlit
         { camera = camera
-        , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
-        , background = Scene3d.backgroundColor Tango.orange1
+        , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
+        , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
         , entities = [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]
         }
