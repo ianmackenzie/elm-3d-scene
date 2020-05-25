@@ -710,7 +710,7 @@ allLightsEnabled =
 {-| No lights at all! You don't need lights if you're only using materials
 like [`color`](Material#color) or [`emissive`](Material#emissive) (since those
 materials don't react to external light anyways). But in that case it might be
-simplest to use [`Scene3d.unlit`](Scene3d#unlit) instead of [`Scene3d.toHtml`](Scene3d#toHtml)
+simplest to use [`Scene3d.unlit`](Scene3d#unlit) instead of [`Scene3d.custom`](Scene3d#custom)
 so that you don't have to explicitly provide a `Lights` value at all.
 -}
 noLights : Lights coordinates
@@ -1392,7 +1392,7 @@ However, there are a couple of additional arguments:
 
   - You must specify the `aspectRatio` (width over height) that the scene is
     being rendered at, so that projection matrices can be computed correctly.
-    (In `Scene3d.toHtml`, aspect ratio is computed from the given dimensions.)
+    (In `Scene3d.custom`, aspect ratio is computed from the given dimensions.)
   - You must specify the current supersampling factor being used, if any. This
     allows the circular dots used to render points to have the same radius
     whether or not supersampling is used (e.g. if using 2x supersampling, then
