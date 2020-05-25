@@ -1927,20 +1927,22 @@ reinhardPerChannelToneMapping maxOverexposure =
 
 {-| A popular 'filmic' tone mapping method developed by John Hable for Uncharted
 2 and documented [here](http://filmicworlds.com/blog/filmic-tonemapping-operators/).
-It attempts to approximately reproduce how real film reacts to light. The
-results are fairly similar to `reinhardPerChannelToneMapping 5`, but will tend
-to have deeper blacks for a slightly less washed-out look:
+This is a good default choice for realistic-looking scenes since it attempts to
+approximately reproduce how real film reacts to light. The results are fairly
+similar to `reinhardPerChannelToneMapping 5`, but will tend to have slightly
+deeper blacks:
 
 ![Hable filmic tone mapping](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/hable-filmic-tone-mapping.png)
 
-Note that by default this can cause the scene to look slightly dark (compare
-the above to the example using [no tone mapping](#noToneMapping)) but that can
-be compensated by adjusting exposure (e.g. by reducing the [exposure value](#exposureValue)
-by 1 or 2) to result in a well-exposed scene without blown-out highlights:
+Note that applying tone mapping can cause the scene to look slightly dark
+(compare the above to the example using [no tone mapping](#noToneMapping)).
+However, this can be compensated for by adjusting exposure (for example, by
+reducing the [exposure value](#exposureValue) by 1 or 2):
 
 ![Hable filmic tone mapping, brightened](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/hable-filmic-tone-mapping-bright.png)
 
-This is a good default choice for realistic-looking scenes.
+Note how this version is brighter overall than the [original](#noToneMapping),
+non-tone-mapped image but doesn't suffer from the blown-out highlights.
 
 -}
 hableFilmicToneMapping : ToneMapping
