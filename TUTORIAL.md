@@ -80,7 +80,8 @@ camera =
         }
 ```
 
-Here, we've defined a camera:
+Here, we've used the [`Camera3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/Camera3d)
+module to define a camera:
 
 - Using [perspective](http://glasnost.itcarlow.ie/~powerk/GeneralGraphicsNotes/projection/perspective_projection.html)
   projection with a vertical [field of view](https://en.wikipedia.org/wiki/Field_of_view)
