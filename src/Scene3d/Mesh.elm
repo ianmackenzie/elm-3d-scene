@@ -22,7 +22,7 @@ frame to frame.
 Note that this does _not_ mean that objects can't move around or change color -
 you can freely change the material applied to a mesh from frame to frame, and
 you can use the various provided [transformation functions](Scene3d#transformations)
-to move meshes around without having to recreate them.
+to transform meshes around without having to recreate them.
 
 @docs Mesh
 
