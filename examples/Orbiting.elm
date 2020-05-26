@@ -9,7 +9,6 @@ import Html exposing (Html)
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Length
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Quantity
@@ -146,8 +145,8 @@ view model =
             , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
             , background = Scene3d.transparentBackground
             , entities =
-                [ Scene3d.mesh (Material.color Tango.orange2) model.mesh1
-                , Scene3d.mesh (Material.color Tango.skyBlue2) model.mesh2
+                [ Scene3d.mesh (Material.color Color.orange) model.mesh1
+                , Scene3d.mesh (Material.color Color.blue) model.mesh2
                 ]
             }
         ]

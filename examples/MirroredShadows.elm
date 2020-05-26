@@ -6,6 +6,7 @@ import Block3d
 import Browser
 import Browser.Events
 import Camera3d exposing (Camera3d)
+import Color
 import Direction3d exposing (Direction3d)
 import Html exposing (Html)
 import Html.Attributes
@@ -14,7 +15,6 @@ import Json.Decode as Decode
 import Length exposing (Meters, meters)
 import Luminance
 import LuminousFlux exposing (lumens)
-import Palette.Tango as Tango
 import Pixels exposing (pixels)
 import Plane3d
 import Point3d
@@ -33,12 +33,12 @@ type World
 
 objectMaterial : Material.Uniform coordinates
 objectMaterial =
-    Material.nonmetal { baseColor = Tango.skyBlue1, roughness = 0.4 }
+    Material.nonmetal { baseColor = Color.lightBlue, roughness = 0.4 }
 
 
 floorMaterial : Material.Uniform coordinates
 floorMaterial =
-    Material.matte Tango.chameleon1
+    Material.matte Color.lightGreen
 
 
 floor : Scene3d.Entity World
@@ -130,15 +130,14 @@ main =
                         [ Scene3d.custom
                             { lights =
                                 --Scene3d.oneLight (Light.ambient { chromaticity = Light.daylight, intensity = Illuminance.lux 9000 })
-                                Scene3d.oneLight lightBulb
+                                Scene3d.twoLights
+                                    (if usePointLight then
+                                        lightBulb
 
-                            -- Scene3d.twoLights
-                            --     (if usePointLight then
-                            --         lightBulb
-                            --      else
-                            --         sunlight
-                            --     )
-                            --     daylight
+                                     else
+                                        sunlight
+                                    )
+                                    daylight
                             , camera = camera
                             , clipDepth = meters 0.1
                             , antialiasing = Scene3d.multisampling

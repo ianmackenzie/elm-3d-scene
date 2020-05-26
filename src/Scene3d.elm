@@ -6,7 +6,7 @@ module Scene3d exposing
     , mesh, meshWithShadow
     , group, nothing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
-    , Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, translucentBackground
+    , Background, transparentBackground, backgroundColor
     , Antialiasing
     , noAntialiasing, multisampling, supersampling
     , Lights
@@ -109,7 +109,7 @@ entity:
 
 # Background
 
-@docs Background, transparentBackground, whiteBackground, blackBackground, backgroundColor, translucentBackground
+@docs Background, transparentBackground, backgroundColor
 
 
 # Antialiasing
@@ -182,7 +182,6 @@ import Block3d exposing (Block3d)
 import BoundingBox3d exposing (BoundingBox3d)
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
-import Color.Transparent
 import Cone3d exposing (Cone3d)
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
@@ -271,7 +270,7 @@ lineSegment givenMaterial givenLineSegment =
 
 dummyMaterial : Material coordinates attributes
 dummyMaterial =
-    Material.color (Color.fromRGB ( 0, 0, 0 ))
+    Material.color Color.black
 
 
 {-| Draw a single triangle.
@@ -922,60 +921,21 @@ to support more fancy things like skybox textures or backgrounds based on the
 current environmental lighting.
 -}
 type Background coordinates
-    = BackgroundColor Color.Transparent.Color
+    = BackgroundColor Color
 
 
 {-| A fully transparent background.
 -}
 transparentBackground : Background coordinates
 transparentBackground =
-    BackgroundColor <|
-        Color.Transparent.fromRGBA
-            { red = 0
-            , green = 0
-            , blue = 0
-            , alpha = Color.Transparent.transparent
-            }
+    backgroundColor (Color.rgba 0 0 0 0)
 
 
-{-| An opaque black background.
--}
-blackBackground : Background coordinates
-blackBackground =
-    BackgroundColor <|
-        Color.Transparent.fromRGBA
-            { red = 0
-            , green = 0
-            , blue = 0
-            , alpha = Color.Transparent.opaque
-            }
-
-
-{-| An opaque white background.
--}
-whiteBackground : Background coordinates
-whiteBackground =
-    BackgroundColor <|
-        Color.Transparent.fromRGBA
-            { red = 255
-            , green = 255
-            , blue = 255
-            , alpha = Color.Transparent.opaque
-            }
-
-
-{-| A custom opaque background color.
+{-| A custom background color.
 -}
 backgroundColor : Color -> Background coordinates
 backgroundColor color =
-    BackgroundColor (Color.Transparent.fromColor Color.Transparent.opaque color)
-
-
-{-| A custom background color with transparency.
--}
-translucentBackground : Color.Transparent.Color -> Background coordinates
-translucentBackground transparentColor =
-    BackgroundColor transparentColor
+    BackgroundColor color
 
 
 
@@ -1727,7 +1687,7 @@ composite arguments scenes =
             arguments.background
 
         backgroundColorString =
-            Color.Transparent.toRGBAString givenBackgroundColor
+            Color.toCssString givenBackgroundColor
 
         commonWebGLOptions =
             [ WebGL.depth 1

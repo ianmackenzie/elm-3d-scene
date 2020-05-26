@@ -20,7 +20,6 @@ import Json.Decode exposing (Decoder)
 import Length exposing (Meters, meters, millimeters)
 import Luminance
 import Mass exposing (kilograms)
-import Palette.Tango as Tango
 import Physics.Body as Body exposing (Body)
 import Physics.Constraint
 import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
@@ -115,7 +114,7 @@ floor =
         { id = Floor
         , entity =
             shape
-                |> Scene3d.block (Material.matte Tango.aluminum6)
+                |> Scene3d.block (Material.matte Color.darkCharcoal)
                 |> Scene3d.translateBy (Vector3d.millimeters 0 0 -5)
         }
 
@@ -150,7 +149,7 @@ table =
                 |> List.map
                     (Scene3d.blockWithShadow
                         (Material.nonmetal
-                            { baseColor = Color.fromRGB ( 255, 255, 255 )
+                            { baseColor = Color.white
                             , roughness = 0.25
                             }
                         )
@@ -338,7 +337,7 @@ mouse =
     Body.compound []
         { id = Mouse
         , entity =
-            Scene3d.sphere (Material.matte (Color.fromRGB ( 255, 255, 255 )))
+            Scene3d.sphere (Material.matte Color.white)
                 (Sphere3d.atOrigin (millimeters 20))
         }
 

@@ -22,6 +22,7 @@ will look like this:
 - [`elm-3d-camera`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/)
   for `Camera3d` and `Viewpoint3d`
 
+You'll also need [`avh4/elm-color`](https://package.elm-lang.org/packages/avh4/elm-color/latest/).
 As a result, when setting up pretty much any app that uses `elm-3d-scene`, you
 will need to run something like:
 
@@ -30,6 +31,7 @@ elm install ianmackenzie/elm-3d-scene
 elm install ianmackenzie/elm-geometry
 elm install ianmackenzie/elm-units
 elm install ianmackenzie/elm-3d-camera
+elm install avh4/elm-color
 ```
 
 In more sophisticated apps, you will also need to install [`elm-triangular-mesh`](https://package.elm-lang.org/packages/ianmackenzie/elm-triangular-mesh/latest/).
@@ -43,7 +45,7 @@ entity:
 
 ```elm
 entities =
-    [ Scene3d.quad (Material.color Tango.skyBlue2)
+    [ Scene3d.quad (Material.color Color.blue)
         (Point3d.meters -1 -1 0)
         (Point3d.meters 1 -1 0)
         (Point3d.meters 1 1 0)
@@ -109,10 +111,10 @@ module HelloWorld exposing (main)
 
 import Angle
 import Camera3d
+import Color
 import Direction3d
 import Html exposing (Html)
 import Length
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Scene3d
@@ -124,7 +126,7 @@ main : Html msg
 main =
     Scene3d.unlit
         { entities =
-            [ Scene3d.quad (Material.color Tango.skyBlue2)
+            [ Scene3d.quad (Material.color Color.blue)
                 (Point3d.meters -1 -1 0)
                 (Point3d.meters 1 -1 0)
                 (Point3d.meters 1 1 0)

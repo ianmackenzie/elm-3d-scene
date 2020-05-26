@@ -3,11 +3,9 @@ module Points exposing (main)
 import Angle exposing (Angle)
 import Camera3d exposing (Camera3d)
 import Color
-import Color.Transparent
 import Direction3d
 import Html exposing (Html)
 import Length exposing (Meters)
-import Palette.Tango as Tango
 import Parameter1d
 import Pixels
 import Point3d
@@ -43,5 +41,5 @@ main =
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
-        , entities = [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]
+        , entities = [ Scene3d.mesh (Material.color Color.blue) mesh ]
         }

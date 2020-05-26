@@ -6,7 +6,6 @@ import Color
 import Direction3d
 import Html exposing (Html)
 import Length
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Scene3d
@@ -55,7 +54,7 @@ main =
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.transparentBackground
         , entities =
-            [ Scene3d.mesh (Material.color Tango.orange2) mesh1
-            , Scene3d.mesh (Material.color Tango.skyBlue2) mesh2
+            [ Scene3d.mesh (Material.color Color.orange) mesh1
+            , Scene3d.mesh (Material.color Color.blue) mesh2
             ]
         }

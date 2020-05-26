@@ -10,7 +10,6 @@ import Html exposing (Html)
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Length
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Quantity

@@ -2,10 +2,10 @@ module LineSegments exposing (main)
 
 import Angle exposing (Angle)
 import Camera3d
+import Color
 import Direction3d
 import Html exposing (Html)
 import Length
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Polyline3d
@@ -43,5 +43,5 @@ main =
         , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
-        , entities = [ Scene3d.mesh (Material.color Tango.skyBlue2) mesh ]
+        , entities = [ Scene3d.mesh (Material.color Color.blue) mesh ]
         }

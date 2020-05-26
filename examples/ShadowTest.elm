@@ -2,13 +2,13 @@ module ShadowTest exposing (main)
 
 import Angle
 import Camera3d exposing (Camera3d)
+import Color
 import Cylinder3d
 import Direction3d
 import Html exposing (Html)
 import Illuminance
 import Length exposing (Meters)
 import Luminance
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Quantity
@@ -96,7 +96,7 @@ camera =
 ballMaterial : Material.Uniform coordinates
 ballMaterial =
     Material.nonmetal
-        { baseColor = Tango.aluminum2
+        { baseColor = Color.gray
         , roughness = 0.4
         }
 
@@ -104,7 +104,7 @@ ballMaterial =
 playerMaterialA : Material.Uniform coordinates
 playerMaterialA =
     Material.nonmetal
-        { baseColor = Tango.orange1
+        { baseColor = Color.lightOrange
         , roughness = 0.4
         }
 
@@ -112,6 +112,6 @@ playerMaterialA =
 grassMaterial : Material.Uniform coordinates
 grassMaterial =
     Material.nonmetal
-        { baseColor = Tango.chameleon3
+        { baseColor = Color.darkGreen
         , roughness = 0.4
         }

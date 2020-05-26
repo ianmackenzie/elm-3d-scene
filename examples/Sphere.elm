@@ -9,7 +9,6 @@ import Illuminance
 import Length exposing (Meters)
 import Luminance
 import LuminousFlux
-import Palette.Tango as Tango
 import Parameter1d
 import Pixels
 import Point3d
@@ -55,7 +54,7 @@ camera =
 material : Material.Uniform coordinates
 material =
     Material.nonmetal
-        { baseColor = Tango.skyBlue2
+        { baseColor = Color.blue
         , roughness = 0.4
         }
 

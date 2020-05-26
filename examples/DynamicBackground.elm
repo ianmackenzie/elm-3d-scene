@@ -5,7 +5,6 @@ import Browser
 import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
-import Color.Transparent
 import Direction3d
 import Duration exposing (Duration)
 import Html exposing (Html)
@@ -13,7 +12,6 @@ import Illuminance
 import Length exposing (Meters)
 import Luminance
 import LuminousFlux
-import Palette.Tango as Tango
 import Parameter1d
 import Pixels
 import Point3d
@@ -68,14 +66,28 @@ camera =
 material : Material.Textured coordinates
 material =
     Material.nonmetal
-        { baseColor = Tango.skyBlue2
+        { baseColor = Color.blue
         , roughness = 0.4
         }
 
 
 backgroundColor : Duration -> Color
 backgroundColor elapsedTime =
-    Color.rotateHue (15 * Duration.inSeconds elapsedTime) Tango.skyBlue2
+    let
+        original =
+            Color.toHsla Color.blue
+
+        incrementedHue =
+            original.hue + Duration.inSeconds elapsedTime / 24
+
+        adjustedHue =
+            if incrementedHue > 1.0 then
+                incrementedHue - 1.0
+
+            else
+                incrementedHue
+    in
+    Color.fromHsla { original | hue = adjustedHue }
 
 
 main : Program () Duration Duration

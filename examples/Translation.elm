@@ -6,7 +6,6 @@ import Color
 import Direction3d
 import Html exposing (Html)
 import Length
-import Palette.Tango as Tango
 import Pixels
 import Point3d
 import Quantity
@@ -51,8 +50,8 @@ main =
 
         square =
             Scene3d.group
-                [ Scene3d.mesh (Material.color Tango.orange2) mesh1
-                , Scene3d.mesh (Material.color Tango.skyBlue2) mesh2
+                [ Scene3d.mesh (Material.color Color.orange) mesh1
+                , Scene3d.mesh (Material.color Color.blue) mesh2
                 ]
 
         squareAtHeight height =

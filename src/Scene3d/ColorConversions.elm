@@ -26,23 +26,22 @@ import Scene3d.Types as Types exposing (Chromaticity(..), CieXyz(..), LinearRgb(
 colorToLinearRgb : Color -> LinearRgb Unitless
 colorToLinearRgb color =
     let
-        ( red, green, blue ) =
-            Color.toRGB color
+        { red, green, blue } =
+            Color.toRgba color
     in
     LinearRgb <|
         vec3
-            (inverseGamma (red / 255))
-            (inverseGamma (green / 255))
-            (inverseGamma (blue / 255))
+            (inverseGamma red)
+            (inverseGamma green)
+            (inverseGamma blue)
 
 
 linearRgbToColor : LinearRgb Unitless -> Color
 linearRgbToColor (LinearRgb linearRgb) =
-    Color.fromRGB
-        ( 255 * gammaCorrect (Vector3.getX linearRgb)
-        , 255 * gammaCorrect (Vector3.getY linearRgb)
-        , 255 * gammaCorrect (Vector3.getZ linearRgb)
-        )
+    Color.rgb
+        (gammaCorrect (Vector3.getX linearRgb))
+        (gammaCorrect (Vector3.getY linearRgb))
+        (gammaCorrect (Vector3.getZ linearRgb))
 
 
 colorToCieXyz : Color -> CieXyz Unitless

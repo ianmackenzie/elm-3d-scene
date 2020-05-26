@@ -30,7 +30,6 @@ import LineSegment3d exposing (LineSegment3d)
 import Luminance
 import LuminousFlux
 import Maybe.Extra as Maybe
-import Palette.Tango as Tango
 import Pixels
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
@@ -1411,7 +1410,7 @@ entity model testCase =
         Color ->
             let
                 material =
-                    Material.color Tango.skyBlue2
+                    Material.color Color.blue
             in
             case testCase.mesh of
                 Points ->
@@ -1471,7 +1470,7 @@ entity model testCase =
         Emissive ->
             let
                 material =
-                    Material.emissive (Light.color Tango.orange2) (Luminance.nits 250)
+                    Material.emissive (Light.color Color.orange) (Luminance.nits 250)
             in
             case testCase.mesh of
                 Points ->
@@ -1531,7 +1530,7 @@ entity model testCase =
         Matte ->
             let
                 material =
-                    Material.matte Tango.skyBlue2
+                    Material.matte Color.blue
             in
             case testCase.mesh of
                 Points ->
@@ -1592,7 +1591,7 @@ entity model testCase =
             let
                 material =
                     Material.nonmetal
-                        { baseColor = Tango.skyBlue2
+                        { baseColor = Color.blue
                         , roughness = 0.25
                         }
             in
@@ -2304,15 +2303,15 @@ axes =
                 ]
     in
     Scene3d.group
-        [ Scene3d.mesh (Material.color Tango.scarletRed1) xAxisMesh
-        , Scene3d.mesh (Material.color Tango.chameleon1) yAxisMesh
-        , Scene3d.mesh (Material.color Tango.skyBlue1) zAxisMesh
+        [ Scene3d.mesh (Material.color Color.lightRed) xAxisMesh
+        , Scene3d.mesh (Material.color Color.lightGreen) yAxisMesh
+        , Scene3d.mesh (Material.color Color.lightBlue) zAxisMesh
         ]
 
 
 floor : Entity WorldCoordinates
 floor =
-    Scene3d.quad (Material.matte Tango.aluminum3)
+    Scene3d.quad (Material.matte Color.darkGray)
         (Point3d.meters 2.25 -2.25 0)
         (Point3d.meters 2.25 2.25 0)
         (Point3d.meters -2.25 2.25 0)

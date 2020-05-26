@@ -8,6 +8,7 @@
     "dependencies": {
         "direct": {
             "NoRedInk/datetimepicker-legacy": "1.0.4",
+            "avh4/elm-color": "1.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
@@ -31,7 +32,6 @@
             "mdgriffith/elm-ui": "1.1.5",
             "myrho/elm-round": "1.0.4",
             "rtfeldman/elm-css": "16.0.1",
-            "tesk9/palette": "2.0.0",
             "w0rm/elm-physics": "5.0.0"
         },
         "indirect": {

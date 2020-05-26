@@ -15,7 +15,6 @@ import Illuminance exposing (Illuminance, Lux)
 import Length exposing (Length, Meters)
 import LuminousFlux exposing (Lumens, LuminousFlux)
 import Maybe.Extra as Maybe
-import Palette.Tango as Tango
 import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
 import Quantity exposing (Unitless)
@@ -600,7 +599,7 @@ mainEntity model parameters =
                 material =
                     case materialType of
                         UntexturedDuckling untexturedMaterialType ->
-                            untexturedMaterial untexturedMaterialType Tango.skyBlue2
+                            untexturedMaterial untexturedMaterialType Color.blue
 
                         TexturedColorDuckling ->
                             Material.texturedColor model.ducklingTexture
@@ -640,12 +639,12 @@ mainEntity model parameters =
                     Sphere3d.withRadius (Length.meters 2.5) Point3d.origin
 
                 defaultColor =
-                    Color.fromRGB ( 233, 235, 236 )
+                    Color.rgb255 233 235 236
 
                 material =
                     case materialType of
                         UntexturedSphere untexturedMaterialType ->
-                            untexturedMaterial untexturedMaterialType Tango.skyBlue2
+                            untexturedMaterial untexturedMaterialType Color.blue
 
                         TexturedColorSphere ->
                             Material.texturedColor model.colorTexture

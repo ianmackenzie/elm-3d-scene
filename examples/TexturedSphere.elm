@@ -14,7 +14,6 @@ import Json.Decode as Decode exposing (Decoder)
 import Length exposing (Meters)
 import Luminance
 import LuminousFlux
-import Palette.Tango as Tango
 import Parameter1d
 import Pixels
 import Point3d

@@ -8,6 +8,7 @@ import Browser
 import Browser.Dom as Dom
 import Browser.Events as Events
 import Camera3d
+import Color
 import Common.Materials as Materials
 import Direction3d
 import Duration
@@ -18,7 +19,6 @@ import Illuminance
 import Length exposing (Length, inMeters, meters)
 import Luminance
 import Mass
-import Palette.Tango as Tango
 import Physics.Body as Body exposing (Body)
 import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
 import Physics.World as World exposing (World)
@@ -159,13 +159,13 @@ materials =
         , Materials.whitePlastic
         , Materials.copper
         , Material.nonmetal
-            { baseColor = Tango.skyBlue1
+            { baseColor = Color.lightBlue
             , roughness = 0.25
             }
         , Materials.gold
         , Materials.whitePlastic
         , Material.nonmetal
-            { baseColor = Tango.skyBlue2
+            { baseColor = Color.blue
             , roughness = 0.25
             }
         ]

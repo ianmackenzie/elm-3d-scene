@@ -122,6 +122,9 @@ Here's a rubber duck model with a constant blue color:
 
 ![Duckling with constant color](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/constant-color.png)
 
+Note that transparency is not currently supported, so any alpha value in the
+given color will be ignored.
+
 -}
 color : Color -> Material coordinates attributes
 color givenColor =
@@ -400,10 +403,10 @@ map function texture =
 toVec3 : Color -> Vec3
 toVec3 givenColor =
     let
-        ( red, green, blue ) =
-            Color.toRGB givenColor
+        { red, green, blue } =
+            Color.toRgba givenColor
     in
-    Math.Vector3.vec3 (red / 255) (green / 255) (blue / 255)
+    Math.Vector3.vec3 red green blue
 
 
 {-| A textured plain-color material, unaffected by lighting.

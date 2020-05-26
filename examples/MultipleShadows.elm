@@ -8,6 +8,7 @@ import Browser
 import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onAnimationFrameDelta, onMouseDown, onMouseMove, onMouseUp, onResize, onVisibilityChange)
 import Camera3d
+import Color
 import Common.Materials as Materials
 import Dict exposing (Dict)
 import Direction3d
@@ -19,7 +20,6 @@ import Illuminance
 import Json.Decode as Decode exposing (Decoder)
 import Length exposing (Meters)
 import LuminousFlux exposing (LuminousFlux)
-import Palette.Tango as Tango
 import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity)
@@ -228,7 +228,7 @@ view { width, height, elapsedTime, azimuth, elevation } =
                 }
 
         plane =
-            Scene3d.quad (Material.matte Tango.aluminum2)
+            Scene3d.quad (Material.matte Color.gray)
                 (Point3d.meters -9 -9 0)
                 (Point3d.meters 9 -9 0)
                 (Point3d.meters 9 9 0)
@@ -266,7 +266,7 @@ view { width, height, elapsedTime, azimuth, elevation } =
 
         secondBox =
             Scene3d.blockWithShadow
-                (Material.pbr { baseColor = Tango.skyBlue2, roughness = 0.25, metallic = 0 })
+                (Material.pbr { baseColor = Color.blue, roughness = 0.25, metallic = 0 })
                 (Block3d.centeredOn (Frame3d.atPoint secondBoxCenter) boxDimensions)
                 |> Scene3d.rotateAround secondBoxRotationAxis
                     (elapsedTime |> Quantity.at secondBoxRotationSpeed)
@@ -288,6 +288,6 @@ view { width, height, elapsedTime, azimuth, elevation } =
         , whiteBalance = Light.fluorescent
         , antialiasing = Scene3d.multisampling
         , dimensions = ( width, height )
-        , background = Scene3d.backgroundColor Tango.skyBlue1
+        , background = Scene3d.backgroundColor Color.lightBlue
         , entities = [ plane, firstBox, secondBox, firstLightBall, secondLightBall ]
         }
