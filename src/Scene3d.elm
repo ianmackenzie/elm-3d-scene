@@ -1384,7 +1384,7 @@ storeStencilValue lightIndex =
 of plain `elm-explorations/webgl` entities, so that you can combine objects
 rendered with `elm-3d-scene` with custom objects you render yourself.
 
-Note that the arguments are not exactly the same as `toHtml`; there are no
+Note that the arguments are not exactly the same as `custom`; there are no
 `background`, `dimensions` or `antialiasing` arguments since those are
 properties that must be set at the top level, so you will have to handle those
 yourself when calling [`WebGL.toHtml`](https://package.elm-lang.org/packages/elm-explorations/webgl/latest/WebGL#toHtml).
@@ -1400,7 +1400,7 @@ However, there are a couple of additional arguments:
     final result has the same visual size). If you're not using supersampling,
     set this value to 1.
 
-This function is called internally by `toHtml` but has not actually been tested
+This function is called internally by `custom` but has not actually been tested
 in combination with other custom WebGL code, so there is a high chance of weird
 interaction bugs. (In particular, if you use the stencil buffer you will likely
 want to clear it explicitly after rendering `elm-3d-scene` entities.) If you
