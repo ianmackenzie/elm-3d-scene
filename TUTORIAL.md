@@ -58,7 +58,7 @@ of the square in counterclockwise order. (`Scene3d.quad` can also be used to
 create rectangles, [parallelograms](https://en.wikipedia.org/wiki/Parallelogram),
 [trapezoids](https://en.wikipedia.org/wiki/Trapezoid) etc.)
 
-Note that entities are always constructed in real-world units - this example
+Note that entities are always constructed using real-world units - this example
 uses meters but you can also use feet, centimeters etc. Using real-world units
 becomes very important later on when using realistic lighting!
 
