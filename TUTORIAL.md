@@ -151,14 +151,14 @@ and `camera`:
 
 - `clipDepth` defines how close objects can get to the camera before they're
   cut off. In this example, you can imagine the camera having an invisible
-  screen one meter in front of the camera that would crop anything that got too
-  close.
+  screen one [meter](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Length)
+  in front of the camera that would crop anything that got too close.
 - `background` specifies the background color to use when rendering. In this 
   case we've used a transparent background so that the background color of the
   HTML underneath (or any other HTML content that happens to be underneath!)
   will show through.
-- `dimensions` defines the size in pixels that the scene should be rendered at.
-  Here we just use a fixed size for simplicity.
+- `dimensions` defines the size in [pixels](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Pixels)
+  that the scene should be rendered at. Here we just use a fixed size for simplicity.
 
 ## Next steps
 
