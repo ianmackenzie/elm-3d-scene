@@ -1,6 +1,5 @@
 module PublishTestApp exposing (main)
 
-import Common
 import Script exposing (Script)
 import Script.Directory as Directory
 import Script.File as File
@@ -33,4 +32,4 @@ script { userPrivileges, workingDirectory } =
 
 main : Script.Program
 main =
-    Common.program script
+    Script.program script

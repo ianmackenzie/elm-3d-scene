@@ -1,6 +1,5 @@
 module GenerateShaders exposing (main)
 
-import Common
 import Glsl
 import Json.Decode as Decode
 import Regex
@@ -451,7 +450,6 @@ hableFilmicToneMap =
             return gammaCorrectedColor(scale * unscaled);
         }
         """
-
 
 
 toneMap : Glsl.Function
@@ -2247,4 +2245,4 @@ script { workingDirectory, userPrivileges } =
 
 main : Script.Program
 main =
-    Common.program script
+    Script.program script
