@@ -9,8 +9,6 @@ elm.exe
 
 *.sublime-workspace
 elm.js
-documentation.json
-docs.json
 
 # =========================
 # Operating System Files
