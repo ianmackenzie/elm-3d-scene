@@ -83,8 +83,8 @@ camera =
 Here, we've used the [`Camera3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/Camera3d)
 module to define a camera:
 
-- Using [perspective](http://glasnost.itcarlow.ie/~powerk/GeneralGraphicsNotes/projection/perspective_projection.html)
-  projection with a vertical [field of view](https://en.wikipedia.org/wiki/Field_of_view)
+- Using [perspective projection](http://glasnost.itcarlow.ie/~powerk/GeneralGraphicsNotes/projection/perspective_projection.html)
+  with a vertical [field of view](https://en.wikipedia.org/wiki/Field_of_view)
   of 30 [degrees](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Angle);
 - Located at the point with coordinates (5, 2, 3) in meters;
 - Looking towards the origin point (the point with coordinates (0, 0, 0));
