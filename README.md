@@ -41,7 +41,7 @@ useful at this stage:
 - Separate packages that parse different 3D model formats so they can be loaded
   into `elm-3d-scene`, e.g.:
   - [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
-  - [STL](https://en.wikipedia.org/wiki/STL_(file_format))
+  - [STL](https://en.wikipedia.org/wiki/STL_%28file_format%29)
   - [DAE](https://en.wikipedia.org/wiki/COLLADA)
 
   I think it makes sense for each file format to have a dedicated package 
