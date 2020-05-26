@@ -59,8 +59,8 @@ create rectangles, [parallelograms](https://en.wikipedia.org/wiki/Parallelogram)
 [trapezoids](https://en.wikipedia.org/wiki/Trapezoid) etc.)
 
 Note that entities are always constructed in real-world units - this example
-uses meters but you can also use feet, centimeters etc. This becomes very
-important later on when using realistic lighting!
+uses meters but you can also use feet, centimeters etc. Using real-world units
+becomes very important later on when using realistic lighting!
 
 ## Cameras
 
