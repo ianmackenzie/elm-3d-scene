@@ -24,11 +24,11 @@ import Temperature
 import Viewpoint3d exposing (Viewpoint3d)
 
 
-type World
-    = World
+type WorldCoordinates
+    = WorldCoordinates
 
 
-viewpoint : Viewpoint3d Meters World
+viewpoint : Viewpoint3d Meters WorldCoordinates
 viewpoint =
     Viewpoint3d.lookAt
         { focalPoint = Point3d.origin
@@ -37,7 +37,7 @@ viewpoint =
         }
 
 
-sunlight : Light World Bool
+sunlight : Light WorldCoordinates Bool
 sunlight =
     Light.directional (Light.castsShadows False)
         { chromaticity = Light.daylight
@@ -46,7 +46,7 @@ sunlight =
         }
 
 
-overheadLighting : Color -> Light World Never
+overheadLighting : Color -> Light WorldCoordinates Never
 overheadLighting color =
     Light.overhead
         { upDirection = Direction3d.positiveZ
@@ -55,7 +55,7 @@ overheadLighting color =
         }
 
 
-camera : Camera3d Meters World
+camera : Camera3d Meters WorldCoordinates
 camera =
     Camera3d.perspective
         { viewpoint = viewpoint
