@@ -81,11 +81,7 @@ backgroundColor elapsedTime =
             original.hue + Duration.inSeconds elapsedTime / 24
 
         adjustedHue =
-            if incrementedHue > 1.0 then
-                incrementedHue - 1.0
-
-            else
-                incrementedHue
+            incrementedHue - toFloat (floor incrementedHue)
     in
     Color.fromHsla { original | hue = adjustedHue }
 
