@@ -7,11 +7,19 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "NoRedInk/datetimepicker-legacy": "1.0.4",
             "avh4/elm-color": "1.0.0",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
+            "elm/http": "2.0.0",
             "elm/json": "1.1.3",
+            "elm/random": "1.0.0",
+            "elm/time": "1.0.0",
+            "elm/url": "1.0.0",
+            "elm-community/array-extra": "2.2.0",
+            "elm-community/maybe-extra": "5.2.0",
+            "elm-community/result-extra": "2.4.0",
             "elm-explorations/linear-algebra": "1.0.3",
             "elm-explorations/webgl": "1.1.1",
             "ianmackenzie/elm-1d-parameter": "1.0.1",
@@ -20,14 +28,24 @@
             "ianmackenzie/elm-geometry": "3.5.0",
             "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.2",
             "ianmackenzie/elm-triangular-mesh": "1.0.4",
-            "ianmackenzie/elm-units": "2.5.0"
+            "ianmackenzie/elm-units": "2.5.0",
+            "ianmackenzie/elm-units-interval": "1.1.0",
+            "justinmimbs/time-extra": "1.1.0",
+            "mdgriffith/elm-ui": "1.1.6",
+            "myrho/elm-round": "1.0.4",
+            "rtfeldman/elm-css": "16.0.1",
+            "w0rm/elm-physics": "5.0.0"
         },
         "indirect": {
-            "elm/time": "1.0.0",
-            "elm/url": "1.0.0",
+            "Skinney/murmur3": "2.0.8",
+            "elm/bytes": "1.0.8",
+            "elm/file": "1.0.5",
+            "elm/parser": "1.1.0",
+            "elm/svg": "1.0.1",
             "elm/virtual-dom": "1.0.2",
             "ianmackenzie/elm-interval": "2.0.0",
-            "ianmackenzie/elm-units-interval": "1.1.0"
+            "justinmimbs/date": "3.2.0",
+            "rtfeldman/elm-hex": "1.0.0"
         }
     },
     "test-dependencies": {

@@ -9,7 +9,7 @@ script : Script.Init -> Script String ()
 script { userPrivileges, workingDirectory } =
     let
         portabilityTestingDirectory =
-            Directory.in_ workingDirectory "portability-testing"
+            Directory.writable userPrivileges "../testing/portability-testing"
 
         generateTestCases order =
             let
