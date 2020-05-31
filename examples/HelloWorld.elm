@@ -17,8 +17,7 @@ main : Html msg
 main =
     Scene3d.unlit
         { entities =
-            -- Create a single rectangular entity from its color and four
-            -- vertices
+            -- Create a single rectangle from its color and four vertices
             [ Scene3d.quad (Material.color Color.blue)
                 (Point3d.meters -1 -1 0)
                 (Point3d.meters 1 -1 0)
