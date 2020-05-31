@@ -23,18 +23,15 @@ main =
         material =
             Material.nonmetal
                 { baseColor = Color.blue
-                , roughness = 0.4
+                , roughness = 0.4 -- varies from 0 (mirror-like) to 1 (matte)
                 }
-
-        -- Create a small sphere at the global origin point
-        sphere =
-            Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
 
         -- Create a sphere entity using the defined material
         sphereEntity =
-            Scene3d.sphere material sphere
+            Scene3d.sphere material <|
+                Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
 
-        -- Add a directional light
+        -- Add a directional light approximating sunlight
         sunlight =
             Light.directional (Light.castsShadows False)
                 { chromaticity = Light.sunlight
@@ -42,7 +39,8 @@ main =
                 , direction = Direction3d.yz (Angle.degrees -120)
                 }
 
-        -- Add some soft overhead lighting
+        -- Add some soft overhead lighting to account for light coming from the
+        -- sky and reflected from surrounding objects
         overheadLighting =
             Light.overhead
                 { upDirection = Direction3d.positiveZ
@@ -50,6 +48,13 @@ main =
                 , chromaticity = Light.daylight
                 }
 
+        -- Use a typical exposure value for a reasonably sunny scene (see
+        -- https://en.wikipedia.org/wiki/Exposure_value#Tabulated_exposure_values
+        -- for some decent values to start with)
+        exposure =
+            Scene3d.exposureValue 12
+
+        -- Define a camera as usual
         camera =
             Camera3d.perspective
                 { viewpoint =
@@ -67,7 +72,7 @@ main =
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , antialiasing = Scene3d.multisampling
         , lights = Scene3d.twoLights sunlight overheadLighting
-        , exposure = Scene3d.exposureValue 12
+        , exposure = exposure
         , toneMapping = Scene3d.noToneMapping
         , whiteBalance = Light.daylight
         , background = Scene3d.transparentBackground
