@@ -31,7 +31,7 @@ main =
             Camera3d.perspective
                 { viewpoint =
                     Viewpoint3d.lookAt
-                        { focalPoint = Point3d.origin
+                        { focalPoint = Point3d.meters 0 0 0.5
                         , eyePoint = Point3d.meters 3 3 2
                         , upDirection = Direction3d.z
                         }
