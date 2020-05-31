@@ -13,7 +13,6 @@ import Point3d
 import Quantity
 import Scene3d
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh
 import Triangle3d
 import Viewpoint3d
 
@@ -21,6 +20,8 @@ import Viewpoint3d
 main : Html msg
 main =
     let
+        -- Create two triangles that together form the unit square in the XY
+        -- plane (the square from (0, 0) to (1, 1))
         triangle1 =
             Triangle3d.from
                 (Point3d.meters 0 0 0)
@@ -33,11 +34,35 @@ main =
                 (Point3d.meters 1 1 0)
                 (Point3d.meters 0 1 0)
 
-        mesh1 =
-            Mesh.triangles [ triangle1 ]
+        -- Create a square entity by grouping together the two triangles (and
+        -- giving them separate colors)
+        square =
+            Scene3d.group
+                [ Scene3d.triangle (Material.color Color.orange) triangle1
+                , Scene3d.triangle (Material.color Color.blue) triangle2
+                ]
 
-        mesh2 =
-            Mesh.triangles [ triangle2 ]
+        -- Construct an axis that the square will be rotated around
+        rotationAxis =
+            Axis3d.through (Point3d.meters 0 2 0) Direction3d.x
+
+        -- Generate 16 evenly spaced rotation angles (see https://package.elm-lang.org/packages/ianmackenzie/elm-1d-parameter/latest/Parameter1d#leading
+        -- and https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Quantity#interpolateFrom
+        -- for details)
+        angles =
+            Parameter1d.leading 16 <|
+                Quantity.interpolateFrom
+                    (Angle.degrees 0)
+                    (Angle.degrees 360)
+
+        -- Helper function for constructing a rotated square at a particular
+        -- angle by rotating it around the axis
+        rotatedSquare angle =
+            square |> Scene3d.rotateAround rotationAxis angle
+
+        -- Generate a list of rotated squares
+        entities =
+            List.map rotatedSquare angles
 
         camera =
             Camera3d.perspective
@@ -49,29 +74,11 @@ main =
                         }
                 , verticalFieldOfView = Angle.degrees 30
                 }
-
-        square =
-            Scene3d.group
-                [ Scene3d.mesh (Material.color Color.orange) mesh1
-                , Scene3d.mesh (Material.color Color.blue) mesh2
-                ]
-
-        rotationAxis =
-            Axis3d.through (Point3d.meters 0 2 0) Direction3d.x
-
-        angles =
-            Parameter1d.leading 16 <|
-                Quantity.interpolateFrom
-                    (Angle.degrees 0)
-                    (Angle.degrees 360)
-
-        rotatedSquare angle =
-            square |> Scene3d.rotateAround rotationAxis angle
     in
     Scene3d.unlit
         { camera = camera
         , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
-        , entities = List.map rotatedSquare angles
+        , entities = entities
         }
