@@ -55,10 +55,10 @@ update (Tick duration) model =
         rotationRate =
             Angle.degrees 90 |> Quantity.per Duration.second
 
-        -- Update the current angle by adding a delta equal to the elapsed time
-        -- since the last animation frame multiplied by the rotation rate
+        -- Update the current angle by adding a delta equal to the rotation rate
+        -- multiplied by elapsed time since the last animation frame
         updatedAngle =
-            model.angle |> Quantity.plus (duration |> Quantity.at rotationRate)
+            model.angle |> Quantity.plus (rotationRate |> Quantity.for duration)
     in
     ( { model | angle = updatedAngle }, Cmd.none )
 
@@ -70,11 +70,10 @@ subscriptions model =
     Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
 
 
-{-| Create a cube entity with different-colored faces by constructing six
-separate quads
+{-| Create a cube entity by constructing six square faces with different colors
 -}
-cube : Scene3d.Entity WorldCoordinates
-cube =
+initialCube : Scene3d.Entity WorldCoordinates
+initialCube =
     let
         -- Define the negative and positive X/Y/Z coordinates of a 16 'pixel'
         -- wide cube centered at the origin (see https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Length#cssPixels)
@@ -135,13 +134,16 @@ cube =
 view : Model -> Html Msg
 view model =
     let
-        -- Define the axis that the cube rotates around
+        -- Define the angled axis that the cube rotates around by specifying a
+        -- point and a direction
         rotationAxis =
-            Axis3d.through Point3d.origin (Direction3d.xz (Angle.degrees 45))
+            Axis3d.through Point3d.origin <|
+                -- A direction in the XZ plane, 45 degrees up from X towards Z
+                Direction3d.xz (Angle.degrees 45)
 
         -- Rotate the initial cube around the rotation axis by the current angle
         rotatedCube =
-            cube |> Scene3d.rotateAround rotationAxis model.angle
+            initialCube |> Scene3d.rotateAround rotationAxis model.angle
 
         -- Create an isometric camera
         camera =
