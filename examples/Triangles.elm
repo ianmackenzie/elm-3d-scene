@@ -19,6 +19,7 @@ import Viewpoint3d
 main : Html msg
 main =
     let
+        -- Create an orange triangle using the Triangle3d type from elm-geometry
         triangle1 =
             Scene3d.triangle (Material.color Color.orange) <|
                 Triangle3d.from
@@ -26,6 +27,7 @@ main =
                     (Point3d.meters 1 0 0)
                     (Point3d.meters 1 1 0)
 
+        -- Create a blue triangle
         triangle2 =
             Scene3d.triangle (Material.color Color.blue) <|
                 Triangle3d.from
@@ -33,6 +35,7 @@ main =
                     (Point3d.meters 1 1 0)
                     (Point3d.meters 0 1 0)
 
+        -- Create a camera as before
         camera =
             Camera3d.perspective
                 { viewpoint =
