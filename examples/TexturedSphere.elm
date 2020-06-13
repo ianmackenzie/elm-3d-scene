@@ -134,6 +134,13 @@ update message model =
                         MouseMove dx dy ->
                             if loadedModel.orbiting then
                                 let
+                                    -- Here we figure out what axis to rotate the sphere around,
+                                    -- based on the drag direction. For example, if we drag
+                                    -- vertically, then we want to rotate around a horizontal axis,
+                                    -- and if we drag horizontally then we want to rotate around a
+                                    -- vertical axis. 'Horizontal' and 'vertical' here should be
+                                    -- with respect to the view plane, not the global coordinate
+                                    -- system, so we use the X and Y directions of the viewpoint.
                                     rotationVector =
                                         Vector3d.withLength (Angle.degrees dx)
                                             (Viewpoint3d.yDirection viewpoint)
@@ -145,6 +152,9 @@ update message model =
                                 case Vector3d.direction rotationVector of
                                     Just direction ->
                                         let
+                                            -- Rotate the Frame3d defining the orientation of the
+                                            -- sphere around the axis that we've constructed, by
+                                            -- an angle based on the total length of the drag
                                             newFrame =
                                                 loadedModel.sphereFrame
                                                     |> Frame3d.rotateAround
@@ -165,6 +175,12 @@ update message model =
     ( updatedModel, Cmd.none )
 
 
+{-| Every time a texture gets returned from an HTTP request, one of the Maybe
+fields in the record below gets set to 'Just texture'. Every time that happens,
+we use this function to check if _all_ of the textures have been loaded. If so,
+we can transition into the Loaded state; otherwise we stay in the Loading state
+and wait for the remaining textures to load.
+-}
 checkIfLoaded :
     { colorTexture : Maybe (Material.Texture Color)
     , roughnessTexture : Maybe (Material.Texture Float)
@@ -186,6 +202,9 @@ checkIfLoaded textures =
             Loading textures
 
 
+{-| In this example, we have a fixed viewpoint since we rotate the sphere
+instead.
+-}
 viewpoint : Viewpoint3d Meters WorldCoordinates
 viewpoint =
     Viewpoint3d.lookAt
@@ -235,6 +254,10 @@ view model =
     case model of
         Loaded { colorTexture, roughnessTexture, metallicTexture, sphereFrame } ->
             let
+                -- Create a fully textured PBR material from the three loaded
+                -- textures. Note that you can also use Material.constant if you
+                -- want to use a constant value for one or two of the parameters
+                -- instead of an actual texture.
                 material =
                     Material.texturedPbr
                         { baseColor = colorTexture
@@ -255,6 +278,7 @@ view model =
                 , entities =
                     [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
                         |> Scene3d.sphere material
+                        -- place the sphere in the rotated frame
                         |> Scene3d.placeIn sphereFrame
                     ]
                 }
