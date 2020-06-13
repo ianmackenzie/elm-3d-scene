@@ -20,22 +20,18 @@ main : Html msg
 main =
     let
         triangle1 =
-            Triangle3d.from
-                (Point3d.meters 0 0 0)
-                (Point3d.meters 1 0 0)
-                (Point3d.meters 1 1 0)
+            Scene3d.triangle (Material.color Color.orange) <|
+                Triangle3d.from
+                    (Point3d.meters 0 0 0)
+                    (Point3d.meters 1 0 0)
+                    (Point3d.meters 1 1 0)
 
         triangle2 =
-            Triangle3d.from
-                (Point3d.meters 0 0 0)
-                (Point3d.meters 1 1 0)
-                (Point3d.meters 0 1 0)
-
-        mesh1 =
-            Mesh.triangles [ triangle1 ]
-
-        mesh2 =
-            Mesh.triangles [ triangle2 ]
+            Scene3d.triangle (Material.color Color.blue) <|
+                Triangle3d.from
+                    (Point3d.meters 0 0 0)
+                    (Point3d.meters 1 1 0)
+                    (Point3d.meters 0 1 0)
 
         camera =
             Camera3d.perspective
@@ -49,12 +45,9 @@ main =
                 }
     in
     Scene3d.unlit
-        { camera = camera
+        { entities = [ triangle1, triangle2 ]
+        , camera = camera
         , clipDepth = Length.meters 0.1
         , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
         , background = Scene3d.transparentBackground
-        , entities =
-            [ Scene3d.mesh (Material.color Color.orange) mesh1
-            , Scene3d.mesh (Material.color Color.blue) mesh2
-            ]
         }
