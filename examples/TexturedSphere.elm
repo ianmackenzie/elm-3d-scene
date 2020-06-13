@@ -268,7 +268,7 @@ view model =
             Scene3d.custom
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
-                , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+                , dimensions = ( Pixels.pixels 400, Pixels.pixels 400 )
                 , antialiasing = Scene3d.multisampling
                 , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
