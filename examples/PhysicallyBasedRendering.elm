@@ -1,4 +1,8 @@
-module PhysicallyBasedMaterials exposing (main)
+module PhysicallyBasedRendering exposing (main)
+
+{-| This example introduces rendering with realistic materials, and also how
+to use Scene3d.custom to specify your own lights.
+-}
 
 import Angle exposing (Angle)
 import Camera3d exposing (Camera3d)
@@ -70,10 +74,10 @@ main =
         { camera = camera
         , clipDepth = Length.centimeters 0.5
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
-        , antialiasing = Scene3d.multisampling
+        , antialiasing = Scene3d.multisampling -- must explicitly specify antialiasing method
         , lights = Scene3d.twoLights sunlight overheadLighting
         , exposure = exposure
-        , toneMapping = Scene3d.noToneMapping
+        , toneMapping = Scene3d.noToneMapping -- see ExposureAndToneMapping example for details
         , whiteBalance = Light.daylight
         , background = Scene3d.transparentBackground
         , entities = [ sphereEntity ]
