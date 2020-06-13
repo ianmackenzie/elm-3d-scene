@@ -1,5 +1,9 @@
 module Rotation exposing (main)
 
+{-| This example shows how to create multiple rotated copies of a single 3D
+entity in order to create circular pattern.
+-}
+
 import Angle exposing (Angle)
 import Axis3d
 import Camera3d

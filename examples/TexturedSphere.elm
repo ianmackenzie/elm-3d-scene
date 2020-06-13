@@ -1,5 +1,11 @@
 module TexturedSphere exposing (main)
 
+{-| This example illustrates creating a fully textured physically-based object,
+with textures controlling color, roughness and metallicness. It also includes
+some logic for rotating an object in the scene (as opposed to orbiting the
+camera).
+-}
+
 import Angle exposing (Angle)
 import Axis3d exposing (Axis3d)
 import Browser

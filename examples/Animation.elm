@@ -1,5 +1,10 @@
 module Animation exposing (main)
 
+{-| The example uses an onAnimationFrameDelta subscription to implement a simple
+loading spinner, and shows how you would incorporate elm-3d-scene into an elm-ui
+layout.
+-}
+
 import Angle exposing (Angle)
 import Axis3d
 import Browser

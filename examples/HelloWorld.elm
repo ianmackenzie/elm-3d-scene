@@ -1,5 +1,14 @@
 module HelloWorld exposing (main)
 
+{-| Just about the simplest elm-3d-scene program! This example introduces
+several fundamental concepts used in elm-3d-scene:
+
+  - Creating an entity to draw
+  - Defining a camera
+  - Rendering a scene to create an HTML element
+
+-}
+
 import Angle
 import Camera3d
 import Color

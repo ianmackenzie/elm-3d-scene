@@ -1,5 +1,10 @@
 module Points exposing (main)
 
+{-| This example shows how to render points in 3D as dots with particular radius
+(in pixels - the dots will have the same radius no matter how near/far away they
+are).
+-}
+
 import Angle exposing (Angle)
 import Camera3d exposing (Camera3d)
 import Color

@@ -1,5 +1,9 @@
 module OrbitingCamera exposing (main)
 
+{-| This example shows how you can allow orbiting of a scene by listening for
+mouse events and moving the camera accordingly.
+-}
+
 import Angle exposing (Angle)
 import Browser
 import Browser.Events

@@ -1,5 +1,8 @@
 module Texture exposing (main)
 
+{-| This example shows how to load a texture and apply it to a simple 3D entity.
+-}
+
 import Angle exposing (Angle)
 import Browser
 import Camera3d

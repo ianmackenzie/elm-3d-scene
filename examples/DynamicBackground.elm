@@ -1,5 +1,11 @@
 module DynamicBackground exposing (main)
 
+{-| This example shows how you might animate the background color of a scene
+(with a bit of extra logic to add some lighting matching the background color,
+so that it appears that the object being rendered is being illuminated by its
+surroundings).
+-}
+
 import Angle exposing (Angle)
 import Browser
 import Browser.Events

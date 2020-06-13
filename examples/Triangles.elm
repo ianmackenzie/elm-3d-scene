@@ -1,5 +1,9 @@
 module Triangles exposing (main)
 
+{-| This example is very similar to the HelloWorld example but shows how to
+render individual triangles.
+-}
+
 import Angle exposing (Angle)
 import Camera3d
 import Color

@@ -1,5 +1,13 @@
 module MultipleShadows exposing (main)
 
+{-| This example illustrates a few different techniques:
+
+  - Casting shadows from multiple lights and objects
+  - Animating multiple objects
+  - Rendering a scene to the full size of the current browser window
+
+-}
+
 import Angle exposing (Angle)
 import Array exposing (Array)
 import Axis3d

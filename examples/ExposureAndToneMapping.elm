@@ -1,5 +1,9 @@
 module ExposureAndToneMapping exposing (main)
 
+{-| This example lets you play around with different exposure values and tone
+mapping methods, to see the relationships between them.
+-}
+
 import Angle exposing (Angle)
 import Array
 import Axis3d
