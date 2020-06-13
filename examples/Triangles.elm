@@ -38,7 +38,7 @@ main =
                 { viewpoint =
                     Viewpoint3d.lookAt
                         { focalPoint = Point3d.meters 0.5 0.5 0
-                        , eyePoint = Point3d.meters 3 3 2
+                        , eyePoint = Point3d.meters 3 1 1
                         , upDirection = Direction3d.z
                         }
                 , verticalFieldOfView = Angle.degrees 30
@@ -48,6 +48,6 @@ main =
         { entities = [ triangle1, triangle2 ]
         , camera = camera
         , clipDepth = Length.meters 0.1
-        , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
         }
