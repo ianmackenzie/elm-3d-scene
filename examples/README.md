@@ -14,7 +14,7 @@ techqniues and concepts.
 - `HelloWorld.elm`
 - `Triangles.elm`
 - `Points.elm`
-- `PhysicallyBasedMaterials.elm`
+- `PhysicallyBasedRendering.elm`
 - `Rotation.elm`
 - `CustomMesh.elm`
 - `LightingAndShadows.elm`
