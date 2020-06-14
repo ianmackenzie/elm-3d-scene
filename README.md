@@ -20,7 +20,7 @@ Any questions/feedback, please open an issue or please reach out in the
 The best way to start learning the `elm-3d-scene` API is by reading through the
 [tutorial](https://github.com/ianmackenzie/elm-3d-scene/blob/master/TUTORIAL.md)
 and then checking out the [examples](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
-For more details on any type/function, the [reference documentation](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-scene/latest/)
+For more details on any type/function, the [reference documentation](https://elm-doc-preview.netlify.app/?repo=ianmackenzie%2Felm-3d-scene)
 is your friend.
 
 ![Duckling model](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-nonmetal-rough.png)
