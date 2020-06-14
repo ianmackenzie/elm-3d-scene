@@ -1,72 +1,63 @@
+_Note: this package is not yet released! This means that some of the links below
+may not be active yet._
+
 # elm-3d-scene
 
-`elm-3d-scene` is a high-level Elm package for producing 3D graphics. It aims to
-make creating 3D graphics as easy and enjoyable as possible, without having to
-worry about low-level details like shader programs and transformation matrices
-but still including powerful features such as:
+`elm-3d-scene` is a high-level Elm package for producing 3D graphics, with
+support for lighting, shadows and realistic materials:
 
-- Efficient animated transformations
-- Physically-based materials
-- Multiple light sources
-- Accurate shadows
+![Lit scene with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/hable-filmic-tone-mapping-bright.png)
 
-The documentation for `elm-3d-scene` (including this README!) is still being
-worked on, but once that is done (soon!) it will be published as a normal Elm
-package. In the meantime, you can [watch my elm-conf talk](https://www.youtube.com/watch?v=Htqc64s5qYU)
-and try out the package by checking out this repository and then firing up `elm
-reactor` in [the examples folder](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
+It aims to make creating 3D graphics as easy and enjoyable as possible, without
+having to worry about low-level details like shader programs and transformation
+matrices.
 
-Any questions/feedback, please open an issue or reach out to **@ianmackenzie**
-on the [Elm Slack](https://elmlang.herokuapp.com)!
+Any questions/feedback, please open an issue or please reach out in the
+**#webgl** channel or to **@ianmackenzie** on the [Elm Slack](https://elmlang.herokuapp.com)!
 
-## Contributing
+## Getting started
 
-Contributions are very welcome! Here are some ideas for some that would be very
-useful at this stage:
+The best way to start learning the `elm-3d-scene` API is by checking out the
+[examples](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples).
+For more details on any type/function, the [reference documentation](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-scene/latest/)
+is your friend.
 
-- More examples to add to the `examples` directory, showing how to create
-  specific kinds of scenes or how to integrate `elm-3d-scene` with other
-  packages, such as:
-  - An example combining `elm-3d-scene` and [`elm-gamepad`](https://package.elm-lang.org/packages/xarvh/elm-gamepad/latest/),
-    perhaps using the gamepad to walk around a scene
-  - An example with an `elm-3d-scene` scene within an [`elm-ui`](https://package.elm-lang.org/packages/mdgriffith/elm-ui/latest/)
-    layout
-  - A simple example using `elm-3d-scene` with just plain colors (no lighting)
-    to create a small 3D loading spinner widget
-  - An example with shadows cast from a moving light source (I think something
-    like a point light flying in and amongst a bunch of cubes could look pretty
-    cool)
-  - Anything you think would look cool/illustrate part of the API missed by
-    other examples/help others understand something you struggled with
-- Separate packages that parse different 3D model formats so they can be loaded
-  into `elm-3d-scene`, e.g.:
-  - [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
-  - [STL](https://en.wikipedia.org/wiki/STL_%28file_format%29)
-  - [DAE](https://en.wikipedia.org/wiki/COLLADA)
+![Duckling model](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-nonmetal-rough.png)
 
-  I think it makes sense for each file format to have a dedicated package 
-  separate from `elm-3d-scene`. Ideally, I think each package should focus on
-  simply parsing a file into a nice Elm data structure (instead of directly into
-  an `elm-3d-scene` `Entity`, for example) so that the data could also be used
-  in other ways (custom rendering engines, 3D printing, analysis etc.).
-  
-  Note that some work has already started on [GLTF](https://en.wikipedia.org/wiki/GlTF)
-  loading, so reach out to me (@ianmackenzie) on the [Elm Slack](http://elmlang.herokuapp.com/)
-  if that's something you're interested in working on.
+One important point to understand is that `elm-3d-scene` builds heavily on
+several other packages. Many of the types you will see used in `elm-3d-scene`
+functions actually come from packages such as:
 
-Once the internals of `elm-3d-scene` stabilize a bit, there will be lots more
-opportunities to contribute to the core rendering engine, to add features such
-as:
+  - [`avh4/elm-color`](https://package.elm-lang.org/packages/avh4/elm-color/latest/):
+    `Color`
+  - [`ianmackenzie/elm-3d-camera`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/):
+    `Camera3d` and `Viewpoint3d`
+  - [`ianmackenzie/elm-units`](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/):
+    `Length`, `Angle`, `Pixels`, `Luminance`, `Illuminance`, `LuminousFlux`
+  - [`ianmackenzie/elm-geometry`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/):
+    `Point3d`, `Vector3d`, `Direction3d`, `LineSegment3d`, `Triangle3d`,
+    `Axis3d`...
 
-- Textured backgrounds (https://github.com/ianmackenzie/elm-3d-scene/issues/53)
-- Rectangular/polygonal light sources (https://github.com/ianmackenzie/elm-3d-scene/issues/41)
-- 3D-rendered text (https://github.com/ianmackenzie/elm-3d-scene/issues/37)
-- Procedural textures (https://github.com/ianmackenzie/elm-3d-scene/issues/22)
-- Debug rendering options (https://github.com/ianmackenzie/elm-3d-scene/issues/21)
-- Funky material types like water and ceramics (https://github.com/ianmackenzie/elm-3d-scene/issues/5)
+As a result, to start using `elm-3d-scene` in your own project you will need at
+least a decent understanding of those packages as well; check out their READMEs
+and reference documentation for details. You'll also need to make sure you
+explicitly install at least the above packages:
 
-For now, though, the internals are changing rapidly enough that
-coordination/collaboration on these kinds of issues would be tricky.
+```text
+elm install ianmackenzie/elm-3d-scene
+elm install avh4/elm-color
+elm install ianmackenzie/elm-3d-camera
+elm install ianmackenzie/elm-units
+elm install ianmackenzie/elm-geometry
+```
+
+(All of those packages will get downloaded and installed automatically anyways,
+since they're dependencies of `elm-3d-scene`, but you'll need to install them
+explicitly in your own project so that you can use them directly.) For many
+projects, you'll also need to install and use
+[`ianmackenzie/elm-triangular-mesh`](https://package.elm-lang.org/packages/ianmackenzie/elm-triangular-mesh/latest/).
+
+![Table and chairs](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cloudy-scene.png)
 
 ## Climate action
 
@@ -84,4 +75,49 @@ please [open a new issue](https://github.com/ianmackenzie/elm-3d-scene/issues),
 describe briefly what you're working on and I will treat that issue as high
 priority.
 
-![Physics simulation](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/physics-background.png)
+![Spheres and blocks](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/point-light.png)
+
+## Contributing
+
+Contributions are very welcome! Here are some ideas for some that would be very
+useful at this stage:
+
+- More examples to add to the `examples` directory, showing how to create
+  specific kinds of scenes or how to integrate `elm-3d-scene` with other
+  packages, such as:
+  - An example combining `elm-3d-scene` and [`elm-gamepad`](https://package.elm-lang.org/packages/xarvh/elm-gamepad/latest/),
+    perhaps using the gamepad to walk around a scene
+  - An example with shadows cast from a moving light source (I think something
+    like a point light flying in and amongst a bunch of cubes could look pretty
+    cool)
+  - Anything you think would look cool/illustrate part of the API missed by
+    other examples/help others understand something you struggled with
+- Separate packages that parse different 3D model formats so they can be loaded
+  into `elm-3d-scene`, such as [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file),
+  [STL](https://en.wikipedia.org/wiki/STL_%28file_format%29) or [DAE](https://en.wikipedia.org/wiki/COLLADA).
+
+  I think it makes sense for each file format to have a dedicated package 
+  separate from `elm-3d-scene`. Ideally, I think each package should focus on
+  simply parsing a file into a nice Elm data structure (instead of directly into
+  an `elm-3d-scene` `Entity`, for example) so that the data could also be used
+  in other ways (custom rendering engines, 3D printing, analysis etc.).
+  
+  Note that some work has already started on [GLTF](https://en.wikipedia.org/wiki/GlTF)
+  loading, so reach out to me (**@ianmackenzie**) on the [Elm Slack](http://elmlang.herokuapp.com/)
+  if that's something you're interested in working on.
+
+Once the internals of `elm-3d-scene` stabilize a bit, there will be lots more
+opportunities to contribute to the core rendering engine, to add features such
+as:
+
+- Textured backgrounds ([#53](https://github.com/ianmackenzie/elm-3d-scene/issues/53))
+- Rectangular/polygonal light sources ([#41](https://github.com/ianmackenzie/elm-3d-scene/issues/41))
+- 3D-rendered text ([#37](https://github.com/ianmackenzie/elm-3d-scene/issues/37))
+- Procedural textures ([#22](https://github.com/ianmackenzie/elm-3d-scene/issues/22))
+- Debug rendering options ([#21](https://github.com/ianmackenzie/elm-3d-scene/issues/21))
+- Funky material types like water and ceramics ([#5](https://github.com/ianmackenzie/elm-3d-scene/issues/5))
+
+For now, though, the internals are changing rapidly enough that
+coordination/collaboration on these kinds of issues would be tricky.
+
+![Physics simulation](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/physics-background-600px.png)
