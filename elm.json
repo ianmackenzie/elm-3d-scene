@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "ianmackenzie/elm-3d-scene",
-    "summary": "OpenSolid-based 3D scene graph package",
+    "summary": "3D rendering engine for Elm",
     "license": "MPL-2.0",
     "version": "1.0.0",
     "exposed-modules": [
