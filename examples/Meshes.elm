@@ -1,8 +1,8 @@
-module CustomMesh exposing (main)
+module Meshes exposing (main)
 
 {-| If you want to create complex shapes and render them efficiently, you will
 likely need to create your own Mesh values. This example illustrates how to
-create a custom mesh from scratch; in your own apps you might generate meshes
+create a mesh from scratch; in your own apps you might generate meshes
 programmatically using some geometry-generation logic, or parse them from some
 file format.
 -}

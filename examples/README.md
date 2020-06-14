@@ -16,7 +16,7 @@ techqniues and concepts.
 - `Points.elm`
 - `PhysicallyBasedRendering.elm`
 - `Rotation.elm`
-- `CustomMesh.elm`
+- `Meshes.elm`
 - `LightingAndShadows.elm`
 
 ### Intermediate
