@@ -1566,12 +1566,16 @@ singlePointVertexShader =
         , constants = []
         , functions = [ getWorldPosition ]
         }
+        -- Note that we actually have to 'use' dummyAttribute here (it will
+        -- always be 1). Otherwise Safari will notice that no mesh attributes
+        -- are actually used, and as a result will skip some initialization
+        -- steps that Elm's WebGL library depends on.
         """
         void main () {
             vec4 worldPosition = getWorldPosition(pointPosition, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             float supersampling = sceneProperties[3][0];
-            gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
+            gl_PointSize = 2.0 * pointRadius * supersampling * dummyAttribute + 2.0;
         }
         """
 

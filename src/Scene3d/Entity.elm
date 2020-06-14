@@ -599,7 +599,7 @@ point givenRadius givenMaterial givenPoint =
 
 dummyVertex : WebGL.Mesh { dummyAttribute : Float }
 dummyVertex =
-    WebGL.points [ { dummyAttribute = 0 } ]
+    WebGL.points [ { dummyAttribute = 1 } ]
 
 
 lineSegment : Material.Plain coordinates -> LineSegment3d Meters coordinates -> Entity coordinates

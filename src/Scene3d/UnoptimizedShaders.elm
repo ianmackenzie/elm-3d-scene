@@ -358,7 +358,7 @@ singlePointVertex =
             vec4 worldPosition = getWorldPosition(pointPosition, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             float supersampling = sceneProperties[3][0];
-            gl_PointSize = 2.0 * pointRadius * supersampling + 2.0;
+            gl_PointSize = 2.0 * pointRadius * supersampling * dummyAttribute + 2.0;
         }
     |]
 
