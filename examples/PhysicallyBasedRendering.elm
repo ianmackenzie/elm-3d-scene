@@ -1,7 +1,7 @@
 module PhysicallyBasedRendering exposing (main)
 
-{-| This example introduces rendering with realistic materials, and also how
-to use Scene3d.custom to specify your own lights.
+{-| This example introduces rendering with realistic materials and light
+sources.
 -}
 
 import Angle exposing (Angle)
@@ -35,29 +35,6 @@ main =
             Scene3d.sphere material <|
                 Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
 
-        -- Add a directional light approximating sunlight
-        sunlight =
-            Light.directional (Light.castsShadows False)
-                { chromaticity = Light.sunlight
-                , intensity = Illuminance.lux 10000
-                , direction = Direction3d.yz (Angle.degrees -120)
-                }
-
-        -- Add some soft overhead lighting to account for light coming from the
-        -- sky and reflected from surrounding objects
-        overheadLighting =
-            Light.overhead
-                { upDirection = Direction3d.positiveZ
-                , intensity = Illuminance.lux 15000
-                , chromaticity = Light.daylight
-                }
-
-        -- Use a typical exposure value for a reasonably sunny scene (see
-        -- https://en.wikipedia.org/wiki/Exposure_value#Tabulated_exposure_values
-        -- for some decent values to start with)
-        exposure =
-            Scene3d.exposureValue 12
-
         -- Define a camera as usual
         camera =
             Camera3d.perspective
@@ -70,15 +47,26 @@ main =
                 , verticalFieldOfView = Angle.degrees 30
                 }
     in
-    Scene3d.custom
+    -- Use the preset 'Scene3d.sunny' which handles most of the lighting details
+    -- for us (creates one direct light source approximating sunlight, and
+    -- another soft light source representing sky light and light reflected from
+    -- surrounding objects)
+    Scene3d.sunny
         { camera = camera
         , clipDepth = Length.centimeters 0.5
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
-        , antialiasing = Scene3d.multisampling -- must explicitly specify antialiasing method
-        , lights = Scene3d.twoLights sunlight overheadLighting
-        , exposure = exposure
-        , toneMapping = Scene3d.noToneMapping -- see ExposureAndToneMapping example for details
-        , whiteBalance = Light.daylight
         , background = Scene3d.transparentBackground
         , entities = [ sphereEntity ]
+
+        -- Specify that sunlight should not cast shadows (since we wouldn't see
+        -- them anyways in this scene)
+        , shadows = False
+
+        -- Specify the global up direction (this controls the orientation of
+        -- the sky light)
+        , upDirection = Direction3d.z
+
+        -- Specify the direction of incoming sunlight (note that this is the
+        -- opposite of the direction *to* the sun)
+        , sunlightDirection = Direction3d.yz (Angle.degrees -120)
         }
