@@ -26,7 +26,7 @@ main =
         -- Define a blue nonmetal (plastic or similar) material
         material =
             Material.nonmetal
-                { baseColor = Color.blue
+                { baseColor = Color.lightBlue
                 , roughness = 0.4 -- varies from 0 (mirror-like) to 1 (matte)
                 }
 
