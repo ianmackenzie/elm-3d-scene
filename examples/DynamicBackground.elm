@@ -42,23 +42,18 @@ backgroundColor elapsedTime =
         incrementedHue =
             original.hue + Duration.inSeconds elapsedTime / 24
 
-        -- Adjust hue to be in range 0-1
+        -- Adjust hue to be in the range 0-1
         adjustedHue =
             incrementedHue - toFloat (floor incrementedHue)
     in
     Color.fromHsla { original | hue = adjustedHue }
 
 
-{-| Store total elapsed time in our model
--}
 type alias Model =
     { elapsedTime : Duration
     }
 
 
-{-| Receive a Tick message on every animation frame with elapsed duration since
-last frame (should usually be around 16 milliseconds)
--}
 type Msg
     = Tick Duration
 

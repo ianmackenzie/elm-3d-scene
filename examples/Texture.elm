@@ -19,9 +19,9 @@ import WebGL.Texture
 
 
 type Model
-    = Loading -- waiting for texture to load
-    | Loaded (Material.Texture Color) -- successfully loaded texture
-    | Error WebGL.Texture.Error -- error occurred when loading texture
+    = Loading -- Waiting for texture to load
+    | Loaded (Material.Texture Color) -- Successfully loaded texture
+    | Error WebGL.Texture.Error -- Error occurred when loading texture
 
 
 type Msg
@@ -56,18 +56,16 @@ update message model =
 view : Model -> Browser.Document Msg
 view model =
     let
-        -- Construct a fixed viewpoint
-        viewpoint =
-            Viewpoint3d.orbitZ
-                { focalPoint = Point3d.meters 0.5 0.5 0
-                , azimuth = Angle.degrees 20
-                , elevation = Angle.degrees 60
-                , distance = Length.meters 3
-                }
-
+        -- Construct a fixed camera
         camera =
             Camera3d.perspective
-                { viewpoint = viewpoint
+                { viewpoint =
+                    Viewpoint3d.orbitZ
+                        { focalPoint = Point3d.meters 0.5 0.5 0
+                        , azimuth = Angle.degrees 20
+                        , elevation = Angle.degrees 60
+                        , distance = Length.meters 3
+                        }
                 , verticalFieldOfView = Angle.degrees 30
                 }
     in
@@ -86,8 +84,8 @@ view model =
                     , background = Scene3d.transparentBackground
                     , clipDepth = Length.meters 0.1
                     , entities =
-                        -- Use the loaded texture as the material for a square
-                        [ Scene3d.quad (Material.texturedColor texture)
+                        [ -- Use the loaded texture as the material for a square
+                          Scene3d.quad (Material.texturedColor texture)
                             (Point3d.meters 0 0 0)
                             (Point3d.meters 1 0 0)
                             (Point3d.meters 1 1 0)

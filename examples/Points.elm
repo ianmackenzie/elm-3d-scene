@@ -1,8 +1,8 @@
 module Points exposing (main)
 
 {-| This example shows how to render points in 3D as dots with particular radius
-(in pixels - the dots will have the same radius no matter how near/far away they
-are).
+in pixels (the dots will have the same radius no matter how near/far away they
+are from the camera).
 -}
 
 import Angle exposing (Angle)
@@ -33,10 +33,16 @@ main =
                     (Point3d.meters 1 0 -1)
                     (Point3d.meters -1 0 1)
 
-        -- Create a Mesh value from the list of points, passing in the radius
-        -- in pixels which they should be rendered at
-        pointsMesh =
-            Mesh.points { radius = Pixels.pixels 5 } points
+        -- Convert the points to a list of entities by providing a radius and
+        -- color for each point
+        pointEntities =
+            points
+                |> List.map
+                    (\point ->
+                        Scene3d.point { radius = Pixels.pixels 5 }
+                            (Material.color Color.blue)
+                            point
+                    )
 
         camera =
             Camera3d.perspective
@@ -54,7 +60,5 @@ main =
         , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
-        , entities =
-            -- Color the points blue
-            [ Scene3d.mesh (Material.color Color.blue) pointsMesh ]
+        , entities = pointEntities
         }

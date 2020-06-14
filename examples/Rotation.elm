@@ -27,24 +27,23 @@ main =
         -- Create two triangles that together form the unit square in the XY
         -- plane (the square from (0, 0) to (1, 1))
         triangle1 =
-            Triangle3d.from
-                (Point3d.meters 0 0 0)
-                (Point3d.meters 1 0 0)
-                (Point3d.meters 1 1 0)
+            Scene3d.triangle (Material.color Color.orange) <|
+                Triangle3d.from
+                    (Point3d.meters 0 0 0)
+                    (Point3d.meters 1 0 0)
+                    (Point3d.meters 1 1 0)
 
         triangle2 =
-            Triangle3d.from
-                (Point3d.meters 0 0 0)
-                (Point3d.meters 1 1 0)
-                (Point3d.meters 0 1 0)
+            Scene3d.triangle (Material.color Color.blue) <|
+                Triangle3d.from
+                    (Point3d.meters 0 0 0)
+                    (Point3d.meters 1 1 0)
+                    (Point3d.meters 0 1 0)
 
         -- Create a square entity by grouping together the two triangles (and
         -- giving them separate colors)
         square =
-            Scene3d.group
-                [ Scene3d.triangle (Material.color Color.orange) triangle1
-                , Scene3d.triangle (Material.color Color.blue) triangle2
-                ]
+            Scene3d.group [ triangle1, triangle2 ]
 
         -- Construct an axis that the square will be rotated around
         rotationAxis =

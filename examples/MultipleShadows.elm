@@ -48,8 +48,8 @@ type WorldCoordinates
 
 
 type alias Model =
-    { width : Quantity Float Pixels
-    , height : Quantity Float Pixels
+    { width : Quantity Float Pixels -- Width of the browser window
+    , height : Quantity Float Pixels -- Height of the browser window
     , elapsedTime : Duration
     , orbiting : Bool
     , azimuth : Angle
@@ -98,6 +98,7 @@ init () =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
+        -- Browser window size changed
         Resize width height ->
             ( { model | width = width, height = height }, Cmd.none )
 
@@ -110,9 +111,12 @@ update message model =
         MouseUp ->
             ( { model | orbiting = False }, Cmd.none )
 
+        -- User switched back to this tab
         VisibilityChange Browser.Events.Visible ->
             ( model, Cmd.none )
 
+        -- User switched to a different tab, minimized the browser etc.; cancel
+        -- any orbit in progress
         VisibilityChange Browser.Events.Hidden ->
             ( { model | orbiting = False }, Cmd.none )
 
@@ -153,7 +157,8 @@ mouseMoveDecoder =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ -- Listen for resize events so we can render full screen
+        [ -- Listen for resize events so we can render the full size of the
+          -- browser window
           Browser.Events.onResize
             (\width height ->
                 Resize
@@ -312,7 +317,7 @@ view model =
                 (Block3d.centeredOn (Frame3d.atPoint secondBoxCenter) boxDimensions)
                 |> Scene3d.rotateAround secondBoxRotationAxis secondBoxAngle
 
-        -- Define camera as usual
+        -- Define a camera as usual
         camera =
             Camera3d.perspective
                 { viewpoint =
@@ -330,7 +335,7 @@ view model =
         , camera = camera
         , clipDepth = Length.centimeters 10
         , exposure = Scene3d.exposureValue 6
-        , toneMapping = Scene3d.hableFilmicToneMapping
+        , toneMapping = Scene3d.hableFilmicToneMapping -- See ExposureAndToneMapping.elm for details
         , whiteBalance = Light.fluorescent
         , antialiasing = Scene3d.multisampling
         , dimensions = ( model.width, model.height )

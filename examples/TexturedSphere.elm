@@ -27,7 +27,7 @@ import Quantity
 import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
-import Sphere3d
+import Sphere3d exposing (Sphere3d)
 import Task
 import Temperature
 import Vector3d exposing (Vector3d)
@@ -35,12 +35,15 @@ import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
 
 
-type SphereCoordinates
-    = SphereCoordinates
-
-
 type WorldCoordinates
     = WorldCoordinates
+
+
+{-| Here, we define a separate coordinate system for the local sphere coordinate
+system
+-}
+type SphereCoordinates
+    = SphereCoordinates
 
 
 type Model
@@ -53,8 +56,12 @@ type Model
         { colorTexture : Material.Texture Color
         , roughnessTexture : Material.Texture Float
         , metallicTexture : Material.Texture Float
-        , sphereFrame : Frame3d Meters WorldCoordinates { defines : SphereCoordinates }
         , orbiting : Bool
+
+        -- This frame exists in world coordinates and defines the orientation
+        -- of the sphere coordinate system (and therefore the orientation of the
+        -- sphere itself)
+        , sphereFrame : Frame3d Meters WorldCoordinates { defines : SphereCoordinates }
         }
     | Errored String
 
@@ -200,8 +207,11 @@ checkIfLoaded textures =
                 { colorTexture = colorTexture
                 , roughnessTexture = roughnessTexture
                 , metallicTexture = metallicTexture
-                , sphereFrame = Frame3d.atOrigin
                 , orbiting = False
+
+                -- Start with the sphere coordinate system aligned with the
+                -- world coordinate system
+                , sphereFrame = Frame3d.atOrigin
                 }
 
         _ ->
@@ -255,6 +265,13 @@ camera =
         }
 
 
+{-| Define the sphere in its own coordinate system
+-}
+sphere : Sphere3d Meters SphereCoordinates
+sphere =
+    Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
+
+
 view : Model -> Html msg
 view model =
     case model of
@@ -282,9 +299,10 @@ view model =
                 , whiteBalance = Light.daylight
                 , background = Scene3d.transparentBackground
                 , entities =
-                    [ Sphere3d.withRadius (Length.centimeters 5) Point3d.origin
-                        |> Scene3d.sphere material
-                        -- place the sphere in the rotated frame
+                    [ -- Create a sphere entity in local sphere coordinates
+                      Scene3d.sphere material sphere
+                        -- Place the sphere in the (rotated) frame to convert it
+                        -- into world coordinates
                         |> Scene3d.placeIn sphereFrame
                     ]
                 }

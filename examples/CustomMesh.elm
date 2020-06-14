@@ -23,6 +23,9 @@ import TriangularMesh
 import Viewpoint3d
 
 
+{-| Declare a coordinate system type (many apps will only need a single
+"world coordinates" type, but you can call it whatever you want)
+-}
 type WorldCoordinates
     = WorldCoordinates
 
@@ -31,7 +34,8 @@ type WorldCoordinates
 that does not have UV (texture) coordinates and therefore cannot have textures
 applied to it, but _does_ have normal vectors defined and can therefore use
 materials that involve lighting (in addition to materials like 'constant color'
-which ignore lighting).
+which ignore lighting). Once created, a Mesh value should generally be stored
+in your model and reused from frame to frame.
 -}
 pyramidMesh : Mesh.Uniform WorldCoordinates
 pyramidMesh =
@@ -80,6 +84,9 @@ pyramidMesh =
 main : Html msg
 main =
     let
+        -- Create an entity from a mesh. This is a cheap operation, so you can
+        -- do things like dynamically change the material applied to mesh from
+        -- frame to frame.
         pyramidEntity =
             Scene3d.mesh (Material.matte Color.blue) pyramidMesh
 

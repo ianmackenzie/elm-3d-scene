@@ -1,7 +1,7 @@
 module Animation exposing (main)
 
 {-| The example uses an onAnimationFrameDelta subscription to implement a simple
-loading spinner, and shows how you would incorporate elm-3d-scene into an elm-ui
+loading spinner, and shows how you can incorporate elm-3d-scene into an elm-ui
 layout.
 -}
 
@@ -29,13 +29,18 @@ type WorldCoordinates
     = WorldCoordinates
 
 
+{-| Store the rotation angle of a cube to use as a loading spinner
+-}
 type alias Model =
-    { angle : Angle -- Rotation angle of the cube
+    { angle : Angle
     }
 
 
+{-| Receive a Tick message on every animation frame with elapsed duration since
+last frame (should usually be around 16 milliseconds)
+-}
 type Msg
-    = Tick Duration -- Elapsed time since last animation frame
+    = Tick Duration
 
 
 main : Program () Model Msg
@@ -56,7 +61,8 @@ init () =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update (Tick duration) model =
     let
-        -- Speed at which the cube rotates
+        -- Speed at which the cube rotates; Angle, Quantity and Duration are
+        -- all modules from elm-units
         rotationRate =
             Angle.degrees 90 |> Quantity.per Duration.second
 
@@ -71,7 +77,7 @@ update (Tick duration) model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     -- Subscribe to animation frames and wrap each time step (a number of
-    -- milliseconds) into a typed Duration value
+    -- milliseconds) into a Duration value and then into a Tick message
     Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
 
 
@@ -113,7 +119,7 @@ initialCube =
         p8 =
             Point3d.xyz negative positive positive
 
-        -- Create the six faces
+        -- Create the six faces with different colors
         bottom =
             Scene3d.quad (Material.color Color.blue) p1 p2 p3 p4
 
@@ -161,7 +167,7 @@ view model =
                 , viewportHeight = Length.cssPixels 32
                 }
     in
-    -- Create a little loading spinner using elm-ui
+    -- Create a little loading spinner layout using elm-ui
     Element.layout [ Element.width Element.fill, Element.height Element.fill ] <|
         Element.row [ Element.centerX, Element.centerY ]
             [ Element.html <|

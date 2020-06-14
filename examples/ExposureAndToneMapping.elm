@@ -275,6 +275,12 @@ init () =
 view : Model -> Html Msg
 view model =
     let
+        -- 'Tone mapping' refers to various methods used to map high dynamic
+        -- range colors (colors with a wider range of brightnesses than could
+        -- be displayed on a standard monitor) into a narrower range of colors
+        -- that *can* be displayed, without making most colors very dark;
+        -- different kinds of tone mapping apply different kinds of color
+        -- transformations
         toneMapping =
             case model.toneMapping of
                 NoToneMapping ->

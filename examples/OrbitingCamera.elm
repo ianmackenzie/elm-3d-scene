@@ -24,9 +24,6 @@ import Triangle3d
 import Viewpoint3d
 
 
-{-| Declare a coordinate system type (many apps will only need a single
-"world coordinates" type, but you can call it whatever you want)
--}
 type WorldCoordinates
     = WorldCoordinates
 
@@ -51,23 +48,27 @@ init () =
     -- Create a couple of Mesh values containing a single triangle each and
     -- store them in the model
     let
-        triangle1 =
-            Triangle3d.from
-                (Point3d.meters 0 0 0)
-                (Point3d.meters 1 0 0)
-                (Point3d.meters 1 1 0)
+        mesh1 =
+            Mesh.triangles
+                [ Triangle3d.from
+                    (Point3d.meters 0 0 0)
+                    (Point3d.meters 1 0 0)
+                    (Point3d.meters 1 1 0)
+                ]
 
-        triangle2 =
-            Triangle3d.from
-                (Point3d.meters 0 0 0)
-                (Point3d.meters 1 1 0)
-                (Point3d.meters 0 1 0)
+        mesh2 =
+            Mesh.triangles
+                [ Triangle3d.from
+                    (Point3d.meters 0 0 0)
+                    (Point3d.meters 1 1 0)
+                    (Point3d.meters 0 1 0)
+                ]
     in
     ( { azimuth = Angle.degrees 45
       , elevation = Angle.degrees 30
       , orbiting = False
-      , mesh1 = Mesh.triangles [ triangle1 ]
-      , mesh2 = Mesh.triangles [ triangle2 ]
+      , mesh1 = mesh1
+      , mesh2 = mesh2
       }
     , Cmd.none
     )
@@ -142,10 +143,10 @@ subscriptions model =
 view : Model -> Browser.Document Msg
 view model =
     let
+        -- Create a viewpoint by orbiting around a Z axis through the given
+        -- focal point, with azimuth measured from the positive X direction
+        -- towards positive Y
         viewpoint =
-            -- Create a viewpoint by orbiting around a Z axis through the given
-            -- focal point, with azimuth measured from the positive X direction
-            -- towards positive Y
             Viewpoint3d.orbitZ
                 { focalPoint = Point3d.meters 0.5 0.5 0
                 , azimuth = model.azimuth
