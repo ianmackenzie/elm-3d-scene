@@ -13,9 +13,9 @@ import Html exposing (Html)
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Length
-import Pixels
+import Pixels exposing (Pixels)
 import Point3d
-import Quantity
+import Quantity exposing (Quantity)
 import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
@@ -40,7 +40,7 @@ type alias Model =
 type Msg
     = MouseDown
     | MouseUp
-    | MouseMove Float Float
+    | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
 
 
 init : () -> ( Model, Cmd Msg )
@@ -89,20 +89,25 @@ update message model =
         MouseMove dx dy ->
             if model.orbiting then
                 let
+                    -- How fast we want to orbit the camera (orbiting the
+                    -- camera by 1 degree per pixel of drag is a decent default
+                    -- to start with)
+                    rotationRate =
+                        Angle.degrees 1 |> Quantity.per Pixels.pixel
+
                     -- Adjust azimuth based on horizontal mouse motion (one
                     -- degree per pixel)
                     newAzimuth =
-                        model.azimuth |> Quantity.minus (Angle.degrees dx)
+                        model.azimuth
+                            |> Quantity.minus (dx |> Quantity.at rotationRate)
 
                     -- Adjust elevation based on vertical mouse motion (one
                     -- degree per pixel), and clamp to make sure camera cannot
                     -- go past vertical in either direction
                     newElevation =
                         model.elevation
-                            |> Quantity.plus (Angle.degrees dy)
-                            |> Quantity.clamp
-                                (Angle.degrees -90)
-                                (Angle.degrees 90)
+                            |> Quantity.plus (dy |> Quantity.at rotationRate)
+                            |> Quantity.clamp (Angle.degrees -90) (Angle.degrees 90)
                 in
                 ( { model | azimuth = newAzimuth, elevation = newElevation }
                 , Cmd.none
@@ -118,8 +123,8 @@ mouse position in the model) - not supported in Internet Explorer though
 decodeMouseMove : Decoder Msg
 decodeMouseMove =
     Decode.map2 MouseMove
-        (Decode.field "movementX" Decode.float)
-        (Decode.field "movementY" Decode.float)
+        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
 
 
 subscriptions : Model -> Sub Msg

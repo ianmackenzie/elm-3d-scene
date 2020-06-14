@@ -21,9 +21,9 @@ import Length exposing (Meters)
 import Luminance
 import LuminousFlux
 import Parameter1d
-import Pixels
+import Pixels exposing (Pixels)
 import Point3d
-import Quantity
+import Quantity exposing (Quantity)
 import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
@@ -72,7 +72,7 @@ type Msg
     | GotMetallicTexture (Result WebGL.Texture.Error (Material.Texture Float))
     | MouseDown
     | MouseUp
-    | MouseMove Float Float
+    | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
 
 
 init : ( Model, Cmd Msg )
@@ -147,6 +147,9 @@ update message model =
                         MouseMove dx dy ->
                             if loadedModel.orbiting then
                                 let
+                                    rotationRate =
+                                        Angle.degrees 1 |> Quantity.per Pixels.pixel
+
                                     -- Here we figure out what axis to rotate the sphere around,
                                     -- based on the drag direction. For example, if we drag
                                     -- vertically, then we want to rotate around a horizontal axis,
@@ -155,10 +158,10 @@ update message model =
                                     -- with respect to the view plane, not the global coordinate
                                     -- system, so we use the X and Y directions of the viewpoint.
                                     rotationVector =
-                                        Vector3d.withLength (Angle.degrees dx)
+                                        Vector3d.withLength (dx |> Quantity.at rotationRate)
                                             (Viewpoint3d.yDirection viewpoint)
                                             |> Vector3d.plus
-                                                (Vector3d.withLength (Angle.degrees dy)
+                                                (Vector3d.withLength (dy |> Quantity.at rotationRate)
                                                     (Viewpoint3d.xDirection viewpoint)
                                                 )
                                 in
@@ -317,8 +320,8 @@ view model =
 decodeMouseMove : Decoder Msg
 decodeMouseMove =
     Decode.map2 MouseMove
-        (Decode.field "movementX" Decode.float)
-        (Decode.field "movementY" Decode.float)
+        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
 
 
 subscriptions : Model -> Sub Msg

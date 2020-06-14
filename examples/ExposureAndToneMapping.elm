@@ -21,9 +21,9 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Length exposing (Meters)
 import LuminousFlux
-import Pixels
+import Pixels exposing (Pixels)
 import Point3d
-import Quantity
+import Quantity exposing (Quantity)
 import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
@@ -194,7 +194,7 @@ type Msg
     | SetToneMapping ToneMapping
     | MouseDown
     | MouseUp
-    | MouseMove Float Float
+    | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -216,8 +216,11 @@ update message model =
             -- Handle orbiting just like in the OrbitingCamera example
             if model.orbiting then
                 let
+                    rotationRate =
+                        Angle.degrees 0.25 |> Quantity.per Pixels.pixel
+
                     rotation numPixels =
-                        Angle.degrees (0.25 * numPixels)
+                        numPixels |> Quantity.at rotationRate
 
                     newAzimuth =
                         model.azimuth |> Quantity.minus (rotation dx)
@@ -340,8 +343,8 @@ view model =
 decodeMouseMove : Decoder Msg
 decodeMouseMove =
     Decode.map2 MouseMove
-        (Decode.field "movementX" Decode.float)
-        (Decode.field "movementY" Decode.float)
+        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
 
 
 subscriptions : Model -> Sub Msg
