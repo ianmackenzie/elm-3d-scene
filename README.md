@@ -26,37 +26,39 @@ is your friend.
 ![Duckling model](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-nonmetal-rough.png)
 
 One important point to understand is that `elm-3d-scene` builds heavily on
-several other packages. Many of the types you will see used in `elm-3d-scene`
-functions actually come from packages such as:
+several other packages, making extensive use of types and modules from:
 
   - [`avh4/elm-color`](https://package.elm-lang.org/packages/avh4/elm-color/latest/):
     `Color`
   - [`ianmackenzie/elm-3d-camera`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/):
     `Camera3d` and `Viewpoint3d`
   - [`ianmackenzie/elm-units`](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/):
-    `Length`, `Angle`, `Pixels`, `Luminance`, `Illuminance`, `LuminousFlux`
+    `Quantity`, `Length`, `Meters`, `Angle`, `Pixels`, `Luminance`, `Illuminance`,
+    `LuminousFlux` and `Temperature`
+  - [`ianmackenzie/elm-triangular-mesh`](https://package.elm-lang.org/packages/ianmackenzie/elm-triangular-mesh/latest/):
+    `TriangularMesh`
   - [`ianmackenzie/elm-geometry`](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/):
     `Point3d`, `Vector3d`, `Direction3d`, `LineSegment3d`, `Triangle3d`,
-    `Axis3d`...
+    `Sphere3d`, `Block3d`, `Axis3d`...basically anything ending in `3d` other
+    than `Camera3d` and `Viewpoint3d` =)
 
 As a result, to start using `elm-3d-scene` in your own project you will need at
 least a decent understanding of those packages as well; check out their READMEs
-and reference documentation for details. You'll also need to make sure you
-explicitly install at least the above packages:
+and reference documentation for details. You'll also need to explicitly install
+them:
 
 ```text
 elm install ianmackenzie/elm-3d-scene
 elm install avh4/elm-color
 elm install ianmackenzie/elm-3d-camera
 elm install ianmackenzie/elm-units
+elm install ianmackenzie/elm-triangular-mesh
 elm install ianmackenzie/elm-geometry
 ```
 
 (All of those packages will get downloaded and installed automatically anyways,
 since they're dependencies of `elm-3d-scene`, but you'll need to install them
-explicitly in your own project so that you can use them directly.) For many
-projects, you'll also need to install and use
-[`ianmackenzie/elm-triangular-mesh`](https://package.elm-lang.org/packages/ianmackenzie/elm-triangular-mesh/latest/).
+explicitly in your own project so that you can use them directly.)
 
 ![Table and chairs](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/cloudy-scene.png)
 
