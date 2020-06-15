@@ -164,13 +164,13 @@ and `camera`:
 
 ## Next steps
 
-This has just scratched the surface of `elm-3d-scene` - check out the [examples](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples)
+This has just scratched the surface of `elm-3d-scene` - check out the [examples](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples/README.md)
 to see how to:
 
 - Add animation to your scene (using Elm techniques you already know!)
-- Add interactivity such as orbiting and zooming
-- Use built-in shapes such as blocks, spheres and cylinders
+- Add interactivity such as an orbiting camera
+- Use built-in shapes such as balls and blocks
 - Add realistic lighting and shadows
-- Define complex shapes using triangular meshes
-- Convert triangular meshes to and from JSON
+- Define custom shapes using triangular meshes
 - Apply textures to your objects
+- Support high dynamic range (HDR) scenes
