@@ -9,7 +9,7 @@ please reach out in the **#webgl** channel or to **@ianmackenzie** on the [Elm S
 ### Beginner
 
 These examples (in rough order of complexity) introduce various core rendering
-techqniues and concepts.
+techniques and concepts.
 
 - [`HelloWorld.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/HelloWorld.elm)
 - [`Triangles.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Triangles.elm)
