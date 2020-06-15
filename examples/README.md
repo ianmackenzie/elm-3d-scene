@@ -11,13 +11,13 @@ please reach out in the **#webgl** channel or to **@ianmackenzie** on the [Elm S
 These examples (in rough order of complexity) introduce various core rendering
 techqniues and concepts.
 
-- `HelloWorld.elm`
-- `Triangles.elm`
-- `Points.elm`
-- `PhysicallyBasedRendering.elm`
-- `Rotation.elm`
-- `Meshes.elm`
-- `LightingAndShadows.elm`
+- [`HelloWorld.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/HelloWorld.elm)
+- [`Triangles.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Triangles.elm)
+- [`Points.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Points.elm)
+- [`PhysicallyBasedRendering.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/PhysicallyBasedRendering.elm)
+- [`Rotation.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Rotation.elm)
+- [`Meshes.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Meshes.elm)
+- [`LightingAndShadows.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/LightingAndShadows.elm)
 
 ### Intermediate
 
@@ -25,16 +25,16 @@ These examples incorporate The Elm Architecture (TEA) in order to implement
 animation, interactivity, and texturing (which requires an HTTP request, and
 therefore some state handling).
 
-- `Texture.elm`
-- `Animation.elm`
-- `DynamicBackground.elm`
-- `OrbitingCamera.elm`
+- [`Texture.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Texture.elm)
+- [`Animation.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Animation.elm)
+- [`DynamicBackground.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/DynamicBackground.elm)
+- [`OrbitingCamera.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/OrbitingCamera.elm)
 
 ### Advanced
 
 Finally, these examples generally combine two or more techniques/concepts to
 create more complex and interesting scenes. 
 
-- `TexturedSphere.elm`
-- `MultipleShadows.elm`
-- `ExposureAndToneMapping.elm`
+- [`TexturedSphere.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/TexturedSphere.elm)
+- [`MultipleShadows.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/MultipleShadows.elm)
+- [`ExposureAndToneMapping.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/ExposureAndToneMapping.elm)
