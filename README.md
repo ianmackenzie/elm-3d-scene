@@ -43,9 +43,11 @@ several other packages, making extensive use of types and modules from:
     than `Camera3d` and `Viewpoint3d` =)
 
 As a result, to start using `elm-3d-scene` in your own project you will need at
-least a decent understanding of those packages as well; check out their READMEs
-and reference documentation for details. You'll also need to explicitly install
-them:
+least a decent understanding of those packages as well. Check out their READMEs
+and reference documentation for details, but you can probably get a decent sense
+of how they work by checking out the [`elm-3d-scene` examples](https://github.com/ianmackenzie/elm-3d-scene/tree/master/examples/README.md).
+
+When installing `elm-3d-scene`, you'll also want to install the above packages:
 
 ```text
 elm install ianmackenzie/elm-3d-scene
@@ -56,7 +58,7 @@ elm install ianmackenzie/elm-triangular-mesh
 elm install ianmackenzie/elm-geometry
 ```
 
-(All of those packages will get downloaded and installed automatically anyways,
+(All of the packages will get downloaded and installed automatically anyways,
 since they're dependencies of `elm-3d-scene`, but you'll need to install them
 explicitly in your own project so that you can use them directly.)
 
