@@ -160,7 +160,8 @@ and `camera`:
   HTML underneath (or any other HTML content that happens to be underneath!)
   will show through.
 - `dimensions` defines the size in [pixels](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Pixels)
-  that the scene should be rendered at. Here we just use a fixed size for simplicity.
+  that the scene should be rendered at. Here we use a hardcoded size for
+  simplicity.
 
 ## Next steps
 
