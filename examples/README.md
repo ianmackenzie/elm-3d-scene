@@ -12,6 +12,7 @@ These examples (in rough order of complexity) introduce various core rendering
 techniques and concepts.
 
 - [`HelloWorld.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/HelloWorld.elm)
+  (adapted from the [tutorial](https://github.com/ianmackenzie/elm-3d-scene/blob/master/TUTORIAL.md))
 - [`Triangles.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Triangles.elm)
 - [`Points.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Points.elm)
 - [`PhysicallyBasedRendering.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/PhysicallyBasedRendering.elm)
