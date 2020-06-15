@@ -94,7 +94,7 @@ module to define a camera:
   appears to be up.
 
 The [`Viewpoint3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/Viewpoint3d)
-has several additional functions for defining the position and orientation of
+module has several additional functions for defining the position and orientation of
 cameras, and you can use [`Camera3d.orthographic`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/Camera3d#orthographic)
 if you want to use [orthographic projection](https://en.wikipedia.org/wiki/Orthographic_projection)
 instead.
