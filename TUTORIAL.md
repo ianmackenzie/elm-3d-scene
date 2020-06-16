@@ -72,26 +72,30 @@ will be used to render the scene:
 ```elm
 camera =
     Camera3d.perspective
-        { verticalFieldOfView = Angle.degrees 30
-        , viewpoint =
+        { viewpoint =
             Viewpoint3d.lookAt
-                { focalPoint = Point3d.origin
-                , eyePoint = Point3d.meters 5 2 3
+                { eyePoint = Point3d.meters 5 2 3
+                , focalPoint = Point3d.origin
                 , upDirection = Direction3d.positiveZ
                 }
+        , verticalFieldOfView = Angle.degrees 30
         }
 ```
 
-Here, we've used the [`Camera3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/Camera3d)
-module to define a camera:
+![Camera diagram](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/camera-without-clip-depth.png)
 
-- Using [perspective projection](http://glasnost.itcarlow.ie/~powerk/GeneralGraphicsNotes/projection/perspective_projection.html)
-  with a vertical [field of view](https://en.wikipedia.org/wiki/Field_of_view)
-  of 30 [degrees](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Angle);
+Here, we've used the [`Camera3d`] and [`Viewpoint3d`] modules from the
+[`elm-3d-camera`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest)
+package to define a camera:
+
 - Located at the point with coordinates (5, 2, 3) in meters;
 - Looking towards the origin point (the point with coordinates (0, 0, 0));
-- And oriented so that the positive Z [direction](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Direction3d)
-  appears to be up.
+- Oriented so that the positive Z [direction](https://package.elm-lang.org/packages/ianmackenzie/elm-geometry/latest/Direction3d)
+  appears to be up;
+- And using [perspective projection](http://glasnost.itcarlow.ie/~powerk/GeneralGraphicsNotes/projection/perspective_projection.html),
+  with a vertical [field of view](https://en.wikipedia.org/wiki/Field_of_view)
+  of 30 [degrees](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Angle)
+  (a reasonable default for realistic rendering).
 
 The [`Viewpoint3d`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest/Viewpoint3d)
 module has several additional functions for defining the position and orientation of
