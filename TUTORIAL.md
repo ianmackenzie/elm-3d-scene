@@ -158,7 +158,7 @@ and `camera`:
   cut off. In this example, you can imagine the camera having an invisible
   screen one [meter](https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/Length)
   in front of the camera that would crop anything that got too close.
-  ![Clip depth diagram](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/clip-depth-temp.png)
+  ![Clip depth diagram](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/clip-depth.png)
 - `background` specifies the background color to use when rendering. In this 
   case we've used a transparent background so that the background color of the
   HTML underneath (or any other HTML content that happens to be underneath!)
