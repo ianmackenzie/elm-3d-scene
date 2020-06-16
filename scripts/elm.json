@@ -20,6 +20,7 @@
             "elm-community/array-extra": "2.1.0",
             "elm-community/maybe-extra": "5.2.0",
             "elm-community/result-extra": "2.3.0",
+            "elm-community/string-extra": "4.0.1",
             "elm-explorations/linear-algebra": "1.0.3",
             "elm-explorations/webgl": "1.1.1",
             "ianmackenzie/elm-1d-parameter": "1.0.1",
@@ -30,7 +31,8 @@
             "ianmackenzie/elm-triangular-mesh": "1.0.4",
             "ianmackenzie/elm-units": "2.2.0",
             "ianmackenzie/elm-units-interval": "1.1.0",
-            "mdgriffith/elm-ui": "1.1.5"
+            "mdgriffith/elm-ui": "1.1.5",
+            "s6o/elm-recase": "1.0.1"
         },
         "indirect": {
             "elm/bytes": "1.0.8",
