@@ -82,9 +82,8 @@ camera =
         }
 ```
 
-Here, we've used the `Camera3d` and `Viewpoint3d` modules from the
-[`elm-3d-camera`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest)
-package to define a camera:
+Here, we've used the `Camera3d` and `Viewpoint3d` modules from [`elm-3d-camera`](https://package.elm-lang.org/packages/ianmackenzie/elm-3d-camera/latest)
+to define a camera:
 
 - Located at the point with coordinates (5, 2, 3) in meters;
 - Looking towards the origin point (the point with coordinates (0, 0, 0));
