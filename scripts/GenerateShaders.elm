@@ -225,11 +225,6 @@ materialColorTexture =
     Glsl.uniform Glsl.mediump Glsl.sampler2D "materialColorTexture"
 
 
-constantMaterialColor : Glsl.Uniform
-constantMaterialColor =
-    Glsl.uniform Glsl.lowp Glsl.vec2 "constantMaterialColor"
-
-
 quadVertexPositions : Glsl.Uniform
 quadVertexPositions =
     Glsl.uniform Glsl.highp Glsl.mat4 "quadVertexPositions"
@@ -253,16 +248,6 @@ lineSegmentEndPoint =
 pointPosition : Glsl.Uniform
 pointPosition =
     Glsl.uniform Glsl.highp Glsl.vec3 "pointPosition"
-
-
-planarMap : Glsl.Uniform
-planarMap =
-    Glsl.uniform Glsl.highp Glsl.mat4 "planarMap"
-
-
-sphericalMap : Glsl.Uniform
-sphericalMap =
-    Glsl.uniform Glsl.highp Glsl.mat4 "sphericalMap"
 
 
 
@@ -1184,21 +1169,6 @@ perpendicularTo =
         """
 
 
-getSphericalUv : Glsl.Function
-getSphericalUv =
-    Glsl.function { dependencies = [], constants = [ kPi ] }
-        """
-        vec2 getSphericalUv(vec3 position, mat4 sphericalMap) {
-            vec4 relative = sphericalMap * vec4(position, 1.0);
-            float theta = atan(relative.y, relative.x);
-            float u = clamp((theta + kPi) / (2 * kPi), 0.0, 1.0);
-            float phi = atan(relative.z, length(relative.xy));
-            float v = clamp((theta + kPi / 2.0) / kPi, 0.0, 1.0);
-            return vec2(u, v);
-        }
-        """
-
-
 
 ---------- VERTEX SHADERS ----------
 
@@ -1234,44 +1204,6 @@ unlitVertexShader =
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
             interpolatedUv = uv;
-        }
-        """
-
-
-planarMappedUnlitVertexShader : Glsl.Shader
-planarMappedUnlitVertexShader =
-    Glsl.vertexShader "planarMappedUnlitVertex"
-        { attributes = [ position ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, projectionMatrix, sceneProperties, planarMap ]
-        , varyings = [ interpolatedPosition, interpolatedUv ]
-        , constants = []
-        , functions = [ getWorldPosition ]
-        }
-        """
-        void main() {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedUv = planarMap * vec4(position, 1.0);
-        }
-        """
-
-
-sphericalMappedUnlitVertexShader : Glsl.Shader
-sphericalMappedUnlitVertexShader =
-    Glsl.vertexShader "sphericalMappedUnlitVertex"
-        { attributes = [ position ]
-        , uniforms = [ modelScale, modelMatrix, viewMatrix, projectionMatrix, sceneProperties, sphericalMap ]
-        , varyings = [ interpolatedPosition, interpolatedUv ]
-        , constants = []
-        , functions = [ getWorldPosition, getSphericalUv ]
-        }
-        """
-        void main() {
-            vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
-            gl_Position = projectionMatrix * (viewMatrix * worldPosition);
-            interpolatedPosition = worldPosition.xyz;
-            interpolatedUv = getSphericalUv(position, sphericalMap);
         }
         """
 
