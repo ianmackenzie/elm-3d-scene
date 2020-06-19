@@ -105,13 +105,13 @@ update message model =
                         GotMetallicTexture (Ok metallicTexture) ->
                             checkIfLoaded { textures | metallicTexture = Just metallicTexture }
 
-                        GotColorTexture (Err error) ->
+                        GotColorTexture (Err _) ->
                             Errored "Error loading color texture"
 
-                        GotRoughnessTexture (Err error) ->
+                        GotRoughnessTexture (Err _) ->
                             Errored "Error loading roughness texture"
 
-                        GotMetallicTexture (Err error) ->
+                        GotMetallicTexture (Err _) ->
                             Errored "Error loading metallic texture"
 
                         MouseDown ->
