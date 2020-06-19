@@ -1829,6 +1829,7 @@ lambertianFragment =
         varying highp vec3 interpolatedNormal;
         
         const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kOrthographicProjection = 1.0;
         const lowp float kDirectionalLight = 1.0;
         const lowp float kPointLight = 2.0;
         const highp float kPi = 3.14159265359;
@@ -1844,8 +1845,10 @@ lambertianFragment =
             if (projectionType == kPerspectiveProjection) {
                 vec3 cameraPoint = sceneProperties[1].xyz;
                 return normalize(cameraPoint - surfacePosition);
-            } else {
+            } else if (projectionType == kOrthographicProjection) {
                 return sceneProperties[1].xyz;
+            } else {
+                return vec3(0.0, 0.0, 0.0);
             }
         }
         
@@ -2086,6 +2089,7 @@ lambertianTextureFragment =
         varying highp vec3 interpolatedTangent;
         
         const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kOrthographicProjection = 1.0;
         const lowp float kDirectionalLight = 1.0;
         const lowp float kPointLight = 2.0;
         const highp float kPi = 3.14159265359;
@@ -2114,8 +2118,10 @@ lambertianTextureFragment =
             if (projectionType == kPerspectiveProjection) {
                 vec3 cameraPoint = sceneProperties[1].xyz;
                 return normalize(cameraPoint - surfacePosition);
-            } else {
+            } else if (projectionType == kOrthographicProjection) {
                 return sceneProperties[1].xyz;
+            } else {
+                return vec3(0.0, 0.0, 0.0);
             }
         }
         
@@ -2372,6 +2378,7 @@ physicalFragment =
         varying highp vec3 interpolatedNormal;
         
         const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kOrthographicProjection = 1.0;
         const lowp float kDirectionalLight = 1.0;
         const lowp float kPointLight = 2.0;
         const highp float kPi = 3.14159265359;
@@ -2388,8 +2395,10 @@ physicalFragment =
             if (projectionType == kPerspectiveProjection) {
                 vec3 cameraPoint = sceneProperties[1].xyz;
                 return normalize(cameraPoint - surfacePosition);
-            } else {
+            } else if (projectionType == kOrthographicProjection) {
                 return sceneProperties[1].xyz;
+            } else {
+                return vec3(0.0, 0.0, 0.0);
             }
         }
         
@@ -2767,6 +2776,7 @@ physicalTexturesFragment =
         varying highp vec3 interpolatedTangent;
         
         const lowp float kPerspectiveProjection = 0.0;
+        const lowp float kOrthographicProjection = 1.0;
         const lowp float kDirectionalLight = 1.0;
         const lowp float kPointLight = 2.0;
         const highp float kPi = 3.14159265359;
@@ -2805,8 +2815,10 @@ physicalTexturesFragment =
             if (projectionType == kPerspectiveProjection) {
                 vec3 cameraPoint = sceneProperties[1].xyz;
                 return normalize(cameraPoint - surfacePosition);
-            } else {
+            } else if (projectionType == kOrthographicProjection) {
                 return sceneProperties[1].xyz;
+            } else {
+                return vec3(0.0, 0.0, 0.0);
             }
         }
         
