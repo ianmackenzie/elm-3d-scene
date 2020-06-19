@@ -270,9 +270,6 @@ cone =
                 endAngle =
                     wedgeAngle |> Quantity.multiplyBy (toFloat endIndex)
 
-                tipAngle =
-                    wedgeAngle |> Quantity.multiplyBy (toFloat endIndex - 0.5)
-
                 startX =
                     radius |> Quantity.multiplyBy (Angle.cos startAngle)
 
