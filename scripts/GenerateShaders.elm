@@ -662,15 +662,17 @@ getDirectionToLightAndNormalIlluminance =
 
 getDirectionToCamera : Glsl.Function
 getDirectionToCamera =
-    Glsl.function { dependencies = [], constants = [ kPerspectiveProjection ] }
+    Glsl.function { dependencies = [], constants = [ kPerspectiveProjection, kOrthographicProjection ] }
         """
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
             float projectionType = sceneProperties[1].w;
             if (projectionType == kPerspectiveProjection) {
                 vec3 cameraPoint = sceneProperties[1].xyz;
                 return normalize(cameraPoint - surfacePosition);
-            } else {
+            } else if (projectionType == kOrthographicProjection) {
                 return sceneProperties[1].xyz;
+            } else {
+                return vec3(0.0, 0.0, 0.0);
             }
         }
         """
