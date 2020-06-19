@@ -9,12 +9,10 @@ import Camera3d exposing (Camera3d)
 import Color
 import Direction3d
 import Html exposing (Html)
-import Illuminance
 import Length exposing (Meters)
 import Pixels
 import Point3d
 import Scene3d
-import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
 import Viewpoint3d exposing (Viewpoint3d)

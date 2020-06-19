@@ -25,14 +25,10 @@ module Scene3d.Light exposing
 
 import Color exposing (Color)
 import Direction3d exposing (Direction3d)
-import Duration exposing (Duration)
 import Illuminance exposing (Illuminance)
 import Length exposing (Meters)
-import Luminance exposing (Luminance)
 import LuminousFlux exposing (LuminousFlux)
-import Math.Matrix4 exposing (Mat4)
 import Math.Vector3 exposing (Vec3)
-import Math.Vector4 exposing (Vec4)
 import Point3d exposing (Point3d)
 import Quantity
 import Scene3d.ColorConversions as ColorConversions

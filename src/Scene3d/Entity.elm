@@ -22,11 +22,9 @@ module Scene3d.Entity exposing
     )
 
 import Angle exposing (Angle)
-import Array
 import Axis3d exposing (Axis3d)
 import Block3d exposing (Block3d)
 import BoundingBox3d exposing (BoundingBox3d)
-import Color exposing (Color)
 import Cone3d exposing (Cone3d)
 import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
@@ -43,11 +41,9 @@ import Math.Vector4 exposing (Vec4)
 import Pixels exposing (Pixels)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
-import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
-import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Material as Material exposing (Material)
-import Scene3d.Mesh as Mesh exposing (Mesh, Shadow)
+import Scene3d.Mesh exposing (Mesh, Shadow)
 import Scene3d.Primitives as Primitives
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types
@@ -66,11 +62,9 @@ import Scene3d.Types as Types
 import Scene3d.UnoptimizedShaders as Shaders
 import Sphere3d exposing (Sphere3d)
 import Triangle3d exposing (Triangle3d)
-import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
 import WebGL
 import WebGL.Settings
-import WebGL.Settings.Blend as Blend
 import WebGL.Settings.StencilTest as StencilTest
 import WebGL.Texture
 

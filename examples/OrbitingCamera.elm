@@ -9,8 +9,6 @@ import Browser
 import Browser.Events
 import Camera3d
 import Color
-import Html exposing (Html)
-import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Length
 import Pixels exposing (Pixels)
@@ -19,7 +17,6 @@ import Quantity exposing (Quantity)
 import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
-import SketchPlane3d
 import Triangle3d
 import Viewpoint3d
 

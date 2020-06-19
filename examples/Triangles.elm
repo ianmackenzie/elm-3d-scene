@@ -14,8 +14,6 @@ import Pixels
 import Point3d
 import Scene3d
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh
-import SketchPlane3d
 import Triangle3d
 import Viewpoint3d
 

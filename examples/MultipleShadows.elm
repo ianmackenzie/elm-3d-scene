@@ -9,7 +9,6 @@ module MultipleShadows exposing (main)
 -}
 
 import Angle exposing (Angle)
-import Array exposing (Array)
 import Axis3d
 import Block3d exposing (Block3d)
 import Browser
@@ -17,12 +16,10 @@ import Browser.Dom
 import Browser.Events
 import Camera3d
 import Color
-import Dict exposing (Dict)
 import Direction3d
 import Duration exposing (Duration)
 import Frame3d
 import Html exposing (Html)
-import Html.Attributes as Attributes exposing (style)
 import Illuminance
 import Json.Decode as Decode exposing (Decoder)
 import Length exposing (Meters)
@@ -33,13 +30,10 @@ import Quantity exposing (Quantity)
 import Scene3d exposing (Entity)
 import Scene3d.Light as Light exposing (Chromaticity, Light)
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh
-import SketchPlane3d
 import SolidAngle
 import Sphere3d
 import Task
 import Temperature
-import Vector3d
 import Viewpoint3d
 
 

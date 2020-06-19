@@ -14,7 +14,6 @@ import Color
 import Direction3d
 import Duration exposing (Duration)
 import Element
-import Element.Font
 import Html exposing (Html)
 import Length
 import Pixels

@@ -1,7 +1,6 @@
 module GenerateShaders exposing (main)
 
 import Glsl
-import Json.Decode as Decode
 import Regex
 import Script exposing (Script, UserPrivileges)
 import Script.Directory as Directory exposing (Directory)

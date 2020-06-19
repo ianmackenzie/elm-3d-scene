@@ -187,8 +187,6 @@ import Cylinder3d exposing (Cylinder3d)
 import Direction3d exposing (Direction3d)
 import Duration exposing (Duration)
 import Frame3d exposing (Frame3d)
-import Geometry.Interop.LinearAlgebra.Frame3d as Frame3d
-import Geometry.Interop.LinearAlgebra.Point3d as Point3d
 import Html exposing (Html)
 import Html.Attributes
 import Html.Keyed
@@ -196,7 +194,6 @@ import Illuminance exposing (Illuminance)
 import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Luminance exposing (Luminance)
-import LuminousFlux exposing (LuminousFlux)
 import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
@@ -205,7 +202,6 @@ import Pixels exposing (Pixels, inPixels)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity(..))
-import Rectangle2d
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Entity as Entity
 import Scene3d.Light as Light exposing (Chromaticity, Light)
@@ -214,7 +210,6 @@ import Scene3d.Mesh as Mesh exposing (Mesh)
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (Bounds, DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
 import Sphere3d exposing (Sphere3d)
-import Temperature exposing (Temperature)
 import Triangle3d exposing (Triangle3d)
 import Vector3d exposing (Vector3d)
 import Viewpoint3d exposing (Viewpoint3d)
@@ -224,7 +219,6 @@ import WebGL.Settings
 import WebGL.Settings.Blend as Blend
 import WebGL.Settings.DepthTest as DepthTest
 import WebGL.Settings.StencilTest as StencilTest
-import WebGL.Texture exposing (Texture)
 
 
 

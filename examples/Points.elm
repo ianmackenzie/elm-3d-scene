@@ -16,7 +16,6 @@ import Pixels
 import Point3d
 import Scene3d
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh exposing (Mesh)
 import Viewpoint3d exposing (Viewpoint3d)
 
 

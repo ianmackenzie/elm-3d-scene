@@ -6,7 +6,6 @@ mapping methods, to see the relationships between them.
 
 import Angle exposing (Angle)
 import Array
-import Axis3d
 import Block3d
 import Browser
 import Browser.Events
@@ -27,9 +26,7 @@ import Quantity exposing (Quantity)
 import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
-import SketchPlane3d exposing (SketchPlane3d)
 import Sphere3d
-import Vector3d
 import Viewpoint3d
 
 

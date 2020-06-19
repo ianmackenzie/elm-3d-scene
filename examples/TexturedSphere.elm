@@ -18,9 +18,6 @@ import Html exposing (Html)
 import Illuminance
 import Json.Decode as Decode exposing (Decoder)
 import Length exposing (Meters)
-import Luminance
-import LuminousFlux
-import Parameter1d
 import Pixels exposing (Pixels)
 import Point3d
 import Quantity exposing (Quantity)
@@ -29,7 +26,6 @@ import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d exposing (Sphere3d)
 import Task
-import Temperature
 import Vector3d exposing (Vector3d)
 import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture

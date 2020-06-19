@@ -16,9 +16,6 @@ import Duration exposing (Duration)
 import Html exposing (Html)
 import Illuminance
 import Length exposing (Meters)
-import Luminance
-import LuminousFlux
-import Parameter1d
 import Pixels
 import Point3d
 import Quantity
@@ -26,7 +23,6 @@ import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
-import Temperature
 import Viewpoint3d exposing (Viewpoint3d)
 
 
