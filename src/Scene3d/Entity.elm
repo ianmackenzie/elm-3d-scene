@@ -121,16 +121,16 @@ mesh givenMaterial givenMesh =
                 Types.EmptyMesh ->
                     empty
 
-                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                Types.Triangles _ _ _ _ ->
                     empty
 
-                Types.Facets _ _ webGLMesh backFaceSetting ->
+                Types.Facets _ _ _ _ ->
                     empty
 
-                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                Types.Indexed _ _ _ _ ->
                     empty
 
-                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                Types.MeshWithNormals _ _ _ _ ->
                     empty
 
                 Types.MeshWithUvs boundingBox _ webGLMesh backFaceSetting ->
@@ -142,13 +142,13 @@ mesh givenMaterial givenMesh =
                 Types.MeshWithTangents boundingBox _ webGLMesh backFaceSetting ->
                     colorTextureMesh data (toBounds boundingBox) webGLMesh backFaceSetting
 
-                Types.LineSegments _ _ webGLMesh ->
+                Types.LineSegments _ _ _ ->
                     empty
 
-                Types.Polyline _ _ webGLMesh ->
+                Types.Polyline _ _ _ ->
                     empty
 
-                Types.Points _ radius _ webGLMesh ->
+                Types.Points _ _ _ _ ->
                     empty
 
         Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
@@ -191,16 +191,16 @@ mesh givenMaterial givenMesh =
                 Types.EmptyMesh ->
                     empty
 
-                Types.Triangles _ _ webGLMesh backFaceSetting ->
+                Types.Triangles _ _ _ _ ->
                     empty
 
-                Types.Facets _ _ webGLMesh backFaceSetting ->
+                Types.Facets _ _ _ _ ->
                     empty
 
-                Types.Indexed _ _ webGLMesh backFaceSetting ->
+                Types.Indexed _ _ _ _ ->
                     empty
 
-                Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                Types.MeshWithNormals _ _ _ _ ->
                     empty
 
                 Types.MeshWithUvs boundingBox _ webGLMesh backFaceSetting ->
@@ -212,13 +212,13 @@ mesh givenMaterial givenMesh =
                 Types.MeshWithTangents boundingBox _ webGLMesh backFaceSetting ->
                     texturedEmissiveMesh data backlight (toBounds boundingBox) webGLMesh backFaceSetting
 
-                Types.LineSegments _ _ webGLMesh ->
+                Types.LineSegments _ _ _ ->
                     empty
 
-                Types.Polyline _ _ webGLMesh ->
+                Types.Polyline _ _ _ ->
                     empty
 
-                Types.Points _ radius _ webGLMesh ->
+                Types.Points _ _ _ _ ->
                     empty
 
         Types.LambertianMaterial Types.UseMeshUvs materialColorTexture normalMapTexture ->
@@ -266,13 +266,13 @@ mesh givenMaterial givenMesh =
                         Types.Triangles _ _ _ _ ->
                             empty
 
-                        Types.Facets _ _ webGLMesh cullBackFaces ->
+                        Types.Facets _ _ _ _ ->
                             empty
 
                         Types.Indexed _ _ _ _ ->
                             empty
 
-                        Types.MeshWithNormals _ _ webGLMesh cullBackFaces ->
+                        Types.MeshWithNormals _ _ _ _ ->
                             empty
 
                         Types.MeshWithUvs _ _ _ _ ->
@@ -362,13 +362,13 @@ mesh givenMaterial givenMesh =
                         Types.Triangles _ _ _ _ ->
                             empty
 
-                        Types.Facets _ _ webGLMesh backFaceSetting ->
+                        Types.Facets _ _ _ _ ->
                             empty
 
                         Types.Indexed _ _ _ _ ->
                             empty
 
-                        Types.MeshWithNormals _ _ webGLMesh backFaceSetting ->
+                        Types.MeshWithNormals _ _ _ _ ->
                             empty
 
                         Types.MeshWithUvs _ _ _ _ ->
@@ -581,7 +581,7 @@ point givenRadius givenMaterial givenPoint =
                             , projectionMatrix = projectionMatrix
                             }
 
-        Types.EmissiveMaterial _ (Types.Texture _) backlight ->
+        Types.EmissiveMaterial _ (Types.Texture _) _ ->
             empty
 
         Types.LambertianMaterial _ _ _ ->
@@ -650,7 +650,7 @@ lineSegment givenMaterial givenLineSegment =
                             , projectionMatrix = projectionMatrix
                             }
 
-        Types.EmissiveMaterial _ (Types.Texture _) backlight ->
+        Types.EmissiveMaterial _ (Types.Texture _) _ ->
             empty
 
         Types.LambertianMaterial _ _ _ ->
@@ -870,7 +870,7 @@ triangleMesh givenMaterial givenTriangle =
                             , projectionMatrix = projectionMatrix
                             }
 
-        Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
+        Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture _) _ ->
             empty
 
         Types.LambertianMaterial Types.UseMeshUvs materialColorTexture normalMapTexture ->
@@ -898,7 +898,7 @@ triangleMesh givenMaterial givenTriangle =
                                     , projectionMatrix = projectionMatrix
                                     }
 
-                TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( normalMapData, useNormalMap ) ->
+                TexturedLambertianMaterial _ _ ->
                     empty
 
         Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture normalMapTexture ->
@@ -928,7 +928,7 @@ triangleMesh givenMaterial givenTriangle =
                                     , projectionMatrix = projectionMatrix
                                     }
 
-                TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, constantRoughness ) ( metallicData, constantMetallic ) ( normalMapData, useNormalMap ) ->
+                TexturedPbrMaterial _ _ _ _ ->
                     empty
 
 
