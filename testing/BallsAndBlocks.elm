@@ -11,7 +11,7 @@ import Camera3d
 import Color
 import Common.Materials as Materials
 import Direction3d
-import Duration
+import Duration exposing (Duration)
 import Frame3d
 import Html exposing (Html)
 import Html.Attributes
@@ -24,6 +24,7 @@ import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
 import Physics.World as World exposing (World)
 import Pixels exposing (pixels)
 import Point3d
+import Quantity
 import Random
 import Scene3d
 import Scene3d.Light as Light exposing (Light)
@@ -34,7 +35,8 @@ import Viewpoint3d
 
 
 type alias Model =
-    { world : World (Scene3d.Entity BodyCoordinates)
+    { allFrames : List (World (Scene3d.Entity BodyCoordinates))
+    , remainingFrames : List (World (Scene3d.Entity BodyCoordinates))
     , screenWidth : Float
     , screenHeight : Float
     }
@@ -55,9 +57,35 @@ main =
         }
 
 
+simulate : Duration -> World (Scene3d.Entity BodyCoordinates) -> List (World (Scene3d.Entity BodyCoordinates))
+simulate remainingDuration currentWorld =
+    if remainingDuration |> Quantity.lessThanOrEqualTo Quantity.zero then
+        [ currentWorld ]
+
+    else
+        let
+            timestep =
+                Duration.seconds (1 / 60)
+
+            futureWorlds =
+                simulate (remainingDuration |> Quantity.minus timestep)
+                    (World.simulate timestep currentWorld)
+        in
+        currentWorld :: futureWorlds
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { world = initialWorld
+    let
+        frames =
+            -- Generate 10 seconds of simulation ahead of time
+            simulate (Duration.seconds 10) initialWorld
+                -- Just for fun, reverse the frames to watch the simulation
+                -- backwards =)
+                |> List.reverse
+    in
+    ( { allFrames = frames
+      , remainingFrames = frames
       , screenWidth = 0
       , screenHeight = 0
       }
@@ -71,9 +99,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick _ ->
-            ( { model | world = World.simulate (Duration.seconds (1 / 60)) model.world }
-            , Cmd.none
-            )
+            case model.remainingFrames of
+                first :: rest ->
+                    -- Advance by one simulation frame
+                    ( { model | remainingFrames = rest }, Cmd.none )
+
+                [] ->
+                    -- If we've hit the end, restart from the beginning
+                    ( { model | remainingFrames = model.allFrames }, Cmd.none )
 
         Resize width height ->
             ( { model | screenWidth = width, screenHeight = height }
@@ -90,54 +123,59 @@ subscriptions _ =
 
 
 view : Model -> Html Msg
-view { world, screenWidth, screenHeight } =
-    let
-        camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { eyePoint = Point3d.meters 0 20 20
-                        , focalPoint = Point3d.meters 0 0 0
-                        , upDirection = Direction3d.positiveZ
+view { remainingFrames, screenWidth, screenHeight } =
+    case remainingFrames of
+        [] ->
+            Html.text "Initializing..."
+
+        currentFrame :: rest ->
+            let
+                camera =
+                    Camera3d.perspective
+                        { viewpoint =
+                            Viewpoint3d.lookAt
+                                { eyePoint = Point3d.meters 0 20 20
+                                , focalPoint = Point3d.meters 0 0 0
+                                , upDirection = Direction3d.positiveZ
+                                }
+                        , verticalFieldOfView = Angle.degrees 24
                         }
-                , verticalFieldOfView = Angle.degrees 24
-                }
 
-        drawables =
-            List.map getTransformedDrawable (World.bodies world)
+                drawables =
+                    List.map getTransformedDrawable (World.bodies currentFrame)
 
-        sunlight =
-            Light.directional (Light.castsShadows True)
-                { chromaticity = Light.sunlight
-                , intensity = Illuminance.lux 10000
-                , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
-                }
+                sunlight =
+                    Light.directional (Light.castsShadows True)
+                        { chromaticity = Light.sunlight
+                        , intensity = Illuminance.lux 10000
+                        , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
+                        }
 
-        daylight =
-            Light.overhead
-                { upDirection = Direction3d.z
-                , chromaticity = Light.daylight
-                , intensity = Illuminance.lux 15000
-                }
-    in
-    Html.div
-        [ Html.Attributes.style "position" "absolute"
-        , Html.Attributes.style "left" "0"
-        , Html.Attributes.style "top" "0"
-        ]
-        [ Scene3d.custom
-            { dimensions = ( pixels screenWidth, pixels screenHeight )
-            , antialiasing = Scene3d.multisampling
-            , camera = camera
-            , lights = Scene3d.twoLights sunlight daylight
-            , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
-            , toneMapping = Scene3d.noToneMapping
-            , whiteBalance = Light.daylight
-            , background = Scene3d.transparentBackground
-            , clipDepth = meters 0.1
-            , entities = drawables
-            }
-        ]
+                daylight =
+                    Light.overhead
+                        { upDirection = Direction3d.z
+                        , chromaticity = Light.daylight
+                        , intensity = Illuminance.lux 15000
+                        }
+            in
+            Html.div
+                [ Html.Attributes.style "position" "absolute"
+                , Html.Attributes.style "left" "0"
+                , Html.Attributes.style "top" "0"
+                ]
+                [ Scene3d.custom
+                    { dimensions = ( pixels screenWidth, pixels screenHeight )
+                    , antialiasing = Scene3d.multisampling
+                    , camera = camera
+                    , lights = Scene3d.twoLights sunlight daylight
+                    , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
+                    , toneMapping = Scene3d.noToneMapping
+                    , whiteBalance = Light.daylight
+                    , background = Scene3d.transparentBackground
+                    , clipDepth = meters 0.1
+                    , entities = drawables
+                    }
+                ]
 
 
 initialWorld : World (Scene3d.Entity BodyCoordinates)
