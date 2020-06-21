@@ -17,6 +17,7 @@ import Frame3d
 import Html exposing (Html)
 import Html.Attributes
 import Illuminance
+import Json.Decode as Decode
 import Length exposing (Length, inMeters, meters)
 import Luminance
 import Mass
@@ -39,12 +40,14 @@ type alias Model =
     { elapsedDuration : Duration
     , screenWidth : Float
     , screenHeight : Float
+    , animating : Bool
     }
 
 
 type Msg
     = Tick Duration
     | Resize Float Float
+    | Click
 
 
 main : Program () Model Msg
@@ -62,6 +65,7 @@ init _ =
     ( { screenWidth = 0
       , screenHeight = 0
       , elapsedDuration = Quantity.zero
+      , animating = True
       }
     , Task.perform
         (\{ viewport } -> Resize viewport.width viewport.height)
@@ -82,12 +86,26 @@ update msg model =
             , Cmd.none
             )
 
+        Click ->
+            ( { model | animating = not model.animating }
+            , Cmd.none
+            )
+
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
+    let
+        animationSubscription =
+            if model.animating then
+                Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
+
+            else
+                Sub.none
+    in
     Sub.batch
         [ Events.onResize (\w h -> Resize (toFloat w) (toFloat h))
-        , Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
+        , animationSubscription
+        , Events.onClick (Decode.succeed Click)
         ]
 
 
