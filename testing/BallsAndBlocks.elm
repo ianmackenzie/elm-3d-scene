@@ -183,19 +183,13 @@ initialWorld =
 materials : Array (Material.Uniform coordinates)
 materials =
     Array.fromList
-        [ Materials.aluminum
-        , Materials.whitePlastic
-        , Materials.copper
-        , Material.nonmetal
-            { baseColor = Color.lightBlue
-            , roughness = 0.25
-            }
-        , Materials.gold
-        , Materials.whitePlastic
-        , Material.nonmetal
-            { baseColor = Color.blue
-            , roughness = 0.25
-            }
+        [ Material.matte (Color.rgb255 233 235 236)
+        , Material.matte Color.white
+        , Material.matte (Color.rgb255 244 162 137)
+        , Material.matte Color.lightBlue
+        , Material.matte (Color.rgb255 255 195 86)
+        , Material.matte Color.white
+        , Material.matte Color.blue
         ]
 
 
