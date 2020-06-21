@@ -3,6 +3,7 @@ module BallsAndBlocks exposing (main)
 import Acceleration
 import Angle
 import Array exposing (Array)
+import Axis3d
 import Block3d
 import Browser
 import Browser.Dom as Dom
@@ -35,15 +36,14 @@ import Viewpoint3d
 
 
 type alias Model =
-    { allFrames : List (World (Scene3d.Entity BodyCoordinates))
-    , remainingFrames : List (World (Scene3d.Entity BodyCoordinates))
+    { elapsedDuration : Duration
     , screenWidth : Float
     , screenHeight : Float
     }
 
 
 type Msg
-    = Tick Float
+    = Tick Duration
     | Resize Float Float
 
 
@@ -57,37 +57,11 @@ main =
         }
 
 
-simulate : Duration -> World (Scene3d.Entity BodyCoordinates) -> List (World (Scene3d.Entity BodyCoordinates))
-simulate remainingDuration currentWorld =
-    if remainingDuration |> Quantity.lessThanOrEqualTo Quantity.zero then
-        [ currentWorld ]
-
-    else
-        let
-            timestep =
-                Duration.seconds (1 / 60)
-
-            futureWorlds =
-                simulate (remainingDuration |> Quantity.minus timestep)
-                    (World.simulate timestep currentWorld)
-        in
-        currentWorld :: futureWorlds
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
-    let
-        frames =
-            -- Generate 10 seconds of simulation ahead of time
-            simulate (Duration.seconds 10) initialWorld
-                -- Just for fun, reverse the frames to watch the simulation
-                -- backwards =)
-                |> List.reverse
-    in
-    ( { allFrames = frames
-      , remainingFrames = frames
-      , screenWidth = 0
+    ( { screenWidth = 0
       , screenHeight = 0
+      , elapsedDuration = Quantity.zero
       }
     , Task.perform
         (\{ viewport } -> Resize viewport.width viewport.height)
@@ -98,15 +72,10 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Tick _ ->
-            case model.remainingFrames of
-                first :: rest ->
-                    -- Advance by one simulation frame
-                    ( { model | remainingFrames = rest }, Cmd.none )
-
-                [] ->
-                    -- If we've hit the end, restart from the beginning
-                    ( { model | remainingFrames = model.allFrames }, Cmd.none )
+        Tick duration ->
+            ( { model | elapsedDuration = model.elapsedDuration |> Quantity.plus duration }
+            , Cmd.none
+            )
 
         Resize width height ->
             ( { model | screenWidth = width, screenHeight = height }
@@ -118,64 +87,67 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Events.onResize (\w h -> Resize (toFloat w) (toFloat h))
-        , Events.onAnimationFrameDelta Tick
+        , Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
         ]
 
 
 view : Model -> Html Msg
-view { remainingFrames, screenWidth, screenHeight } =
-    case remainingFrames of
-        [] ->
-            Html.text "Initializing..."
-
-        currentFrame :: rest ->
-            let
-                camera =
-                    Camera3d.perspective
-                        { viewpoint =
-                            Viewpoint3d.lookAt
-                                { eyePoint = Point3d.meters 0 20 20
-                                , focalPoint = Point3d.meters 0 0 0
-                                , upDirection = Direction3d.positiveZ
-                                }
-                        , verticalFieldOfView = Angle.degrees 24
+view { elapsedDuration, screenWidth, screenHeight } =
+    let
+        camera =
+            Camera3d.perspective
+                { viewpoint =
+                    Viewpoint3d.lookAt
+                        { eyePoint = Point3d.meters 0 20 20
+                        , focalPoint = Point3d.meters 0 0 0
+                        , upDirection = Direction3d.positiveZ
                         }
+                , verticalFieldOfView = Angle.degrees 24
+                }
 
-                drawables =
-                    List.map getTransformedDrawable (World.bodies currentFrame)
+        rotationRate =
+            Angle.degrees 90 |> Quantity.per Duration.second
 
-                sunlight =
-                    Light.directional (Light.castsShadows True)
-                        { chromaticity = Light.sunlight
-                        , intensity = Illuminance.lux 10000
-                        , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
-                        }
+        rotationAngle =
+            elapsedDuration |> Quantity.at rotationRate
 
-                daylight =
-                    Light.overhead
-                        { upDirection = Direction3d.z
-                        , chromaticity = Light.daylight
-                        , intensity = Illuminance.lux 15000
-                        }
-            in
-            Html.div
-                [ Html.Attributes.style "position" "absolute"
-                , Html.Attributes.style "left" "0"
-                , Html.Attributes.style "top" "0"
-                ]
-                [ Scene3d.custom
-                    { dimensions = ( pixels screenWidth, pixels screenHeight )
-                    , antialiasing = Scene3d.multisampling
-                    , camera = camera
-                    , lights = Scene3d.twoLights sunlight daylight
-                    , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
-                    , toneMapping = Scene3d.noToneMapping
-                    , whiteBalance = Light.daylight
-                    , background = Scene3d.transparentBackground
-                    , clipDepth = meters 0.1
-                    , entities = drawables
-                    }
-                ]
+        drawables =
+            Scene3d.group (List.map getTransformedDrawable (World.bodies initialWorld))
+                |> Scene3d.translateIn Direction3d.negativeZ (Length.meters 6)
+                |> Scene3d.rotateAround Axis3d.z rotationAngle
+
+        sunlight =
+            Light.directional (Light.castsShadows True)
+                { chromaticity = Light.sunlight
+                , intensity = Illuminance.lux 10000
+                , direction = Direction3d.xyZ (Angle.degrees 45) (Angle.degrees -60)
+                }
+
+        daylight =
+            Light.overhead
+                { upDirection = Direction3d.z
+                , chromaticity = Light.daylight
+                , intensity = Illuminance.lux 15000
+                }
+    in
+    Html.div
+        [ Html.Attributes.style "position" "absolute"
+        , Html.Attributes.style "left" "0"
+        , Html.Attributes.style "top" "0"
+        ]
+        [ Scene3d.custom
+            { dimensions = ( pixels screenWidth, pixels screenHeight )
+            , antialiasing = Scene3d.multisampling
+            , camera = camera
+            , lights = Scene3d.twoLights sunlight daylight
+            , exposure = Scene3d.maxLuminance (Luminance.nits 10000)
+            , toneMapping = Scene3d.noToneMapping
+            , whiteBalance = Light.daylight
+            , background = Scene3d.transparentBackground
+            , clipDepth = meters 0.1
+            , entities = [ drawables ]
+            }
+        ]
 
 
 initialWorld : World (Scene3d.Entity BodyCoordinates)
