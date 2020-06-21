@@ -479,13 +479,15 @@ var _WebGL_drawGL = F2(function (model, domNode) {
       program = {
         glProgram: glProgram,
         attributes: Object.assign({}, entity.__vert.attributes, entity.__frag.attributes),
-        uniformSetters: _WebGL_createUniformSetters(
-          gl,
-          model,
-          glProgram,
-          Object.assign({}, entity.__vert.uniforms, entity.__frag.uniforms)
-        )
+        currentUniforms: {}
       };
+
+      program.uniformSetters = _WebGL_createUniformSetters(
+        gl,
+        model,
+        program,
+        Object.assign({}, entity.__vert.uniforms, entity.__frag.uniforms)
+      );
 
       progid = _WebGL_getProgID(entity.__vert.id, entity.__frag.id);
       model.__cache.programs[progid] = program;
@@ -558,50 +560,77 @@ var _WebGL_drawGL = F2(function (model, domNode) {
 });
 
 function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
+  var glProgram = program.glProgram;
+  var currentUniforms = program.currentUniforms;
   var textureCounter = 0;
-  function createUniformSetter(program, uniform) {
-    var uniformLocation = gl.getUniformLocation(program, uniform.name);
+  function createUniformSetter(glProgram, uniform) {
+    var uniformName = uniform.name;
+    var uniformLocation = gl.getUniformLocation(glProgram, uniformName);
     switch (uniform.type) {
       case gl.INT:
         return function (value) {
-          gl.uniform1i(uniformLocation, value);
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniform1i(uniformLocation, value);
+            currentUniforms[uniformName] = value;
+          }
         };
       case gl.FLOAT:
         return function (value) {
-          gl.uniform1f(uniformLocation, value);
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniform1f(uniformLocation, value);
+            currentUniforms[uniformName] = value;
+          }
         };
       case gl.FLOAT_VEC2:
         return function (value) {
-          gl.uniform2f(uniformLocation, value[0], value[1]);
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniform2f(uniformLocation, value[0], value[1]);
+            currentUniforms[uniformName] = value;
+          }
         };
       case gl.FLOAT_VEC3:
         return function (value) {
-          gl.uniform3f(uniformLocation, value[0], value[1], value[2]);
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniform3f(uniformLocation, value[0], value[1], value[2]);
+            currentUniforms[uniformName] = value;
+          }
         };
       case gl.FLOAT_VEC4:
         return function (value) {
-          gl.uniform4f(uniformLocation, value[0], value[1], value[2], value[3]);
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniform4f(uniformLocation, value[0], value[1], value[2], value[3]);
+            currentUniforms[uniformName] = value;
+          }
         };
       case gl.FLOAT_MAT4:
         return function (value) {
-          gl.uniformMatrix4fv(uniformLocation, false, new Float32Array(value));
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniformMatrix4fv(uniformLocation, false, new Float32Array(value));
+            currentUniforms[uniformName] = value;
+          }
         };
       case gl.SAMPLER_2D:
         var currentTexture = textureCounter++;
         return function (texture) {
-          gl.activeTexture(gl.TEXTURE0 + currentTexture);
-          var tex = model.__cache.textures.get(texture);
-          if (!tex) {
-            _WebGL_log('Created texture');
-            tex = texture.__$createTexture(gl);
-            model.__cache.textures.set(texture, tex);
+          if (currentUniforms[uniformName] !== value) {
+            gl.activeTexture(gl.TEXTURE0 + currentTexture);
+            var tex = model.__cache.textures.get(texture);
+            if (!tex) {
+              _WebGL_log('Created texture');
+              tex = texture.__$createTexture(gl);
+              model.__cache.textures.set(texture, tex);
+            }
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.uniform1i(uniformLocation, currentTexture);
+            currentUniforms[uniformName] = texture;
           }
-          gl.bindTexture(gl.TEXTURE_2D, tex);
-          gl.uniform1i(uniformLocation, currentTexture);
         };
       case gl.BOOL:
         return function (value) {
-          gl.uniform1i(uniformLocation, value);
+          if (currentUniforms[uniformName] !== value) {
+            gl.uniform1i(uniformLocation, value);
+            currentUniforms[uniformName] = texture;
+          }
         };
       default:
         _WebGL_log('Unsupported uniform type: ' + uniform.type);
@@ -610,10 +639,10 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
   }
 
   var uniformSetters = {};
-  var numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+  var numUniforms = gl.getProgramParameter(glProgram, gl.ACTIVE_UNIFORMS);
   for (var i = 0; i < numUniforms; i++) {
-    var uniform = gl.getActiveUniform(program, i);
-    uniformSetters[uniformsMap[uniform.name] || uniform.name] = createUniformSetter(program, uniform);
+    var uniform = gl.getActiveUniform(glProgram, i);
+    uniformSetters[uniformsMap[uniform.name] || uniform.name] = createUniformSetter(glProgram, uniform);
   }
 
   return uniformSetters;
