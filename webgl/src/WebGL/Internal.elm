@@ -1,7 +1,6 @@
 module WebGL.Internal exposing
     ( Option(..)
     , Setting(..)
-    , disableSetting
     , enableOption
     , enableSetting
     )
@@ -81,34 +80,3 @@ enableSetting gl glSettings setting =
 
         SampleAlphaToCoverage ->
             Elm.Kernel.WebGL.enableSampleAlphaToCoverage gl glSettings setting
-
-
-disableSetting : () -> Setting -> ()
-disableSetting cache setting =
-    case setting of
-        Blend _ _ _ _ _ _ _ _ _ _ ->
-            Elm.Kernel.WebGL.disableBlend cache
-
-        DepthTest _ _ _ _ ->
-            Elm.Kernel.WebGL.disableDepthTest cache
-
-        StencilTest _ _ _ _ _ _ _ _ _ _ _ ->
-            Elm.Kernel.WebGL.disableStencilTest cache
-
-        Scissor _ _ _ _ ->
-            Elm.Kernel.WebGL.disableScissor cache
-
-        ColorMask _ _ _ _ ->
-            Elm.Kernel.WebGL.disableColorMask cache
-
-        CullFace _ ->
-            Elm.Kernel.WebGL.disableCullFace cache
-
-        PolygonOffset _ _ ->
-            Elm.Kernel.WebGL.disablePolygonOffset cache
-
-        SampleCoverage _ _ ->
-            Elm.Kernel.WebGL.disableSampleCoverage cache
-
-        SampleAlphaToCoverage ->
-            Elm.Kernel.WebGL.disableSampleAlphaToCoverage cache

@@ -1,7 +1,7 @@
 /*
 
 import Elm.Kernel.VirtualDom exposing (custom, doc)
-import WebGL.Internal as WI exposing (enableSetting, disableSetting, enableOption)
+import WebGL.Internal as WI exposing (enableSetting, enableOption)
 
 */
 
@@ -45,7 +45,7 @@ var _WebGL_entity = F5(function (settings, vert, frag, mesh, uniforms) {
 var _WebGL_enableBlend = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.blend;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -70,7 +70,7 @@ var _WebGL_enableBlend = F3(function (gl, glSettings, setting) {
 var _WebGL_enableDepthTest = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.depthTest;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -95,7 +95,7 @@ var _WebGL_enableDepthTest = F3(function (gl, glSettings, setting) {
 var _WebGL_enableStencilTest = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.stencilTest;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -126,7 +126,7 @@ var _WebGL_enableStencilTest = F3(function (gl, glSettings, setting) {
 var _WebGL_enableScissor = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.scissor;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -143,7 +143,7 @@ var _WebGL_enableScissor = F3(function (gl, glSettings, setting) {
 var _WebGL_enableColorMask = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.colorMask;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
   glSetting.enabled = true;
 
@@ -156,7 +156,7 @@ var _WebGL_enableColorMask = F3(function (gl, glSettings, setting) {
 var _WebGL_enableCullFace = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.cullFace;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -173,7 +173,7 @@ var _WebGL_enableCullFace = F3(function (gl, glSettings, setting) {
 var _WebGL_enablePolygonOffset = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.polygonOffset;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -190,7 +190,7 @@ var _WebGL_enablePolygonOffset = F3(function (gl, glSettings, setting) {
 var _WebGL_enableSampleCoverage = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.sampleCoverage;
   var current = glSetting.setting;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
   glSetting.setting = setting;
 
   if (!glSetting.enabled) {
@@ -203,10 +203,9 @@ var _WebGL_enableSampleCoverage = F3(function (gl, glSettings, setting) {
   }
 });
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_enableSampleAlphaToCoverage = F3(function (gl, glSettings, setting) {
   var glSetting = glSettings.sampleAlphaToCoverage;
-  glSetting.frame = glSettings.frame;
+  glSetting.toggle = glSettings.toggle;
 
   if (!glSetting.enabled) {
     gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
@@ -214,12 +213,10 @@ var _WebGL_enableSampleAlphaToCoverage = F3(function (gl, glSettings, setting) {
   }
 });
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableBlend = function (cache) {
   cache.gl.disable(cache.gl.BLEND);
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableDepthTest = function (cache) {
   cache.gl.disable(cache.gl.DEPTH_TEST);
   cache.gl.depthMask(true);
@@ -232,7 +229,6 @@ var _WebGL_disableDepthTest = function (cache) {
   }
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableStencilTest = function (cache) {
   cache.gl.disable(cache.gl.STENCIL_TEST);
   cache.gl.stencilMask(cache.STENCIL_WRITEMASK);
@@ -252,12 +248,10 @@ var _WebGL_disableStencilTest = function (cache) {
   }
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableScissor = function (cache) {
   cache.gl.disable(cache.gl.SCISSOR_TEST);
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableColorMask = function (cache) {
   cache.gl.colorMask(true, true, true, true);
   cache.glSettings.colorMask.setting = {
@@ -268,28 +262,24 @@ var _WebGL_disableColorMask = function (cache) {
   };
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableCullFace = function (cache) {
   cache.gl.disable(cache.gl.CULL_FACE);
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disablePolygonOffset = function (cache) {
   cache.gl.disable(cache.gl.POLYGON_OFFSET_FILL);
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableSampleCoverage = function (cache) {
   cache.gl.disable(cache.gl.SAMPLE_COVERAGE);
 };
 
-// eslint-disable-next-line no-unused-vars
 var _WebGL_disableSampleAlphaToCoverage = function (cache) {
   cache.gl.disable(cache.gl.SAMPLE_ALPHA_TO_COVERAGE);
 };
 
-var settingsNames = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMask', 'cullFace', 'polygonOffset', 'sampleCoverage', 'sampleAlphaToCoverage']
-var settingsDisableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage]
+var _WebGL_settingsNames = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMask', 'cullFace', 'polygonOffset', 'sampleCoverage', 'sampleAlphaToCoverage']
+var _WebGL_settingsDisableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage]
 
 function _WebGL_doCompile(gl, src, type) {
 
@@ -576,16 +566,16 @@ var _WebGL_drawGL = F2(function (model, domNode) {
       }
     }
 
-    model.__cache.glSettings.frame++;
+    model.__cache.glSettings.toggle = !model.__cache.glSettings.toggle;
 
     _WebGL_listEach(A2(__WI_enableSetting, gl, glSettings), entity.__settings);
 
-    for (var st = 0; st < settingsNames.length; st++) {
-      var glSetting = glSettings[settingsNames[st]];
-      if (glSetting.frame !== glSettings.frame && glSetting.enabled) {
-        settingsDisableFunctions[st](model.__cache);
+    for (var st = 0; st < _WebGL_settingsNames.length; st++) {
+      var glSetting = glSettings[_WebGL_settingsNames[st]];
+      if (glSetting.toggle !== glSettings.toggle && glSetting.enabled) {
+        _WebGL_settingsDisableFunctions[st](model.__cache);
         glSetting.enabled = false;
-        glSetting.frame = glSettings.frame;
+        glSetting.toggle = glSettings.toggle;
       }
     }
 
@@ -776,9 +766,7 @@ function _WebGL_render(model) {
     sceneSettings: []
   };
 
-  _WebGL_listEach(function (option) {
-    return A2(__WI_enableOption, options, option);
-  }, model.__options);
+  _WebGL_listEach(__WI_enableOption(options), model.__options);
 
   _WebGL_log('Render canvas');
   var canvas = __VirtualDom_doc.createElement('canvas');
@@ -793,19 +781,17 @@ function _WebGL_render(model) {
     });
 
     model.__cache.gl = gl;
-
-    model.__cache.frame = 0;
     model.__cache.glSettings = {
-      frame: 0,
-      blend: { setting: undefined, enabled: false, frame: 0 },
-      depthTest: { setting: undefined, enabled: false, frame: 0 },
-      stencilTest: { setting: undefined, enabled: false, frame: 0 },
-      scissor: { setting: undefined, enabled: false, frame: 0 },
-      colorMask: { setting: undefined, enabled: false, frame: 0 },
-      cullFace: { setting: undefined, enabled: false, frame: 0 },
-      polygonOffset: { setting: undefined, enabled: false, frame: 0 },
-      sampleCoverage: { setting: undefined, enabled: false, frame: 0 },
-      sampleAlphaToCoverage: { enabled: false, frame: 0 }
+      toggle: false, // used to distinguish settings from previous and current draw calls
+      blend: { setting: undefined, enabled: false, toggle: false },
+      depthTest: { setting: undefined, enabled: false, toggle: false },
+      stencilTest: { setting: undefined, enabled: false, toggle: false },
+      scissor: { setting: undefined, enabled: false, toggle: false },
+      colorMask: { setting: undefined, enabled: false, toggle: false },
+      cullFace: { setting: undefined, enabled: false, toggle: false },
+      polygonOffset: { setting: undefined, enabled: false, toggle: false },
+      sampleCoverage: { setting: undefined, enabled: false, toggle: false },
+      sampleAlphaToCoverage: { enabled: false, toggle: false }
     };
 
     model.__cache.shaders = [];
