@@ -80,9 +80,15 @@ var _WebGL_enableDepthTest = F3(function (gl, glSettings, setting) {
 
   // a    b    c    d
   // func mask near far
-  gl.depthFunc(setting.a);
-  gl.depthMask(setting.b);
-  gl.depthRange(setting.c, setting.d);
+  if (!current || (current.a !== setting.a)) {
+    gl.depthFunc(setting.a);
+  }
+  if (!current || (current.b !== setting.b)) {
+    gl.depthMask(setting.b);
+  }
+  if (!current || (current.c !== setting.c || current.d !== setting.d)) {
+    gl.depthRange(setting.c, setting.d);
+  }
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -106,8 +112,7 @@ var _WebGL_enableStencilTest = F3(function (gl, glSettings, setting) {
     gl.stencilOpSeparate(gl.FRONT, setting.e, setting.f, setting.g);
   }
   if (!current || (current.c !== setting.c)) {
-    gl.stencilMaskSeparate(gl.FRONT, setting.c);
-    gl.stencilMaskSeparate(gl.BACK, setting.c);
+    gl.stencilMask(setting.c);
   }
   if (!current || (current.h !== setting.h || current.a !== setting.a || current.b !== setting.b)) {
     gl.stencilFuncSeparate(gl.BACK, setting.h, setting.a, setting.b);
@@ -129,7 +134,9 @@ var _WebGL_enableScissor = F3(function (gl, glSettings, setting) {
     glSetting.enabled = true;
   }
 
-  gl.scissor(setting.a, setting.b, setting.c, setting.d);
+  if (!current || (current.a !== setting.a || current.b !== setting.b || current.c !== setting.c || current.d !== setting.d)) {
+    gl.scissor(setting.a, setting.b, setting.c, setting.d);
+  }
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -140,7 +147,9 @@ var _WebGL_enableColorMask = F3(function (gl, glSettings, setting) {
   glSetting.setting = setting;
   glSetting.enabled = true;
 
-  gl.colorMask(setting.a, setting.b, setting.c, setting.d);
+  if (!current || (current.a !== setting.a || current.b !== setting.b || current.c !== setting.c || current.d !== setting.d)) {
+    gl.colorMask(setting.a, setting.b, setting.c, setting.d);
+  }
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -155,7 +164,9 @@ var _WebGL_enableCullFace = F3(function (gl, glSettings, setting) {
     glSetting.enabled = true;
   }
 
-  gl.cullFace(setting.a);
+  if (!current || (current.a !== setting.a)) {
+    gl.cullFace(setting.a);
+  }
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -170,7 +181,9 @@ var _WebGL_enablePolygonOffset = F3(function (gl, glSettings, setting) {
     glSetting.enabled = true;
   }
 
-  gl.polygonOffset(setting.a, setting.b);
+  if (!current || (current.a !== setting.a || current.b !== setting.b)) {
+    gl.polygonOffset(setting.a, setting.b);
+  }
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -185,7 +198,9 @@ var _WebGL_enableSampleCoverage = F3(function (gl, glSettings, setting) {
     glSetting.enabled = true;
   }
 
-  gl.sampleCoverage(setting.a, setting.b);
+  if (!current || (current.a !== setting.a || current.b !== setting.b)) {
+    gl.sampleCoverage(setting.a, setting.b);
+  }
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -208,12 +223,33 @@ var _WebGL_disableBlend = function (cache) {
 var _WebGL_disableDepthTest = function (cache) {
   cache.gl.disable(cache.gl.DEPTH_TEST);
   cache.gl.depthMask(true);
+  var setting = cache.glSettings.stencilTest.setting;
+  cache.glSettings.depthTest.setting = {
+    a: setting.a,
+    b: true,
+    c: setting.c,
+    d: setting.d
+  }
 };
 
 // eslint-disable-next-line no-unused-vars
 var _WebGL_disableStencilTest = function (cache) {
   cache.gl.disable(cache.gl.STENCIL_TEST);
   cache.gl.stencilMask(cache.STENCIL_WRITEMASK);
+  var setting = cache.glSettings.stencilTest.setting;
+  cache.glSettings.stencilTest.setting = {
+    a: setting.a,
+    b: setting.b,
+    c: cache.STENCIL_WRITEMASK,
+    d: setting.d,
+    e: setting.e,
+    f: setting.f,
+    g: setting.g,
+    h: setting.h,
+    i: setting.i,
+    j: setting.j,
+    k: setting.k
+  }
 };
 
 // eslint-disable-next-line no-unused-vars
@@ -224,6 +260,12 @@ var _WebGL_disableScissor = function (cache) {
 // eslint-disable-next-line no-unused-vars
 var _WebGL_disableColorMask = function (cache) {
   cache.gl.colorMask(true, true, true, true);
+  cache.glSettings.colorMask.setting = {
+    a: true,
+    b: true,
+    c: true,
+    d: true
+  };
 };
 
 // eslint-disable-next-line no-unused-vars
