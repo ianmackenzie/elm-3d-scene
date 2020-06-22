@@ -5,10 +5,6 @@ import WebGL.Internal as WI exposing (enableSetting, enableOption)
 
 */
 
-function _WebGL_log(/* msg */) {
-  // console.log(msg);
-}
-
 var _WebGL_guid = 0;
 
 function _WebGL_listEach(fn, list) {
@@ -285,10 +281,7 @@ var _WebGL_settings = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMas
 var _WebGL_disableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage];
 
 function _WebGL_doCompile(gl, src, type) {
-
   var shader = gl.createShader(type);
-  _WebGL_log('Created shader');
-
   gl.shaderSource(shader, src);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -296,13 +289,10 @@ function _WebGL_doCompile(gl, src, type) {
   }
 
   return shader;
-
 }
 
 function _WebGL_doLink(gl, vshader, fshader) {
-
   var program = gl.createProgram();
-  _WebGL_log('Created program');
 
   gl.attachShader(program, vshader);
   gl.attachShader(program, fshader);
@@ -312,7 +302,6 @@ function _WebGL_doLink(gl, vshader, fshader) {
   }
 
   return program;
-
 }
 
 function _WebGL_getAttributeInfo(gl, type) {
@@ -385,8 +374,6 @@ function _WebGL_doBindAttribute(gl, attribute, mesh, attributes) {
   }, mesh.b);
 
   var buffer = gl.createBuffer();
-  _WebGL_log('Created attribute buffer ' + attribute.name);
-
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, array, gl.STATIC_DRAW);
   return buffer;
@@ -411,7 +398,6 @@ function _WebGL_doBindAttribute(gl, attribute, mesh, attributes) {
  */
 function _WebGL_doBindSetup(gl, mesh) {
   if (mesh.a.__$indexSize > 0) {
-    _WebGL_log('Created index buffer');
     var indexBuffer = gl.createBuffer();
     var indices = _WebGL_makeIndexedBuffer(mesh.c, mesh.a.__$indexSize);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -459,7 +445,6 @@ function _WebGL_getProgID(vertID, fragID) {
 }
 
 var _WebGL_drawGL = F2(function (model, domNode) {
-
   var cache = model.__cache;
   var gl = cache.gl;
 
@@ -469,7 +454,6 @@ var _WebGL_drawGL = F2(function (model, domNode) {
 
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-  _WebGL_log('Drawing');
 
   function drawEntity(entity) {
     if (!entity.__mesh.b.b) {
@@ -658,7 +642,6 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
             gl.activeTexture(gl.TEXTURE0 + currentTexture);
             var tex = cache.textures.get(texture);
             if (!tex) {
-              _WebGL_log('Created texture');
               tex = texture.__$createTexture(gl);
               cache.textures.set(texture, tex);
             }
@@ -675,7 +658,6 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
           }
         };
       default:
-        _WebGL_log('Unsupported uniform type: ' + uniform.type);
         return function () { };
     }
   }
@@ -780,7 +762,6 @@ function _WebGL_render(model) {
     return A2(__WI_enableOption, options, option);
   }, model.__options);
 
-  _WebGL_log('Render canvas');
   var canvas = __VirtualDom_doc.createElement('canvas');
   var gl = canvas.getContext && (
     canvas.getContext('webgl', options.contextAttributes) ||
