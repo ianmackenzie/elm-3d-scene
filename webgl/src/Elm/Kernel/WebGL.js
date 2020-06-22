@@ -42,176 +42,199 @@ var _WebGL_entity = F5(function (settings, vert, frag, mesh, uniforms) {
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enableBlend = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.blend;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
+var _WebGL_enableBlend = F2(function (cache, setting) {
+  var blend = cache.blend;
+  blend.toggle = cache.toggle;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.BLEND);
-    glSetting.enabled = true;
+  if (!blend.enabled) {
+    cache.gl.enable(cache.gl.BLEND);
+    blend.enabled = true;
   }
 
   // a   b   c   d   e   f   g h i j
   // eq1 f11 f12 eq2 f21 f22 r g b a
-  if (!current || (current.a !== setting.a || current.d !== setting.d)) {
-    gl.blendEquationSeparate(setting.a, setting.d);
+  if (blend.a !== setting.a || blend.d !== setting.d) {
+    cache.gl.blendEquationSeparate(setting.a, setting.d);
+    blend.a = setting.a;
+    blend.d = setting.d;
   }
-  if (!current || (current.b !== setting.b || current.c !== setting.c || current.e !== setting.e || current.f !== setting.f)) {
-    gl.blendFuncSeparate(setting.b, setting.c, setting.e, setting.f);
+  if (blend.b !== setting.b || blend.c !== setting.c || blend.e !== setting.e || blend.f !== setting.f) {
+    cache.gl.blendFuncSeparate(setting.b, setting.c, setting.e, setting.f);
+    blend.b = setting.b;
+    blend.c = setting.c;
+    blend.e = setting.e;
+    blend.f = setting.f;
   }
-  if (!current || (current.g !== setting.g || current.h !== setting.h || current.i !== setting.i || current.j !== setting.j)) {
-    gl.blendColor(setting.g, setting.h, setting.i, setting.j);
+  if (blend.g !== setting.g || blend.h !== setting.h || blend.i !== setting.i || blend.j !== setting.j) {
+    cache.gl.blendColor(setting.g, setting.h, setting.i, setting.j);
+    blend.g = setting.g;
+    blend.h = setting.h;
+    blend.i = setting.i;
+    blend.j = setting.j;
   }
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enableDepthTest = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.depthTest;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
+var _WebGL_enableDepthTest = F2(function (cache, setting) {
+  var depthTest = cache.depthTest;
+  depthTest.toggle = cache.toggle;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.DEPTH_TEST);
-    glSetting.enabled = true;
+  if (!depthTest.enabled) {
+    cache.gl.enable(cache.gl.DEPTH_TEST);
+    depthTest.enabled = true;
   }
 
   // a    b    c    d
   // func mask near far
-  if (!current || (current.a !== setting.a)) {
-    gl.depthFunc(setting.a);
+  if (depthTest.a !== setting.a) {
+    cache.gl.depthFunc(setting.a);
+    depthTest.a = setting.a;
   }
-  if (!current || (current.b !== setting.b)) {
-    gl.depthMask(setting.b);
+  if (depthTest.b !== setting.b) {
+    cache.gl.depthMask(setting.b);
+    depthTest.b = setting.b;
   }
-  if (!current || (current.c !== setting.c || current.d !== setting.d)) {
-    gl.depthRange(setting.c, setting.d);
+  if (depthTest.c !== setting.c || depthTest.d !== setting.d) {
+    cache.gl.depthRange(setting.c, setting.d);
+    depthTest.c = setting.c;
+    depthTest.d = setting.d;
   }
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enableStencilTest = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.stencilTest;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
+var _WebGL_enableStencilTest = F2(function (cache, setting) {
+  var stencilTest = cache.stencilTest;
+  stencilTest.toggle = cache.toggle;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.STENCIL_TEST);
-    glSetting.enabled = true;
+  if (!stencilTest.enabled) {
+    cache.gl.enable(cache.gl.STENCIL_TEST);
+    stencilTest.enabled = true;
   }
 
   // a   b    c         d     e     f      g      h     i     j      k
   // ref mask writeMask test1 fail1 zfail1 zpass1 test2 fail2 zfail2 zpass2
-  if (!current || (current.d !== setting.d || current.a !== setting.a || current.b !== setting.b)) {
-    gl.stencilFuncSeparate(gl.FRONT, setting.d, setting.a, setting.b);
+  if (stencilTest.d !== setting.d || stencilTest.a !== setting.a || stencilTest.b !== setting.b) {
+    cache.gl.stencilFuncSeparate(cache.gl.FRONT, setting.d, setting.a, setting.b);
+    stencilTest.d = setting.d;
+    // a and b are set in the cache.gl.BACK diffing because they should be the same
   }
-  if (!current || (current.e !== setting.e || current.f !== setting.f || current.g !== setting.g)) {
-    gl.stencilOpSeparate(gl.FRONT, setting.e, setting.f, setting.g);
+  if (stencilTest.e !== setting.e || stencilTest.f !== setting.f || stencilTest.g !== setting.g) {
+    cache.gl.stencilOpSeparate(cache.gl.FRONT, setting.e, setting.f, setting.g);
+    stencilTest.e = setting.e;
+    stencilTest.f = setting.f;
+    stencilTest.g = setting.g;
   }
-  if (!current || (current.c !== setting.c)) {
-    gl.stencilMask(setting.c);
+  if (stencilTest.c !== setting.c) {
+    cache.gl.stencilMask(setting.c);
+    stencilTest.c = setting.c;
   }
-  if (!current || (current.h !== setting.h || current.a !== setting.a || current.b !== setting.b)) {
-    gl.stencilFuncSeparate(gl.BACK, setting.h, setting.a, setting.b);
+  if (stencilTest.h !== setting.h || stencilTest.a !== setting.a || stencilTest.b !== setting.b) {
+    cache.gl.stencilFuncSeparate(cache.gl.BACK, setting.h, setting.a, setting.b);
+    stencilTest.h = setting.h;
+    stencilTest.a = setting.a;
+    stencilTest.b = setting.b;
   }
-  if (!current || (current.i !== setting.i || current.j !== setting.j || current.k !== setting.k)) {
-    gl.stencilOpSeparate(gl.BACK, setting.i, setting.j, setting.k);
-  }
-});
-
-// eslint-disable-next-line no-unused-vars
-var _WebGL_enableScissor = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.scissor;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
-
-  if (!glSetting.enabled) {
-    gl.enable(gl.SCISSOR_TEST);
-    glSetting.enabled = true;
-  }
-
-  if (!current || (current.a !== setting.a || current.b !== setting.b || current.c !== setting.c || current.d !== setting.d)) {
-    gl.scissor(setting.a, setting.b, setting.c, setting.d);
+  if (stencilTest.i !== setting.i || stencilTest.j !== setting.j || stencilTest.k !== setting.k) {
+    cache.gl.stencilOpSeparate(cache.gl.BACK, setting.i, setting.j, setting.k);
+    stencilTest.i = setting.i;
+    stencilTest.j = setting.j;
+    stencilTest.k = setting.k;
   }
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enableColorMask = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.colorMask;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
-  glSetting.enabled = true;
+var _WebGL_enableScissor = F2(function (cache, setting) {
+  var scissor = cache.scissor;
+  scissor.toggle = cache.toggle;
 
-  if (!current || (current.a !== setting.a || current.b !== setting.b || current.c !== setting.c || current.d !== setting.d)) {
-    gl.colorMask(setting.a, setting.b, setting.c, setting.d);
+  if (!scissor.enabled) {
+    cache.gl.enable(cache.gl.SCISSOR_TEST);
+    scissor.enabled = true;
+  }
+
+  if (scissor.a !== setting.a || scissor.b !== setting.b || scissor.c !== setting.c || scissor.d !== setting.d) {
+    cache.gl.scissor(setting.a, setting.b, setting.c, setting.d);
+    scissor.a = setting.a;
+    scissor.b = setting.b;
+    scissor.c = setting.c;
+    scissor.d = setting.d;
   }
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enableCullFace = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.cullFace;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
+var _WebGL_enableColorMask = F2(function (cache, setting) {
+  var colorMask = cache.colorMask;
+  colorMask.toggle = cache.toggle;
+  colorMask.enabled = true;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.CULL_FACE);
-    glSetting.enabled = true;
-  }
-
-  if (!current || (current.a !== setting.a)) {
-    gl.cullFace(setting.a);
+  if (colorMask.a !== setting.a || colorMask.b !== setting.b || colorMask.c !== setting.c || colorMask.d !== setting.d) {
+    cache.gl.colorMask(setting.a, setting.b, setting.c, setting.d);
+    colorMask.a = setting.a;
+    colorMask.b = setting.b;
+    colorMask.c = setting.c;
+    colorMask.d = setting.d;
   }
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enablePolygonOffset = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.polygonOffset;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
+var _WebGL_enableCullFace = F2(function (cache, setting) {
+  var cullFace = cache.cullFace;
+  cullFace.toggle = cache.toggle;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.POLYGON_OFFSET_FILL);
-    glSetting.enabled = true;
+  if (!cullFace.enabled) {
+    cache.gl.enable(cache.gl.CULL_FACE);
+    cullFace.enabled = true;
   }
 
-  if (!current || (current.a !== setting.a || current.b !== setting.b)) {
-    gl.polygonOffset(setting.a, setting.b);
+  if (cullFace.a !== setting.a) {
+    cache.gl.cullFace(setting.a);
+    cullFace.a = setting.a;
   }
 });
 
 // eslint-disable-next-line no-unused-vars
-var _WebGL_enableSampleCoverage = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.sampleCoverage;
-  var current = glSetting.setting;
-  glSetting.toggle = glSettings.toggle;
-  glSetting.setting = setting;
+var _WebGL_enablePolygonOffset = F2(function (cache, setting) {
+  var polygonOffset = cache.polygonOffset;
+  polygonOffset.toggle = cache.toggle;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.SAMPLE_COVERAGE);
-    glSetting.enabled = true;
+  if (!polygonOffset.enabled) {
+    cache.gl.enable(cache.gl.POLYGON_OFFSET_FILL);
+    polygonOffset.enabled = true;
   }
 
-  if (!current || (current.a !== setting.a || current.b !== setting.b)) {
-    gl.sampleCoverage(setting.a, setting.b);
+  if (polygonOffset.a !== setting.a || polygonOffset.b !== setting.b) {
+    cache.gl.polygonOffset(setting.a, setting.b);
+    polygonOffset.a = setting.a;
+    polygonOffset.b = setting.b;
+  }
+});
+
+// eslint-disable-next-line no-unused-vars
+var _WebGL_enableSampleCoverage = F2(function (cache, setting) {
+  var sampleCoverage = cache.sampleCoverage;
+  sampleCoverage.toggle = cache.toggle;
+
+  if (!sampleCoverage.enabled) {
+    cache.gl.enable(cache.gl.SAMPLE_COVERAGE);
+    sampleCoverage.enabled = true;
+  }
+
+  if (sampleCoverage.a !== setting.a || sampleCoverage.b !== setting.b) {
+    cache.gl.sampleCoverage(setting.a, setting.b);
+    sampleCoverage.a = setting.a;
+    sampleCoverage.b = setting.b;
   }
 });
 
-var _WebGL_enableSampleAlphaToCoverage = F3(function (gl, glSettings, setting) {
-  var glSetting = glSettings.sampleAlphaToCoverage;
-  glSetting.toggle = glSettings.toggle;
+var _WebGL_enableSampleAlphaToCoverage = function (cache) {
+  var sampleAlphaToCoverage = cache.sampleAlphaToCoverage;
+  sampleAlphaToCoverage.toggle = cache.toggle;
 
-  if (!glSetting.enabled) {
-    gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-    glSetting.enabled = true;
+  if (!sampleAlphaToCoverage.enabled) {
+    cache.gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+    sampleAlphaToCoverage.enabled = true;
   }
-});
+};
 
 var _WebGL_disableBlend = function (cache) {
   cache.gl.disable(cache.gl.BLEND);
@@ -220,32 +243,13 @@ var _WebGL_disableBlend = function (cache) {
 var _WebGL_disableDepthTest = function (cache) {
   cache.gl.disable(cache.gl.DEPTH_TEST);
   cache.gl.depthMask(true);
-  var setting = cache.glSettings.stencilTest.setting;
-  cache.glSettings.depthTest.setting = {
-    a: setting.a,
-    b: true,
-    c: setting.c,
-    d: setting.d
-  }
+  cache.depthTest.b = true;
 };
 
 var _WebGL_disableStencilTest = function (cache) {
   cache.gl.disable(cache.gl.STENCIL_TEST);
   cache.gl.stencilMask(cache.STENCIL_WRITEMASK);
-  var setting = cache.glSettings.stencilTest.setting;
-  cache.glSettings.stencilTest.setting = {
-    a: setting.a,
-    b: setting.b,
-    c: cache.STENCIL_WRITEMASK,
-    d: setting.d,
-    e: setting.e,
-    f: setting.f,
-    g: setting.g,
-    h: setting.h,
-    i: setting.i,
-    j: setting.j,
-    k: setting.k
-  }
+  cache.stencilTest.c = cache.STENCIL_WRITEMASK;
 };
 
 var _WebGL_disableScissor = function (cache) {
@@ -254,12 +258,10 @@ var _WebGL_disableScissor = function (cache) {
 
 var _WebGL_disableColorMask = function (cache) {
   cache.gl.colorMask(true, true, true, true);
-  cache.glSettings.colorMask.setting = {
-    a: true,
-    b: true,
-    c: true,
-    d: true
-  };
+  cache.colorMask.a = true;
+  cache.colorMask.b = true;
+  cache.colorMask.c = true;
+  cache.colorMask.d = true;
 };
 
 var _WebGL_disableCullFace = function (cache) {
@@ -278,8 +280,8 @@ var _WebGL_disableSampleAlphaToCoverage = function (cache) {
   cache.gl.disable(cache.gl.SAMPLE_ALPHA_TO_COVERAGE);
 };
 
-var _WebGL_settingsNames = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMask', 'cullFace', 'polygonOffset', 'sampleCoverage', 'sampleAlphaToCoverage']
-var _WebGL_settingsDisableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage]
+var _WebGL_settings = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMask', 'cullFace', 'polygonOffset', 'sampleCoverage', 'sampleAlphaToCoverage']
+var _WebGL_disableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage]
 
 function _WebGL_doCompile(gl, src, type) {
 
@@ -457,8 +459,8 @@ function _WebGL_getProgID(vertID, fragID) {
 
 var _WebGL_drawGL = F2(function (model, domNode) {
 
-  var gl = model.__cache.gl;
-  var glSettings = model.__cache.glSettings;
+  var cache = model.__cache;
+  var gl = cache.gl;
 
   if (!gl) {
     return domNode;
@@ -477,33 +479,33 @@ var _WebGL_drawGL = F2(function (model, domNode) {
     var program;
     if (entity.__vert.id && entity.__frag.id) {
       progid = _WebGL_getProgID(entity.__vert.id, entity.__frag.id);
-      program = model.__cache.programs[progid];
+      program = cache.programs[progid];
     }
 
     if (!program) {
 
       var vshader;
       if (entity.__vert.id) {
-        vshader = model.__cache.shaders[entity.__vert.id];
+        vshader = cache.shaders[entity.__vert.id];
       } else {
         entity.__vert.id = _WebGL_guid++;
       }
 
       if (!vshader) {
         vshader = _WebGL_doCompile(gl, entity.__vert.src, gl.VERTEX_SHADER);
-        model.__cache.shaders[entity.__vert.id] = vshader;
+        cache.shaders[entity.__vert.id] = vshader;
       }
 
       var fshader;
       if (entity.__frag.id) {
-        fshader = model.__cache.shaders[entity.__frag.id];
+        fshader = cache.shaders[entity.__frag.id];
       } else {
         entity.__frag.id = _WebGL_guid++;
       }
 
       if (!fshader) {
         fshader = _WebGL_doCompile(gl, entity.__frag.src, gl.FRAGMENT_SHADER);
-        model.__cache.shaders[entity.__frag.id] = fshader;
+        cache.shaders[entity.__frag.id] = fshader;
       }
 
       var glProgram = _WebGL_doLink(gl, vshader, fshader);
@@ -516,6 +518,13 @@ var _WebGL_drawGL = F2(function (model, domNode) {
         activeAttributeLocations: []
       };
 
+      program.uniformSetters = _WebGL_createUniformSetters(
+        gl,
+        model,
+        program,
+        Object.assign({}, entity.__vert.uniforms, entity.__frag.uniforms)
+      );
+
       var numActiveAttributes = gl.getProgramParameter(glProgram, gl.ACTIVE_ATTRIBUTES);
       for (var i = 0; i < numActiveAttributes; i++) {
         var attribute = gl.getActiveAttrib(glProgram, i);
@@ -524,27 +533,19 @@ var _WebGL_drawGL = F2(function (model, domNode) {
         program.activeAttributeLocations.push(attribLocation);
       }
 
-      program.uniformSetters = _WebGL_createUniformSetters(
-        gl,
-        model,
-        program,
-        Object.assign({}, entity.__vert.uniforms, entity.__frag.uniforms)
-      );
-
       progid = _WebGL_getProgID(entity.__vert.id, entity.__frag.id);
-      model.__cache.programs[progid] = program;
-
+      cache.programs[progid] = program;
     }
 
     gl.useProgram(program.glProgram);
 
     _WebGL_setUniforms(program.uniformSetters, entity.__uniforms);
 
-    var buffer = model.__cache.buffers.get(entity.__mesh);
+    var buffer = cache.buffers.get(entity.__mesh);
 
     if (!buffer) {
       buffer = _WebGL_doBindSetup(gl, entity.__mesh);
-      model.__cache.buffers.set(entity.__mesh, buffer);
+      cache.buffers.set(entity.__mesh, buffer);
     }
 
     for (var i = 0; i < program.activeAttributes.length; i++) {
@@ -571,16 +572,16 @@ var _WebGL_drawGL = F2(function (model, domNode) {
       }
     }
 
-    model.__cache.glSettings.toggle = !model.__cache.glSettings.toggle;
-
-    _WebGL_listEach(A2(__WI_enableSetting, gl, glSettings), entity.__settings);
-
-    for (var st = 0; st < _WebGL_settingsNames.length; st++) {
-      var glSetting = glSettings[_WebGL_settingsNames[st]];
-      if (glSetting.toggle !== glSettings.toggle && glSetting.enabled) {
-        _WebGL_settingsDisableFunctions[st](model.__cache);
-        glSetting.enabled = false;
-        glSetting.toggle = glSettings.toggle;
+    // Apply all the new settings
+    cache.toggle = !cache.toggle;
+    _WebGL_listEach(__WI_enableSetting(cache), entity.__settings);
+    // Disable the settings that were applied in the previous draw call
+    for (var i = 0; i < _WebGL_settings.length; i++) {
+      var setting = cache[_WebGL_settings[i]];
+      if (setting.toggle !== cache.toggle && setting.enabled) {
+        _WebGL_disableFunctions[i](cache);
+        setting.enabled = false;
+        setting.toggle = cache.toggle;
       }
     }
 
@@ -651,11 +652,11 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
         return function (texture) {
           if (currentUniforms[uniformName] !== value) {
             gl.activeTexture(gl.TEXTURE0 + currentTexture);
-            var tex = model.__cache.textures.get(texture);
+            var tex = cache.textures.get(texture);
             if (!tex) {
               _WebGL_log('Created texture');
               tex = texture.__$createTexture(gl);
-              model.__cache.textures.set(texture, tex);
+              cache.textures.set(texture, tex);
             }
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
@@ -771,7 +772,9 @@ function _WebGL_render(model) {
     sceneSettings: []
   };
 
-  _WebGL_listEach(__WI_enableOption(options), model.__options);
+  _WebGL_listEach(function (option) {
+    return A2(__WI_enableOption, options, option);
+  }, model.__options);
 
   _WebGL_log('Render canvas');
   var canvas = __VirtualDom_doc.createElement('canvas');
@@ -786,18 +789,19 @@ function _WebGL_render(model) {
     });
 
     model.__cache.gl = gl;
-    model.__cache.glSettings = {
-      toggle: false, // used to distinguish settings from previous and current draw calls
-      blend: { setting: undefined, enabled: false, toggle: false },
-      depthTest: { setting: undefined, enabled: false, toggle: false },
-      stencilTest: { setting: undefined, enabled: false, toggle: false },
-      scissor: { setting: undefined, enabled: false, toggle: false },
-      colorMask: { setting: undefined, enabled: false, toggle: false },
-      cullFace: { setting: undefined, enabled: false, toggle: false },
-      polygonOffset: { setting: undefined, enabled: false, toggle: false },
-      sampleCoverage: { setting: undefined, enabled: false, toggle: false },
-      sampleAlphaToCoverage: { enabled: false, toggle: false }
-    };
+
+    // Cache the current settings in order to diff them to avoid redundant calls
+    // https://emscripten.org/docs/optimizing/Optimizing-WebGL.html#avoid-redundant-calls
+    model.__cache.toggle = false; // used to diff the settings from the previous and current draw calls
+    model.__cache.blend = { enabled: false, toggle: false };
+    model.__cache.depthTest = { enabled: false, toggle: false };
+    model.__cache.stencilTest = { enabled: false, toggle: false };
+    model.__cache.scissor = { enabled: false, toggle: false };
+    model.__cache.colorMask = { enabled: false, toggle: false };
+    model.__cache.cullFace = { enabled: false, toggle: false };
+    model.__cache.polygonOffset = { enabled: false, toggle: false };
+    model.__cache.sampleCoverage = { enabled: false, toggle: false };
+    model.__cache.sampleAlphaToCoverage = { enabled: false, toggle: false };
 
     model.__cache.shaders = [];
     model.__cache.programs = {};

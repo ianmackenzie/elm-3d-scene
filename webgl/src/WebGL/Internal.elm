@@ -51,32 +51,32 @@ type Setting
     | SampleAlphaToCoverage
 
 
-enableSetting : () -> () -> Setting -> ()
-enableSetting gl glSettings setting =
+enableSetting : () -> Setting -> ()
+enableSetting cache setting =
     case setting of
         Blend _ _ _ _ _ _ _ _ _ _ ->
-            Elm.Kernel.WebGL.enableBlend gl glSettings setting
+            Elm.Kernel.WebGL.enableBlend cache setting
 
         DepthTest _ _ _ _ ->
-            Elm.Kernel.WebGL.enableDepthTest gl glSettings setting
+            Elm.Kernel.WebGL.enableDepthTest cache setting
 
         StencilTest _ _ _ _ _ _ _ _ _ _ _ ->
-            Elm.Kernel.WebGL.enableStencilTest gl glSettings setting
+            Elm.Kernel.WebGL.enableStencilTest cache setting
 
         Scissor _ _ _ _ ->
-            Elm.Kernel.WebGL.enableScissor gl glSettings setting
+            Elm.Kernel.WebGL.enableScissor cache setting
 
         ColorMask _ _ _ _ ->
-            Elm.Kernel.WebGL.enableColorMask gl glSettings setting
+            Elm.Kernel.WebGL.enableColorMask cache setting
 
         CullFace _ ->
-            Elm.Kernel.WebGL.enableCullFace gl glSettings setting
+            Elm.Kernel.WebGL.enableCullFace cache setting
 
         PolygonOffset _ _ ->
-            Elm.Kernel.WebGL.enablePolygonOffset gl glSettings setting
+            Elm.Kernel.WebGL.enablePolygonOffset cache setting
 
         SampleCoverage _ _ ->
-            Elm.Kernel.WebGL.enableSampleCoverage gl glSettings setting
+            Elm.Kernel.WebGL.enableSampleCoverage cache setting
 
         SampleAlphaToCoverage ->
-            Elm.Kernel.WebGL.enableSampleAlphaToCoverage gl glSettings setting
+            Elm.Kernel.WebGL.enableSampleAlphaToCoverage cache
