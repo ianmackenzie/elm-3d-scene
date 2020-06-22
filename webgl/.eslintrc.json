@@ -43,6 +43,7 @@
         "A5": false,
         "Float32Array": false,
         "Int32Array": false,
-        "Uint16Array": false
+        "Uint16Array": false,
+        "WeakMap": false
     }
 }

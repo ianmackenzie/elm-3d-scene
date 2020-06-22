@@ -226,12 +226,13 @@ var _WebGL_enableSampleCoverage = F2(function (cache, setting) {
   }
 });
 
+// eslint-disable-next-line no-unused-vars
 var _WebGL_enableSampleAlphaToCoverage = function (cache) {
   var sampleAlphaToCoverage = cache.sampleAlphaToCoverage;
   sampleAlphaToCoverage.toggle = cache.toggle;
 
   if (!sampleAlphaToCoverage.enabled) {
-    cache.gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+    cache.gl.enable(cache.gl.SAMPLE_ALPHA_TO_COVERAGE);
     sampleAlphaToCoverage.enabled = true;
   }
 };
@@ -280,8 +281,8 @@ var _WebGL_disableSampleAlphaToCoverage = function (cache) {
   cache.gl.disable(cache.gl.SAMPLE_ALPHA_TO_COVERAGE);
 };
 
-var _WebGL_settings = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMask', 'cullFace', 'polygonOffset', 'sampleCoverage', 'sampleAlphaToCoverage']
-var _WebGL_disableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage]
+var _WebGL_settings = ['blend', 'depthTest', 'stencilTest', 'scissor', 'colorMask', 'cullFace', 'polygonOffset', 'sampleCoverage', 'sampleAlphaToCoverage'];
+var _WebGL_disableFunctions = [_WebGL_disableBlend, _WebGL_disableDepthTest, _WebGL_disableStencilTest, _WebGL_disableScissor, _WebGL_disableColorMask, _WebGL_disableCullFace, _WebGL_disablePolygonOffset, _WebGL_disableSampleCoverage, _WebGL_disableSampleAlphaToCoverage];
 
 function _WebGL_doCompile(gl, src, type) {
 
@@ -477,6 +478,8 @@ var _WebGL_drawGL = F2(function (model, domNode) {
 
     var progid;
     var program;
+    var i;
+
     if (entity.__vert.id && entity.__frag.id) {
       progid = _WebGL_getProgID(entity.__vert.id, entity.__frag.id);
       program = cache.programs[progid];
@@ -526,7 +529,7 @@ var _WebGL_drawGL = F2(function (model, domNode) {
       );
 
       var numActiveAttributes = gl.getProgramParameter(glProgram, gl.ACTIVE_ATTRIBUTES);
-      for (var i = 0; i < numActiveAttributes; i++) {
+      for (i = 0; i < numActiveAttributes; i++) {
         var attribute = gl.getActiveAttrib(glProgram, i);
         var attribLocation = gl.getAttribLocation(glProgram, attribute.name);
         program.activeAttributes.push(attribute);
@@ -548,9 +551,9 @@ var _WebGL_drawGL = F2(function (model, domNode) {
       cache.buffers.set(entity.__mesh, buffer);
     }
 
-    for (var i = 0; i < program.activeAttributes.length; i++) {
-      var attribute = program.activeAttributes[i];
-      var attribLocation = program.activeAttributeLocations[i];
+    for (i = 0; i < program.activeAttributes.length; i++) {
+      attribute = program.activeAttributes[i];
+      attribLocation = program.activeAttributeLocations[i];
 
       if (buffer.buffers[attribute.name] === undefined) {
         buffer.buffers[attribute.name] = _WebGL_doBindAttribute(gl, attribute, entity.__mesh, program.attributes);
@@ -576,7 +579,7 @@ var _WebGL_drawGL = F2(function (model, domNode) {
     cache.toggle = !cache.toggle;
     _WebGL_listEach(__WI_enableSetting(cache), entity.__settings);
     // Disable the settings that were applied in the previous draw call
-    for (var i = 0; i < _WebGL_settings.length; i++) {
+    for (i = 0; i < _WebGL_settings.length; i++) {
       var setting = cache[_WebGL_settings[i]];
       if (setting.toggle !== cache.toggle && setting.enabled) {
         _WebGL_disableFunctions[i](cache);
@@ -601,6 +604,7 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
   var glProgram = program.glProgram;
   var currentUniforms = program.currentUniforms;
   var textureCounter = 0;
+  var cache = model.__cache;
   function createUniformSetter(glProgram, uniform) {
     var uniformName = uniform.name;
     var uniformLocation = gl.getUniformLocation(glProgram, uniformName);
@@ -650,7 +654,7 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
       case gl.SAMPLER_2D:
         var currentTexture = textureCounter++;
         return function (texture) {
-          if (currentUniforms[uniformName] !== value) {
+          if (currentUniforms[uniformName] !== texture) {
             gl.activeTexture(gl.TEXTURE0 + currentTexture);
             var tex = cache.textures.get(texture);
             if (!tex) {
@@ -667,7 +671,7 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
         return function (value) {
           if (currentUniforms[uniformName] !== value) {
             gl.uniform1i(uniformLocation, value);
-            currentUniforms[uniformName] = texture;
+            currentUniforms[uniformName] = value;
           }
         };
       default:
