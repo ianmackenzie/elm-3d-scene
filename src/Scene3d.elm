@@ -123,8 +123,9 @@ entity:
 
 @docs Lights
 
-The following functions let you set up lighting using up to eight lights. Note
-that any light past the fourth must be constructed using [`Scene3d.neverCastsShadows`](#neverCastsShadows).
+The following functions let you set up lighting using up to eight total lights.
+Only the first four of those lights may cast shadows; any light past the fourth
+must be constructed using [`Scene3d.neverCastsShadows`](#neverCastsShadows).
 
 @docs noLights, oneLight, twoLights, threeLights, fourLights, fiveLights, sixLights, sevenLights, eightLights
 
