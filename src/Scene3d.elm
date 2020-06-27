@@ -32,6 +32,10 @@ In contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
 module is 'expensive'; meshes should generally be created once and then stored
 in your model.
 
+One small limitation to keep in mind: browsers generally don't allow more than
+16 active WebGL 'contexts' at a time, so trying to render a hundred different
+3D scenes on a single page will almost certainly not work!
+
 @docs unlit, cloudy, sunny, custom
 
 
