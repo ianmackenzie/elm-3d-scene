@@ -15,6 +15,20 @@ matrices.
 Any questions/feedback, please open an issue or please reach out in the
 **#webgl** channel or to **@ianmackenzie** on the [Elm Slack](https://elmlang.herokuapp.com)!
 
+## Who is this for?
+
+`elm-3d-scene` is built to support a wide range of use cases, from [simple 3D
+loading spinners](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/animation.html)
+up to [near-photorealistic scenes](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/duckling.html).
+It is designed to be beginner-friendly with a smooth onramp to advanced features like [shadows](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/multiple-shadows.html), [HDR lighting](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/exposure-and-tone-mapping.html) and [physically based materials](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/textured-sphere.html). You can use `elm-3d-scene` to make:
+
+- Games
+- Animations
+- Visualizations
+- Scientific/engineering/technical apps and more!
+
+However, if you're a WebGL guru who's comfortable with writing their own shader programs, then `elm-3d-scene` might not (yet?) be for you - you're currently limited to the material and lighting types that `elm-3d-scene` supports directly. Eventually `elm-3d-scene` will likely support custom shaders in some way (see the [roadmap](#roadmap)), but it's not there yet.
+
 ## Getting started
 
 The best way to start learning the `elm-3d-scene` API is by reading through the
@@ -81,6 +95,18 @@ describe briefly what you're working on and I will treat that issue as high
 priority.
 
 ![Spheres and blocks](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/point-light.png)
+
+## Roadmap
+
+`elm-3d-scene` has a decent number of features already, but there are many, many more to add. Check out the [issues](https://github.com/ianmackenzie/elm-3d-scene/issues) to get a sense of what features are planned (and add your own feature request if there's something you'd like to see!), but some of the immediate next steps will likely include:
+
+- [Support for loading different model formats](https://github.com/ianmackenzie/elm-3d-scene/issues/30) such as glTF and OBJ (likely in separate packages designed to work nicely with `elm-3d-scene`, instead of being part of `elm-3d-scene` itself)
+- Support for normal and ambient occlusion mapping (already mostly implemented internally)
+- [Improved line rendering](https://github.com/ianmackenzie/elm-3d-scene/issues/32)
+- [Silhouette edges/outlined meshes](https://github.com/ianmackenzie/elm-3d-scene/issues/26)
+- Some level of support for [transparency](https://github.com/ianmackenzie/elm-3d-scene/issues/4)
+
+In the longer term, once the API and internals stabilize, it should be possible to add support for providing custom vertex and/or fragment shaders (for things like custom procedural texturing, fancy material types or deformable meshes). However, this will require some significant API design work.
 
 ## Contributing
 
