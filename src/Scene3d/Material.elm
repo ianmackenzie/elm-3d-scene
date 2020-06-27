@@ -42,6 +42,12 @@ like their non-textured versions above, but require a mesh that has [UV](https:/
 (texture) coordinates. Color, roughness and metallicness can then be controlled
 by a texture image instead of being restricted to constant values.
 
+Note that images used as textures should generally have dimensions that are
+powers of 2: 2048x2048, 1024x512, etc. Images you get from sites like [CC0
+Textures](https://cc0textures.com/) will almost always have appropriate
+dimensions, but if you want to use your own images some cropping/resizing may be
+needed.
+
 @docs Texture, constant, load
 
 @docs texturedColor, texturedEmissive, texturedMatte, texturedNonmetal, texturedMetal, texturedPbr
