@@ -123,10 +123,13 @@ likely include:
 - [Silhouette edges/outlined meshes](https://github.com/ianmackenzie/elm-3d-scene/issues/26)
 - Some level of support for [transparency](https://github.com/ianmackenzie/elm-3d-scene/issues/4)
 
-In the longer term, once the API and internals stabilize, it should be possible
-to add support for providing custom vertex and/or fragment shaders (for things
-like custom procedural texturing, fancy material types or deformable meshes).
-However, this will require some significant API design work.
+In the longer term, I hope to add support for:
+
+- Custom vertex and/or fragment shaders (for things like custom procedural
+  texturing, fancy material types or deformable meshes)
+- Skeletal animation (rigging/skinning)
+
+However, these will require some significant API design and implementation work.
 
 ## Contributing
 
