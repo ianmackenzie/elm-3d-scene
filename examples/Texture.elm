@@ -80,7 +80,7 @@ view model =
                 -- Texture loaded successfully, render a scene using it
                 [ Scene3d.unlit
                     { camera = camera
-                    , dimensions = ( Pixels.pixels 400, Pixels.pixels 400 )
+                    , dimensions = ( Pixels.int 400, Pixels.int 400 )
                     , background = Scene3d.transparentBackground
                     , clipDepth = Length.meters 0.1
                     , entities =

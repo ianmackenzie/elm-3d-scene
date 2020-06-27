@@ -302,7 +302,7 @@ view model =
                 { lights = Scene3d.twoLights lightBulb overheadLighting
                 , camera = camera model
                 , clipDepth = Length.meters 0.1
-                , dimensions = ( Pixels.pixels 640, Pixels.pixels 480 )
+                , dimensions = ( Pixels.int 640, Pixels.int 480 )
                 , antialiasing = Scene3d.multisampling
                 , exposure = Scene3d.exposureValue model.exposureValue
                 , toneMapping = toneMapping
@@ -340,8 +340,8 @@ view model =
 decodeMouseMove : Decoder Msg
 decodeMouseMove =
     Decode.map2 MouseMove
-        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
-        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
 
 subscriptions : Model -> Sub Msg

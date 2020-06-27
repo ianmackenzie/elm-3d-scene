@@ -290,7 +290,7 @@ view model =
             Scene3d.custom
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
-                , dimensions = ( Pixels.pixels 400, Pixels.pixels 400 )
+                , dimensions = ( Pixels.int 400, Pixels.int 400 )
                 , antialiasing = Scene3d.multisampling
                 , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
@@ -316,8 +316,8 @@ view model =
 decodeMouseMove : Decoder Msg
 decodeMouseMove =
     Decode.map2 MouseMove
-        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
-        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
 
 subscriptions : Model -> Sub Msg

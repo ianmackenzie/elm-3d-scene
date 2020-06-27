@@ -81,7 +81,7 @@ main =
     Scene3d.unlit
         { camera = camera
         , clipDepth = Length.meters 0.1
-        , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 300, Pixels.int 300 )
         , background = Scene3d.transparentBackground
         , entities = entities
         }

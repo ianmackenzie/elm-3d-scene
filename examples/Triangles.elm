@@ -53,6 +53,6 @@ main =
         { entities = [ triangle1, triangle2 ]
         , camera = camera
         , clipDepth = Length.meters 0.1
-        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 400, Pixels.int 300 )
         , background = Scene3d.transparentBackground
         }

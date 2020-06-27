@@ -199,7 +199,7 @@ import Math.Matrix4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
-import Pixels exposing (Pixels, inPixels)
+import Pixels exposing (Pixels)
 import Plane3d exposing (Plane3d)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity(..))
@@ -1619,7 +1619,7 @@ custom :
     , toneMapping : ToneMapping
     , whiteBalance : Chromaticity
     , antialiasing : Antialiasing
-    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , dimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , background : Background coordinates
     , entities : List (Entity coordinates)
     }
@@ -1655,7 +1655,7 @@ composite :
     { camera : Camera3d Meters coordinates
     , clipDepth : Length
     , antialiasing : Antialiasing
-    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , dimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , background : Background coordinates
     }
     ->
@@ -1673,10 +1673,10 @@ composite arguments scenes =
             arguments.dimensions
 
         widthInPixels =
-            inPixels width
+            Pixels.toInt width
 
         heightInPixels =
-            inPixels height
+            Pixels.toInt height
 
         (BackgroundColor givenBackgroundColor) =
             arguments.background
@@ -1705,13 +1705,13 @@ composite arguments scenes =
                     ( commonWebGLOptions, "0", value )
 
         widthCss =
-            Html.Attributes.style "width" (String.fromFloat widthInPixels ++ "px")
+            Html.Attributes.style "width" (String.fromInt widthInPixels ++ "px")
 
         heightCss =
-            Html.Attributes.style "height" (String.fromFloat heightInPixels ++ "px")
+            Html.Attributes.style "height" (String.fromInt heightInPixels ++ "px")
 
         aspectRatio =
-            Quantity.ratio width height
+            toFloat widthInPixels / toFloat heightInPixels
 
         webGLEntities =
             scenes
@@ -1733,8 +1733,8 @@ composite arguments scenes =
     Html.Keyed.node "div" [ Html.Attributes.style "padding" "0px", widthCss, heightCss ] <|
         [ ( key
           , WebGL.toHtmlWith webGLOptions
-                [ Html.Attributes.width (round (widthInPixels * scalingFactor))
-                , Html.Attributes.height (round (heightInPixels * scalingFactor))
+                [ Html.Attributes.width (round (toFloat widthInPixels * scalingFactor))
+                , Html.Attributes.height (round (toFloat heightInPixels * scalingFactor))
                 , widthCss
                 , heightCss
                 , Html.Attributes.style "display" "block"
@@ -1986,7 +1986,7 @@ which in turn reduces [Z-fighting](https://en.wikipedia.org/wiki/Z-fighting).
 
 -}
 unlit :
-    { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    { dimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , background : Background coordinates
@@ -2022,7 +2022,7 @@ sunny :
     { upDirection : Direction3d coordinates
     , sunlightDirection : Direction3d coordinates
     , shadows : Bool
-    , dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    , dimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , camera : Camera3d Meters coordinates
     , clipDepth : Length
     , background : Background coordinates
@@ -2087,7 +2087,7 @@ the same scene with the up direction reversed:
 
 -}
 cloudy :
-    { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    { dimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , upDirection : Direction3d coordinates
     , camera : Camera3d Meters coordinates
     , clipDepth : Length

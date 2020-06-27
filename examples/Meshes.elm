@@ -109,5 +109,5 @@ main =
         , background = Scene3d.transparentBackground
         , clipDepth = Length.centimeters 1
         , shadows = False
-        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 400, Pixels.int 300 )
         }

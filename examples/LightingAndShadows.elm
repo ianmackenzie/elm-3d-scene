@@ -132,7 +132,7 @@ main =
         , camera = camera
         , background = Scene3d.transparentBackground
         , clipDepth = Length.centimeters 1
-        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 400, Pixels.int 300 )
 
         -- Define the lights to use in the scene. elm-3d-scene only supports up
         -- to eight total lights, so there are different functions for different

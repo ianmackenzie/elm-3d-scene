@@ -120,8 +120,8 @@ mouse position in the model) - not supported in Internet Explorer though
 decodeMouseMove : Decoder Msg
 decodeMouseMove =
     Decode.map2 MouseMove
-        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
-        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
 
 subscriptions : Model -> Sub Msg
@@ -167,7 +167,7 @@ view model =
         [ Scene3d.unlit
             { camera = camera
             , clipDepth = Length.meters 0.1
-            , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+            , dimensions = ( Pixels.int 400, Pixels.int 300 )
             , background = Scene3d.transparentBackground
             , entities =
                 -- Draw the two single-triangle meshes

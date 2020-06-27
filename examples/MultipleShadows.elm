@@ -42,8 +42,8 @@ type WorldCoordinates
 
 
 type alias Model =
-    { width : Quantity Float Pixels -- Width of the browser window
-    , height : Quantity Float Pixels -- Height of the browser window
+    { width : Quantity Int Pixels -- Width of the browser window
+    , height : Quantity Int Pixels -- Height of the browser window
     , elapsedTime : Duration
     , orbiting : Bool
     , azimuth : Angle
@@ -52,7 +52,7 @@ type alias Model =
 
 
 type Msg
-    = Resize (Quantity Float Pixels) (Quantity Float Pixels)
+    = Resize (Quantity Int Pixels) (Quantity Int Pixels)
     | Tick Duration
     | MouseDown
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
@@ -82,8 +82,8 @@ init () =
     , Task.perform
         (\{ viewport } ->
             Resize
-                (Pixels.pixels viewport.width)
-                (Pixels.pixels viewport.height)
+                (Pixels.int (round viewport.width))
+                (Pixels.int (round viewport.height))
         )
         Browser.Dom.getViewport
     )
@@ -144,8 +144,8 @@ update message model =
 mouseMoveDecoder : Decoder Msg
 mouseMoveDecoder =
     Decode.map2 MouseMove
-        (Decode.field "movementX" (Decode.map Pixels.pixels Decode.float))
-        (Decode.field "movementY" (Decode.map Pixels.pixels Decode.float))
+        (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
 
 subscriptions : Model -> Sub Msg
@@ -153,12 +153,7 @@ subscriptions model =
     Sub.batch
         [ -- Listen for resize events so we can render the full size of the
           -- browser window
-          Browser.Events.onResize
-            (\width height ->
-                Resize
-                    (Pixels.pixels (toFloat width))
-                    (Pixels.pixels (toFloat height))
-            )
+          Browser.Events.onResize (\width height -> Resize (Pixels.int width) (Pixels.int height))
 
         -- Subscribe to animation frames to animate the cubes
         , Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)

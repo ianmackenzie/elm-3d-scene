@@ -119,7 +119,7 @@ view model =
                 , verticalFieldOfView = Angle.degrees 30
                 }
         , clipDepth = Length.centimeters 0.5
-        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 400, Pixels.int 300 )
         , antialiasing = Scene3d.multisampling
         , lights = Scene3d.twoLights sunlight overheadLighting
         , exposure = Scene3d.exposureValue 12

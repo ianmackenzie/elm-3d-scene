@@ -26,7 +26,7 @@
         "ianmackenzie/elm-geometry": "3.5.0 <= v < 4.0.0",
         "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.2 <= v < 3.0.0",
         "ianmackenzie/elm-triangular-mesh": "1.0.2 <= v < 2.0.0",
-        "ianmackenzie/elm-units": "2.2.0 <= v < 3.0.0"
+        "ianmackenzie/elm-units": "2.6.0 <= v < 3.0.0"
     },
     "test-dependencies": {
         "elm/random": "1.0.0 <= v < 2.0.0",

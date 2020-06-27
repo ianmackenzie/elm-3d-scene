@@ -84,7 +84,7 @@ import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
-import Pixels exposing (Pixels, inPixels)
+import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
 import Quantity exposing (Quantity(..), Unitless)
@@ -740,7 +740,7 @@ points { radius } givenPoints =
                 webGLMesh =
                     WebGL.points (List.map plainVertex givenPoints)
             in
-            Types.Points bounds (inPixels radius) givenPoints webGLMesh
+            Types.Points bounds (Pixels.toFloat radius) givenPoints webGLMesh
 
 
 {-| Construct a `Shadow` value from a given mesh. This is an expensive

@@ -72,5 +72,5 @@ main =
         , background = Scene3d.transparentBackground
 
         -- Size in pixels of the generated HTML element
-        , dimensions = ( Pixels.pixels 400, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 400, Pixels.int 300 )
         }

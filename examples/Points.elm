@@ -38,7 +38,7 @@ main =
             points
                 |> List.map
                     (\point ->
-                        Scene3d.point { radius = Pixels.pixels 5 }
+                        Scene3d.point { radius = Pixels.float 5 }
                             (Material.color Color.blue)
                             point
                     )
@@ -56,7 +56,7 @@ main =
     in
     Scene3d.unlit
         { camera = camera
-        , dimensions = ( Pixels.pixels 300, Pixels.pixels 300 )
+        , dimensions = ( Pixels.int 300, Pixels.int 300 )
         , background = Scene3d.transparentBackground
         , clipDepth = Length.meters 0.1
         , entities = pointEntities

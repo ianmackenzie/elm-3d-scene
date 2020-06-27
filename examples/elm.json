@@ -21,7 +21,7 @@
             "ianmackenzie/elm-geometry": "3.5.0",
             "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.2",
             "ianmackenzie/elm-triangular-mesh": "1.0.4",
-            "ianmackenzie/elm-units": "2.5.0",
+            "ianmackenzie/elm-units": "2.6.0",
             "mdgriffith/elm-ui": "1.1.6"
         },
         "indirect": {

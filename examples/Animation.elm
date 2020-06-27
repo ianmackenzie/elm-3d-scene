@@ -172,7 +172,7 @@ view model =
             [ Element.html <|
                 Scene3d.unlit
                     { camera = camera
-                    , dimensions = ( Pixels.pixels 32, Pixels.pixels 32 )
+                    , dimensions = ( Pixels.int 32, Pixels.int 32 )
                     , entities = [ rotatedCube ]
                     , clipDepth = Length.cssPixels 10
                     , background = Scene3d.transparentBackground

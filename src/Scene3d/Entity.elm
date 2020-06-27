@@ -550,7 +550,7 @@ point givenRadius givenMaterial givenPoint =
                             Shaders.constantPointFragment
                             dummyVertex
                             { pointPosition = Point3d.toVec3 givenPoint
-                            , pointRadius = Pixels.inPixels givenRadius
+                            , pointRadius = Pixels.toFloat givenRadius
                             , constantColor = color
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
@@ -572,7 +572,7 @@ point givenRadius givenMaterial givenPoint =
                             Shaders.emissivePointFragment
                             dummyVertex
                             { pointPosition = Point3d.toVec3 givenPoint
-                            , pointRadius = Pixels.inPixels givenRadius
+                            , pointRadius = Pixels.toFloat givenRadius
                             , sceneProperties = sceneProperties
                             , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
                             , modelScale = modelScale
