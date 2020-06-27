@@ -121,7 +121,8 @@ likely include:
   internally)
 - [Improved line rendering](https://github.com/ianmackenzie/elm-3d-scene/issues/32)
 - [Silhouette edges/outlined meshes](https://github.com/ianmackenzie/elm-3d-scene/issues/26)
-- Some level of support for [transparency](https://github.com/ianmackenzie/elm-3d-scene/issues/4)
+- Some level of support for [transparent objects](https://github.com/ianmackenzie/elm-3d-scene/issues/4)
+  like windows
 
 In the longer term, I hope to add support for:
 
