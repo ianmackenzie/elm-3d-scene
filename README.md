@@ -114,6 +114,9 @@ to get a sense of what features are planned (and add your own feature request if
 there's something you'd like to see!), but some of the immediate next steps will
 likely include:
 
+- Performance improvements (there are already some [improvements in the pipeline
+  for `elm-explorations/webgl`](https://github.com/elm-explorations/webgl/pull/28)
+  that will significantly improve `elm-3d-scene` performance)
 - [Support for loading different model formats](https://github.com/ianmackenzie/elm-3d-scene/issues/30)
   such as glTF and OBJ (likely in separate packages designed to work nicely with
   `elm-3d-scene`, instead of being part of `elm-3d-scene` itself)
