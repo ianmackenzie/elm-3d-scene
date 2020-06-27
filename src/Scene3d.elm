@@ -329,11 +329,12 @@ four vertices in counterclockwise order.
 
 Normal vectors will be automatically computed at each vertex which are
 perpendicular to the two adjoining edges. (The four vertices should usually
-be coplanar, in which case all normal vectors will be the same.) The four
-vertices will also be given the UV (texture) coordinates (0,0), (1,0), (1,1)
-and (0,1) respectively; this means that if you specify vertices counterclockwise
-from the bottom left corner of a rectangle, a texture will map onto the
-rectangle basically the way you would expect:
+be coplanar, in which case all normal vectors will be the same.)
+
+The four vertices will also be given the UV (texture) coordinates (0,0), (1,0),
+(1,1) and (0,1) respectively; this means that if you specify vertices
+counterclockwise from the bottom left corner of a rectangle, a texture will map
+onto the rectangle basically the way you would expect:
 
 ![Textured quad](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/textured-quad.png)
 
