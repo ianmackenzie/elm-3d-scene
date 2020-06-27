@@ -1,6 +1,3 @@
-_Note: this package is not yet released! This means that some of the links below
-may not be active yet._
-
 # elm-3d-scene
 
 `elm-3d-scene` is a high-level Elm package for producing 3D graphics, with

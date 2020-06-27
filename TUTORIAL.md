@@ -1,6 +1,3 @@
-_Note: `elm-3d-scene` is still under development, so not quite everything linked
-to/referred to here is actually in place yet!_
-
 # `elm-3d-scene` tutorial
 
 This tutorial certainly won't cover every feature of `elm-3d-scene`, but it
