@@ -10,7 +10,9 @@ support for lighting, shadows and realistic materials:
 
 It aims to make creating 3D graphics as easy and enjoyable as possible, without
 having to worry about low-level details like shader programs and transformation
-matrices.
+matrices. `elm-3d-scene` uses [`elm-explorations/webgl`](https://package.elm-lang.org/packages/elm-explorations/webgl/latest/)
+under the hood (and therefore requires [WebGL support](https://caniuse.com/#feat=webgl)
+to work), but no knowledge of WebGL is required to use this package.
 
 Any questions/feedback, please open an issue or please reach out in the
 **#webgl** channel or to **@ianmackenzie** on the [Elm Slack](https://elmlang.herokuapp.com)!
