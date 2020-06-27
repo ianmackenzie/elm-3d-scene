@@ -26,8 +26,9 @@ Note that the way `elm-3d-scene` is designed, functions in this module are
 generally 'cheap' and can safely be used in your `view` function directly. For
 example, you can safely have logic in your `view` function that enables and
 disables lights, moves objects around by translating/rotating/mirroring them,
-or even changes the material used to render a particular object with. In
-contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
+or even changes the material used to render a particular object with.
+
+In contrast, creating meshes using the functions in the [`Mesh`](Scene3d-Mesh)
 module is 'expensive'; meshes should generally be created once and then stored
 in your model.
 
