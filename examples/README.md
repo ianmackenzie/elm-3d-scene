@@ -4,7 +4,7 @@ This directory contains several examples of using `elm-3d-scene` to create
 different kinds of 3D graphics. Click the 'HTML' link of any example to see a
 live version. To edit/play around with the examples, there are two main options:
 
-- Click the 'Ellie' link on any example to edit/remix it on [Ellie](https://ellie-app.com)
+- Click the 'Ellie' link of any example to edit/remix it on [Ellie](https://ellie-app.com)
 - Clone the `elm-3d-scene` repository and start up `elm reactor` in this
   directory, then start playing around with the different examples (or create
   your own!)
