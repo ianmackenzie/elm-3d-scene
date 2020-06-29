@@ -234,31 +234,42 @@ var _WebGL_enableSampleAlphaToCoverage = function (cache) {
 };
 
 var _WebGL_disableBlend = function (cache) {
-  cache.gl.disable(cache.gl.BLEND);
+  if (cache.blend.enabled) {
+    cache.gl.disable(cache.gl.BLEND);
+    cache.blend.enabled = false;
+  }
 };
 
 var _WebGL_disableDepthTest = function (cache) {
-  cache.gl.disable(cache.gl.DEPTH_TEST);
-  cache.gl.depthMask(true);
-  cache.depthTest.b = true;
+  if (cache.depthTest.enabled) {
+    cache.gl.disable(cache.gl.DEPTH_TEST);
+    cache.depthTest.enabled = false;
+  }
 };
 
 var _WebGL_disableStencilTest = function (cache) {
-  cache.gl.disable(cache.gl.STENCIL_TEST);
-  cache.gl.stencilMask(cache.STENCIL_WRITEMASK);
-  cache.stencilTest.c = cache.STENCIL_WRITEMASK;
+  if (cache.stencilTest.enabled) {
+    cache.gl.disable(cache.gl.STENCIL_TEST);
+    cache.stencilTest.enabled = false;
+  }
 };
 
 var _WebGL_disableScissor = function (cache) {
-  cache.gl.disable(cache.gl.SCISSOR_TEST);
+  if (cache.scissor.enabled) {
+    cache.gl.disable(cache.gl.SCISSOR_TEST);
+    cache.scissor.enabled = false;
+  }
 };
 
 var _WebGL_disableColorMask = function (cache) {
-  cache.gl.colorMask(true, true, true, true);
-  cache.colorMask.a = true;
-  cache.colorMask.b = true;
-  cache.colorMask.c = true;
-  cache.colorMask.d = true;
+  var colorMask = cache.colorMask;
+  if (!colorMask.a || !colorMask.b || !colorMask.c || !colorMask.d) {
+    cache.gl.colorMask(true, true, true, true);
+    colorMask.a = true;
+    colorMask.b = true;
+    colorMask.c = true;
+    colorMask.d = true;
+  }
 };
 
 var _WebGL_disableCullFace = function (cache) {
@@ -453,6 +464,17 @@ var _WebGL_drawGL = F2(function (model, domNode) {
   }
 
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+  if (!cache.depthTest.b) {
+    gl.depthMask(true);
+    cache.depthTest.b = true;
+  }
+  if (cache.stencilTest.c !== cache.STENCIL_WRITEMASK) {
+    gl.stencilMask(cache.STENCIL_WRITEMASK);
+    cache.stencilTest.c = cache.STENCIL_WRITEMASK;
+  }
+  _WebGL_disableScissor(cache);
+  _WebGL_disableColorMask(cache);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 
   function drawEntity(entity) {
@@ -638,14 +660,14 @@ function _WebGL_createUniformSetters(gl, model, program, uniformsMap) {
       case gl.SAMPLER_2D:
         var currentTexture = textureCounter++;
         return function (texture) {
+          gl.activeTexture(gl.TEXTURE0 + currentTexture);
+          var tex = cache.textures.get(texture);
+          if (!tex) {
+            tex = texture.__$createTexture(gl);
+            cache.textures.set(texture, tex);
+          }
+          gl.bindTexture(gl.TEXTURE_2D, tex);
           if (currentUniforms[uniformName] !== texture) {
-            gl.activeTexture(gl.TEXTURE0 + currentTexture);
-            var tex = cache.textures.get(texture);
-            if (!tex) {
-              tex = texture.__$createTexture(gl);
-              cache.textures.set(texture, tex);
-            }
-            gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
             currentUniforms[uniformName] = texture;
           }
