@@ -35,7 +35,6 @@ import Svg.Attributes
 import TriangularMesh exposing (TriangularMesh)
 import Vector2d
 import Viewpoint3d
-import WebGL
 
 
 type ProjectionType
