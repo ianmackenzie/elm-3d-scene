@@ -59,3 +59,5 @@ create more complex and interesting scenes.
   ([HTML](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/multiple-shadows.html), [Ellie](https://ellie-app.com/9g2PQxgqk49a1))
 - [`ExposureAndToneMapping.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/ExposureAndToneMapping.elm)
   ([HTML](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/exposure-and-tone-mapping.html), [Ellie](https://ellie-app.com/9g2NQtQNxXpa1))
+- [`Overlay.elm`](https://github.com/ianmackenzie/elm-3d-scene/blob/master/examples/Overlay.elm)
+  ([HTML](https://ianmackenzie.github.io/elm-3d-scene/examples/1.0.0/overlay.html), [Ellie](https://ellie-app.com/bdkzqjBxCtQa1))
