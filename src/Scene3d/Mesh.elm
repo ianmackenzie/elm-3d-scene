@@ -1,9 +1,10 @@
 module Scene3d.Mesh exposing
     ( Mesh
-    , Plain, Uniform, Unlit, Textured
+    , Plain, Uniform, Unlit, Textured, NormalMapped
     , points, lineSegments, polyline, triangles, facets
     , indexedTriangles, indexedFacets, indexedFaces
     , texturedTriangles, texturedFacets, texturedFaces
+    , normalMappedFaces
     , Shadow, shadow
     , cullBackFaces
     )
@@ -32,7 +33,7 @@ to transform meshes around without having to recreate them.
 These type aliases make it easier to write down type annotations for meshes you
 store in your model or return from a function.
 
-@docs Plain, Uniform, Unlit, Textured
+@docs Plain, Uniform, Unlit, Textured, NormalMapped
 
 
 # Constructors
@@ -60,6 +61,11 @@ to be used.
 @docs texturedTriangles, texturedFacets, texturedFaces
 
 
+## Normal-mapped meshes
+
+@docs normalMappedFaces
+
+
 # Shadows
 
 In `elm-3d-scene`, to render an object with its shadow you will first need to
@@ -84,6 +90,7 @@ import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (Vec3)
+import Math.Vector4
 import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
 import Polyline3d exposing (Polyline3d)
@@ -618,27 +625,55 @@ texturedFaces givenMesh =
 
 
 collectNormalMapped :
-    { position : Point3d Meters coordinates, normal : Vector3d Unitless coordinates, uv : ( Float, Float ), tangent : Vector3d Unitless coordinates }
+    { position : Point3d Meters coordinates
+    , normal : Vector3d Unitless coordinates
+    , uv : ( Float, Float )
+    , tangent : Vector3d Unitless coordinates
+    , tangentBasisIsRightHanded : Bool
+    }
     -> List VertexWithTangent
     -> List VertexWithTangent
-collectNormalMapped { position, normal, uv, tangent } accumulated =
+collectNormalMapped { position, normal, uv, tangent, tangentBasisIsRightHanded } accumulated =
     let
         ( u, v ) =
             uv
+
+        t =
+            Vector3d.toUnitless tangent
+
+        bitangentSign =
+            if tangentBasisIsRightHanded then
+                -1
+
+            else
+                1
+
+        vertex =
+            { position = Point3d.toVec3 position
+            , normal = Vector3d.toVec3 normal
+            , uv = Math.Vector2.vec2 u v
+            , tangent =
+                Math.Vector4.fromRecord
+                    { x = t.x
+                    , y = t.y
+                    , z = t.z
+                    , w = bitangentSign
+                    }
+            }
     in
-    { position = Point3d.toVec3 position, normal = Vector3d.toVec3 normal, uv = Math.Vector2.vec2 u v, tangent = Vector3d.toVec3 tangent }
-        :: accumulated
+    vertex :: accumulated
 
 
-normalMapped :
+normalMappedFaces :
     TriangularMesh
         { position : Point3d Meters coordinates
         , normal : Vector3d Unitless coordinates
         , uv : ( Float, Float )
         , tangent : Vector3d Unitless coordinates
+        , tangentBasisIsRightHanded : Bool
         }
     -> NormalMapped coordinates
-normalMapped givenMesh =
+normalMappedFaces givenMesh =
     let
         collectedVertices =
             Array.foldr collectNormalMapped [] (TriangularMesh.vertices givenMesh)

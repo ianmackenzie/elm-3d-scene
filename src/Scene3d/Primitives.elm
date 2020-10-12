@@ -23,7 +23,7 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : Mesh.Textured coordinates
+sphere : Mesh.NormalMapped coordinates
 sphere =
     let
         n =
@@ -66,10 +66,10 @@ sphere =
                                             (phi |> Quantity.plus (Angle.degrees 90))
                                             (Angle.degrees 180)
                                         )
-
-                                    -- , tangent =
-                                    --     Direction3d.xy (theta |> Quantity.plus (Angle.degrees 90))
-                                    --         |> Direction3d.toVector
+                                    , tangent =
+                                        Direction3d.xy (theta |> Quantity.plus (Angle.degrees 90))
+                                            |> Direction3d.toVector
+                                    , tangentBasisIsRightHanded = True
                                     }
                                 )
                     )
@@ -119,7 +119,7 @@ sphere =
                     )
                 |> List.concat
     in
-    Mesh.texturedFaces (TriangularMesh.indexed vertices faces)
+    Mesh.normalMappedFaces (TriangularMesh.indexed vertices faces)
         |> Mesh.cullBackFaces
 
 

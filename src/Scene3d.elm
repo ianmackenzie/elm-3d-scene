@@ -1,8 +1,8 @@
 module Scene3d exposing
     ( unlit, cloudy, sunny, custom
     , Entity
-    , point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
-    , triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, cylinderWithShadow, coneWithShadow
+    , point, lineSegment, triangle, facet, quad, block, sphere, normalMappedSphere, cylinder, cone
+    , triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, normalMappedSphereWithShadow, cylinderWithShadow, coneWithShadow
     , mesh, meshWithShadow
     , group, nothing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
@@ -68,7 +68,7 @@ For up to a few dozen individual entities (points, line segments, triangles etc)
 it should be fine to use these convenience functions, but for much more than
 that you will likely want to switch to using a proper mesh for efficiency.
 
-@docs point, lineSegment, triangle, facet, quad, block, sphere, cylinder, cone
+@docs point, lineSegment, triangle, facet, quad, block, sphere, normalMappedSphere, cylinder, cone
 
 
 ## Shapes with shadows
@@ -78,7 +78,7 @@ but make the given object cast a shadow (or perhaps multiple shadows, if there
 are multiple shadow-casting lights in the scene). Note that no shadows will
 appear if there are no shadow-casting lights!
 
-@docs triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, cylinderWithShadow, coneWithShadow
+@docs triangleWithShadow, facetWithShadow, quadWithShadow, blockWithShadow, sphereWithShadow, normalMappedSphereWithShadow, cylinderWithShadow, coneWithShadow
 
 
 ## Meshes
@@ -393,13 +393,27 @@ Note that this projection, while simple, means that the texture used will get
 -}
 sphere : Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphere givenMaterial givenSphere =
-    Entity.sphere True False givenMaterial givenSphere
+    normalMappedSphere (Material.textured givenMaterial) givenSphere
 
 
 {-| ![Sphere with shadows](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/sphere-with-shadows.png)
 -}
 sphereWithShadow : Material.Textured coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 sphereWithShadow givenMaterial givenSphere =
+    normalMappedSphereWithShadow (Material.textured givenMaterial) givenSphere
+
+
+{-| Like `sphere`, but can accept a normal-mapped material.
+-}
+normalMappedSphere : Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+normalMappedSphere givenMaterial givenSphere =
+    Entity.sphere True False givenMaterial givenSphere
+
+
+{-| Like `sphereWithShadow`, but can accept a normal-mapped material.
+-}
+normalMappedSphereWithShadow : Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+normalMappedSphereWithShadow givenMaterial givenSphere =
     Entity.sphere True True givenMaterial givenSphere
 
 

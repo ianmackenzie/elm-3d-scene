@@ -156,10 +156,11 @@ encodeNormalMappedVertex :
     { position : Point3d Meters coordinates
     , normal : Vector3d Unitless coordinates
     , tangent : Vector3d Unitless coordinates
+    , tangentBasisIsRightHanded : Bool
     , uv : ( Float, Float )
     }
     -> Value
-encodeNormalMappedVertex { position, normal, tangent, uv } =
+encodeNormalMappedVertex { position, normal, tangent, tangentBasisIsRightHanded, uv } =
     let
         p =
             Point3d.toMeters position
@@ -169,6 +170,13 @@ encodeNormalMappedVertex { position, normal, tangent, uv } =
 
         t =
             Vector3d.toUnitless tangent
+
+        bitangentSign =
+            if tangentBasisIsRightHanded then
+                1
+
+            else
+                -1
 
         ( u, v ) =
             uv
@@ -183,6 +191,7 @@ encodeNormalMappedVertex { position, normal, tangent, uv } =
         , ( "tx", Encode.float t.x )
         , ( "ty", Encode.float t.y )
         , ( "tz", Encode.float t.z )
+        , ( "tw", Encode.float bitangentSign )
         , ( "u", Encode.float u )
         , ( "v", Encode.float v )
         ]

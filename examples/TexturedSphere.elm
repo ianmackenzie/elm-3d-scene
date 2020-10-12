@@ -46,12 +46,12 @@ type Model
     = Loading
         { colorTexture : Maybe (Material.Texture Color)
         , roughnessTexture : Maybe (Material.Texture Float)
-        , metallicTexture : Maybe (Material.Texture Float)
+        , normalMap : Maybe Material.NormalMap
         }
     | Loaded
         { colorTexture : Material.Texture Color
         , roughnessTexture : Material.Texture Float
-        , metallicTexture : Material.Texture Float
+        , normalMap : Material.NormalMap
         , orbiting : Bool
 
         -- This frame exists in world coordinates and defines the orientation
@@ -65,7 +65,7 @@ type Model
 type Msg
     = GotColorTexture (Result WebGL.Texture.Error (Material.Texture Color))
     | GotRoughnessTexture (Result WebGL.Texture.Error (Material.Texture Float))
-    | GotMetallicTexture (Result WebGL.Texture.Error (Material.Texture Float))
+    | GotNormalMap (Result WebGL.Texture.Error Material.NormalMap)
     | MouseDown
     | MouseUp
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
@@ -76,15 +76,15 @@ init =
     ( Loading
         { colorTexture = Nothing
         , roughnessTexture = Nothing
-        , metallicTexture = Nothing
+        , normalMap = Nothing
         }
     , Cmd.batch
-        [ Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_col.jpg"
+        [ Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_col.jpg"
             |> Task.attempt GotColorTexture
-        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_rgh.jpg"
+        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_rgh.jpg"
             |> Task.attempt GotRoughnessTexture
-        , Material.load "https://ianmackenzie.github.io/elm-3d-scene/examples/metal/Metal03_met.jpg"
-            |> Task.attempt GotMetallicTexture
+        , Material.loadNormalMap "https://ianmackenzie.github.io/elm-3d-scene/examples/leather/Leather11_nrm.jpg"
+            |> Task.attempt GotNormalMap
         ]
     )
 
@@ -102,8 +102,8 @@ update message model =
                         GotRoughnessTexture (Ok roughnessTexture) ->
                             checkIfLoaded { textures | roughnessTexture = Just roughnessTexture }
 
-                        GotMetallicTexture (Ok metallicTexture) ->
-                            checkIfLoaded { textures | metallicTexture = Just metallicTexture }
+                        GotNormalMap (Ok normalMap) ->
+                            checkIfLoaded { textures | normalMap = Just normalMap }
 
                         GotColorTexture (Err _) ->
                             Errored "Error loading color texture"
@@ -111,8 +111,8 @@ update message model =
                         GotRoughnessTexture (Err _) ->
                             Errored "Error loading roughness texture"
 
-                        GotMetallicTexture (Err _) ->
-                            Errored "Error loading metallic texture"
+                        GotNormalMap (Err _) ->
+                            Errored "Error loading normal map"
 
                         MouseDown ->
                             model
@@ -131,7 +131,7 @@ update message model =
                         GotRoughnessTexture _ ->
                             model
 
-                        GotMetallicTexture _ ->
+                        GotNormalMap _ ->
                             model
 
                         MouseDown ->
@@ -196,16 +196,16 @@ and wait for the remaining textures to load.
 checkIfLoaded :
     { colorTexture : Maybe (Material.Texture Color)
     , roughnessTexture : Maybe (Material.Texture Float)
-    , metallicTexture : Maybe (Material.Texture Float)
+    , normalMap : Maybe Material.NormalMap
     }
     -> Model
 checkIfLoaded textures =
-    case ( textures.colorTexture, textures.roughnessTexture, textures.metallicTexture ) of
-        ( Just colorTexture, Just roughnessTexture, Just metallicTexture ) ->
+    case ( textures.colorTexture, textures.roughnessTexture, textures.normalMap ) of
+        ( Just colorTexture, Just roughnessTexture, Just normalMap ) ->
             Loaded
                 { colorTexture = colorTexture
                 , roughnessTexture = roughnessTexture
-                , metallicTexture = metallicTexture
+                , normalMap = normalMap
                 , orbiting = False
 
                 -- Start with the sphere coordinate system aligned with the
@@ -274,23 +274,24 @@ sphere =
 view : Model -> Html msg
 view model =
     case model of
-        Loaded { colorTexture, roughnessTexture, metallicTexture, sphereFrame } ->
+        Loaded { colorTexture, roughnessTexture, normalMap, sphereFrame } ->
             let
                 -- Create a fully textured PBR material from the three loaded
                 -- textures. Note that you can also use Material.constant if you
                 -- want to use a constant value for one or two of the parameters
                 -- instead of an actual texture.
                 material =
-                    Material.texturedPbr
+                    Material.normalMappedPbr
                         { baseColor = colorTexture
                         , roughness = roughnessTexture
-                        , metallic = metallicTexture
+                        , metallic = Material.constant 0
+                        , normalMap = normalMap
                         }
             in
             Scene3d.custom
                 { camera = camera
                 , clipDepth = Length.centimeters 0.5
-                , dimensions = ( Pixels.int 400, Pixels.int 400 )
+                , dimensions = ( Pixels.int 800, Pixels.int 800 )
                 , antialiasing = Scene3d.multisampling
                 , lights = Scene3d.threeLights sunlight sky environment
                 , exposure = Scene3d.exposureValue 11
@@ -299,7 +300,7 @@ view model =
                 , background = Scene3d.transparentBackground
                 , entities =
                     [ -- Create a sphere entity in local sphere coordinates
-                      Scene3d.sphere material sphere
+                      Scene3d.normalMappedSphere material sphere
                         -- Place the sphere in the (rotated) frame to convert it
                         -- into world coordinates
                         |> Scene3d.placeIn sphereFrame

@@ -197,7 +197,7 @@ texturedVertex :
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        , interpolatedTangent : Vec4
         }
 texturedVertex =
     [glsl|
@@ -216,7 +216,7 @@ texturedVertex =
         varying highp vec3 interpolatedPosition;
         varying highp vec3 interpolatedNormal;
         varying mediump vec2 interpolatedUv;
-        varying highp vec3 interpolatedTangent;
+        varying highp vec4 interpolatedTangent;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -242,7 +242,7 @@ texturedVertex =
             interpolatedPosition = worldPosition.xyz;
             interpolatedNormal = getWorldNormal(normal, modelScale, modelMatrix);
             interpolatedUv = uv;
-            interpolatedTangent = vec3(0.0, 0.0, 0.0);
+            interpolatedTangent = vec4(0.0, 0.0, 0.0, 0.0);
         }
     |]
 
@@ -253,7 +253,7 @@ normalMappedVertex :
             | position : Vec3
             , normal : Vec3
             , uv : Vec2
-            , tangent : Vec3
+            , tangent : Vec4
         }
         { uniforms
             | modelScale : Vec4
@@ -265,7 +265,7 @@ normalMappedVertex :
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        , interpolatedTangent : Vec4
         }
 normalMappedVertex =
     [glsl|
@@ -274,7 +274,7 @@ normalMappedVertex =
         attribute highp vec3 position;
         attribute highp vec3 normal;
         attribute mediump vec2 uv;
-        attribute highp vec3 tangent;
+        attribute highp vec4 tangent;
         
         uniform highp vec4 modelScale;
         uniform highp mat4 modelMatrix;
@@ -285,7 +285,7 @@ normalMappedVertex =
         varying highp vec3 interpolatedPosition;
         varying highp vec3 interpolatedNormal;
         varying mediump vec2 interpolatedUv;
-        varying highp vec3 interpolatedTangent;
+        varying highp vec4 interpolatedTangent;
         
         vec4 getWorldPosition(vec3 modelPosition, vec4 modelScale, mat4 modelMatrix) {
             vec4 scaledPosition = vec4(modelScale.xyz * modelPosition, 1.0);
@@ -305,8 +305,8 @@ normalMappedVertex =
             return (modelMatrix * vec4(safeNormalize(normalScale * modelNormal), 0.0)).xyz;
         }
         
-        vec3 getWorldTangent(vec3 modelTangent, vec4 modelScale, mat4 modelMatrix) {
-            return (modelMatrix * vec4(safeNormalize(modelScale.xyz * modelTangent), 0.0)).xyz;
+        vec4 getWorldTangent(vec4 modelTangent, vec4 modelScale, mat4 modelMatrix) {
+            return vec4((modelMatrix * vec4(safeNormalize(modelScale.xyz * modelTangent.xyz), 0.0)).xyz, modelScale.w * modelTangent.w);
         }
         
         void main () {
@@ -485,29 +485,29 @@ plainQuadVertex =
         uniform highp mat4 sceneProperties;
         uniform highp mat4 quadVertexPositions;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec4 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
+                tangent = vec4(normalize(next - position), 1.0);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
+                tangent = vec4(normalize(position - prev), 1.0);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
+                tangent = vec4(normalize(position - next), 1.0);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
+                tangent = vec4(normalize(prev - position), 1.0);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -520,7 +520,7 @@ plainQuadVertex =
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            vec4 tangent = vec4(0.0, 0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
@@ -558,29 +558,29 @@ unlitQuadVertex =
         
         varying mediump vec2 interpolatedUv;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec4 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
+                tangent = vec4(normalize(next - position), 1.0);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
+                tangent = vec4(normalize(position - prev), 1.0);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
+                tangent = vec4(normalize(position - next), 1.0);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
+                tangent = vec4(normalize(prev - position), 1.0);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -593,7 +593,7 @@ unlitQuadVertex =
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            vec4 tangent = vec4(0.0, 0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
@@ -707,29 +707,29 @@ smoothQuadVertex =
         varying highp vec3 interpolatedPosition;
         varying highp vec3 interpolatedNormal;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec4 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
+                tangent = vec4(normalize(next - position), 1.0);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
+                tangent = vec4(normalize(position - prev), 1.0);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
+                tangent = vec4(normalize(position - next), 1.0);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
+                tangent = vec4(normalize(prev - position), 1.0);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -755,7 +755,7 @@ smoothQuadVertex =
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            vec4 tangent = vec4(0.0, 0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
@@ -781,7 +781,7 @@ texturedQuadVertex :
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        , interpolatedTangent : Vec4
         }
 texturedQuadVertex =
     [glsl|
@@ -799,31 +799,31 @@ texturedQuadVertex =
         varying highp vec3 interpolatedPosition;
         varying highp vec3 interpolatedNormal;
         varying mediump vec2 interpolatedUv;
-        varying highp vec3 interpolatedTangent;
+        varying highp vec4 interpolatedTangent;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec4 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
+                tangent = vec4(normalize(next - position), 1.0);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
+                tangent = vec4(normalize(position - prev), 1.0);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
+                tangent = vec4(normalize(position - next), 1.0);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
+                tangent = vec4(normalize(prev - position), 1.0);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -849,7 +849,7 @@ texturedQuadVertex =
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            vec3 tangent = vec4(0.0, 0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
@@ -1137,29 +1137,29 @@ quadShadowVertex =
         const lowp float kDirectionalLight = 1.0;
         const lowp float kPointLight = 2.0;
         
-        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec3 tangent) {
+        void getQuadVertex(int quadVertexIndex, mat4 quadVertexPositions, out vec3 position, out vec3 normal, out vec4 tangent) {
             vec3 next = vec3(0.0, 0.0, 0.0);
             vec3 prev = vec3(0.0, 0.0, 0.0);
             if (quadVertexIndex == 0) {
                 prev = quadVertexPositions[3].xyz;
                 position = quadVertexPositions[0].xyz;
                 next = quadVertexPositions[1].xyz;
-                tangent = normalize(next - position);
+                tangent = vec4(normalize(next - position), 1.0);
             } else if (quadVertexIndex == 1) {
                 prev = quadVertexPositions[0].xyz;
                 position = quadVertexPositions[1].xyz;
                 next = quadVertexPositions[2].xyz;
-                tangent = normalize(position - prev);
+                tangent = vec4(normalize(position - prev), 1.0);
             } else if (quadVertexIndex == 2) {
                 prev = quadVertexPositions[1].xyz;
                 position = quadVertexPositions[2].xyz;
                 next = quadVertexPositions[3].xyz;
-                tangent = normalize(position - next);
+                tangent = vec4(normalize(position - next), 1.0);
             } else {
                 prev = quadVertexPositions[2].xyz;
                 position = quadVertexPositions[3].xyz;
                 next = quadVertexPositions[0].xyz;
-                tangent = normalize(prev - position);
+                tangent = vec4(normalize(prev - position), 1.0);
             }
             normal = normalize(cross(next - position, prev - position));
         }
@@ -1214,7 +1214,7 @@ quadShadowVertex =
         void main () {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec3(0.0, 0.0, 0.0);
+            vec4 tangent = vec4(0.0, 0.0, 0.0, 0.0);
             getQuadVertex(int(quadShadowVertex.x), quadVertexPositions, position, normal, tangent);
             normal *= quadShadowVertex.y;
             gl_Position = shadowVertexPosition(
@@ -2060,13 +2060,13 @@ lambertianTextureFragment :
             , enabledLights : Vec4
             , materialColorTexture : Texture
             , normalMapTexture : Texture
-            , useNormalMap : Float
+            , normalMapType : Float
             , viewMatrix : Mat4
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        , interpolatedTangent : Vec4
         }
 lambertianTextureFragment =
     [glsl|
@@ -2080,13 +2080,13 @@ lambertianTextureFragment =
         uniform lowp vec4 enabledLights;
         uniform mediump sampler2D materialColorTexture;
         uniform mediump sampler2D normalMapTexture;
-        uniform lowp float useNormalMap;
+        uniform lowp float normalMapType;
         uniform highp mat4 viewMatrix;
         
         varying highp vec3 interpolatedPosition;
         varying highp vec3 interpolatedNormal;
         varying mediump vec2 interpolatedUv;
-        varying highp vec3 interpolatedTangent;
+        varying highp vec4 interpolatedTangent;
         
         const lowp float kPerspectiveProjection = 0.0;
         const lowp float kOrthographicProjection = 1.0;
@@ -2096,21 +2096,25 @@ lambertianTextureFragment =
         const lowp float kDisabledLight = 0.0;
         const lowp float kSoftLighting = 3.0;
         
-        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
-            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
-            float x = 2.0 * (rgb.r - 0.5);
-            float y = 2.0 * (rgb.g - 0.5);
-            float z = 2.0 * (rgb.b - 0.5);
-            return normalize(vec3(-x, -y, z));
+        vec3 getLocalNormal(sampler2D normalMap, float normalMapType, vec2 uv) {
+            if (normalMapType == 0.0) {
+                return vec3(0.0, 0.0, 1.0);
+            } else {
+                vec3 rgb = texture2D(normalMap, uv).rgb;
+                float x = 2.0 * (rgb.r - 0.5);
+                float y = 2.0 * (rgb.g - 0.5) * normalMapType;
+                float z = 2.0 * (rgb.b - 0.5);
+                return normalize(vec3(x, y, z));
+            }
         }
         
         float getNormalSign() {
             return 2.0 * float(gl_FrontFacing) - 1.0;
         }
         
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent) * normalSign;
-            return normalize(localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal);
+        vec3 getMappedNormal(vec3 normal, vec4 tangent, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent.xyz) * tangent.w;
+            return normalize(localNormal.x * tangent.xyz + localNormal.y * bitangent + localNormal.z * normal);
         }
         
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
@@ -2319,10 +2323,10 @@ lambertianTextureFragment =
         }
         
         void main() {
-            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
+            vec3 localNormal = getLocalNormal(normalMapTexture, normalMapType, interpolatedUv);
             float normalSign = getNormalSign();
             vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
-            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, normalSign, localNormal);
+            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
             vec3 materialColor = fromSrgb(texture2D(materialColorTexture, interpolatedUv).rgb);
         
@@ -2743,12 +2747,12 @@ physicalTexturesFragment :
             , metallicTexture : Texture
             , constantMetallic : Vec2
             , normalMapTexture : Texture
-            , useNormalMap : Float
+            , normalMapType : Float
         }
         { interpolatedPosition : Vec3
         , interpolatedNormal : Vec3
         , interpolatedUv : Vec2
-        , interpolatedTangent : Vec3
+        , interpolatedTangent : Vec4
         }
 physicalTexturesFragment =
     [glsl|
@@ -2768,12 +2772,12 @@ physicalTexturesFragment =
         uniform mediump sampler2D metallicTexture;
         uniform lowp vec2 constantMetallic;
         uniform mediump sampler2D normalMapTexture;
-        uniform lowp float useNormalMap;
+        uniform lowp float normalMapType;
         
         varying highp vec3 interpolatedPosition;
         varying highp vec3 interpolatedNormal;
         varying mediump vec2 interpolatedUv;
-        varying highp vec3 interpolatedTangent;
+        varying highp vec4 interpolatedTangent;
         
         const lowp float kPerspectiveProjection = 0.0;
         const lowp float kOrthographicProjection = 1.0;
@@ -2793,21 +2797,25 @@ physicalTexturesFragment =
             }
         }
         
-        vec3 getLocalNormal(sampler2D normalMap, float useNormalMap, vec2 uv) {
-            vec3 rgb = useNormalMap * texture2D(normalMap, uv).rgb + (1.0 - useNormalMap) * vec3(0.5, 0.5, 1.0);
-            float x = 2.0 * (rgb.r - 0.5);
-            float y = 2.0 * (rgb.g - 0.5);
-            float z = 2.0 * (rgb.b - 0.5);
-            return normalize(vec3(-x, -y, z));
+        vec3 getLocalNormal(sampler2D normalMap, float normalMapType, vec2 uv) {
+            if (normalMapType == 0.0) {
+                return vec3(0.0, 0.0, 1.0);
+            } else {
+                vec3 rgb = texture2D(normalMap, uv).rgb;
+                float x = 2.0 * (rgb.r - 0.5);
+                float y = 2.0 * (rgb.g - 0.5) * normalMapType;
+                float z = 2.0 * (rgb.b - 0.5);
+                return normalize(vec3(x, y, z));
+            }
         }
         
         float getNormalSign() {
             return 2.0 * float(gl_FrontFacing) - 1.0;
         }
         
-        vec3 getMappedNormal(vec3 normal, vec3 tangent, float normalSign, vec3 localNormal) {
-            vec3 bitangent = cross(normal, tangent) * normalSign;
-            return normalize(localNormal.x * tangent + localNormal.y * bitangent + localNormal.z * normal);
+        vec3 getMappedNormal(vec3 normal, vec4 tangent, vec3 localNormal) {
+            vec3 bitangent = cross(normal, tangent.xyz) * tangent.w;
+            return normalize(localNormal.x * tangent.xyz + localNormal.y * bitangent + localNormal.z * normal);
         }
         
         vec3 getDirectionToCamera(vec3 surfacePosition, mat4 sceneProperties) {
@@ -3143,10 +3151,10 @@ physicalTexturesFragment =
             float roughness = getFloatValue(roughnessTexture, interpolatedUv, constantRoughness);
             float metallic = getFloatValue(metallicTexture, interpolatedUv, constantMetallic);
         
-            vec3 localNormal = getLocalNormal(normalMapTexture, useNormalMap, interpolatedUv);
+            vec3 localNormal = getLocalNormal(normalMapTexture, normalMapType, interpolatedUv);
             float normalSign = getNormalSign();
             vec3 originalNormal = normalize(interpolatedNormal) * normalSign;
-            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, normalSign, localNormal);
+            vec3 normalDirection = getMappedNormal(originalNormal, interpolatedTangent, localNormal);
             vec3 directionToCamera = getDirectionToCamera(interpolatedPosition, sceneProperties);
         
             vec3 linearColor = physicalLighting(
