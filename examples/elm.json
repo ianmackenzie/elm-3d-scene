@@ -15,16 +15,16 @@
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm-explorations/linear-algebra": "1.0.3",
-            "elm-explorations/webgl": "1.1.1",
+            "elm-explorations/webgl": "1.1.2",
             "ianmackenzie/elm-1d-parameter": "1.0.1",
             "ianmackenzie/elm-3d-camera": "3.1.0",
             "ianmackenzie/elm-float-extra": "1.1.0",
-            "ianmackenzie/elm-geometry": "3.5.0",
+            "ianmackenzie/elm-geometry": "3.6.0",
             "ianmackenzie/elm-geometry-linear-algebra-interop": "2.0.2",
             "ianmackenzie/elm-geometry-svg": "3.0.0",
-            "ianmackenzie/elm-triangular-mesh": "1.0.4",
-            "ianmackenzie/elm-units": "2.6.0",
-            "mdgriffith/elm-ui": "1.1.6"
+            "ianmackenzie/elm-triangular-mesh": "1.1.0",
+            "ianmackenzie/elm-units": "2.7.0",
+            "mdgriffith/elm-ui": "1.1.8"
         },
         "indirect": {
             "elm/url": "1.0.0",
