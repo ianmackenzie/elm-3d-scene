@@ -25,298 +25,171 @@ import Vector3d exposing (Vector3d)
 
 sphere : Mesh.NormalMapped coordinates
 sphere =
-    let
-        n =
-            72
+    Mesh.cullBackFaces <|
+        Mesh.normalMappedFaces <|
+            TriangularMesh.grid 72 72 <|
+                \u v ->
+                    let
+                        theta =
+                            2 * pi * u
 
-        radius =
-            Length.meters 1
+                        phi =
+                            -pi / 2 + pi * v
 
-        m =
-            ceiling (toFloat n / 2)
+                        sinTheta =
+                            sin theta
 
-        thetaValues =
-            Parameter1d.steps n
-                (Quantity.interpolateFrom zero (Angle.turns 1))
+                        cosTheta =
+                            cos theta
 
-        phiValues =
-            Parameter1d.steps m
-                (Quantity.interpolateFrom
-                    (Angle.degrees 90)
-                    (Angle.degrees -90)
-                )
+                        sinPhi =
+                            sin phi
 
-        vertices =
-            thetaValues
-                |> List.map
-                    (\theta ->
-                        phiValues
-                            |> List.map
-                                (\phi ->
-                                    { position =
-                                        Point3d.xyz
-                                            (radius |> Quantity.multiplyBy (Angle.cos phi * Angle.cos theta))
-                                            (radius |> Quantity.multiplyBy (Angle.cos phi * Angle.sin theta))
-                                            (radius |> Quantity.multiplyBy (Angle.sin phi))
-                                    , normal =
-                                        Direction3d.xyZ theta phi |> Direction3d.toVector
-                                    , uv =
-                                        ( Quantity.ratio theta (Angle.turns 1)
-                                        , Quantity.ratio
-                                            (phi |> Quantity.plus (Angle.degrees 90))
-                                            (Angle.degrees 180)
-                                        )
-                                    , tangent =
-                                        Direction3d.xy (theta |> Quantity.plus (Angle.degrees 90))
-                                            |> Direction3d.toVector
-                                    , tangentBasisIsRightHanded = True
-                                    }
-                                )
-                    )
-                |> List.concat
-                |> Array.fromList
+                        cosPhi =
+                            cos phi
 
-        thetaStartIndices =
-            List.range 0 (n - 1)
-
-        phiStartIndices =
-            List.range 0 (m - 1)
-
-        linearIndex i j =
-            i * (m + 1) + j
-
-        faces =
-            thetaStartIndices
-                |> List.map
-                    (\i ->
-                        phiStartIndices
-                            |> List.map
-                                (\j ->
-                                    let
-                                        bottomLeftIndex =
-                                            linearIndex i (j + 1)
-
-                                        bottomRightIndex =
-                                            linearIndex (i + 1) (j + 1)
-
-                                        topLeftIndex =
-                                            linearIndex i j
-
-                                        topRightIndex =
-                                            linearIndex (i + 1) j
-                                    in
-                                    [ ( bottomLeftIndex
-                                      , bottomRightIndex
-                                      , topRightIndex
-                                      )
-                                    , ( bottomLeftIndex
-                                      , topRightIndex
-                                      , topLeftIndex
-                                      )
-                                    ]
-                                )
-                            |> List.concat
-                    )
-                |> List.concat
-    in
-    Mesh.normalMappedFaces (TriangularMesh.indexed vertices faces)
-        |> Mesh.cullBackFaces
+                        xyz =
+                            { x = cosPhi * cosTheta
+                            , y = cosPhi * sinTheta
+                            , z = sinPhi
+                            }
+                    in
+                    { position = Point3d.unsafe xyz
+                    , normal = Vector3d.unsafe xyz
+                    , uv = ( u, v )
+                    , tangent = Vector3d.unsafe { x = -sinTheta, y = cosTheta, z = 0 }
+                    , tangentBasisIsRightHanded = True
+                    }
 
 
 cylinder : Mesh.Uniform coordinates
 cylinder =
     let
-        radius =
-            Length.meters 1
-
-        subdivisions =
-            72
-
-        height =
-            Length.meters 1
-
-        wedgeAngle =
-            Angle.turns 1 |> Quantity.divideBy (toFloat subdivisions)
-
         negativeZVector =
-            Direction3d.negativeZ |> Direction3d.toVector
+            Vector3d.unsafe { x = 0, y = 0, z = -1 }
 
         positiveZVector =
-            Direction3d.positiveZ |> Direction3d.toVector
-
-        bottomZ =
-            Quantity.multiplyBy -0.5 height
-
-        topZ =
-            Quantity.multiplyBy 0.5 height
+            Vector3d.unsafe { x = 0, y = 0, z = 1 }
 
         bottomCenter =
-            Point3d.xyz zero zero bottomZ
+            { position = Point3d.unsafe { x = 0, y = 0, z = -0.5 }
+            , normal = negativeZVector
+            }
 
         topCenter =
-            Point3d.xyz zero zero topZ
+            { position = Point3d.unsafe { x = 0, y = 0, z = 0.5 }
+            , normal = positiveZVector
+            }
 
-        wedge startIndex =
-            let
-                startAngle =
-                    wedgeAngle |> Quantity.multiplyBy (toFloat startIndex)
+        bottom =
+            TriangularMesh.radial bottomCenter <|
+                Parameter1d.leading 72 <|
+                    \u ->
+                        let
+                            theta =
+                                2 * pi * u
+                        in
+                        { position = Point3d.unsafe { x = cos theta, y = -(sin theta), z = -0.5 }
+                        , normal = negativeZVector
+                        }
 
-                endIndex =
-                    startIndex + 1 |> modBy subdivisions
+        top =
+            TriangularMesh.radial topCenter <|
+                Parameter1d.leading 72 <|
+                    \u ->
+                        let
+                            theta =
+                                2 * pi * u
+                        in
+                        { position = Point3d.unsafe { x = cos theta, y = sin theta, z = 0.5 }
+                        , normal = positiveZVector
+                        }
 
-                endAngle =
-                    wedgeAngle |> Quantity.multiplyBy (toFloat endIndex)
+        sides =
+            TriangularMesh.tube 1 72 <|
+                \u v ->
+                    let
+                        theta =
+                            2 * pi * v
 
-                startX =
-                    radius |> Quantity.multiplyBy (Angle.cos startAngle)
+                        sinTheta =
+                            sin theta
 
-                endX =
-                    radius |> Quantity.multiplyBy (Angle.cos endAngle)
-
-                startY =
-                    radius |> Quantity.multiplyBy (Angle.sin startAngle)
-
-                endY =
-                    radius |> Quantity.multiplyBy (Angle.sin endAngle)
-
-                p0 =
-                    Point3d.xyz startX startY bottomZ
-
-                p1 =
-                    Point3d.xyz endX endY bottomZ
-
-                p2 =
-                    Point3d.xyz startX startY topZ
-
-                p3 =
-                    Point3d.xyz endX endY topZ
-
-                startNormal =
-                    Direction3d.on SketchPlane3d.xy
-                        (Direction2d.fromAngle startAngle)
-                        |> Direction3d.toVector
-
-                endNormal =
-                    Direction3d.on SketchPlane3d.xy
-                        (Direction2d.fromAngle endAngle)
-                        |> Direction3d.toVector
-            in
-            [ ( { position = bottomCenter, normal = negativeZVector }
-              , { position = p1, normal = negativeZVector }
-              , { position = p0, normal = negativeZVector }
-              )
-            , ( { position = p0, normal = startNormal }
-              , { position = p1, normal = endNormal }
-              , { position = p3, normal = endNormal }
-              )
-            , ( { position = p0, normal = startNormal }
-              , { position = p3, normal = endNormal }
-              , { position = p2, normal = startNormal }
-              )
-            , ( { position = topCenter, normal = positiveZVector }
-              , { position = p2, normal = positiveZVector }
-              , { position = p3, normal = positiveZVector }
-              )
-            ]
-
-        wedges =
-            List.range 0 (subdivisions - 1)
-                |> List.map wedge
-
-        triangularMesh =
-            TriangularMesh.triangles (List.concat wedges)
+                        cosTheta =
+                            cos theta
+                    in
+                    { position = Point3d.unsafe { x = cosTheta, y = -sinTheta, z = u - 0.5 }
+                    , normal = Vector3d.unsafe { x = cosTheta, y = -sinTheta, z = 0 }
+                    }
     in
-    Mesh.indexedFaces triangularMesh |> Mesh.cullBackFaces
+    Mesh.cullBackFaces <|
+        Mesh.indexedFaces <|
+            TriangularMesh.combine [ top, bottom, sides ]
 
 
 cone : Mesh.Uniform coordinates
 cone =
     let
-        radius =
-            Length.meters 1
-
-        subdivisions =
-            72
-
-        elevationAngle =
-            Angle.degrees 45
-
-        wedgeAngle =
-            Angle.turns 1 |> Quantity.divideBy (toFloat subdivisions)
-
         negativeZVector =
-            Direction3d.negativeZ |> Direction3d.toVector
+            Vector3d.unsafe { x = 0, y = 0, z = -1 }
 
-        bottomZ =
-            Quantity.zero
+        bottomCenter =
+            { position = Point3d.origin
+            , normal = negativeZVector
+            }
 
-        topZ =
-            Length.meters 1
+        tip =
+            { position = Point3d.unsafe { x = 0, y = 0, z = 1 }
+            , normal = Vector3d.zero
+            }
 
-        basePoint =
-            Point3d.xyz zero zero bottomZ
+        halfRootTwo =
+            0.5 * sqrt 2
 
-        tipPoint =
-            Point3d.xyz zero zero topZ
+        bottom =
+            TriangularMesh.radial bottomCenter <|
+                Parameter1d.leading 72 <|
+                    \u ->
+                        let
+                            theta =
+                                2 * pi * u
 
-        wedge startIndex =
-            let
-                startAngle =
-                    wedgeAngle |> Quantity.multiplyBy (toFloat startIndex)
+                            sinTheta =
+                                sin theta
 
-                endIndex =
-                    startIndex + 1 |> modBy subdivisions
+                            cosTheta =
+                                cos theta
+                        in
+                        { position = Point3d.unsafe { x = cosTheta, y = -sinTheta, z = 0 }
+                        , normal = negativeZVector
+                        }
 
-                endAngle =
-                    wedgeAngle |> Quantity.multiplyBy (toFloat endIndex)
+        sides =
+            TriangularMesh.radial tip <|
+                Parameter1d.leading 72 <|
+                    \u ->
+                        let
+                            theta =
+                                2 * pi * u
 
-                startX =
-                    radius |> Quantity.multiplyBy (Angle.cos startAngle)
+                            sinTheta =
+                                sin theta
 
-                endX =
-                    radius |> Quantity.multiplyBy (Angle.cos endAngle)
-
-                startY =
-                    radius |> Quantity.multiplyBy (Angle.sin startAngle)
-
-                endY =
-                    radius |> Quantity.multiplyBy (Angle.sin endAngle)
-
-                p0 =
-                    Point3d.xyz startX startY bottomZ
-
-                p1 =
-                    Point3d.xyz endX endY bottomZ
-
-                startNormal =
-                    Direction3d.xyZ startAngle elevationAngle
-                        |> Direction3d.toVector
-
-                endNormal =
-                    Direction3d.xyZ endAngle elevationAngle
-                        |> Direction3d.toVector
-
-                tipNormal =
-                    Vector3d.zero
-            in
-            [ ( { position = basePoint, normal = negativeZVector }
-              , { position = p1, normal = negativeZVector }
-              , { position = p0, normal = negativeZVector }
-              )
-            , ( { position = p0, normal = startNormal }
-              , { position = p1, normal = endNormal }
-              , { position = tipPoint, normal = tipNormal }
-              )
-            ]
-
-        wedges =
-            List.range 0 (subdivisions - 1)
-                |> List.map wedge
-
-        triangularMesh =
-            TriangularMesh.triangles (List.concat wedges)
+                            cosTheta =
+                                cos theta
+                        in
+                        { position = Point3d.unsafe { x = cosTheta, y = sinTheta, z = 0 }
+                        , normal =
+                            Vector3d.unsafe
+                                { x = cosTheta * halfRootTwo
+                                , y = sinTheta * halfRootTwo
+                                , z = halfRootTwo
+                                }
+                        }
     in
-    Mesh.indexedFaces triangularMesh |> Mesh.cullBackFaces
+    Mesh.cullBackFaces <|
+        Mesh.indexedFaces <|
+            TriangularMesh.combine [ bottom, sides ]
 
 
 block : Mesh.Uniform coordinates
