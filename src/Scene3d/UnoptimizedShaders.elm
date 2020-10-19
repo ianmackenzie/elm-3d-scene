@@ -849,7 +849,7 @@ texturedQuadVertex =
         void main() {
             vec3 position = vec3(0.0, 0.0, 0.0);
             vec3 normal = vec3(0.0, 0.0, 0.0);
-            vec3 tangent = vec4(0.0, 0.0, 0.0, 0.0);
+            vec4 tangent = vec4(0.0, 0.0, 0.0, 0.0);
             getQuadVertex(int(quadVertex.z), quadVertexPositions, position, normal, tangent);
             vec4 worldPosition = getWorldPosition(position, modelScale, modelMatrix);
             gl_Position = projectionMatrix * (viewMatrix * worldPosition);
