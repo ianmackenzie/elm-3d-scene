@@ -337,110 +337,124 @@ parseMaterial string =
 
 parseShadows : String -> Result String Bool
 parseShadows string =
-    -- case string of
-    --     "NoShadows" ->
-    --         Ok False
-    --     "Shadows" ->
-    --         Ok True
-    --     _ ->
-    --         Err ("Unrecognized shadows setting '" ++ string ++ "'")
-    Ok True
+    case string of
+        "NoShadows" ->
+            Ok False
+
+        "Shadows" ->
+            Ok True
+
+        _ ->
+            Err ("Unrecognized shadows setting '" ++ string ++ "'")
 
 
 parseTransformation : String -> Result String Transformation
 parseTransformation string =
-    -- case string of
-    --     "NoTransformation" ->
-    --         Ok NoTransformation
-    --     "Translation" ->
-    --         Ok Translation
-    --     "Rotation" ->
-    --         Ok Rotation
-    --     "Scale" ->
-    --         Ok Scale
-    --     "Mirror" ->
-    --         Ok Mirror
-    --     _ ->
-    --         Err ("Unrecognized transformation type '" ++ string ++ "'")
-    Ok NoTransformation
+    case string of
+        "NoTransformation" ->
+            Ok NoTransformation
+
+        "Translation" ->
+            Ok Translation
+
+        "Rotation" ->
+            Ok Rotation
+
+        "Scale" ->
+            Ok Scale
+
+        "Mirror" ->
+            Ok Mirror
+
+        _ ->
+            Err ("Unrecognized transformation type '" ++ string ++ "'")
 
 
 parsePointLight : String -> Result String Bool
 parsePointLight string =
-    -- case string of
-    --     "PointLight" ->
-    --         Ok True
-    --     "NoPointLight" ->
-    --         Ok False
-    --     _ ->
-    --         Err ("Unrecognized point light type '" ++ string ++ "'")
-    Ok True
+    case string of
+        "PointLight" ->
+            Ok True
+
+        "NoPointLight" ->
+            Ok False
+
+        _ ->
+            Err ("Unrecognized point light type '" ++ string ++ "'")
 
 
 parseDirectionalLight : String -> Result String Bool
 parseDirectionalLight string =
-    -- case string of
-    --     "DirectionalLight" ->
-    --         Ok True
-    --     "NoDirectionalLight" ->
-    --         Ok False
-    --     _ ->
-    --         Err ("Unrecognized directional light type '" ++ string ++ "'")
-    Ok True
+    case string of
+        "DirectionalLight" ->
+            Ok True
+
+        "NoDirectionalLight" ->
+            Ok False
+
+        _ ->
+            Err ("Unrecognized directional light type '" ++ string ++ "'")
 
 
 parseSoftLighting : String -> Result String Bool
 parseSoftLighting string =
-    -- case string of
-    --     "SoftLighting" ->
-    --         Ok True
-    --     "NoSoftLighting" ->
-    --         Ok False
-    --     _ ->
-    --         Err ("Unrecognized soft lighting type '" ++ string ++ "'")
-    Ok True
+    case string of
+        "SoftLighting" ->
+            Ok True
+
+        "NoSoftLighting" ->
+            Ok False
+
+        _ ->
+            Err ("Unrecognized soft lighting type '" ++ string ++ "'")
 
 
 parseToneMapping : String -> Result String ToneMapping
 parseToneMapping string =
-    -- case string of
-    --     "NoToneMapping" ->
-    --         Ok NoToneMapping
-    --     "Reinhard" ->
-    --         Ok Reinhard
-    --     "ReinhardPerChannel" ->
-    --         Ok ReinhardPerChannel
-    --     "HableFilmic" ->
-    --         Ok HableFilmic
-    --     _ ->
-    --         Err ("Unrecognized tone mapping type '" ++ string ++ "'")
-    Ok HableFilmic
+    case string of
+        "NoToneMapping" ->
+            Ok NoToneMapping
+
+        "Reinhard" ->
+            Ok Reinhard
+
+        "ReinhardPerChannel" ->
+            Ok ReinhardPerChannel
+
+        "HableFilmic" ->
+            Ok HableFilmic
+
+        _ ->
+            Err ("Unrecognized tone mapping type '" ++ string ++ "'")
 
 
 parseAntialiasing : String -> Result String Antialiasing
 parseAntialiasing string =
-    -- case string of
-    --     "NoAntialiasing" ->
-    --         Ok NoAntialiasing
-    --     "Multisampling" ->
-    --         Ok Multisampling
-    --     "Supersampling" ->
-    --         Ok Supersampling
-    --     _ ->
-    --         Err ("Unrecognized antialiasing type '" ++ string ++ "'")
-    Ok Multisampling
+    case string of
+        "NoAntialiasing" ->
+            Ok NoAntialiasing
+
+        "Multisampling" ->
+            Ok Multisampling
+
+        "Supersampling" ->
+            Ok Supersampling
+
+        _ ->
+            Err ("Unrecognized antialiasing type '" ++ string ++ "'")
 
 
 parseProjection : String -> Result String Projection
 parseProjection string =
-    -- case string of
-    --     "Perspective" ->
-    --         Ok Perspective
-    --     "Orthographic" ->
-    --         Ok Orthographic
-    --     _ ->
-    --         Err ("Unrecognized projection type '" ++ string ++ "'")
-    Ok Perspective
+    case string of
+        "Perspective" ->
+            Ok Perspective
+
+        "Orthographic" ->
+            Ok Orthographic
+
+        _ ->
+            Err ("Unrecognized projection type '" ++ string ++ "'")
 
 
 parseTestCase : String -> Result String TestCase
