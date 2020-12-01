@@ -26,6 +26,7 @@
             "ianmackenzie/elm-triangular-mesh": "1.1.0",
             "ianmackenzie/elm-units": "2.7.0",
             "mdgriffith/elm-ui": "1.1.8",
+            "ohanhi/keyboard": "2.0.1",
             "w0rm/elm-obj-file": "1.0.0",
             "w0rm/elm-physics": "5.1.1"
         },

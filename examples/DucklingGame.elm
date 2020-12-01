@@ -2,21 +2,29 @@ module DucklingGame exposing (main)
 
 import Acceleration exposing (Acceleration)
 import Angle exposing (Angle)
+import Area
 import Array exposing (Array)
 import Axis3d exposing (Axis3d)
+import Block3d exposing (Block3d)
 import BoundingBox3d
 import Browser
 import Browser.Dom
 import Browser.Events
 import Camera3d exposing (Camera3d)
 import Color exposing (Color)
+import Density
 import Direction3d exposing (Direction3d)
 import Duration exposing (Duration)
 import Force exposing (Force)
 import Frame3d exposing (Frame3d)
 import Html exposing (Html)
+import Html.Events
 import Http
+import Json.Decode as Decode
+import Keyboard exposing (Key)
+import Keyboard.Arrows
 import Length exposing (Length, Meters)
+import LineSegment3d exposing (LineSegment3d)
 import Mass exposing (Mass)
 import Obj.Decode exposing (Decoder, ObjCoordinates)
 import Physics.Body exposing (Body)
@@ -24,11 +32,16 @@ import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
 import Physics.Shape exposing (Shape)
 import Physics.World exposing (World)
 import Pixels exposing (Pixels)
+import Point2d exposing (Point2d)
 import Point3d exposing (Point3d)
 import Quantity exposing (Quantity, Unitless)
+import Rectangle2d exposing (Rectangle2d)
+import Rectangle3d exposing (Rectangle3d)
 import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh
+import SketchPlane3d exposing (SketchPlane3d)
+import Sphere3d exposing (Sphere3d)
 import Task exposing (Task)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
@@ -68,6 +81,8 @@ type alias RunningModel =
     , texture : Material.Texture Color
     , world : World BodyId
     , screenDimensions : ( Quantity Int Pixels, Quantity Int Pixels )
+    , pressedKeys : List Key
+    , animationTime : Duration
     }
 
 
@@ -84,8 +99,9 @@ type LoadingMsg
 
 
 type RunningMsg
-    = Tick Duration
+    = Tick
     | Resize Int Int
+    | KeyboardMsg Keyboard.Msg
 
 
 type Msg
@@ -95,7 +111,7 @@ type Msg
 
 objFrame : Frame3d Meters BodyCoordinates { defines : ObjCoordinates }
 objFrame =
-    Frame3d.atOrigin
+    Frame3d.atPoint (Point3d.centimeters -1 0 -0.6)
 
 
 decodeMeshes : Decoder Meshes
@@ -116,15 +132,33 @@ init () =
             , Http.get
                 { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/duckling-with-hull.obj"
                 , expect =
-                    Obj.Decode.expectObj MeshesResponse Length.meters decodeMeshes
+                    Obj.Decode.expectObj MeshesResponse (\value -> Length.centimeters (6 * value)) decodeMeshes
                 }
             , Task.perform GotInitialViewport Browser.Dom.getViewport
             ]
     )
 
 
+wall1 : Block3d Meters BodyCoordinates
+wall1 =
+    Block3d.from
+        (Point3d.centimeters -31 -31 0)
+        (Point3d.centimeters -30 31 1)
 
--- bounds: Just (BoundingBox3d { maxX = Quantity 0.981508, maxY = Quantity 0.59949, maxZ = Quantity 1.635867, minX = Quantity -0.70286, minY = Quantity -0.541566, minZ = Quantity 0.097289 })
+
+wall2 : Block3d Meters BodyCoordinates
+wall2 =
+    Block3d.rotateAround Axis3d.z (Angle.degrees 90) wall1
+
+
+wall3 : Block3d Meters BodyCoordinates
+wall3 =
+    Block3d.rotateAround Axis3d.z (Angle.degrees 90) wall2
+
+
+wall4 : Block3d Meters BodyCoordinates
+wall4 =
+    Block3d.rotateAround Axis3d.z (Angle.degrees 90) wall3
 
 
 handleResponse : LoadingModel -> Model
@@ -135,16 +169,37 @@ handleResponse loadingModel =
                 ducklingShape =
                     Physics.Shape.unsafeConvex meshes.convex
 
+                counterweight =
+                    Physics.Shape.sphere <|
+                        Sphere3d.atPoint (Point3d.centimeters 0 -0.25 -6)
+                            (Length.centimeters 4)
+
                 ducklingBehavior =
-                    Physics.Body.dynamic (Mass.grams 100)
+                    Physics.Body.dynamic (Mass.grams 40)
 
                 ducklingBody =
-                    Physics.Body.compound [ ducklingShape ] DucklingId
+                    Physics.Body.compound
+                        [ ducklingShape
+                        , counterweight
+                        ]
+                        DucklingId
                         |> Physics.Body.withBehavior ducklingBehavior
                         |> Physics.Body.withDamping
-                            { linear = 0.15
-                            , angular = 0.15
+                            { linear = 0.99
+                            , angular = 0.95
                             }
+
+                wallBody1 =
+                    Physics.Body.block wall1 WallId
+
+                wallBody2 =
+                    Physics.Body.block wall2 WallId
+
+                wallBody3 =
+                    Physics.Body.block wall3 WallId
+
+                wallBody4 =
+                    Physics.Body.block wall4 WallId
 
                 texturedMesh =
                     Mesh.texturedFaces meshes.textured
@@ -156,15 +211,16 @@ handleResponse loadingModel =
                     Physics.World.empty
                         |> Physics.World.withGravity (Acceleration.gees 1) Direction3d.negativeZ
                         |> Physics.World.add ducklingBody
+                        |> Physics.World.add wallBody1
+                        |> Physics.World.add wallBody2
+                        |> Physics.World.add wallBody3
+                        |> Physics.World.add wallBody4
 
                 boundingBox =
                     meshes.convex
                         |> TriangularMesh.vertices
                         |> Array.toList
                         |> BoundingBox3d.hullN
-
-                _ =
-                    Debug.log "bounds" boundingBox
             in
             Running
                 { texturedMesh = texturedMesh
@@ -175,6 +231,8 @@ handleResponse loadingModel =
                     ( Pixels.int (round viewport.viewport.width)
                     , Pixels.int (round viewport.viewport.height)
                     )
+                , pressedKeys = []
+                , animationTime = Duration.seconds 0
                 }
 
         _ ->
@@ -200,8 +258,12 @@ updateLoading msg model =
             ( Failed "Error loading texture", Cmd.none )
 
 
-simulate : Duration -> World BodyId -> World BodyId
-simulate duration world =
+simulate : Duration -> List Key -> Duration -> World BodyId -> World BodyId
+simulate duration pressedKeys animationTime world =
+    let
+        controlDirection =
+            Keyboard.Arrows.arrowsDirection pressedKeys
+    in
     world
         |> Physics.World.update
             (\body ->
@@ -218,15 +280,84 @@ simulate duration world =
                 case bodyId of
                     DucklingId ->
                         let
-                            springConstant =
-                                Force.newtons 1 |> Quantity.per (Length.centimeters 10)
+                            centerDepth =
+                                Quantity.max
+                                    (Quantity.negate (Point3d.zCoordinate bodyOrigin))
+                                    Quantity.zero
 
-                            forceMagnitude =
-                                Point3d.zCoordinate bodyOrigin
-                                    |> Quantity.negate
-                                    |> Quantity.at springConstant
+                            nominalCrossSection =
+                                Area.squareCentimeters 40
+
+                            submergedVolume =
+                                nominalCrossSection
+                                    |> Quantity.times centerDepth
+
+                            displacedMass =
+                                submergedVolume |> Quantity.at (Density.gramsPerCubicCentimeter 1)
+
+                            buoyancy =
+                                displacedMass |> Quantity.times (Acceleration.gees 1)
+
+                            ( leftSign, rightSign ) =
+                                case controlDirection of
+                                    Keyboard.Arrows.North ->
+                                        ( 1, 1 )
+
+                                    Keyboard.Arrows.NorthEast ->
+                                        ( 1, 0.5 )
+
+                                    Keyboard.Arrows.NorthWest ->
+                                        ( 0.5, 1 )
+
+                                    Keyboard.Arrows.East ->
+                                        ( 0.5, -0.5 )
+
+                                    Keyboard.Arrows.West ->
+                                        ( -0.5, 0.5 )
+
+                                    Keyboard.Arrows.South ->
+                                        ( -0.5, -0.5 )
+
+                                    Keyboard.Arrows.SouthEast ->
+                                        ( -0.5, -0.25 )
+
+                                    Keyboard.Arrows.SouthWest ->
+                                        ( -0.25, -0.5 )
+
+                                    Keyboard.Arrows.NoDirection ->
+                                        ( 0, 0 )
+
+                            maxThrust =
+                                Force.newtons 0.05
+
+                            animationDuration =
+                                Duration.seconds 0.5
+
+                            animationParameter =
+                                Quantity.ratio animationTime animationDuration
+
+                            leftMagnitude =
+                                maxThrust |> Quantity.multiplyBy (leftSign * 0.333 * (2 + sin (2 * pi * animationParameter)))
+
+                            rightMagnitude =
+                                maxThrust |> Quantity.multiplyBy (rightSign * 0.333 * (2 + cos (2 * pi * animationParameter)))
+
+                            leftPoint =
+                                Point3d.placeIn bodyFrame <|
+                                    Point3d.centimeters -1 2.25 0
+
+                            rightPoint =
+                                Point3d.placeIn bodyFrame <|
+                                    Point3d.centimeters -1 -1.75 0
+
+                            thrustDirection =
+                                Direction3d.xyZ (Angle.degrees 0) (Angle.degrees 45)
+                                    |> Direction3d.placeIn bodyFrame
                         in
-                        body |> Physics.Body.applyForce forceMagnitude Direction3d.z bodyOrigin
+                        body
+                            |> Physics.Body.applyForce buoyancy Direction3d.z bodyOrigin
+                            |> Physics.Body.applyForce leftMagnitude thrustDirection leftPoint
+                            |> Physics.Body.applyForce rightMagnitude thrustDirection rightPoint
 
                     _ ->
                         body
@@ -237,13 +368,35 @@ simulate duration world =
 updateRunning : RunningMsg -> RunningModel -> ( Model, Cmd Msg )
 updateRunning msg model =
     case msg of
-        Tick duration ->
-            ( Running { model | world = simulate duration model.world }
+        Tick ->
+            let
+                frameLength =
+                    Duration.milliseconds 16
+            in
+            ( Running
+                { model
+                    | world =
+                        simulate frameLength
+                            model.pressedKeys
+                            model.animationTime
+                            model.world
+                    , animationTime =
+                        model.animationTime |> Quantity.plus frameLength
+                }
             , Cmd.none
             )
 
         Resize width height ->
             ( Running { model | screenDimensions = ( Pixels.int width, Pixels.int height ) }
+            , Cmd.none
+            )
+
+        KeyboardMsg keyboardMsg ->
+            ( Running
+                { model
+                    | pressedKeys = Keyboard.update keyboardMsg model.pressedKeys
+                    , animationTime = Duration.seconds 0
+                }
             , Cmd.none
             )
 
@@ -273,8 +426,9 @@ subscriptions model =
         Running _ ->
             Sub.map RunningMsg <|
                 Sub.batch
-                    [ Browser.Events.onAnimationFrameDelta (Duration.milliseconds >> Tick)
-                    , Browser.Events.onResize Resize
+                    [ Browser.Events.onResize Resize
+                    , Browser.Events.onAnimationFrameDelta (always Tick)
+                    , Sub.map KeyboardMsg Keyboard.subscriptions
                     ]
 
         Failed _ ->
@@ -287,27 +441,31 @@ viewRunning model =
         ( width, height ) =
             model.screenDimensions
 
+        testCamera =
+            Camera3d.orthographic
+                { viewpoint =
+                    Viewpoint3d.orbitZ
+                        { focalPoint = Point3d.origin
+                        , distance = Length.meters 1
+                        , azimuth = Angle.degrees 0
+                        , elevation = Angle.degrees 0
+                        }
+                , viewportHeight = Length.centimeters 20
+                }
+
         camera =
             Camera3d.perspective
                 { viewpoint =
                     Viewpoint3d.orbitZ
-                        { focalPoint = Point3d.origin
-                        , distance = Length.meters 7
+                        { focalPoint = Point3d.centimeters 10 10 0
+                        , distance = Length.centimeters 75
                         , azimuth = Angle.degrees 30
-                        , elevation = Angle.degrees 32
+                        , elevation = Angle.degrees 30
                         }
                 , verticalFieldOfView = Angle.degrees 30
                 }
-    in
-    Scene3d.sunny
-        { upDirection = Direction3d.z
-        , sunlightDirection = Direction3d.negativeZ
-        , shadows = True
-        , camera = camera
-        , dimensions = model.screenDimensions
-        , background = Scene3d.transparentBackground
-        , clipDepth = Length.meters 0.1
-        , entities =
+
+        physicsEntities =
             model.world
                 |> Physics.World.bodies
                 |> List.map
@@ -335,6 +493,37 @@ viewRunning model =
                             _ ->
                                 Scene3d.nothing
                     )
+
+        axes =
+            Scene3d.group
+                [ Scene3d.lineSegment (Material.color Color.red) (LineSegment3d.from Point3d.origin (Point3d.centimeters 20 0 0))
+                , Scene3d.lineSegment (Material.color Color.green) (LineSegment3d.from Point3d.origin (Point3d.centimeters 0 20 0))
+                , Scene3d.lineSegment (Material.color Color.blue) (LineSegment3d.from Point3d.origin (Point3d.centimeters 0 0 20))
+                ]
+
+        water =
+            Scene3d.quad (Material.color Color.blue)
+                (Point3d.centimeters -30 -30 0)
+                (Point3d.centimeters 30 -30 0)
+                (Point3d.centimeters 30 30 0)
+                (Point3d.centimeters -30 30 0)
+
+        walls =
+            Scene3d.group
+                (List.map (Scene3d.block (Material.matte Color.darkGreen)) [ wall1, wall2, wall3, wall4 ])
+                |> Scene3d.placeIn Frame3d.atOrigin
+    in
+    Scene3d.cloudy
+        { camera = camera
+        , upDirection = Direction3d.z
+        , dimensions = model.screenDimensions
+        , background = Scene3d.transparentBackground
+        , clipDepth = Length.meters 0.1
+        , entities =
+            [ Scene3d.group physicsEntities
+            , walls
+            , water
+            ]
         }
 
 
