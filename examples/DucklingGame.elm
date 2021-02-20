@@ -29,6 +29,7 @@ import Mass exposing (Mass)
 import Obj.Decode exposing (Decoder, ObjCoordinates)
 import Physics.Body exposing (Body)
 import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
+import Physics.Material
 import Physics.Shape exposing (Shape)
 import Physics.World exposing (World)
 import Pixels exposing (Pixels)
@@ -64,7 +65,10 @@ type alias Meshes =
 
 type alias LoadingModel =
     { meshes : Maybe Meshes
-    , texture : Maybe (Material.Texture Color)
+    , ducklingTexture : Maybe (Material.Texture Color)
+    , ballColorTexture : Maybe (Material.Texture Color)
+    , ballMetallicTexture : Maybe (Material.Texture Float)
+    , ballRoughnessTexture : Maybe (Material.Texture Float)
     , viewport : Maybe Browser.Dom.Viewport
     }
 
@@ -78,7 +82,10 @@ type BodyId
 type alias RunningModel =
     { texturedMesh : Mesh.Textured BodyCoordinates
     , shadowMesh : Mesh.Shadow BodyCoordinates
-    , texture : Material.Texture Color
+    , ducklingTexture : Material.Texture Color
+    , ballColorTexture : Material.Texture Color
+    , ballMetallicTexture : Material.Texture Float
+    , ballRoughnessTexture : Material.Texture Float
     , world : World BodyId
     , screenDimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , pressedKeys : List Key
@@ -95,7 +102,10 @@ type Model
 type LoadingMsg
     = GotInitialViewport Browser.Dom.Viewport
     | MeshesResponse (Result Http.Error Meshes)
-    | TextureResponse (Result WebGL.Texture.Error (Material.Texture Color))
+    | DucklingTextureResponse (Result WebGL.Texture.Error (Material.Texture Color))
+    | BallColorTextureResponse (Result WebGL.Texture.Error (Material.Texture Color))
+    | BallMetallicTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
+    | BallRoughnessTextureResponse (Result WebGL.Texture.Error (Material.Texture Float))
 
 
 type RunningMsg
@@ -123,12 +133,28 @@ decodeMeshes =
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( Loading { meshes = Nothing, texture = Nothing, viewport = Nothing }
+    ( Loading
+        { meshes = Nothing
+        , ducklingTexture = Nothing
+        , ballColorTexture = Nothing
+        , ballMetallicTexture = Nothing
+        , ballRoughnessTexture = Nothing
+        , viewport = Nothing
+        }
     , Cmd.map LoadingMsg <|
         Cmd.batch
-            [ Task.attempt TextureResponse <|
+            [ Task.attempt DucklingTextureResponse <|
                 Material.loadWith Material.trilinearFiltering
                     "https://ianmackenzie.github.io/elm-3d-scene/examples/duckling.png"
+            , Task.attempt BallColorTextureResponse <|
+                Material.loadWith Material.trilinearFiltering
+                    "https://ianmackenzie.github.io/elm-3d-scene/examples/ornament/ChristmasTreeOrnament003_2K_Color.jpg"
+            , Task.attempt BallRoughnessTextureResponse <|
+                Material.loadWith Material.trilinearFiltering
+                    "https://ianmackenzie.github.io/elm-3d-scene/examples/ornament/ChristmasTreeOrnament003_2K_Roughness.jpg"
+            , Task.attempt BallMetallicTextureResponse <|
+                Material.loadWith Material.trilinearFiltering
+                    "https://ianmackenzie.github.io/elm-3d-scene/examples/ornament/ChristmasTreeOrnament003_2K_Metalness.jpg"
             , Http.get
                 { url = "https://ianmackenzie.github.io/elm-3d-scene/examples/duckling-with-hull.obj"
                 , expect =
@@ -161,10 +187,19 @@ wall4 =
     Block3d.rotateAround Axis3d.z (Angle.degrees 90) wall3
 
 
+ballRadius : Length
+ballRadius =
+    Length.centimeters 6
+
+
+type SixMaybes a b c d e f
+    = SixMaybes (Maybe a) (Maybe b) (Maybe c) (Maybe d) (Maybe e) (Maybe f)
+
+
 handleResponse : LoadingModel -> Model
 handleResponse loadingModel =
-    case ( loadingModel.meshes, loadingModel.texture, loadingModel.viewport ) of
-        ( Just meshes, Just texture, Just viewport ) ->
+    case SixMaybes loadingModel.meshes loadingModel.ducklingTexture loadingModel.viewport loadingModel.ballColorTexture loadingModel.ballRoughnessTexture loadingModel.ballMetallicTexture of
+        SixMaybes (Just meshes) (Just ducklingTexture) (Just viewport) (Just ballColorTexture) (Just ballRoughnessTexture) (Just ballMetallicTexture) ->
             let
                 ducklingShape =
                     Physics.Shape.unsafeConvex meshes.convex
@@ -177,6 +212,27 @@ handleResponse loadingModel =
                 ducklingBehavior =
                     Physics.Body.dynamic (Mass.grams 40)
 
+                ducklingMaterial =
+                    Physics.Material.custom
+                        { friction = 0.0005
+                        , bounciness = 0.75
+                        }
+
+                ballBehavior =
+                    Physics.Body.dynamic (Mass.grams 10)
+
+                ballMaterial =
+                    Physics.Material.custom
+                        { friction = 0.05
+                        , bounciness = 0.75
+                        }
+
+                wallMaterial =
+                    Physics.Material.custom
+                        { friction = 0.0005
+                        , bounciness = 0
+                        }
+
                 ducklingBody =
                     Physics.Body.compound
                         [ ducklingShape
@@ -184,22 +240,37 @@ handleResponse loadingModel =
                         ]
                         DucklingId
                         |> Physics.Body.withBehavior ducklingBehavior
+                        |> Physics.Body.withMaterial ducklingMaterial
                         |> Physics.Body.withDamping
                             { linear = 0.99
                             , angular = 0.95
                             }
 
+                ballBody =
+                    Physics.Body.sphere (Sphere3d.atOrigin ballRadius) BallId
+                        |> Physics.Body.withBehavior ballBehavior
+                        |> Physics.Body.withMaterial ballMaterial
+                        |> Physics.Body.withDamping
+                            { linear = 0.99
+                            , angular = 0.8
+                            }
+                        |> Physics.Body.translateBy (Vector3d.centimeters 15 -5 5)
+
                 wallBody1 =
                     Physics.Body.block wall1 WallId
+                        |> Physics.Body.withMaterial wallMaterial
 
                 wallBody2 =
                     Physics.Body.block wall2 WallId
+                        |> Physics.Body.withMaterial wallMaterial
 
                 wallBody3 =
                     Physics.Body.block wall3 WallId
+                        |> Physics.Body.withMaterial wallMaterial
 
                 wallBody4 =
                     Physics.Body.block wall4 WallId
+                        |> Physics.Body.withMaterial wallMaterial
 
                 texturedMesh =
                     Mesh.texturedFaces meshes.textured
@@ -211,6 +282,7 @@ handleResponse loadingModel =
                     Physics.World.empty
                         |> Physics.World.withGravity (Acceleration.gees 1) Direction3d.negativeZ
                         |> Physics.World.add ducklingBody
+                        |> Physics.World.add ballBody
                         |> Physics.World.add wallBody1
                         |> Physics.World.add wallBody2
                         |> Physics.World.add wallBody3
@@ -225,7 +297,10 @@ handleResponse loadingModel =
             Running
                 { texturedMesh = texturedMesh
                 , shadowMesh = shadowMesh
-                , texture = texture
+                , ducklingTexture = ducklingTexture
+                , ballColorTexture = ballColorTexture
+                , ballRoughnessTexture = ballRoughnessTexture
+                , ballMetallicTexture = ballMetallicTexture
                 , world = world
                 , screenDimensions =
                     ( Pixels.int (round viewport.viewport.width)
@@ -248,14 +323,32 @@ updateLoading msg model =
         MeshesResponse (Ok meshes) ->
             ( handleResponse { model | meshes = Just meshes }, Cmd.none )
 
-        TextureResponse (Ok texture) ->
-            ( handleResponse { model | texture = Just texture }, Cmd.none )
+        DucklingTextureResponse (Ok texture) ->
+            ( handleResponse { model | ducklingTexture = Just texture }, Cmd.none )
+
+        BallColorTextureResponse (Ok texture) ->
+            ( handleResponse { model | ballColorTexture = Just texture }, Cmd.none )
+
+        BallRoughnessTextureResponse (Ok texture) ->
+            ( handleResponse { model | ballRoughnessTexture = Just texture }, Cmd.none )
+
+        BallMetallicTextureResponse (Ok texture) ->
+            ( handleResponse { model | ballMetallicTexture = Just texture }, Cmd.none )
 
         MeshesResponse (Err _) ->
             ( Failed "Error loading meshes", Cmd.none )
 
-        TextureResponse (Err _) ->
-            ( Failed "Error loading texture", Cmd.none )
+        DucklingTextureResponse (Err _) ->
+            ( Failed "Error loading duckling texture", Cmd.none )
+
+        BallColorTextureResponse (Err _) ->
+            ( Failed "Error loading ball color texture", Cmd.none )
+
+        BallRoughnessTextureResponse (Err _) ->
+            ( Failed "Error loading ball roughness texture", Cmd.none )
+
+        BallMetallicTextureResponse (Err _) ->
+            ( Failed "Error loading ball metallic texture", Cmd.none )
 
 
 simulate : Duration -> List Key -> Duration -> World BodyId -> World BodyId
@@ -344,11 +437,11 @@ simulate duration pressedKeys animationTime world =
 
                             leftPoint =
                                 Point3d.placeIn bodyFrame <|
-                                    Point3d.centimeters -1 2.25 0
+                                    Point3d.centimeters -1.5 2.25 0
 
                             rightPoint =
                                 Point3d.placeIn bodyFrame <|
-                                    Point3d.centimeters -1 -1.75 0
+                                    Point3d.centimeters -1.5 -1.75 0
 
                             thrustDirection =
                                 Direction3d.xyZ (Angle.degrees 0) (Angle.degrees 45)
@@ -359,7 +452,34 @@ simulate duration pressedKeys animationTime world =
                             |> Physics.Body.applyForce leftMagnitude thrustDirection leftPoint
                             |> Physics.Body.applyForce rightMagnitude thrustDirection rightPoint
 
-                    _ ->
+                    BallId ->
+                        let
+                            z0 =
+                                Point3d.zCoordinate bodyOrigin
+                        in
+                        if z0 |> Quantity.greaterThan ballRadius then
+                            body
+
+                        else
+                            let
+                                h =
+                                    ballRadius |> Quantity.minus z0
+
+                                submergedVolume =
+                                    Quantity.multiplyBy (pi / 3) (Quantity.squared h)
+                                        |> Quantity.times
+                                            (Quantity.multiplyBy 3 ballRadius |> Quantity.minus h)
+
+                                displacedMass =
+                                    submergedVolume |> Quantity.at (Density.gramsPerCubicCentimeter 1)
+
+                                buoyancy =
+                                    displacedMass |> Quantity.times (Acceleration.gees 1)
+                            in
+                            body
+                                |> Physics.Body.applyForce buoyancy Direction3d.z bodyOrigin
+
+                    WallId ->
                         body
             )
         |> Physics.World.simulate duration
@@ -479,8 +599,15 @@ viewRunning model =
 
                             ducklingMaterial =
                                 Material.texturedNonmetal
-                                    { baseColor = model.texture
+                                    { baseColor = model.ducklingTexture
                                     , roughness = Material.constant 0.25
+                                    }
+
+                            ballMaterial =
+                                Material.texturedPbr
+                                    { baseColor = model.ballColorTexture
+                                    , roughness = model.ballRoughnessTexture
+                                    , metallic = model.ballMetallicTexture
                                     }
                         in
                         case bodyId of
@@ -490,8 +617,13 @@ viewRunning model =
                                     model.shadowMesh
                                     |> Scene3d.placeIn bodyFrame
 
-                            _ ->
+                            WallId ->
                                 Scene3d.nothing
+
+                            BallId ->
+                                Scene3d.sphere ballMaterial
+                                    (Sphere3d.atOrigin ballRadius)
+                                    |> Scene3d.placeIn bodyFrame
                     )
 
         axes =
