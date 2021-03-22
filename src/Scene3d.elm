@@ -537,8 +537,8 @@ To render an object with a shadow, you would generally do something like:
 
     entity =
         Scene3d.meshWithShadow
-            objectMesh
             objectMaterial
+            objectMesh
             objectShadow
 
 -}
