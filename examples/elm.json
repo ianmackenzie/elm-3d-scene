@@ -16,7 +16,7 @@
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm-explorations/linear-algebra": "1.0.3",
-            "elm-explorations/webgl": "1.1.2",
+            "elm-explorations/webgl": "1.1.3",
             "ianmackenzie/elm-1d-parameter": "1.0.1",
             "ianmackenzie/elm-3d-camera": "3.1.0",
             "ianmackenzie/elm-float-extra": "1.1.0",
