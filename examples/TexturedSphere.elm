@@ -281,11 +281,12 @@ view model =
                 -- want to use a constant value for one or two of the parameters
                 -- instead of an actual texture.
                 material =
-                    Material.normalMappedPbr
+                    Material.bumpyPbr
                         { baseColor = colorTexture
                         , roughness = roughnessTexture
                         , metallic = Material.constant 0
                         , normalMap = normalMap
+                        , ambientOcclusion = Material.constant 1
                         }
             in
             Scene3d.custom

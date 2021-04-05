@@ -23,10 +23,10 @@ import TriangularMesh
 import Vector3d exposing (Vector3d)
 
 
-sphere : Mesh.NormalMapped coordinates
+sphere : Mesh.Bumpy coordinates
 sphere =
     Mesh.cullBackFaces <|
-        Mesh.normalMappedFaces <|
+        Mesh.bumpyFaces <|
             TriangularMesh.grid 72 72 <|
                 \u v ->
                     let

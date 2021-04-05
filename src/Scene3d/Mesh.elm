@@ -1,10 +1,10 @@
 module Scene3d.Mesh exposing
     ( Mesh
-    , Plain, Uniform, Unlit, Textured, NormalMapped
+    , Plain, Uniform, Unlit, Textured, Bumpy
     , points, lineSegments, polyline, triangles, facets
     , indexedTriangles, indexedFacets, indexedFaces
     , texturedTriangles, texturedFacets, texturedFaces
-    , normalMappedFaces
+    , bumpyFaces
     , Shadow, shadow
     , cullBackFaces
     )
@@ -33,7 +33,7 @@ to transform meshes around without having to recreate them.
 These type aliases make it easier to write down type annotations for meshes you
 store in your model or return from a function.
 
-@docs Plain, Uniform, Unlit, Textured, NormalMapped
+@docs Plain, Uniform, Unlit, Textured, Bumpy
 
 
 # Constructors
@@ -61,9 +61,9 @@ to be used.
 @docs texturedTriangles, texturedFacets, texturedFaces
 
 
-## Normal-mapped meshes
+## Bumpy meshes
 
-@docs normalMappedFaces
+@docs bumpyFaces
 
 
 # Shadows
@@ -162,7 +162,7 @@ type alias Textured coordinates =
 {-| A mesh with normal vectors, UV coordinates and tangent vectors at each
 vertex, allowing for full texturing including normal maps.
 -}
-type alias NormalMapped coordinates =
+type alias Bumpy coordinates =
     Mesh coordinates { normals : (), uvs : (), tangents : () }
 
 
@@ -624,7 +624,7 @@ texturedFaces givenMesh =
             Types.MeshWithNormalsAndUvs bounds givenMesh webGLMesh KeepBackFaces
 
 
-collectNormalMapped :
+collectBumpy :
     { position : Point3d Meters coordinates
     , normal : Vector3d Unitless coordinates
     , uv : ( Float, Float )
@@ -633,7 +633,7 @@ collectNormalMapped :
     }
     -> List VertexWithTangent
     -> List VertexWithTangent
-collectNormalMapped { position, normal, uv, tangent, tangentBasisIsRightHanded } accumulated =
+collectBumpy { position, normal, uv, tangent, tangentBasisIsRightHanded } accumulated =
     let
         ( u, v ) =
             uv
@@ -664,7 +664,7 @@ collectNormalMapped { position, normal, uv, tangent, tangentBasisIsRightHanded }
     vertex :: accumulated
 
 
-normalMappedFaces :
+bumpyFaces :
     TriangularMesh
         { position : Point3d Meters coordinates
         , normal : Vector3d Unitless coordinates
@@ -672,11 +672,11 @@ normalMappedFaces :
         , tangent : Vector3d Unitless coordinates
         , tangentBasisIsRightHanded : Bool
         }
-    -> NormalMapped coordinates
-normalMappedFaces givenMesh =
+    -> Bumpy coordinates
+bumpyFaces givenMesh =
     let
         collectedVertices =
-            Array.foldr collectNormalMapped [] (TriangularMesh.vertices givenMesh)
+            Array.foldr collectBumpy [] (TriangularMesh.vertices givenMesh)
     in
     case collectedVertices of
         [] ->

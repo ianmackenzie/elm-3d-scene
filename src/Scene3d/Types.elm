@@ -86,8 +86,8 @@ type alias VertexWithTangent =
 type Material coordinates attributes
     = UnlitMaterial TextureMap (Texture Vec3)
     | EmissiveMaterial TextureMap (Texture (LinearRgb Unitless)) Luminance
-    | LambertianMaterial TextureMap (Texture (LinearRgb Unitless)) NormalMap
-    | PbrMaterial TextureMap (Texture (LinearRgb Unitless)) (Texture Float) (Texture Float) NormalMap
+    | LambertianMaterial TextureMap (Texture (LinearRgb Unitless)) (Texture Float) NormalMap
+    | PbrMaterial TextureMap (Texture (LinearRgb Unitless)) (Texture Float) (Texture Float) (Texture Float) NormalMap
 
 
 type NormalMap

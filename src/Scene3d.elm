@@ -405,14 +405,14 @@ sphereWithShadow givenMaterial givenSphere =
 
 {-| Like `sphere`, but can accept a normal-mapped material.
 -}
-normalMappedSphere : Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+normalMappedSphere : Material.Bumpy coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 normalMappedSphere givenMaterial givenSphere =
     Entity.sphere True False givenMaterial givenSphere
 
 
 {-| Like `sphereWithShadow`, but can accept a normal-mapped material.
 -}
-normalMappedSphereWithShadow : Material.NormalMapped coordinates -> Sphere3d Meters coordinates -> Entity coordinates
+normalMappedSphereWithShadow : Material.Bumpy coordinates -> Sphere3d Meters coordinates -> Entity coordinates
 normalMappedSphereWithShadow givenMaterial givenSphere =
     Entity.sphere True True givenMaterial givenSphere
 

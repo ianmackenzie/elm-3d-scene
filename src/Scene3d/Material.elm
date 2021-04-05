@@ -6,8 +6,8 @@ module Scene3d.Material exposing
     , texturedColor, texturedEmissive, texturedMatte, texturedNonmetal, texturedMetal, texturedPbr
     , loadWith, nearestNeighborFiltering, bilinearFiltering, trilinearFiltering
     , NormalMap, loadNormalMap, noNormalMap, loadNormalMapWith, NormalMapFormat, openglFormat, directxFormat
-    , normalMappedMatte, normalMappedNonmetal, normalMappedMetal, normalMappedPbr
-    , Plain, Unlit, Uniform, Textured, NormalMapped
+    , bumpyMatte, bumpyNonmetal, bumpyMetal, bumpyPbr
+    , Plain, Unlit, Uniform, Textured, Bumpy
     , plain, unlit, uniform, textured
     )
 
@@ -60,11 +60,11 @@ needed.
 @docs loadWith, nearestNeighborFiltering, bilinearFiltering, trilinearFiltering
 
 
-## Normal-mapped materials
+## Bumpy materials
 
 @docs NormalMap, loadNormalMap, noNormalMap, loadNormalMapWith, NormalMapFormat, openglFormat, directxFormat
 
-@docs normalMappedMatte, normalMappedNonmetal, normalMappedMetal, normalMappedPbr
+@docs bumpyMatte, bumpyNonmetal, bumpyMetal, bumpyPbr
 
 
 # Type annotations
@@ -96,7 +96,7 @@ Then, if you need to turn this value _back_ into a
 saying "yes, I know this is a uniform material, but I still want to apply it to
 this textured mesh".
 
-@docs Plain, Unlit, Uniform, Textured, NormalMapped
+@docs Plain, Unlit, Uniform, Textured, Bumpy
 
 @docs plain, unlit, uniform, textured
 
@@ -162,6 +162,7 @@ matte : Color -> Material coordinates { a | normals : () }
 matte materialColor =
     Types.LambertianMaterial Types.UseMeshUvs
         (Types.Constant (ColorConversions.colorToLinearRgb materialColor))
+        (constant 1)
         Types.NoNormalMap
 
 
@@ -232,6 +233,7 @@ pbr { baseColor, roughness, metallic } =
         (Types.Constant (ColorConversions.colorToLinearRgb baseColor))
         (Types.Constant (clamp 0 1 roughness))
         (Types.Constant (clamp 0 1 metallic))
+        (Types.Constant 1)
         Types.NoNormalMap
 
 
@@ -462,6 +464,7 @@ texturedMatte : Texture Color -> Material coordinates { a | normals : (), uvs : 
 texturedMatte colorTexture =
     Types.LambertianMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb colorTexture)
+        (constant 1)
         Types.NoNormalMap
 
 
@@ -544,6 +547,7 @@ texturedPbr { baseColor, roughness, metallic } =
         (map ColorConversions.colorToLinearRgb baseColor)
         (map (clamp 0 1) roughness)
         (map (clamp 0 1) metallic)
+        (constant 1)
         Types.NoNormalMap
 
 
@@ -565,55 +569,62 @@ loadNormalMap url =
     loadNormalMapWith { format = openglFormat, options = trilinearFiltering } url
 
 
-normalMappedMatte : Texture Color -> NormalMap -> NormalMapped coordinates
-normalMappedMatte colorTexture normalMapTexture =
+bumpyMatte : Texture Color -> Texture Float -> NormalMap -> Bumpy coordinates
+bumpyMatte colorTexture ambientOcclusionTexture normalMapTexture =
     Types.LambertianMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb colorTexture)
+        ambientOcclusionTexture
         normalMapTexture
 
 
-normalMappedMetal :
+bumpyMetal :
     { baseColor : Texture Color
     , roughness : Texture Float
+    , ambientOcclusion : Texture Float
     , normalMap : NormalMap
     }
-    -> NormalMapped coordinates
-normalMappedMetal { baseColor, roughness, normalMap } =
-    normalMappedPbr
+    -> Bumpy coordinates
+bumpyMetal { baseColor, roughness, ambientOcclusion, normalMap } =
+    bumpyPbr
         { baseColor = baseColor
         , roughness = roughness
         , metallic = constant 1
+        , ambientOcclusion = ambientOcclusion
         , normalMap = normalMap
         }
 
 
-normalMappedNonmetal :
+bumpyNonmetal :
     { baseColor : Texture Color
     , roughness : Texture Float
+    , ambientOcclusion : Texture Float
     , normalMap : NormalMap
     }
-    -> NormalMapped coordinates
-normalMappedNonmetal { baseColor, roughness, normalMap } =
-    normalMappedPbr
+    -> Bumpy coordinates
+bumpyNonmetal { baseColor, roughness, ambientOcclusion, normalMap } =
+    bumpyPbr
         { baseColor = baseColor
         , roughness = roughness
         , metallic = constant 0
+        , ambientOcclusion = ambientOcclusion
         , normalMap = normalMap
         }
 
 
-normalMappedPbr :
+bumpyPbr :
     { baseColor : Texture Color
     , roughness : Texture Float
     , metallic : Texture Float
+    , ambientOcclusion : Texture Float
     , normalMap : NormalMap
     }
-    -> NormalMapped coordinates
-normalMappedPbr { baseColor, roughness, metallic, normalMap } =
+    -> Bumpy coordinates
+bumpyPbr { baseColor, roughness, metallic, ambientOcclusion, normalMap } =
     Types.PbrMaterial Types.UseMeshUvs
         (map ColorConversions.colorToLinearRgb baseColor)
         (map (clamp 0 1) roughness)
         (map (clamp 0 1) metallic)
+        (map (clamp 0 1) ambientOcclusion)
         normalMap
 
 
@@ -650,7 +661,7 @@ type alias Anisotropic coordinates =
     Material coordinates { normals : (), tangents : () }
 
 
-type alias NormalMapped coordinates =
+type alias Bumpy coordinates =
     Material coordinates { normals : (), uvs : (), tangents : () }
 
 
@@ -702,8 +713,8 @@ coerce material =
         Types.EmissiveMaterial textureMap colorTexture brightness ->
             Types.EmissiveMaterial textureMap colorTexture brightness
 
-        Types.LambertianMaterial textureMap colorTexture normalMapTexture ->
-            Types.LambertianMaterial textureMap colorTexture normalMapTexture
+        Types.LambertianMaterial textureMap colorTexture ambientOcclusionTexture normalMapTexture ->
+            Types.LambertianMaterial textureMap colorTexture ambientOcclusionTexture normalMapTexture
 
-        Types.PbrMaterial textureMap colorTexture roughnessTexture metallicTexture normalMapTexture ->
-            Types.PbrMaterial textureMap colorTexture roughnessTexture metallicTexture normalMapTexture
+        Types.PbrMaterial textureMap colorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture ->
+            Types.PbrMaterial textureMap colorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture
