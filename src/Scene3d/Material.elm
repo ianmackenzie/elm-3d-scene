@@ -72,7 +72,7 @@ needed.
 The functions in this module all return values with a 'free' type parameter -
 for example, the return type of `Material.matte` is
 
-    Material coordinates { a | normals : () }
+    Material coordinates { a | normals = () }
 
 This makes most code simpler (it means that such a material can work with _any_
 kind of mesh that has normal vectors, even if for example that mesh also has
@@ -89,7 +89,7 @@ aliases. For example, the material above might be stored as a
 
 Then, if you need to turn this value _back_ into a
 
-    Material coordinates { a | normals : () }
+    Material coordinates { a | normals = () }
 
 (so that you could apply it to a textured mesh, for example) you can use
 `Material.uniform` to do so. You can think of `Material.uniform material` as
@@ -105,10 +105,12 @@ this textured mesh".
 import Color exposing (Color)
 import Luminance exposing (Luminance)
 import Math.Vector3 exposing (Vec3)
+import Math.Vector4 exposing (Vec4)
 import Quantity
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Types as Types exposing (Chromaticity, LinearRgb(..), NormalMapFormat)
 import Task exposing (Task)
+import WebGL exposing (alpha)
 import WebGL.Texture
 
 
@@ -143,7 +145,7 @@ given color will be ignored.
 -}
 color : Color -> Material coordinates attributes
 color givenColor =
-    Types.UnlitMaterial Types.UseMeshUvs (Types.Constant (toVec3 givenColor))
+    Types.UnlitMaterial Types.UseMeshUvs (Types.Constant (toVec4 givenColor))
 
 
 {-| A perfectly matte ([Lambertian](https://en.wikipedia.org/wiki/Lambertian_reflectance))
@@ -436,13 +438,13 @@ map function texture =
             Types.Texture properties
 
 
-toVec3 : Color -> Vec3
-toVec3 givenColor =
+toVec4 : Color -> Vec4
+toVec4 givenColor =
     let
-        { red, green, blue } =
+        { red, green, blue, alpha } =
             Color.toRgba givenColor
     in
-    Math.Vector3.vec3 red green blue
+    Math.Vector4.vec4 red green blue alpha
 
 
 {-| A textured plain-color material, unaffected by lighting.
@@ -452,7 +454,7 @@ toVec3 givenColor =
 -}
 texturedColor : Texture Color -> Material coordinates { a | uvs : () }
 texturedColor colorTexture =
-    Types.UnlitMaterial Types.UseMeshUvs (map toVec3 colorTexture)
+    Types.UnlitMaterial Types.UseMeshUvs (map toVec4 colorTexture)
 
 
 {-| A textured matte material.

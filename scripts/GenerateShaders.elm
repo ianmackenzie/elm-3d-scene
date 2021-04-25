@@ -117,7 +117,7 @@ pointRadius =
 
 constantColor : Glsl.Uniform
 constantColor =
-    Glsl.uniform Glsl.lowp Glsl.vec3 "constantColor"
+    Glsl.uniform Glsl.lowp Glsl.vec4 "constantColor"
 
 
 colorTexture : Glsl.Uniform
@@ -127,7 +127,7 @@ colorTexture =
 
 emissiveColor : Glsl.Uniform
 emissiveColor =
-    Glsl.uniform Glsl.mediump Glsl.vec3 "emissiveColor"
+    Glsl.uniform Glsl.mediump Glsl.vec4 "emissiveColor"
 
 
 backlight : Glsl.Uniform
@@ -137,7 +137,7 @@ backlight =
 
 baseColor : Glsl.Uniform
 baseColor =
-    Glsl.uniform Glsl.lowp Glsl.vec3 "baseColor"
+    Glsl.uniform Glsl.lowp Glsl.vec4 "baseColor"
 
 
 baseColorTexture : Glsl.Uniform
@@ -232,9 +232,9 @@ enabledLights =
 
 materialColor : Glsl.Uniform
 materialColor =
-    Glsl.uniform Glsl.lowp Glsl.vec3 "materialColor"
+    Glsl.uniform Glsl.lowp Glsl.vec4 "materialColor"
 
-    
+
 constantMaterialColor : Glsl.Uniform
 constantMaterialColor =
     Glsl.uniform Glsl.lowp Glsl.vec4 "constantMaterialColor"
@@ -494,15 +494,14 @@ toSrgb : Glsl.Function
 toSrgb =
     Glsl.function { dependencies = [ toneMap, gammaCorrect ], constants = [] }
         """
-        vec4 toSrgb(vec3 linearColor, mat4 sceneProperties) {
+        vec3 toSrgb(vec3 linearColor, mat4 sceneProperties) {
             vec3 referenceWhite = sceneProperties[2].rgb;
             float unitR = linearColor.r / referenceWhite.r;
             float unitG = linearColor.g / referenceWhite.g;
             float unitB = linearColor.b / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
-            return vec4(toneMapped, 1.0);
+            return toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
         }
         """
 
@@ -1036,16 +1035,16 @@ softLighting =
             vec3 vT1 = vec3(0.0, 1.0, 0.0);
             vec3 vT2 = cross(vH, vT1);
             float s = 0.5 * (1.0 + vH.z);
-            
+
             vec3 localHalfDirection = sampleFacetNormal(vH, vT1, vT2, s, alpha);
             vec3 localLightDirection = vec3(0.0, 0.0, 0.0);
-            
+
             localLightDirection = -reflect(localViewDirection, localHalfDirection);
             vec3 specular = softLightingSpecularSample(luminanceAbove, luminanceBelow, localUpDirection, localViewDirection, localLightDirection, localHalfDirection, alphaSquared, specularBaseColor);
-            
+
             localLightDirection = vec3(0.000000, 0.000000, 1.000000);
             vec3 diffuse = softLightingLuminance(luminanceAbove, luminanceBelow, localUpDirection, localLightDirection) * localLightDirection.z;
-            
+
             return specular + diffuse * diffuseBaseColor;
         }
         """
@@ -1743,7 +1742,7 @@ constantFragmentShader =
         }
         """
         void main () {
-            gl_FragColor = vec4(constantColor, 1.0);
+            gl_FragColor = constantColor;
         }
         """
 
@@ -1776,8 +1775,8 @@ constantPointFragmentShader =
         """
         void main () {
             float supersampling = sceneProperties[3][0];
-            float alpha = pointAlpha(pointRadius * supersampling, gl_PointCoord);
-            gl_FragColor = vec4(constantColor, alpha);
+            float alpha = constantColor.a * pointAlpha(pointRadius * supersampling, gl_PointCoord);
+            gl_FragColor = vec4(constantColor.rgb, alpha);
         }
         """
 
@@ -1793,7 +1792,7 @@ emissiveFragmentShader =
         }
         """
         void main () {
-            gl_FragColor = toSrgb(emissiveColor, sceneProperties);
+            gl_FragColor = vec4(toSrgb(emissiveColor.rgb, sceneProperties), emissiveColor.a);
         }
         """
 
@@ -1809,8 +1808,9 @@ emissiveTextureFragmentShader =
         }
         """
         void main () {
-            vec3 emissiveColor = fromSrgb(texture2D(colorTexture, interpolatedUv).rgb) * backlight;
-            gl_FragColor = toSrgb(emissiveColor, sceneProperties);
+            vec4 textureColor = texture2D(colorTexture, interpolatedUv);
+            vec3 emissiveColor = fromSrgb(textureColor.rgb) * backlight;
+            gl_FragColor = vec4(toSrgb(emissiveColor, sceneProperties), textureColor.a);
         }
         """
 
@@ -1826,9 +1826,9 @@ emissivePointFragmentShader =
         }
         """
         void main () {
-            vec4 color = toSrgb(emissiveColor, sceneProperties);
+            vec3 color = toSrgb(emissiveColor, sceneProperties);
             float supersampling = sceneProperties[3][0];
-            float alpha = pointAlpha(pointRadius * supersampling, gl_PointCoord);
+            float alpha = emissiveColor.a * pointAlpha(pointRadius * supersampling, gl_PointCoord);
             gl_FragColor = vec4(color.rgb, alpha);
         }
         """
@@ -1866,7 +1866,7 @@ lambertianFragmentShader =
             vec3 linearColor = lambertianLighting(
                 interpolatedPosition,
                 normalDirection,
-                materialColor,
+                materialColor.rgb,
                 ambientOcclusion,
                 lights12,
                 lights34,
@@ -1875,7 +1875,7 @@ lambertianFragmentShader =
                 enabledLights
             );
 
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
+            gl_FragColor = vec4(toSrgb(linearColor, sceneProperties), materialColor.a);
         }
         """
 
@@ -1925,7 +1925,7 @@ lambertianTextureFragmentShader =
             vec3 linearColor = lambertianLighting(
                 interpolatedPosition,
                 normalDirection,
-                materialColor,
+                materialColor.rgb,
                 ambientOcclusion,
                 lights12,
                 lights34,
@@ -1934,7 +1934,7 @@ lambertianTextureFragmentShader =
                 enabledLights
             );
 
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
+            gl_FragColor = vec4(toSrgb(linearColor, sceneProperties), materialColor.a);
         }
         """
 
@@ -1973,7 +1973,7 @@ physicalFragmentShader =
             vec3 linearColor = physicalLighting(
                 interpolatedPosition,
                 normalDirection,
-                baseColor,
+                baseColor.rgb,
                 directionToCamera,
                 viewMatrix,
                 roughness,
@@ -1986,7 +1986,7 @@ physicalFragmentShader =
                 enabledLights
             );
 
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
+            gl_FragColor = vec4(toSrgb(linearColor, sceneProperties), baseColor.a);
         }
         """
 
@@ -2034,7 +2034,8 @@ physicalTexturesFragmentShader =
         }
         """
         void main() {
-            vec3 baseColor = fromSrgb(texture2D(baseColorTexture, interpolatedUv).rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
+            vec4 textureColor = texture2D(baseColorTexture, interpolatedUv);
+            vec3 baseColor = fromSrgb(textureColor.rgb) * (1.0 - constantBaseColor.w) + constantBaseColor.rgb * constantBaseColor.w;
             float roughness = getFloatValue(roughnessTexture, interpolatedUv, constantRoughness);
             float metallic = getFloatValue(metallicTexture, interpolatedUv, constantMetallic);
             float ambientOcclusion = getFloatValue(ambientOcclusionTexture, interpolatedUv, constantAmbientOcclusion);
@@ -2061,7 +2062,7 @@ physicalTexturesFragmentShader =
                 enabledLights
             );
 
-            gl_FragColor = toSrgb(linearColor, sceneProperties);
+            gl_FragColor = vec4(toSrgb(linearColor, sceneProperties), textureColor.a);
         }
         """
 

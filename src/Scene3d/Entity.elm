@@ -50,6 +50,8 @@ import Scene3d.Types as Types
     exposing
         ( BackFaceSetting(..)
         , Bounds
+        , DrawFunction
+        , LightMatrices
         , LinearRgb(..)
         , Material(..)
         , Node(..)
@@ -454,7 +456,7 @@ vec3Tuple : WebGL.Texture.Texture -> Texture (LinearRgb Unitless) -> ( WebGL.Tex
 vec3Tuple fallbackData texture =
     case texture of
         Types.Constant (LinearRgb baseColor) ->
-            ( fallbackData, enabledVec3 baseColor )
+            ( fallbackData, baseColor )
 
         Types.Texture { data } ->
             ( data, zeroVec4 )
@@ -584,7 +586,7 @@ point givenRadius givenMaterial givenPoint =
                             dummyVertex
                             { pointPosition = Point3d.toVec3 givenPoint
                             , pointRadius = Pixels.toFloat givenRadius
-                            , constantColor = color
+                            , constantColor = premultiplyColor color
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -607,7 +609,7 @@ point givenRadius givenMaterial givenPoint =
                             { pointPosition = Point3d.toVec3 givenPoint
                             , pointRadius = Pixels.toFloat givenRadius
                             , sceneProperties = sceneProperties
-                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
+                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
                             , viewMatrix = viewMatrix
@@ -644,7 +646,7 @@ lineSegment givenMaterial givenLineSegment =
     case givenMaterial of
         Types.UnlitMaterial _ (Types.Constant color) ->
             Types.Entity <|
-                MeshNode bounds <|
+                meshNode color bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             settings
@@ -653,7 +655,7 @@ lineSegment givenMaterial givenLineSegment =
                             lineSegmentVertices
                             { lineSegmentStartPoint = Point3d.toVec3 p1
                             , lineSegmentEndPoint = Point3d.toVec3 p2
-                            , constantColor = color
+                            , constantColor = premultiplyColor color
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -666,7 +668,7 @@ lineSegment givenMaterial givenLineSegment =
 
         Types.EmissiveMaterial _ (Types.Constant (LinearRgb color)) backlight ->
             Types.Entity <|
-                MeshNode bounds <|
+                meshNode color bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             settings
@@ -677,7 +679,7 @@ lineSegment givenMaterial givenLineSegment =
                             , lineSegmentEndPoint = Point3d.toVec3 p2
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
-                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
+                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
                             , modelMatrix = modelMatrix
                             , viewMatrix = viewMatrix
                             , projectionMatrix = projectionMatrix
@@ -866,7 +868,7 @@ triangleMesh givenMaterial givenTriangle =
     case givenMaterial of
         Types.UnlitMaterial _ (Types.Constant color) ->
             Types.Entity <|
-                MeshNode bounds <|
+                meshNode color bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -874,7 +876,7 @@ triangleMesh givenMaterial givenTriangle =
                             Shaders.constantFragment
                             triangleVertices
                             { triangleVertexPositions = triangleVertexPositions givenTriangle
-                            , constantColor = color
+                            , constantColor = premultiplyColor color
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -887,7 +889,7 @@ triangleMesh givenMaterial givenTriangle =
 
         Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
             Types.Entity <|
-                MeshNode bounds <|
+                meshNode emissiveColor bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -895,7 +897,7 @@ triangleMesh givenMaterial givenTriangle =
                             Shaders.emissiveFragment
                             triangleVertices
                             { triangleVertexPositions = triangleVertexPositions givenTriangle
-                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) emissiveColor
+                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -910,7 +912,7 @@ triangleMesh givenMaterial givenTriangle =
             case resolveLambertian materialColorTexture ambientOcclusionTexture normalMapTexture of
                 ConstantLambertianMaterial (LinearRgb materialColor) ambientOcclusion ->
                     Types.Entity <|
-                        MeshNode bounds <|
+                        meshNode materialColor bounds <|
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -923,7 +925,7 @@ triangleMesh givenMaterial givenTriangle =
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
                                     , enabledLights = enabledLights
-                                    , materialColor = materialColor
+                                    , materialColor = premultiplyColor materialColor
                                     , ambientOcclusion = ambientOcclusion
                                     , sceneProperties = sceneProperties
                                     , modelScale = modelScale
@@ -939,7 +941,7 @@ triangleMesh givenMaterial givenTriangle =
             case resolvePbr baseColorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture of
                 ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ambientOcclusion ->
                     Types.Entity <|
-                        MeshNode bounds <|
+                        meshNode baseColor bounds <|
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -952,7 +954,7 @@ triangleMesh givenMaterial givenTriangle =
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
                                     , enabledLights = enabledLights
-                                    , baseColor = baseColor
+                                    , baseColor = premultiplyColor baseColor
                                     , roughness = roughness
                                     , metallic = metallic
                                     , ambientOcclusion = ambientOcclusion
@@ -983,9 +985,9 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
             toBounds boundingBox
     in
     Types.Entity <|
-        MeshNode bounds <|
-            case givenMaterial of
-                Types.UnlitMaterial _ (Types.Constant color) ->
+        case givenMaterial of
+            Types.UnlitMaterial _ (Types.Constant color) ->
+                meshNode color bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -993,7 +995,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             Shaders.constantFragment
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
-                            , constantColor = color
+                            , constantColor = premultiplyColor color
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -1001,7 +1003,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , projectionMatrix = projectionMatrix
                             }
 
-                Types.UnlitMaterial Types.UseMeshUvs (Types.Texture { data }) ->
+            Types.UnlitMaterial Types.UseMeshUvs (Types.Texture { data }) ->
+                OpaqueMeshNode bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1017,7 +1020,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , projectionMatrix = projectionMatrix
                             }
 
-                Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
+            Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
+                meshNode emissiveColor bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1026,7 +1030,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
                             , backlight = backlight
-                            , emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) emissiveColor
+                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -1034,7 +1038,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , projectionMatrix = projectionMatrix
                             }
 
-                Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
+            Types.EmissiveMaterial Types.UseMeshUvs (Types.Texture { data }) backlight ->
+                OpaqueMeshNode bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1051,9 +1056,10 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             , projectionMatrix = projectionMatrix
                             }
 
-                Types.LambertianMaterial Types.UseMeshUvs materialColorTexture ambientOcclusionTexture normalMapTexture ->
-                    case resolveLambertian materialColorTexture ambientOcclusionTexture normalMapTexture of
-                        ConstantLambertianMaterial (LinearRgb materialColor) ambientOcclusion ->
+            Types.LambertianMaterial Types.UseMeshUvs materialColorTexture ambientOcclusionTexture normalMapTexture ->
+                case resolveLambertian materialColorTexture ambientOcclusionTexture normalMapTexture of
+                    ConstantLambertianMaterial (LinearRgb materialColor) ambientOcclusion ->
+                        meshNode materialColor bounds <|
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1066,7 +1072,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
                                     , enabledLights = enabledLights
-                                    , materialColor = materialColor
+                                    , materialColor = premultiplyColor materialColor
                                     , ambientOcclusion = ambientOcclusion
                                     , sceneProperties = sceneProperties
                                     , modelScale = modelScale
@@ -1075,7 +1081,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , projectionMatrix = projectionMatrix
                                     }
 
-                        TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( ambientOcclusionData, constantAmbientOcclusion ) ( normalMapData, normalMapType ) ->
+                    TexturedLambertianMaterial ( materialColorData, constantMaterialColor ) ( ambientOcclusionData, constantAmbientOcclusion ) ( normalMapData, normalMapType ) ->
+                        meshNode constantMaterialColor bounds <|
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1084,7 +1091,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     quadVertices
                                     { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
                                     , materialColorTexture = materialColorData
-                                    , constantMaterialColor = constantMaterialColor
+                                    , constantMaterialColor = premultiplyColor constantMaterialColor
                                     , ambientOcclusionTexture = ambientOcclusionData
                                     , constantAmbientOcclusion = constantAmbientOcclusion
                                     , normalMapTexture = normalMapData
@@ -1101,9 +1108,10 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , projectionMatrix = projectionMatrix
                                     }
 
-                Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture ->
-                    case resolvePbr baseColorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture of
-                        ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ambientOcclusion ->
+            Types.PbrMaterial Types.UseMeshUvs baseColorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture ->
+                case resolvePbr baseColorTexture roughnessTexture metallicTexture ambientOcclusionTexture normalMapTexture of
+                    ConstantPbrMaterial (LinearRgb baseColor) roughness metallic ambientOcclusion ->
+                        meshNode baseColor bounds <|
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1116,7 +1124,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights56 = lights.lights56
                                     , lights78 = lights.lights78
                                     , enabledLights = enabledLights
-                                    , baseColor = baseColor
+                                    , baseColor = premultiplyColor baseColor
                                     , roughness = roughness
                                     , metallic = metallic
                                     , ambientOcclusion = ambientOcclusion
@@ -1127,7 +1135,8 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , projectionMatrix = projectionMatrix
                                     }
 
-                        TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, constantRoughness ) ( metallicData, constantMetallic ) ( ambientOcclusionData, constantAmbientOcclusion ) ( normalMapData, normalMapType ) ->
+                    TexturedPbrMaterial ( baseColorData, constantBaseColor ) ( roughnessData, constantRoughness ) ( metallicData, constantMetallic ) ( ambientOcclusionData, constantAmbientOcclusion ) ( normalMapData, normalMapType ) ->
+                        meshNode constantBaseColor bounds <|
                             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                                 WebGL.entityWith
                                     (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1141,7 +1150,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                                     , lights78 = lights.lights78
                                     , enabledLights = enabledLights
                                     , baseColorTexture = baseColorData
-                                    , constantBaseColor = constantBaseColor
+                                    , constantBaseColor = premultiplyColor constantBaseColor
                                     , roughnessTexture = roughnessData
                                     , constantRoughness = constantRoughness
                                     , metallicTexture = metallicData
@@ -1204,7 +1213,6 @@ sphereShadow givenSphere =
                     , viewMatrix = viewMatrix
                     , projectionMatrix = projectionMatrix
                     , shadowLight = shadowLight
-                    , constantColor = Math.Vector3.vec3 0 0 1
                     }
 
 
@@ -1609,30 +1617,29 @@ shadowSettings isRightHanded settings =
         leftHandedStencilTest :: settings
 
 
-constantMesh : Vec3 -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
+constantMesh : Vec4 -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
 constantMesh color bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds
-            (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
+        meshNode color bounds <|
+            \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.plainVertex
                     Shaders.constantFragment
                     webGLMesh
-                    { constantColor = color
+                    { constantColor = premultiplyColor color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
                     , viewMatrix = viewMatrix
                     , projectionMatrix = projectionMatrix
                     }
-            )
 
 
 colorTextureMesh : WebGL.Texture.Texture -> Bounds -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
 colorTextureMesh data bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds
+        OpaqueMeshNode bounds
             (\sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
@@ -1649,7 +1656,7 @@ colorTextureMesh data bounds webGLMesh backFaceSetting =
             )
 
 
-constantPointMesh : Vec3 -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
+constantPointMesh : Vec4 -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
 constantPointMesh color radius bounds webGLMesh =
     Types.Entity <|
         PointNode bounds <|
@@ -1659,7 +1666,7 @@ constantPointMesh color radius bounds webGLMesh =
                     Shaders.pointVertex
                     Shaders.constantPointFragment
                     webGLMesh
-                    { constantColor = color
+                    { constantColor = premultiplyColor color
                     , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
@@ -1669,17 +1676,17 @@ constantPointMesh color radius bounds webGLMesh =
                     }
 
 
-emissiveMesh : Vec3 -> Luminance -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
+emissiveMesh : Vec4 -> Luminance -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
 emissiveMesh color backlight bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode color bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.plainVertex
                     Shaders.emissiveFragment
                     webGLMesh
-                    { emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
+                    { emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -1691,7 +1698,7 @@ emissiveMesh color backlight bounds webGLMesh backFaceSetting =
 texturedEmissiveMesh : WebGL.Texture.Texture -> Luminance -> Bounds -> WebGL.Mesh { a | position : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
 texturedEmissiveMesh colorData backlight bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        OpaqueMeshNode bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
@@ -1708,7 +1715,7 @@ texturedEmissiveMesh colorData backlight bounds webGLMesh backFaceSetting =
                     }
 
 
-emissivePointMesh : Vec3 -> Luminance -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
+emissivePointMesh : Vec4 -> Luminance -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> Entity coordinates
 emissivePointMesh color backlight radius bounds webGLMesh =
     Types.Entity <|
         PointNode bounds <|
@@ -1718,7 +1725,7 @@ emissivePointMesh color backlight radius bounds webGLMesh =
                     Shaders.pointVertex
                     Shaders.emissivePointFragment
                     webGLMesh
-                    { emissiveColor = Math.Vector3.scale (Luminance.inNits backlight) color
+                    { emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
                     , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
@@ -1728,17 +1735,17 @@ emissivePointMesh color backlight radius bounds webGLMesh =
                     }
 
 
-lambertianMesh : Vec3 -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
+lambertianMesh : Vec4 -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
 lambertianMesh color ambientOcclusion bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode color bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.uniformVertex
                     Shaders.lambertianFragment
                     webGLMesh
-                    { materialColor = color
+                    { materialColor = premultiplyColor color
                     , ambientOcclusion = ambientOcclusion
                     , sceneProperties = sceneProperties
                     , lights12 = lights.lights12
@@ -1756,7 +1763,7 @@ lambertianMesh color ambientOcclusion bounds webGLMesh backFaceSetting =
 texturedLambertianMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture -> Vec2 -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
 texturedLambertianMesh materialColorData constantMaterialColor ambientOcclusionData constantAmbientOcclusion bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode constantMaterialColor bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
@@ -1764,7 +1771,7 @@ texturedLambertianMesh materialColorData constantMaterialColor ambientOcclusionD
                     Shaders.lambertianTextureFragment
                     webGLMesh
                     { materialColorTexture = materialColorData
-                    , constantMaterialColor = constantMaterialColor
+                    , constantMaterialColor = premultiplyColor constantMaterialColor
                     , ambientOcclusionTexture = ambientOcclusionData
                     , constantAmbientOcclusion = constantAmbientOcclusion
                     , normalMapTexture = materialColorData
@@ -1785,7 +1792,7 @@ texturedLambertianMesh materialColorData constantMaterialColor ambientOcclusionD
 bumpyLambertianMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2, tangent : Vec4 } -> BackFaceSetting -> Entity coordinates
 bumpyLambertianMesh materialColorData constantMaterialColor ambientOcclusionData constantAmbientOcclusion normalMapData normalMapType bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode constantMaterialColor bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
@@ -1793,7 +1800,7 @@ bumpyLambertianMesh materialColorData constantMaterialColor ambientOcclusionData
                     Shaders.lambertianTextureFragment
                     webGLMesh
                     { materialColorTexture = materialColorData
-                    , constantMaterialColor = constantMaterialColor
+                    , constantMaterialColor = premultiplyColor constantMaterialColor
                     , ambientOcclusionTexture = ambientOcclusionData
                     , constantAmbientOcclusion = constantAmbientOcclusion
                     , normalMapTexture = normalMapData
@@ -1811,17 +1818,17 @@ bumpyLambertianMesh materialColorData constantMaterialColor ambientOcclusionData
                     }
 
 
-physicalMesh : Vec3 -> Float -> Float -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
+physicalMesh : Vec4 -> Float -> Float -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3 } -> BackFaceSetting -> Entity coordinates
 physicalMesh color roughness metallic ambientOcclusion bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode color bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.uniformVertex
                     Shaders.physicalFragment
                     webGLMesh
-                    { baseColor = color
+                    { baseColor = premultiplyColor color
                     , roughness = roughness
                     , metallic = metallic
                     , ambientOcclusion = ambientOcclusion
@@ -1841,7 +1848,7 @@ physicalMesh color roughness metallic ambientOcclusion bounds webGLMesh backFace
 texturedPhysicalMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Vec2 -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2 } -> BackFaceSetting -> Entity coordinates
 texturedPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughness metallicData constantMetallic bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode constantBaseColor bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
@@ -1849,7 +1856,7 @@ texturedPhysicalMesh baseColorData constantBaseColor roughnessData constantRough
                     Shaders.physicalTexturesFragment
                     webGLMesh
                     { baseColorTexture = baseColorData
-                    , constantBaseColor = constantBaseColor
+                    , constantBaseColor = premultiplyColor constantBaseColor
                     , roughnessTexture = roughnessData
                     , constantRoughness = constantRoughness
                     , metallicTexture = metallicData
@@ -1874,7 +1881,7 @@ texturedPhysicalMesh baseColorData constantBaseColor roughnessData constantRough
 bumpyPhysicalMesh : WebGL.Texture.Texture -> Vec4 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Vec2 -> WebGL.Texture.Texture -> Float -> Bounds -> WebGL.Mesh { a | position : Vec3, normal : Vec3, uv : Vec2, tangent : Vec4 } -> BackFaceSetting -> Entity coordinates
 bumpyPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughness metallicData constantMetallic ambientOcclusionData constantAmbientOcclusion normalMapData normalMapType bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        MeshNode bounds <|
+        meshNode constantBaseColor bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix ( lights, enabledLights ) settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
@@ -1882,7 +1889,7 @@ bumpyPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughnes
                     Shaders.physicalTexturesFragment
                     webGLMesh
                     { baseColorTexture = baseColorData
-                    , constantBaseColor = constantBaseColor
+                    , constantBaseColor = premultiplyColor constantBaseColor
                     , roughnessTexture = roughnessData
                     , constantRoughness = constantRoughness
                     , metallicTexture = metallicData
@@ -1902,6 +1909,15 @@ bumpyPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughnes
                     , viewMatrix = viewMatrix
                     , projectionMatrix = projectionMatrix
                     }
+
+
+meshNode : Vec4 -> Bounds -> DrawFunction ( LightMatrices, Vec4 ) -> Node
+meshNode color =
+    if Math.Vector4.getW color == 1 || Math.Vector4.getW color == 0 then
+        OpaqueMeshNode
+
+    else
+        TransparentMeshNode
 
 
 collectNodes : List (Entity coordinates) -> List Node -> List Node
@@ -1933,8 +1949,12 @@ preScaleNode scalingFactors node =
         Transformed transformation underlyingNode ->
             Transformed transformation (preScaleNode scalingFactors underlyingNode)
 
-        MeshNode bounds drawFunction ->
-            MeshNode (preScaleBounds scalingFactors bounds)
+        OpaqueMeshNode bounds drawFunction ->
+            OpaqueMeshNode (preScaleBounds scalingFactors bounds)
+                (preScaleDrawFunction scalingFactors drawFunction)
+
+        TransparentMeshNode bounds drawFunction ->
+            TransparentMeshNode (preScaleBounds scalingFactors bounds)
                 (preScaleDrawFunction scalingFactors drawFunction)
 
         PointNode _ _ ->
@@ -1994,7 +2014,10 @@ transformBy transformation (Types.Entity node) =
             in
             Types.Entity (Transformed compositeTransformation underlyingNode)
 
-        MeshNode _ _ ->
+        OpaqueMeshNode _ _ ->
+            Types.Entity (Transformed transformation node)
+
+        TransparentMeshNode _ _ ->
             Types.Entity (Transformed transformation node)
 
         PointNode _ _ ->
@@ -2040,3 +2063,21 @@ placeIn frame givenDrawable =
 scaleAbout : Point3d Meters coordinates -> Float -> Entity coordinates -> Entity coordinates
 scaleAbout centerPoint scale givenDrawable =
     transformBy (Transformation.scaleAbout centerPoint scale) givenDrawable
+
+
+scaleAndPremultiplyColor : Float -> Vec4 -> Vec4
+scaleAndPremultiplyColor scale color =
+    let
+        { x, y, z, w } =
+            Math.Vector4.toRecord color
+    in
+    Math.Vector4.vec4 (x * scale * w) (y * scale * w) (z * scale * w) w
+
+
+premultiplyColor : Vec4 -> Vec4
+premultiplyColor color =
+    let
+        { x, y, z, w } =
+            Math.Vector4.toRecord color
+    in
+    Math.Vector4.vec4 (x * w) (y * w) (z * w) w
