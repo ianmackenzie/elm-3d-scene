@@ -2,6 +2,8 @@ module Scene3d.Entity exposing
     ( Entity
     , block
     , cone
+    , cullBackFaceSetting
+    , cullFrontFaceSetting
     , cylinder
     , empty
     , group
