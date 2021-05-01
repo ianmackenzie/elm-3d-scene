@@ -1913,10 +1913,22 @@ bumpyPhysicalMesh baseColorData constantBaseColor roughnessData constantRoughnes
                     }
 
 
+emptyMeshNode : a -> b -> Node
+emptyMeshNode _ _ =
+    EmptyNode
+
+
 meshNode : Vec4 -> Bounds -> DrawFunction ( LightMatrices, Vec4 ) -> Node
 meshNode color =
-    if Math.Vector4.getW color == 1 || Math.Vector4.getW color == 0 then
+    let
+        alpha =
+            Math.Vector4.getW color
+    in
+    if alpha == 1 then
         OpaqueMeshNode
+
+    else if alpha == 0 then
+        emptyMeshNode
 
     else
         TransparentMeshNode
