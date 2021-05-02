@@ -104,13 +104,11 @@ this textured mesh".
 
 import Color exposing (Color)
 import Luminance exposing (Luminance)
-import Math.Vector3 exposing (Vec3)
 import Math.Vector4 exposing (Vec4)
 import Quantity
 import Scene3d.ColorConversions as ColorConversions
 import Scene3d.Types as Types exposing (Chromaticity, LinearRgb(..), NormalMapFormat)
 import Task exposing (Task)
-import WebGL exposing (alpha)
 import WebGL.Texture
 
 
