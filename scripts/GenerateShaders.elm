@@ -492,13 +492,14 @@ toneMap =
 
 toSrgb : Glsl.Function
 toSrgb =
-    Glsl.function { dependencies = [ toneMap, gammaCorrect ], constants = [] }
+    Glsl.function { dependencies = [ toneMap, gammaCorrect, inverseAlpha ], constants = [] }
         """
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);

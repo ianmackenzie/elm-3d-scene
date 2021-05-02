@@ -1527,11 +1527,18 @@ emissiveFragment =
             }
         }
         
+        float inverseAlpha(float value) {
+            // the value used for alpha cannot be less than zero
+            float signValue = float(sign(value));
+            return signValue / (value + (signValue - 1.0));
+        }
+        
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
@@ -1666,10 +1673,11 @@ emissiveTextureFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
@@ -1778,11 +1786,18 @@ emissivePointFragment =
             }
         }
         
+        float inverseAlpha(float value) {
+            // the value used for alpha cannot be less than zero
+            float signValue = float(sign(value));
+            return signValue / (value + (signValue - 1.0));
+        }
+        
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
@@ -2039,11 +2054,18 @@ lambertianFragment =
             }
         }
         
+        float inverseAlpha(float value) {
+            // the value used for alpha cannot be less than zero
+            float signValue = float(sign(value));
+            return signValue / (value + (signValue - 1.0));
+        }
+        
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
@@ -2359,10 +2381,11 @@ lambertianTextureFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
@@ -2749,11 +2772,18 @@ physicalFragment =
             }
         }
         
+        float inverseAlpha(float value) {
+            // the value used for alpha cannot be less than zero
+            float signValue = float(sign(value));
+            return signValue / (value + (signValue - 1.0));
+        }
+        
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
@@ -3205,10 +3235,11 @@ physicalTexturesFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
+            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r / linearColor.a;
-            float unitG = linearColor.g / referenceWhite.g / linearColor.a;
-            float unitB = linearColor.b / referenceWhite.b / linearColor.a;
+            float unitR = linearColor.r / referenceWhite.r * invAlpha;
+            float unitG = linearColor.g / referenceWhite.g * invAlpha;
+            float unitB = linearColor.b / referenceWhite.b * invAlpha;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
             return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
