@@ -72,7 +72,7 @@ needed.
 The functions in this module all return values with a 'free' type parameter -
 for example, the return type of `Material.matte` is
 
-    Material coordinates { a | normals = () }
+    Material coordinates { a | normals : () }
 
 This makes most code simpler (it means that such a material can work with _any_
 kind of mesh that has normal vectors, even if for example that mesh also has
@@ -89,7 +89,7 @@ aliases. For example, the material above might be stored as a
 
 Then, if you need to turn this value _back_ into a
 
-    Material coordinates { a | normals = () }
+    Material coordinates { a | normals : () }
 
 (so that you could apply it to a textured mesh, for example) you can use
 `Material.uniform` to do so. You can think of `Material.uniform material` as

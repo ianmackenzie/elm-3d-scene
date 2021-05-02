@@ -121,7 +121,7 @@ The two type parameters of the `Mesh` type define what coordinate system a mesh
 is defined in, and what attributes (in addition to position) are present on each
 vertex. For example, a
 
-    Mesh WorldCoordinates { normals = () }
+    Mesh WorldCoordinates { normals : () }
 
 refers to a mesh defined in `WorldCoordinates` (a type you would typically
 define yourself) that has position and normal vector defined at each vertex.
