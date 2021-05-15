@@ -445,15 +445,6 @@ zeroVec4 =
     Math.Vector4.vec4 0 0 0 0
 
 
-enabledVec3 : Vec3 -> Vec4
-enabledVec3 vector =
-    Math.Vector4.vec4
-        (Math.Vector3.getX vector)
-        (Math.Vector3.getY vector)
-        (Math.Vector3.getZ vector)
-        1
-
-
 vec3Tuple : WebGL.Texture.Texture -> Texture (LinearRgb Unitless) -> ( WebGL.Texture.Texture, Vec4 )
 vec3Tuple fallbackData texture =
     case texture of
@@ -611,7 +602,7 @@ point givenRadius givenMaterial givenPoint =
                             { pointPosition = Point3d.toVec3 givenPoint
                             , pointRadius = Pixels.toFloat givenRadius
                             , sceneProperties = sceneProperties
-                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
+                            , emissiveColor = Math.Vector4.scale (Luminance.inNits backlight) color
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
                             , viewMatrix = viewMatrix
@@ -670,7 +661,7 @@ lineSegment givenMaterial givenLineSegment =
 
         Types.EmissiveMaterial _ (Types.Constant (LinearRgb color)) backlight ->
             Types.Entity <|
-                meshNode color bounds <|
+                OpaqueMeshNode bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             settings
@@ -681,7 +672,7 @@ lineSegment givenMaterial givenLineSegment =
                             , lineSegmentEndPoint = Point3d.toVec3 p2
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
-                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
+                            , emissiveColor = Math.Vector4.scale (Luminance.inNits backlight) color
                             , modelMatrix = modelMatrix
                             , viewMatrix = viewMatrix
                             , projectionMatrix = projectionMatrix
@@ -891,7 +882,7 @@ triangleMesh givenMaterial givenTriangle =
 
         Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
             Types.Entity <|
-                meshNode emissiveColor bounds <|
+                OpaqueMeshNode bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -899,7 +890,7 @@ triangleMesh givenMaterial givenTriangle =
                             Shaders.emissiveFragment
                             triangleVertices
                             { triangleVertexPositions = triangleVertexPositions givenTriangle
-                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) emissiveColor
+                            , emissiveColor = Math.Vector4.scale (Luminance.inNits backlight) emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -1023,7 +1014,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             }
 
             Types.EmissiveMaterial _ (Types.Constant (LinearRgb emissiveColor)) backlight ->
-                meshNode emissiveColor bounds <|
+                OpaqueMeshNode bounds <|
                     \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                         WebGL.entityWith
                             (meshSettings isRightHanded Types.KeepBackFaces settings)
@@ -1032,7 +1023,7 @@ quadMesh givenMaterial firstPoint secondPoint thirdPoint fourthPoint =
                             quadVertices
                             { quadVertexPositions = quadVertexPositions firstPoint secondPoint thirdPoint fourthPoint
                             , backlight = backlight
-                            , emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) emissiveColor
+                            , emissiveColor = Math.Vector4.scale (Luminance.inNits backlight) emissiveColor
                             , sceneProperties = sceneProperties
                             , modelScale = modelScale
                             , modelMatrix = modelMatrix
@@ -1681,14 +1672,14 @@ constantPointMesh color radius bounds webGLMesh =
 emissiveMesh : Vec4 -> Luminance -> Bounds -> WebGL.Mesh { a | position : Vec3 } -> BackFaceSetting -> Entity coordinates
 emissiveMesh color backlight bounds webGLMesh backFaceSetting =
     Types.Entity <|
-        meshNode color bounds <|
+        OpaqueMeshNode bounds <|
             \sceneProperties modelScale modelMatrix isRightHanded viewMatrix projectionMatrix lights settings ->
                 WebGL.entityWith
                     (meshSettings isRightHanded backFaceSetting settings)
                     Shaders.plainVertex
                     Shaders.emissiveFragment
                     webGLMesh
-                    { emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
+                    { emissiveColor = Math.Vector4.scale (Luminance.inNits backlight) color
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
                     , modelMatrix = modelMatrix
@@ -1727,7 +1718,7 @@ emissivePointMesh color backlight radius bounds webGLMesh =
                     Shaders.pointVertex
                     Shaders.emissivePointFragment
                     webGLMesh
-                    { emissiveColor = scaleAndPremultiplyColor (Luminance.inNits backlight) color
+                    { emissiveColor = Math.Vector4.scale (Luminance.inNits backlight) color
                     , pointRadius = radius
                     , sceneProperties = sceneProperties
                     , modelScale = modelScale
@@ -2077,15 +2068,6 @@ placeIn frame givenDrawable =
 scaleAbout : Point3d Meters coordinates -> Float -> Entity coordinates -> Entity coordinates
 scaleAbout centerPoint scale givenDrawable =
     transformBy (Transformation.scaleAbout centerPoint scale) givenDrawable
-
-
-scaleAndPremultiplyColor : Float -> Vec4 -> Vec4
-scaleAndPremultiplyColor scale color =
-    let
-        { x, y, z, w } =
-            Math.Vector4.toRecord color
-    in
-    Math.Vector4.vec4 (x * scale * w) (y * scale * w) (z * scale * w) w
 
 
 premultiplyColor : Vec4 -> Vec4

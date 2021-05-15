@@ -1428,8 +1428,8 @@ constantPointFragment =
         
         void main () {
             float supersampling = sceneProperties[3][0];
-            float alpha = constantColor.a * pointAlpha(pointRadius * supersampling, gl_PointCoord);
-            gl_FragColor = vec4(constantColor.rgb, alpha);
+            float alpha = pointAlpha(pointRadius * supersampling, gl_PointCoord);
+            gl_FragColor = constantColor * alpha;
         }
     |]
 
@@ -1820,10 +1820,10 @@ emissivePointFragment =
         }
         
         void main () {
-            vec3 color = toSrgb(emissiveColor, sceneProperties);
+            vec4 color = toSrgb(emissiveColor, sceneProperties);
             float supersampling = sceneProperties[3][0];
-            float alpha = emissiveColor.a * pointAlpha(pointRadius * supersampling, gl_PointCoord);
-            gl_FragColor = vec4(color.rgb, alpha);
+            float alpha = pointAlpha(pointRadius * supersampling, gl_PointCoord);
+            gl_FragColor = color * alpha;
         }
     |]
 
