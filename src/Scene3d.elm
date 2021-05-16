@@ -1100,6 +1100,16 @@ depthTestDefault =
     [ DepthTest.default, defaultBlend ]
 
 
+writeDepth : List WebGL.Settings.Setting
+writeDepth =
+    [ DepthTest.default, defaultBlend, WebGL.Settings.colorMask False False False False ]
+
+
+depthTestEqual : List WebGL.Settings.Setting
+depthTestEqual =
+    [ DepthTest.equal { write = True, near = 0, far = 1 }, defaultBlend ]
+
+
 outsideStencil : List WebGL.Settings.Setting
 outsideStencil =
     [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
@@ -1566,8 +1576,10 @@ toWebGLEntities arguments =
                 SingleUnshadowedPass lightMatrices ->
                     List.concat
                         [ call renderPasses.opaqueMeshes ( lightMatrices, allLightsEnabled ) depthTestDefault
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestDefault)
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestDefault)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: writeDepth)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestEqual)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: writeDepth)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestEqual)
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
 
@@ -1578,8 +1590,10 @@ toWebGLEntities arguments =
                         , call renderPasses.shadows lightMatrices.lights12 createShadowStencil
                         , [ storeStencilValue 0 ]
                         , call renderPasses.opaqueMeshes ( lightMatrices, allLightsEnabled ) outsideStencil
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: outsideStencil)
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: outsideStencil)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: writeDepth)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestEqual)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: writeDepth)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestEqual)
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
 
@@ -1589,8 +1603,10 @@ toWebGLEntities arguments =
                         , [ initStencil ]
                         , createShadows renderPasses.shadows shadowCasters
                         , renderWithinShadows renderPasses.opaqueMeshes allLightMatrices (List.length shadowCasters)
-                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestDefault)
-                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestDefault)
+                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: writeDepth)
+                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestEqual)
+                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: writeDepth)
+                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestEqual)
                         , call renderPasses.points lightingDisabled depthTestDefault
                         ]
 
