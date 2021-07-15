@@ -240,7 +240,7 @@ mesh givenMesh =
         Types.Polyline _ polyline _ ->
             encodePolyline polyline
 
-        Types.Points _ radius points _ ->
+        Types.Points _ _ points _ ->
             Encode.list encodePoint points
 
 
