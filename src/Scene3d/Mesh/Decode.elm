@@ -96,11 +96,6 @@ import Vector3d exposing (Vector3d)
 import WebGL
 
 
-decodeEmpty : a -> Decoder a
-decodeEmpty value =
-    Decode.field "empty" (Decode.null value)
-
-
 decodePoint : Decoder (Point3d Meters coordinates)
 decodePoint =
     Decode.map3 Point3d.meters
@@ -122,11 +117,6 @@ decodeTriangle =
         (Decode.index 0 decodePoint)
         (Decode.index 1 decodePoint)
         (Decode.index 2 decodePoint)
-
-
-decodePolyline : Decoder (Polyline3d Meters coordinates)
-decodePolyline =
-    Decode.map Polyline3d.fromVertices (Decode.list decodePoint)
 
 
 decodeMeshFace : Decoder ( Int, Int, Int )
