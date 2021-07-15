@@ -78,17 +78,17 @@ zero-based indices into the list of vertices (the format used by
 
 -}
 
-import Array exposing (Array)
-import BoundingBox3d exposing (BoundingBox3d)
-import Json.Decode as Decode exposing (Decoder, Value)
-import Length exposing (Length, Meters)
+import Array
+import BoundingBox3d
+import Json.Decode as Decode exposing (Decoder)
+import Length exposing (Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Math.Vector3
 import Pixels exposing (Pixels)
 import Point3d exposing (Point3d)
-import Polyline3d exposing (Polyline3d)
+import Polyline3d
 import Quantity exposing (Quantity, Unitless)
-import Scene3d.Mesh as Mesh exposing (Mesh)
+import Scene3d.Mesh as Mesh
 import Scene3d.Types as Types
 import Triangle3d exposing (Triangle3d)
 import TriangularMesh exposing (TriangularMesh)
