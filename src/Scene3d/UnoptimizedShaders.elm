@@ -1534,14 +1534,20 @@ emissiveFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         void main () {
@@ -1673,14 +1679,20 @@ emissiveTextureFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         void main () {
@@ -1793,14 +1805,20 @@ emissivePointFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         float pointAlpha(float pointRadius, vec2 pointCoord) {
@@ -2061,14 +2079,20 @@ lambertianFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         void main() {
@@ -2381,14 +2405,20 @@ lambertianTextureFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         void main() {
@@ -2779,14 +2809,20 @@ physicalFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         void main() {
@@ -3235,14 +3271,20 @@ physicalTexturesFragment =
         }
         
         vec4 toSrgb(vec4 linearColor, mat4 sceneProperties) {
-            float invAlpha = inverseAlpha(linearColor.a);
             vec3 referenceWhite = sceneProperties[2].rgb;
-            float unitR = linearColor.r / referenceWhite.r * invAlpha;
-            float unitG = linearColor.g / referenceWhite.g * invAlpha;
-            float unitB = linearColor.b / referenceWhite.b * invAlpha;
+            // linearColor has premultiplied alpha, but tone mapping works on
+            // non-premultiplied linear RGB so we need to temporarily 'undo' the
+            // premultiplication before applying tone mapping
+            float invAlpha = inverseAlpha(linearColor.a);
+            float unitR = (linearColor.r * invAlpha) / referenceWhite.r;
+            float unitG = (linearColor.g * invAlpha) / referenceWhite.g;
+            float unitB = (linearColor.b * invAlpha) / referenceWhite.b;
             float toneMapType = sceneProperties[3][2];
             float toneMapParam = sceneProperties[3][3];
-            return vec4(toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam) * linearColor.a, linearColor.a);
+            // Apply tone mapping
+            vec3 toneMapped = toneMap(vec3(unitR, unitG, unitB), toneMapType, toneMapParam);
+            // Re-apply premultiplied alpha after tone mapping
+            return vec4(toneMapped * linearColor.a, linearColor.a);
         }
         
         void main() {
