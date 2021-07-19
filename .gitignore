@@ -21,6 +21,9 @@ elm.js
 .AppleDouble
 .LSOverride
 
+# VSCode specific files
+.vscode
+
 # Thumbnails
 ._*
 
