@@ -301,7 +301,7 @@ view model =
                 , background = Scene3d.transparentBackground
                 , entities =
                     [ -- Create a sphere entity in local sphere coordinates
-                      Scene3d.normalMappedSphere material sphere
+                      Scene3d.bumpySphere material sphere
                         -- Place the sphere in the (rotated) frame to convert it
                         -- into world coordinates
                         |> Scene3d.placeIn sphereFrame
