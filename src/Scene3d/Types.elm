@@ -111,6 +111,7 @@ type Texture value
         { url : String
         , options : WebGL.Texture.Options
         , data : WebGL.Texture.Texture
+
         -- TODO: transparency here
         }
 
