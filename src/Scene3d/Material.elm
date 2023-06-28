@@ -62,7 +62,19 @@ needed.
 
 ## Bumpy materials
 
+'Bumpy' materials extend textured materials to add [normal mapping](https://en.wikipedia.org/wiki/Normal_mapping).
+
 @docs NormalMap, loadNormalMap, noNormalMap, loadNormalMapWith, NormalMapFormat, openglFormat, directxFormat
+
+The `bumpy` material constructors behave similarly to the corresponding `textured` versions, but
+require you to additionally provide a normal map and an [ambient occlusion](https://en.wikipedia.org/wiki/Ambient_occlusion)
+texture. The brightness of the ambient occlusion texture scales the ambient (indirect) portion of
+the lighting at a given position on a surface.
+
+If for a given material you want to specify ambient occlusion but no normal map, then you can pass
+[`Material.noNormalMap`](#noNormLMap) as the normal map. Alternately, if you want to provide a
+normal map but no ambient occlusion texture then you can use `Material.constant 1` as the ambient
+occlusion texture.
 
 @docs bumpyMatte, bumpyNonmetal, bumpyMetal, bumpyPbr
 
@@ -307,6 +319,8 @@ loadWith options url =
             )
 
 
+{-| Load a normal map with a custom format, using custom texture-loading options.
+-}
 loadNormalMapWith : { format : NormalMapFormat, options : WebGL.Texture.Options } -> String -> Task WebGL.Texture.Error NormalMap
 loadNormalMapWith { format, options } url =
     WebGL.Texture.loadWith options url
@@ -321,11 +335,15 @@ loadNormalMapWith { format, options } url =
             )
 
 
+{-| Specify that a given normal map is in OpenGL format.
+-}
 openglFormat : NormalMapFormat
 openglFormat =
     Types.OpenglFormat
 
 
+{-| Specify that a given normal map is in DirectX format.
+-}
 directxFormat : NormalMapFormat
 directxFormat =
     Types.DirectxFormat
@@ -551,24 +569,43 @@ texturedPbr { baseColor, roughness, metallic } =
         Types.NoNormalMap
 
 
+{-| A [normal map](https://en.wikipedia.org/wiki/Normal_mapping) is a special kind of texture that
+represents how the normal vector varies over a given surface. It is useful for adding small details
+like bumps and grooves without having to use a very detailed mesh with lots of small triangles.
+-}
 type alias NormalMap =
     Types.NormalMap
 
 
+{-| Normal maps typically come in [one of two formats](https://substance3d.adobe.com/documentation/bake/what-is-the-difference-between-the-opengl-and-directx-normal-format-182256965.html),
+so when loading a normal map you need to specify which format it is in. If you're not sure, all I
+can suggest is to try both versions and see which one looks right 😅
+-}
 type alias NormalMapFormat =
     Types.NormalMapFormat
 
 
+{-| A dummy normal map that performs no normal mapping at all.
+-}
 noNormalMap : NormalMap
 noNormalMap =
     Types.NoNormalMap
 
 
+{-| Load a normal map from an image URL, defaulting to OpenGL format and trilinear filtering.
+-}
 loadNormalMap : String -> Task WebGL.Texture.Error NormalMap
 loadNormalMap url =
     loadNormalMapWith { format = openglFormat, options = trilinearFiltering } url
 
 
+{-| A normal-mapped matte material, given:
+
+  - A `Texture Color` specifying the material color
+  - A `Texture Float` specifying the ambient occlusion
+  - A `NormalMap` specyfying the normal map
+
+-}
 bumpyMatte : Texture Color -> Texture Float -> NormalMap -> Bumpy coordinates
 bumpyMatte colorTexture ambientOcclusionTexture normalMapTexture =
     Types.LambertianMaterial Types.UseMeshUvs
@@ -577,6 +614,8 @@ bumpyMatte colorTexture ambientOcclusionTexture normalMapTexture =
         normalMapTexture
 
 
+{-| A normal-mapped metallic material.
+-}
 bumpyMetal :
     { baseColor : Texture Color
     , roughness : Texture Float
@@ -594,6 +633,8 @@ bumpyMetal { baseColor, roughness, ambientOcclusion, normalMap } =
         }
 
 
+{-| A normal-mapped nonmetallic material.
+-}
 bumpyNonmetal :
     { baseColor : Texture Color
     , roughness : Texture Float
@@ -611,6 +652,8 @@ bumpyNonmetal { baseColor, roughness, ambientOcclusion, normalMap } =
         }
 
 
+{-| A fully custom normal-mapped material.
+-}
 bumpyPbr :
     { baseColor : Texture Color
     , roughness : Texture Float
@@ -657,10 +700,18 @@ type alias Textured coordinates =
     Material coordinates { normals : (), uvs : () }
 
 
+{-| A material that requires both normal and tangent vectors but not UV coordinates. Likely not very
+common (usually tangent vectors are used for normal mapping, which also requires UV coordinates) and
+not actually used/supported yet by `elm-3d-scene` but provided for completeness.
+-}
 type alias Anisotropic coordinates =
     Material coordinates { normals : (), tangents : () }
 
 
+{-| A material that requires normal vectors, tangent vectors _and_ UV coordinates, used for
+normal mapping: [`bumpyMatte`](#bumpyMatte), [`bumpyNonmetal`](#bumpyNonmetal),
+[`bumpyMetal`](#bumpyMetal) or [`bumpyPbr`](#bumpyPbr).
+-}
 type alias Bumpy coordinates =
     Material coordinates { normals : (), uvs : (), tangents : () }
 

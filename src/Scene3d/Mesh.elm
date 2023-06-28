@@ -664,6 +664,9 @@ collectBumpy { position, normal, uv, tangent, tangentBasisIsRightHanded } accumu
     vertex :: accumulated
 
 
+{-| Construct a mesh from a `TriangularMesh` of vertices with positions, normal
+vectors, texture coordinates and tangent vectors.
+-}
 bumpyFaces :
     TriangularMesh
         { position : Point3d Meters coordinates
