@@ -21,7 +21,6 @@ import Point3d
 import Quantity
 import Scene3d
 import Scene3d.Material as Material
-import Viewpoint3d
 
 
 type WorldCoordinates
@@ -157,13 +156,11 @@ view model =
 
         -- Create an isometric camera
         camera =
-            Camera3d.orthographic
-                { viewpoint =
-                    Viewpoint3d.isometric
-                        { focalPoint = Point3d.origin
-                        , distance = Length.cssPixels 100
-                        }
-                , viewportHeight = Length.cssPixels 32
+            Camera3d.isometric
+                { focalPoint = Point3d.origin
+                , distance = Length.cssPixels 100
+                , fov = Camera3d.height (Length.cssPixels 32)
+                , projection = Camera3d.Orthographic
                 }
     in
     -- Create a little loading spinner layout using elm-ui

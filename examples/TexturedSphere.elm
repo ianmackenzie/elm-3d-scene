@@ -27,7 +27,6 @@ import Scene3d.Material as Material exposing (Material)
 import Sphere3d exposing (Sphere3d)
 import Task
 import Vector3d exposing (Vector3d)
-import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
 
 
@@ -146,6 +145,9 @@ update message model =
                                     rotationRate =
                                         Angle.degrees 1 |> Quantity.per Pixels.pixel
 
+                                    cameraFrame =
+                                        Camera3d.frame camera
+
                                     -- Here we figure out what axis to rotate the sphere around,
                                     -- based on the drag direction. For example, if we drag
                                     -- vertically, then we want to rotate around a horizontal axis,
@@ -155,10 +157,10 @@ update message model =
                                     -- system, so we use the X and Y directions of the viewpoint.
                                     rotationVector =
                                         Vector3d.withLength (dx |> Quantity.at rotationRate)
-                                            (Viewpoint3d.yDirection viewpoint)
+                                            (Frame3d.yDirection cameraFrame)
                                             |> Vector3d.plus
                                                 (Vector3d.withLength (dy |> Quantity.at rotationRate)
-                                                    (Viewpoint3d.xDirection viewpoint)
+                                                    (Frame3d.xDirection cameraFrame)
                                                 )
                                 in
                                 case Vector3d.direction rotationVector of
@@ -217,15 +219,17 @@ checkIfLoaded textures =
             Loading textures
 
 
-{-| In this example, we have a fixed viewpoint since we rotate the sphere
+{-| In this example, we have a fixed camera since we rotate the sphere
 instead.
 -}
-viewpoint : Viewpoint3d Meters WorldCoordinates
-viewpoint =
-    Viewpoint3d.lookAt
+camera : Camera3d Meters WorldCoordinates
+camera =
+    Camera3d.lookAt
         { focalPoint = Point3d.origin
         , eyePoint = Point3d.centimeters 20 10 10
         , upDirection = Direction3d.positiveZ
+        , fov = Camera3d.angle (Angle.degrees 30)
+        , projection = Camera3d.Perspective
         }
 
 
@@ -253,14 +257,6 @@ environment =
         { upDirection = Direction3d.negativeZ
         , intensity = Illuminance.lux 5000
         , chromaticity = Light.daylight
-        }
-
-
-camera : Camera3d Meters WorldCoordinates
-camera =
-    Camera3d.perspective
-        { viewpoint = viewpoint
-        , verticalFieldOfView = Angle.degrees 30
         }
 
 

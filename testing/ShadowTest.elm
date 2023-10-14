@@ -16,7 +16,6 @@ import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material
 import Sphere3d
-import Viewpoint3d exposing (Viewpoint3d)
 
 
 type WorldCoordinates
@@ -58,12 +57,14 @@ main =
         }
 
 
-viewpoint : Viewpoint3d Meters WorldCoordinates
-viewpoint =
-    Viewpoint3d.lookAt
+camera : Camera3d Meters WorldCoordinates
+camera =
+    Camera3d.lookAt
         { focalPoint = Point3d.fromMeters { x = 64, y = 34, z = 0 }
         , eyePoint = Point3d.meters 64 34 80
         , upDirection = Direction3d.positiveY
+        , fov = Camera3d.angle (Angle.degrees 60)
+        , projection = Camera3d.Perspective
         }
 
 
@@ -82,14 +83,6 @@ daylight =
         { upDirection = Direction3d.positiveZ
         , chromaticity = Light.daylight
         , intensity = Illuminance.lux 15000
-        }
-
-
-camera : Camera3d Meters WorldCoordinates
-camera =
-    Camera3d.perspective
-        { viewpoint = viewpoint
-        , verticalFieldOfView = Angle.degrees 60
         }
 
 

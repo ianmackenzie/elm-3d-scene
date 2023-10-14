@@ -20,7 +20,6 @@ import Scene3d.Light as Light
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import TriangularMesh
-import Viewpoint3d
 
 
 type WorldCoordinates
@@ -96,14 +95,12 @@ main =
 
         -- Define a camera as usual
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.origin
-                        , eyePoint = Point3d.centimeters 90 50 50
-                        , upDirection = Direction3d.z
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.lookAt
+                { focalPoint = Point3d.origin
+                , eyePoint = Point3d.centimeters 90 50 50
+                , upDirection = Direction3d.z
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
 
         -- Create a point light representing an incandescent (tungsten) light

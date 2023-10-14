@@ -29,7 +29,6 @@ import Task
 import Temperature exposing (Temperature)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
-import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
 
 
@@ -83,11 +82,6 @@ type SphereParameter
     | ConstantSphereParameter Float
 
 
-type ProjectionType
-    = Perspective
-    | Orthographic
-
-
 type ToneMappingType
     = NoToneMapping
     | ReinhardToneMapping Float
@@ -97,7 +91,7 @@ type ToneMappingType
 
 type alias Parameters =
     { entity : EntityType
-    , projection : ProjectionType
+    , projection : Camera3d.Projection
     , lighting : LightingParameters
     , exposureValue : Float
     , shadows : Bool
@@ -334,11 +328,11 @@ initialControl =
         |> Control.field "Tone mapping" toneMappingControl
 
 
-projectionControl : Control ProjectionType
+projectionControl : Control Camera3d.Projection
 projectionControl =
     Control.choice
-        [ ( "Perspective", Control.value Perspective )
-        , ( "Orthographic", Control.value Orthographic )
+        [ ( "Perspective", Control.value Camera3d.Perspective )
+        , ( "Orthographic", Control.value Camera3d.Orthographic )
         ]
 
 
@@ -482,40 +476,13 @@ viewScene model =
 
 camera : Parameters -> Camera3d Meters WorldCoordinates
 camera parameters =
-    let
-        eyePoint =
-            Point3d.meters 10 5 7
-
-        verticalFieldOfView =
-            Angle.degrees 30
-
-        focalDistance =
-            Point3d.distanceFrom eyePoint Point3d.origin
-
-        viewportHeight =
-            focalDistance
-                |> Quantity.multiplyBy
-                    (2 * Angle.tan (Quantity.half verticalFieldOfView))
-
-        viewpoint =
-            Viewpoint3d.lookAt
-                { focalPoint = Point3d.origin
-                , eyePoint = eyePoint
-                , upDirection = Direction3d.z
-                }
-    in
-    case parameters.projection of
-        Perspective ->
-            Camera3d.perspective
-                { viewpoint = viewpoint
-                , verticalFieldOfView = verticalFieldOfView
-                }
-
-        Orthographic ->
-            Camera3d.orthographic
-                { viewpoint = viewpoint
-                , viewportHeight = viewportHeight
-                }
+    Camera3d.lookAt
+        { focalPoint = Point3d.origin
+        , eyePoint = Point3d.meters 10 5 7
+        , upDirection = Direction3d.z
+        , fov = Camera3d.angle (Angle.degrees 30)
+        , projection = parameters.projection
+        }
 
 
 lights : Parameters -> Scene3d.Lights WorldCoordinates

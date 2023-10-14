@@ -24,7 +24,6 @@ import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Sphere3d
 import Vector3d
-import Viewpoint3d
 
 
 type World
@@ -76,14 +75,12 @@ initialGroup =
 
 camera : Camera3d Meters World
 camera =
-    Camera3d.perspective
-        { viewpoint =
-            Viewpoint3d.lookAt
-                { focalPoint = Point3d.meters 0 0 -2.5
-                , eyePoint = Point3d.meters 16 16 16
-                , upDirection = Direction3d.positiveZ
-                }
-        , verticalFieldOfView = Angle.degrees 30
+    Camera3d.lookAt
+        { focalPoint = Point3d.meters 0 0 -2.5
+        , eyePoint = Point3d.meters 16 16 16
+        , upDirection = Direction3d.positiveZ
+        , fov = Camera3d.angle (Angle.degrees 30)
+        , projection = Camera3d.Perspective
         }
 
 

@@ -15,7 +15,6 @@ import Point3d
 import Scene3d
 import Scene3d.Material as Material
 import Triangle3d
-import Viewpoint3d
 
 
 main : Html msg
@@ -39,14 +38,12 @@ main =
 
         -- Create a camera as usual
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.meters 0.5 0.5 0
-                        , eyePoint = Point3d.meters 3 1 1
-                        , upDirection = Direction3d.z
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.lookAt
+                { focalPoint = Point3d.meters 0.5 0.5 0
+                , eyePoint = Point3d.meters 3 1 1
+                , upDirection = Direction3d.z
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
     in
     Scene3d.unlit

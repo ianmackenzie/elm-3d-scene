@@ -18,7 +18,6 @@ import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import Triangle3d
-import Viewpoint3d
 
 
 type WorldCoordinates
@@ -145,21 +144,17 @@ subscriptions model =
 view : Model -> Browser.Document Msg
 view model =
     let
-        -- Create a viewpoint by orbiting around a Z axis through the given
+        -- Create a camera by orbiting around a Z axis through the given
         -- focal point, with azimuth measured from the positive X direction
         -- towards positive Y
-        viewpoint =
-            Viewpoint3d.orbitZ
+        camera =
+            Camera3d.orbitZ
                 { focalPoint = Point3d.meters 0.5 0.5 0
                 , azimuth = model.azimuth
                 , elevation = model.elevation
                 , distance = Length.meters 3
-                }
-
-        camera =
-            Camera3d.perspective
-                { viewpoint = viewpoint
-                , verticalFieldOfView = Angle.degrees 30
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
     in
     { title = "OrbitingCamera"

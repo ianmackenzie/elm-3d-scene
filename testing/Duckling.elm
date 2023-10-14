@@ -23,7 +23,6 @@ import Scene3d.Mesh as Mesh
 import Scene3d.Mesh.Decode as Decode
 import Sphere3d
 import Task
-import Viewpoint3d
 import WebGL.Texture
 
 
@@ -239,15 +238,13 @@ view model =
                         }
 
                 camera =
-                    Camera3d.perspective
-                        { viewpoint =
-                            Viewpoint3d.orbitZ
-                                { focalPoint = Point3d.meters 0 0 -0.35
-                                , distance = Length.meters 7
-                                , azimuth = Angle.degrees 30
-                                , elevation = Angle.degrees 32
-                                }
-                        , verticalFieldOfView = Angle.degrees 30
+                    Camera3d.orbitZ
+                        { focalPoint = Point3d.meters 0 0 -0.35
+                        , distance = Length.meters 7
+                        , azimuth = Angle.degrees 30
+                        , elevation = Angle.degrees 32
+                        , fov = Camera3d.angle (Angle.degrees 30)
+                        , projection = Camera3d.Perspective
                         }
             in
             Scene3d.custom
@@ -259,7 +256,7 @@ view model =
                 , toneMapping = Scene3d.hableFilmicToneMapping
                 , exposure = Scene3d.exposureValue 13
                 , whiteBalance = Light.daylight
-                , dimensions = ( Pixels.pixels 800, Pixels.pixels 600 )
+                , dimensions = ( Pixels.pixels 1200, Pixels.pixels 900 )
                 , clipDepth = Length.centimeters 1
                 }
 

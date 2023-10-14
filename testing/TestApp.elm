@@ -51,7 +51,6 @@ import Url exposing (Url)
 import Url.Parser
 import Url.Parser.Query
 import Vector3d exposing (Vector3d)
-import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
 
 
@@ -113,11 +112,6 @@ type Antialiasing
     | Supersampling
 
 
-type Projection
-    = Perspective
-    | Orthographic
-
-
 type alias TestCase =
     { mesh : Mesh
     , material : Material
@@ -129,7 +123,7 @@ type alias TestCase =
     , softLighting : Bool
     , toneMapping : ToneMapping
     , antialiasing : Antialiasing
-    , projection : Projection
+    , projection : Camera3d.Projection
     }
 
 
@@ -210,14 +204,14 @@ toggleTransformation currentTransformation =
             NoTransformation
 
 
-toggleProjection : Projection -> Projection
+toggleProjection : Camera3d.Projection -> Camera3d.Projection
 toggleProjection currentProjection =
     case currentProjection of
-        Perspective ->
-            Orthographic
+        Camera3d.Perspective ->
+            Camera3d.Orthographic
 
-        Orthographic ->
-            Perspective
+        Camera3d.Orthographic ->
+            Camera3d.Perspective
 
 
 toggleAntialiasing : Antialiasing -> Antialiasing
@@ -463,14 +457,14 @@ parseAntialiasing string =
             Err ("Unrecognized antialiasing type '" ++ string ++ "'")
 
 
-parseProjection : String -> Result String Projection
+parseProjection : String -> Result String Camera3d.Projection
 parseProjection string =
     case string of
         "Perspective" ->
-            Ok Perspective
+            Ok Camera3d.Perspective
 
         "Orthographic" ->
-            Ok Orthographic
+            Ok Camera3d.Orthographic
 
         _ ->
             Err ("Unrecognized projection type '" ++ string ++ "'")
@@ -2037,43 +2031,13 @@ lights testCase =
 
 camera : TestCase -> Camera3d Meters WorldCoordinates
 camera testCase =
-    let
-        focalPoint =
-            Point3d.meters 0 0 0.5
-
-        eyePoint =
-            Point3d.meters 8 4 6
-
-        verticalFieldOfView =
-            Angle.degrees 30
-
-        focalDistance =
-            Point3d.distanceFrom eyePoint focalPoint
-
-        viewportHeight =
-            focalDistance
-                |> Quantity.multiplyBy
-                    (2 * Angle.tan (Quantity.half verticalFieldOfView))
-
-        viewpoint =
-            Viewpoint3d.lookAt
-                { focalPoint = focalPoint
-                , eyePoint = eyePoint
-                , upDirection = Direction3d.z
-                }
-    in
-    case testCase.projection of
-        Perspective ->
-            Camera3d.perspective
-                { viewpoint = viewpoint
-                , verticalFieldOfView = verticalFieldOfView
-                }
-
-        Orthographic ->
-            Camera3d.orthographic
-                { viewpoint = viewpoint
-                , viewportHeight = viewportHeight
-                }
+    Camera3d.lookAt
+        { focalPoint = Point3d.meters 0 0 0.5
+        , eyePoint = Point3d.meters 8 4 6
+        , upDirection = Direction3d.z
+        , fov = Camera3d.angle (Angle.degrees 30)
+        , projection = testCase.projection
+        }
 
 
 antialiasing : TestCase -> Scene3d.Antialiasing
@@ -2296,13 +2260,13 @@ antialiasingDescription givenAntialiasing =
             "Supersampling"
 
 
-projectionDescription : Projection -> String
+projectionDescription : Camera3d.Projection -> String
 projectionDescription projection =
     case projection of
-        Perspective ->
+        Camera3d.Perspective ->
             "Perspective"
 
-        Orthographic ->
+        Camera3d.Orthographic ->
             "Orthographic"
 
 

@@ -218,7 +218,6 @@ import Scene3d.Types as Types exposing (Bounds, DrawFunction, LightMatrices, Lin
 import Sphere3d exposing (Sphere3d)
 import Triangle3d exposing (Triangle3d)
 import Vector3d exposing (Vector3d)
-import Viewpoint3d exposing (Viewpoint3d)
 import WebGL
 import WebGL.Matrices as WebGL
 import WebGL.Settings
@@ -1429,21 +1428,13 @@ toWebGLEntities :
     -> List WebGL.Entity
 toWebGLEntities arguments =
     let
-        viewpoint =
-            Camera3d.viewpoint arguments.camera
-
         (Types.Entity rootNode) =
             Entity.group arguments.entities
 
-        viewFrame =
-            Frame3d.unsafe
-                { originPoint = Viewpoint3d.eyePoint viewpoint
-                , xDirection = Viewpoint3d.xDirection viewpoint
-                , yDirection = Viewpoint3d.yDirection viewpoint
-                , zDirection = Direction3d.reverse (Viewpoint3d.viewDirection viewpoint)
-                }
+        cameraFrame =
+            Camera3d.frame arguments.camera
     in
-    case getViewBounds viewFrame 1 Nothing [ rootNode ] of
+    case getViewBounds cameraFrame 1 Nothing [ rootNode ] of
         Nothing ->
             -- Empty view bounds means there's nothing to render!
             []
@@ -1495,13 +1486,11 @@ toWebGLEntities arguments =
                 eyePointOrDirectionToCamera =
                     if projectionType == 0 then
                         -- Perspective projection
-                        Point3d.toMeters (Viewpoint3d.eyePoint viewpoint)
+                        Point3d.toMeters (Camera3d.eyePoint arguments.camera)
 
                     else
                         -- Orthographic projection
-                        Viewpoint3d.viewDirection viewpoint
-                            |> Direction3d.reverse
-                            |> Direction3d.unwrap
+                        Direction3d.unwrap (Frame3d.zDirection cameraFrame)
 
                 (Exposure exposureLuminance) =
                     arguments.exposure
@@ -1557,7 +1546,7 @@ toWebGLEntities arguments =
                         }
 
                 viewMatrix =
-                    WebGL.viewMatrix viewpoint
+                    WebGL.viewMatrix arguments.camera
 
                 renderPasses =
                     collectRenderPasses

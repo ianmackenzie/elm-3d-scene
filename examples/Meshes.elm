@@ -20,7 +20,6 @@ import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
 import TriangularMesh
-import Viewpoint3d
 
 
 {-| Declare a coordinate system type (many apps will only need a single
@@ -91,14 +90,12 @@ main =
             Scene3d.mesh (Material.matte Color.blue) pyramidMesh
 
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.origin
-                        , eyePoint = Point3d.centimeters 40 20 30
-                        , upDirection = Direction3d.z
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.lookAt
+                { focalPoint = Point3d.origin
+                , eyePoint = Point3d.centimeters 40 20 30
+                , upDirection = Direction3d.z
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
     in
     Scene3d.sunny

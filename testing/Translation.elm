@@ -13,7 +13,6 @@ import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh
 import Triangle3d
-import Viewpoint3d
 
 
 main : Html msg
@@ -38,14 +37,12 @@ main =
             Mesh.triangles [ triangle2 ]
 
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.meters 0.5 0.5 0.75
-                        , eyePoint = Point3d.meters 4 3 1.8
-                        , upDirection = Direction3d.z
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.lookAt
+                { focalPoint = Point3d.meters 0.5 0.5 0.75
+                , eyePoint = Point3d.meters 4 3 1.8
+                , upDirection = Direction3d.z
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
 
         square =

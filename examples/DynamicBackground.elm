@@ -23,7 +23,6 @@ import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
-import Viewpoint3d exposing (Viewpoint3d)
 
 
 {-| Compute background color based on total elapsed time
@@ -109,14 +108,12 @@ view model =
     in
     Scene3d.custom
         { camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.origin
-                        , eyePoint = Point3d.centimeters 20 10 20
-                        , upDirection = Direction3d.positiveZ
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.lookAt
+                { focalPoint = Point3d.origin
+                , eyePoint = Point3d.centimeters 20 10 20
+                , upDirection = Direction3d.positiveZ
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
         , clipDepth = Length.centimeters 0.5
         , dimensions = ( Pixels.int 400, Pixels.int 300 )

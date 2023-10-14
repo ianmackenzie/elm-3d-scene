@@ -33,7 +33,6 @@ import SketchPlane3d
 import Task
 import Time
 import Vector3d exposing (Vector3d)
-import Viewpoint3d
 import WebGL.Texture
 
 
@@ -78,15 +77,12 @@ view : Model -> Html Msg
 view =
     let
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { eyePoint = Point3d.meters 10 10 10
-                        , focalPoint = Point3d.origin
-                        , upDirection = Direction3d.positiveZ
-                        }
-                , verticalFieldOfView = Angle.degrees 30
-                , clipDepth = meters 0.1
+            Camera3d.lookAt
+                { eyePoint = Point3d.meters 10 10 10
+                , focalPoint = Point3d.origin
+                , upDirection = Direction3d.positiveZ
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
 
         screenWidth =

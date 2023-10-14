@@ -34,28 +34,22 @@ import Svg exposing (Svg)
 import Svg.Attributes
 import TriangularMesh exposing (TriangularMesh)
 import Vector2d
-import Viewpoint3d
-
-
-type ProjectionType
-    = Perspective
-    | Orthographic
 
 
 type Msg
     = SetAngle Angle
-    | SetProjectionType ProjectionType
+    | SetProjection Camera3d.Projection
 
 
 type alias Model =
     { angle : Angle
-    , projectionType : ProjectionType
+    , projection : Camera3d.Projection
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { angle = Angle.degrees 0, projectionType = Perspective }
+    ( { angle = Angle.degrees 0, projection = Camera3d.Perspective }
     , Cmd.none
     )
 
@@ -66,12 +60,12 @@ update message model =
         SetAngle angle ->
             ( { model | angle = angle }, Cmd.none )
 
-        SetProjectionType projectionType ->
-            ( { model | projectionType = projectionType }, Cmd.none )
+        SetProjection projection ->
+            ( { model | projection = projection }, Cmd.none )
 
 
 view : Model -> Html Msg
-view { angle, projectionType } =
+view model =
     let
         width =
             800
@@ -84,30 +78,18 @@ view { angle, projectionType } =
                 |> Point3d.rotateAround Axis3d.y (Angle.degrees -22.5)
                 |> Point3d.rotateAround Axis3d.z (Angle.degrees 60)
 
-        viewpoint =
-            Viewpoint3d.lookAt
+        camera =
+            Camera3d.lookAt
                 { focalPoint = Point3d.origin
                 , eyePoint = eyePoint
                 , upDirection = Direction3d.z
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = model.projection
                 }
-
-        camera =
-            case projectionType of
-                Perspective ->
-                    Camera3d.perspective
-                        { viewpoint = viewpoint
-                        , verticalFieldOfView = Angle.degrees 30
-                        }
-
-                Orthographic ->
-                    Camera3d.orthographic
-                        { viewpoint = viewpoint
-                        , viewportHeight = Length.meters 2
-                        }
 
         -- Take the 3D model for the logo and rotate it by the current angle
         rotatedLogo =
-            blockEntity |> Scene3d.rotateAround Axis3d.z angle
+            blockEntity |> Scene3d.rotateAround Axis3d.z model.angle
 
         -- Defines the shape of the 'screen' that we will be using when
         -- projecting 3D points into 2D
@@ -118,7 +100,7 @@ view { angle, projectionType } =
         -- the logo itself and then project them into 2D screen space
         vertices2d =
             blockVertices
-                |> List.map (Point3d.rotateAround Axis3d.z angle)
+                |> List.map (Point3d.rotateAround Axis3d.z model.angle)
                 |> List.map (Point3d.toScreenSpace camera screenRectangle)
 
         -- Create an SVG circle at each projected 2D position
@@ -137,7 +119,7 @@ view { angle, projectionType } =
         -- Project all logo edges and create SVG elements in a similar way
         svgLines =
             blockEdges
-                |> List.map (LineSegment3d.rotateAround Axis3d.z angle)
+                |> List.map (LineSegment3d.rotateAround Axis3d.z model.angle)
                 |> List.map (LineSegment3d.toScreenSpace camera screenRectangle)
                 |> List.map
                     (\edge ->
@@ -209,7 +191,7 @@ view { angle, projectionType } =
                 , label = Input.labelLeft [] (Element.text "Angle:")
                 , min = 0
                 , max = 360
-                , value = Angle.inDegrees angle
+                , value = Angle.inDegrees model.angle
                 , thumb = Input.defaultThumb
                 , step = Just 1
                 }
@@ -218,12 +200,12 @@ view { angle, projectionType } =
         -- orthographic projection
         radioButtons =
             Input.radio [ Element.padding 6 ]
-                { onChange = SetProjectionType
-                , selected = Just projectionType
-                , label = Input.labelAbove [] (Element.text "Projection type:")
+                { onChange = SetProjection
+                , selected = Just model.projection
+                , label = Input.labelAbove [] (Element.text "Projection:")
                 , options =
-                    [ Input.option Perspective (Element.text "Perspective")
-                    , Input.option Orthographic (Element.text "Orthographic")
+                    [ Input.option Camera3d.Perspective (Element.text "Perspective")
+                    , Input.option Camera3d.Orthographic (Element.text "Orthographic")
                     ]
                 }
     in

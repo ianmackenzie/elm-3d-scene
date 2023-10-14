@@ -19,7 +19,6 @@ import Pixels
 import Point3d
 import Scene3d
 import Scene3d.Material as Material
-import Viewpoint3d
 
 
 main : Html msg
@@ -34,23 +33,20 @@ main =
                 (Point3d.meters 1 1 0)
                 (Point3d.meters -1 1 0)
 
-        -- Create a camera using perspective projection
+        -- Define our camera
         camera =
-            Camera3d.perspective
-                { -- Camera is at the point (4, 2, 2), looking at the point
-                  -- (0, 0, 0), oriented so that positive Z appears up
-                  viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.origin
-                        , eyePoint = Point3d.meters 4 2 2
-                        , upDirection = Direction3d.positiveZ
-                        }
+            Camera3d.lookAt
+                { -- Camera is at the point (4, 2, 2),
+                  -- looking at the point (0, 0, 0),
+                  -- with positive Z as the 'up' direction
+                  eyePoint = Point3d.meters 4 2 2
+                , focalPoint = Point3d.origin
+                , upDirection = Direction3d.positiveZ
 
-                -- The image on the screen will have a total rendered 'height'
-                -- of 30 degrees; small angles make the camera act more like a
-                -- telescope and large numbers make it act more like a fisheye
-                -- lens
-                , verticalFieldOfView = Angle.degrees 30
+                -- We want to use perspective (realistic) projection
+                -- with a total vertical field of view of 30 degrees
+                , projection = Camera3d.Perspective
+                , fov = Camera3d.angle (Angle.degrees 30)
                 }
     in
     -- Render a scene that doesn't involve any lighting (no lighting is needed

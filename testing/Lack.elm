@@ -1,5 +1,9 @@
 module Lack exposing (main)
 
+{-| NOTE: not currently working until elm-physics and elm-obj-file
+have been updated to use elm-geometry 4.0
+-}
+
 import Acceleration
 import Angle
 import Axis3d exposing (Axis3d)

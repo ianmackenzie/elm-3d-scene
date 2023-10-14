@@ -1,5 +1,9 @@
 module DucklingGame exposing (main)
 
+{-| NOTE: not currently working until elm-physics and elm-obj-file
+have been updated to use elm-geometry 4.0
+-}
+
 import Acceleration exposing (Acceleration)
 import Angle exposing (Angle)
 import Area
@@ -46,7 +50,6 @@ import Sphere3d exposing (Sphere3d)
 import Task exposing (Task)
 import TriangularMesh exposing (TriangularMesh)
 import Vector3d exposing (Vector3d)
-import Viewpoint3d exposing (Viewpoint3d)
 import WebGL.Texture
 
 
@@ -562,27 +565,23 @@ viewRunning model =
             model.screenDimensions
 
         testCamera =
-            Camera3d.orthographic
-                { viewpoint =
-                    Viewpoint3d.orbitZ
-                        { focalPoint = Point3d.origin
-                        , distance = Length.meters 1
-                        , azimuth = Angle.degrees 0
-                        , elevation = Angle.degrees 0
-                        }
-                , viewportHeight = Length.centimeters 20
+            Camera3d.orbitZ
+                { focalPoint = Point3d.origin
+                , distance = Length.meters 1
+                , azimuth = Angle.degrees 0
+                , elevation = Angle.degrees 0
+                , fov = Camera3d.height (Length.centimeters 20)
+                , projection = Camera3d.Orthographic
                 }
 
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.orbitZ
-                        { focalPoint = Point3d.centimeters 10 10 0
-                        , distance = Length.centimeters 75
-                        , azimuth = Angle.degrees 30
-                        , elevation = Angle.degrees 30
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.orbitZ
+                { focalPoint = Point3d.centimeters 10 10 0
+                , distance = Length.centimeters 75
+                , azimuth = Angle.degrees 30
+                , elevation = Angle.degrees 30
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
 
         physicsEntities =

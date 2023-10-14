@@ -34,7 +34,6 @@ import SolidAngle
 import Sphere3d
 import Task
 import Temperature
-import Viewpoint3d
 
 
 type WorldCoordinates
@@ -308,15 +307,13 @@ view model =
 
         -- Define a camera as usual
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.orbitZ
-                        { focalPoint = Point3d.centimeters 0 0 20
-                        , azimuth = model.azimuth
-                        , elevation = model.elevation
-                        , distance = Length.meters 3
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.orbitZ
+                { focalPoint = Point3d.centimeters 0 0 20
+                , azimuth = model.azimuth
+                , elevation = model.elevation
+                , distance = Length.meters 3
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
     in
     Scene3d.custom

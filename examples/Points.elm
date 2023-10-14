@@ -16,7 +16,6 @@ import Pixels
 import Point3d
 import Scene3d
 import Scene3d.Material as Material
-import Viewpoint3d exposing (Viewpoint3d)
 
 
 main : Html msg
@@ -44,14 +43,12 @@ main =
                     )
 
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.lookAt
-                        { focalPoint = Point3d.origin
-                        , eyePoint = Point3d.meters 2 6 4
-                        , upDirection = Direction3d.positiveZ
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.lookAt
+                { focalPoint = Point3d.origin
+                , eyePoint = Point3d.meters 2 6 4
+                , upDirection = Direction3d.positiveZ
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
     in
     Scene3d.unlit

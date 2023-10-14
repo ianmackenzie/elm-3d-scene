@@ -27,7 +27,6 @@ import Scene3d
 import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material exposing (Material)
 import Sphere3d
-import Viewpoint3d
 
 
 type WorldCoordinates
@@ -132,15 +131,13 @@ camera : Model -> Camera3d Meters WorldCoordinates
 camera model =
     -- Create a perspective camera based on the current azimuth/elevation from
     -- the model
-    Camera3d.perspective
-        { viewpoint =
-            Viewpoint3d.orbitZ
-                { focalPoint = Point3d.centimeters 0 0 -20
-                , azimuth = model.azimuth
-                , elevation = model.elevation
-                , distance = Length.meters 2
-                }
-        , verticalFieldOfView = Angle.degrees 30
+    Camera3d.orbitZ
+        { focalPoint = Point3d.centimeters 0 0 -20
+        , azimuth = model.azimuth
+        , elevation = model.elevation
+        , distance = Length.meters 2
+        , fov = Camera3d.angle (Angle.degrees 30)
+        , projection = Camera3d.Perspective
         }
 
 

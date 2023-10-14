@@ -14,7 +14,6 @@ import Point3d
 import Scene3d
 import Scene3d.Material as Material
 import Task
-import Viewpoint3d
 import WebGL.Texture
 
 
@@ -58,15 +57,13 @@ view model =
     let
         -- Construct a fixed camera
         camera =
-            Camera3d.perspective
-                { viewpoint =
-                    Viewpoint3d.orbitZ
-                        { focalPoint = Point3d.meters 0.5 0.5 0
-                        , azimuth = Angle.degrees 20
-                        , elevation = Angle.degrees 60
-                        , distance = Length.meters 3
-                        }
-                , verticalFieldOfView = Angle.degrees 30
+            Camera3d.orbitZ
+                { focalPoint = Point3d.meters 0.5 0.5 0
+                , azimuth = Angle.degrees 20
+                , elevation = Angle.degrees 60
+                , distance = Length.meters 3
+                , fov = Camera3d.angle (Angle.degrees 30)
+                , projection = Camera3d.Perspective
                 }
     in
     { title = "Texture"
