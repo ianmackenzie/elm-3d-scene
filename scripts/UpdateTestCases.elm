@@ -19,7 +19,7 @@ script { userPrivileges, workingDirectory } =
             in
             Script.executeWith userPrivileges
                 { workingDirectory = workingDirectory
-                , command = "pict.exe"
+                , command = "pict"
                 , arguments = [ "test_model.txt", "/o:" ++ String.fromInt order ]
                 }
                 |> Script.thenWith (\output -> File.writeTo outputFile output)
