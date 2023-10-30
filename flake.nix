@@ -8,6 +8,11 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        elmScriptSrc = pkgs.fetchgit {
+          url = "https://github.com/ianmackenzie/elm-script";
+          rev = "cc0fb47dda8b2787baee76410b3a0fbbce867944";
+          sha256 = "sha256-/K0s7CYhXhtfTrokudxieUygK0yDbD370FFCEPasVbs=";
+        };
         pict = pkgs.stdenv.mkDerivation {
           name = "pict";
           version = "3.7.4";
@@ -23,11 +28,19 @@
         devShell = pkgs.mkShell {
           buildInputs = [
             pict
+            pkgs.deno
             pkgs.elmPackages.elm
             pkgs.elmPackages.elm-format
             pkgs.elmPackages.elm-test
             pkgs.elmPackages.elm-json
           ];
+          shellHook = ''
+            rm elm-script
+            ln -s ${elmScriptSrc} elm-script
+            elm-script () {
+              deno run --allow-all --no-config elm-script/runner/main.js "$@"
+            }
+          '';
         };
       });
 }

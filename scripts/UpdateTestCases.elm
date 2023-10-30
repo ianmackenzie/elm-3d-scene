@@ -9,7 +9,7 @@ script : Script.Init -> Script String ()
 script { userPrivileges, workingDirectory } =
     let
         portabilityTestingDirectory =
-            Directory.writable userPrivileges "../testing/portability-testing"
+            Directory.writable userPrivileges "testing/portability-testing"
 
         generateTestCases order =
             let
@@ -20,7 +20,7 @@ script { userPrivileges, workingDirectory } =
             Script.executeWith userPrivileges
                 { workingDirectory = workingDirectory
                 , command = "pict"
-                , arguments = [ "test_model.txt", "/o:" ++ String.fromInt order ]
+                , arguments = [ "scripts/test_model.txt", "/o:" ++ String.fromInt order ]
                 }
                 |> Script.thenWith (\output -> File.writeTo outputFile output)
     in
