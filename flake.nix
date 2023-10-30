@@ -35,7 +35,7 @@
             pkgs.elmPackages.elm-json
           ];
           shellHook = ''
-            rm elm-script
+            rm -f elm-script
             ln -s ${elmScriptSrc} elm-script
             elm-script () {
               deno run --allow-all --no-config elm-script/runner/main.js "$@"
