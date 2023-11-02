@@ -3,7 +3,7 @@
     "name": "ianmackenzie/elm-3d-scene",
     "summary": "3D rendering engine for Elm",
     "license": "MPL-2.0",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "exposed-modules": [
         "Scene3d",
         "Scene3d.Material",
