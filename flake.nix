@@ -23,12 +23,17 @@
           };
           nativeBuildInputs = [ pkgs.cmake ];
         };
+        elm-script = pkgs.runCommand "elm-script" { buildInputs = [ pkgs.makeWrapper ]; }
+          ''
+            makeWrapper ${pkgs.deno}/bin/deno $out/bin/elm-script \
+              --add-flags "run --quiet --allow-all --no-config ${elmScriptSrc}/runner/main.js"
+          '';
       in
       {
         devShell = pkgs.mkShell {
           buildInputs = [
+            elm-script
             pict
-            pkgs.deno
             pkgs.elmPackages.elm
             pkgs.elmPackages.elm-format
             pkgs.elmPackages.elm-test
@@ -37,9 +42,6 @@
           shellHook = ''
             rm -f elm-script
             ln -s ${elmScriptSrc} elm-script
-            elm-script () {
-              deno run --allow-all --no-config elm-script/runner/main.js "$@"
-            }
           '';
         };
       });
