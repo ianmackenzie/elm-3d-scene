@@ -2199,10 +2199,10 @@ script : Script.Init -> Script String ()
 script { workingDirectory, userPrivileges } =
     let
         optimizedOutputFile =
-            File.writable userPrivileges "../src/Scene3d/OptimizedShaders.elm"
+            File.writable userPrivileges "src/Scene3d/OptimizedShaders.elm"
 
         unoptimizedOutputFile =
-            File.writable userPrivileges "../src/Scene3d/UnoptimizedShaders.elm"
+            File.writable userPrivileges "src/Scene3d/UnoptimizedShaders.elm"
 
         shaders =
             [ plainVertexShader

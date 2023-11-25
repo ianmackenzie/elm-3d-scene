@@ -1,6 +1,9 @@
 # elm-package generated files
 elm-stuff/
 
+# symlinked elm-script sources
+elm-script
+
 # elm-repl generated files
 repl-temp-*
 
