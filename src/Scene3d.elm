@@ -1094,9 +1094,16 @@ defaultBlend =
     Blend.add Blend.one Blend.oneMinusSrcAlpha
 
 
+commonSettings : List WebGL.Settings.Setting
+commonSettings =
+    [ defaultBlend
+    , WebGL.Settings.sampleAlphaToCoverage
+    ]
+
+
 depthTestDefault : List WebGL.Settings.Setting
 depthTestDefault =
-    [ DepthTest.default, defaultBlend ]
+    DepthTest.default :: commonSettings
 
 
 writeDepth : List WebGL.Settings.Setting
@@ -1121,8 +1128,8 @@ outsideStencil =
         , zpass = StencilTest.keep
         , writeMask = 0
         }
-    , defaultBlend
     ]
+        ++ commonSettings
 
 
 insideStencil : Int -> List WebGL.Settings.Setting
@@ -1137,8 +1144,8 @@ insideStencil lightMask =
         , zpass = StencilTest.keep
         , writeMask = 0
         }
-    , defaultBlend
     ]
+        ++ commonSettings
 
 
 createShadowStencil : List WebGL.Settings.Setting
