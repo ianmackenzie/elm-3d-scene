@@ -1108,7 +1108,9 @@ depthTestDefault =
 
 writeDepth : List WebGL.Settings.Setting
 writeDepth =
-    [ DepthTest.default, defaultBlend, WebGL.Settings.colorMask False False False False ]
+    [ DepthTest.default
+    , WebGL.Settings.colorMask False False False False
+    ]
 
 
 depthTestEqual : List WebGL.Settings.Setting
