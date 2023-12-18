@@ -1089,21 +1089,17 @@ collectRenderPasses sceneProperties viewMatrix projectionMatrix currentTransform
                 childNodes
 
 
-defaultBlend : WebGL.Settings.Setting
-defaultBlend =
-    Blend.add Blend.one Blend.oneMinusSrcAlpha
+blendSettings : List WebGL.Settings.Setting
+blendSettings =
+    [ Blend.add Blend.one Blend.oneMinusSrcAlpha
 
-
-commonSettings : List WebGL.Settings.Setting
-commonSettings =
-    [ defaultBlend
     , WebGL.Settings.sampleAlphaToCoverage
     ]
 
 
-depthTestDefault : List WebGL.Settings.Setting
-depthTestDefault =
-    DepthTest.default :: commonSettings
+drawNormally : List WebGL.Settings.Setting
+drawNormally =
+    DepthTest.default :: blendSettings
 
 
 writeDepth : List WebGL.Settings.Setting
@@ -1113,41 +1109,39 @@ writeDepth =
     ]
 
 
-depthTestEqual : List WebGL.Settings.Setting
-depthTestEqual =
-    [ DepthTest.equal { write = True, near = 0, far = 1 }, defaultBlend ]
+drawWhereDepthTestEqual : List WebGL.Settings.Setting
+drawWhereDepthTestEqual =
+    DepthTest.equal { write = True, near = 0, far = 1 } :: blendSettings
 
 
-outsideStencil : List WebGL.Settings.Setting
-outsideStencil =
-    [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
-    , StencilTest.test
-        { ref = 0
-        , mask = upperFourBits
-        , test = StencilTest.equal
-        , fail = StencilTest.keep
-        , zfail = StencilTest.keep
-        , zpass = StencilTest.keep
-        , writeMask = 0
-        }
-    ]
-        ++ commonSettings
+drawOutsideStencil : List WebGL.Settings.Setting
+drawOutsideStencil =
+    DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
+        :: StencilTest.test
+            { ref = 0
+            , mask = upperFourBits
+            , test = StencilTest.equal
+            , fail = StencilTest.keep
+            , zfail = StencilTest.keep
+            , zpass = StencilTest.keep
+            , writeMask = 0
+            }
+        :: blendSettings
 
 
-insideStencil : Int -> List WebGL.Settings.Setting
-insideStencil lightMask =
-    [ DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
-    , StencilTest.test
-        { ref = lightMask
-        , mask = upperFourBits
-        , test = StencilTest.equal
-        , fail = StencilTest.keep
-        , zfail = StencilTest.keep
-        , zpass = StencilTest.keep
-        , writeMask = 0
-        }
-    ]
-        ++ commonSettings
+drawInsideStencil : Int -> List WebGL.Settings.Setting
+drawInsideStencil lightMask =
+    DepthTest.lessOrEqual { write = True, near = 0, far = 1 }
+        :: StencilTest.test
+            { ref = lightMask
+            , mask = upperFourBits
+            , test = StencilTest.equal
+            , fail = StencilTest.keep
+            , zfail = StencilTest.keep
+            , zpass = StencilTest.keep
+            , writeMask = 0
+            }
+        :: blendSettings
 
 
 createShadowStencil : List WebGL.Settings.Setting
@@ -1544,39 +1538,39 @@ toWebGLEntities arguments =
             case arguments.lights of
                 SingleUnshadowedPass lightMatrices ->
                     List.concat
-                        [ call renderPasses.opaqueMeshes ( lightMatrices, allLightsEnabled ) depthTestDefault
+                        [ call renderPasses.opaqueMeshes ( lightMatrices, allLightsEnabled ) drawNormally
                         , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: writeDepth)
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestEqual)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: drawWhereDepthTestEqual)
                         , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: writeDepth)
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestEqual)
-                        , call renderPasses.points lightingDisabled depthTestDefault
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: drawWhereDepthTestEqual)
+                        , call renderPasses.points lightingDisabled drawNormally
                         ]
 
                 SingleShadowedPass lightMatrices ->
                     List.concat
-                        [ call renderPasses.opaqueMeshes lightingDisabled depthTestDefault
+                        [ call renderPasses.opaqueMeshes lightingDisabled drawNormally
                         , [ initStencil ]
                         , call renderPasses.shadows lightMatrices.lights12 createShadowStencil
                         , [ storeStencilValue 0 ]
-                        , call renderPasses.opaqueMeshes ( lightMatrices, allLightsEnabled ) outsideStencil
+                        , call renderPasses.opaqueMeshes ( lightMatrices, allLightsEnabled ) drawOutsideStencil
                         , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: writeDepth)
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestEqual)
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: drawWhereDepthTestEqual)
                         , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: writeDepth)
-                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestEqual)
-                        , call renderPasses.points lightingDisabled depthTestDefault
+                        , call renderPasses.transparentMeshes ( lightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: drawWhereDepthTestEqual)
+                        , call renderPasses.points lightingDisabled drawNormally
                         ]
 
                 MultiplePasses shadowCasters allLightMatrices ->
                     List.concat
-                        [ call renderPasses.opaqueMeshes ( allLightMatrices, allLightsEnabled ) depthTestDefault
+                        [ call renderPasses.opaqueMeshes ( allLightMatrices, allLightsEnabled ) drawNormally
                         , [ initStencil ]
                         , createShadows renderPasses.shadows shadowCasters
                         , renderWithinShadows renderPasses.opaqueMeshes allLightMatrices (List.length shadowCasters)
                         , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: writeDepth)
-                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: depthTestEqual)
+                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullFrontFaceSetting :: drawWhereDepthTestEqual)
                         , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: writeDepth)
-                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: depthTestEqual)
-                        , call renderPasses.points lightingDisabled depthTestDefault
+                        , call renderPasses.transparentMeshes ( allLightMatrices, allLightsEnabled ) (Entity.cullBackFaceSetting :: drawWhereDepthTestEqual)
+                        , call renderPasses.points lightingDisabled drawNormally
                         ]
 
 
@@ -1660,7 +1654,7 @@ renderWithinShadows meshRenderPasses lightMatrices numShadowingLights =
                             (enabledFlag lightMask 2)
                             (enabledFlag lightMask 3)
                 in
-                call meshRenderPasses ( lightMatrices, enabledLights ) (insideStencil stencilMask)
+                call meshRenderPasses ( lightMatrices, enabledLights ) (drawInsideStencil stencilMask)
             )
         |> List.concat
 
