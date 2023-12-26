@@ -6,7 +6,7 @@ module Scene3d exposing
     , mesh, meshWithShadow
     , group, nothing
     , rotateAround, translateBy, translateIn, scaleAbout, mirrorAcross
-    , Background, transparentBackground, backgroundColor
+    , Background, transparentBackground, backgroundColor, backgroundSkybox
     , Antialiasing
     , noAntialiasing, multisampling, supersampling
     , Lights
@@ -114,7 +114,7 @@ entity:
 
 # Background
 
-@docs Background, transparentBackground, backgroundColor
+@docs Background, transparentBackground, backgroundColor, backgroundSkybox
 
 
 # Antialiasing
@@ -213,6 +213,8 @@ import Scene3d.Entity as Entity
 import Scene3d.Light as Light exposing (Chromaticity, Light)
 import Scene3d.Material as Material exposing (Material)
 import Scene3d.Mesh as Mesh exposing (Mesh)
+import Scene3d.Skybox
+import Scene3d.Skybox.Protected
 import Scene3d.Transformation as Transformation exposing (Transformation)
 import Scene3d.Types as Types exposing (Bounds, DrawFunction, LightMatrices, LinearRgb(..), Material(..), Node(..))
 import Sphere3d exposing (Sphere3d)
@@ -936,6 +938,7 @@ current environmental lighting.
 -}
 type Background coordinates
     = BackgroundColor Color
+    | BackgroundSkybox Scene3d.Skybox.Skybox
 
 
 {-| A fully transparent background.
@@ -950,6 +953,36 @@ transparentBackground =
 backgroundColor : Color -> Background coordinates
 backgroundColor color =
     BackgroundColor color
+
+
+toBackgroundColorString : Background coordinates -> Maybe String
+toBackgroundColorString bkg =
+    case bkg of
+        BackgroundColor color ->
+            Just (Color.toCssString color)
+
+        _ ->
+            Nothing
+
+
+{-| Provides a way to set a skybox background!
+
+Before the skybox can be set, a skybox texture must be loaded first. At the
+moment, only equirectangular skybox textures are supported. On how to load a
+skybox texture, please refer to the `Scene3d.Skybox` module.
+
+Once the skybox texture is ready, it can be set as the background when
+initialising a `Scene3d` scene. For example:
+
+    Scene3d.sunny
+        { background = Scene3d.backgroundSkybox loadedSkyboxTexture
+        , ...
+        }
+
+-}
+backgroundSkybox : Scene3d.Skybox.Skybox -> Background coordinates
+backgroundSkybox texture =
+    BackgroundSkybox texture
 
 
 
@@ -1747,12 +1780,6 @@ composite arguments scenes =
         heightInPixels =
             Pixels.toInt height
 
-        (BackgroundColor givenBackgroundColor) =
-            arguments.background
-
-        backgroundColorString =
-            Color.toCssString givenBackgroundColor
-
         commonWebGLOptions =
             [ WebGL.depth 1
             , WebGL.stencil 0
@@ -1802,14 +1829,36 @@ composite arguments scenes =
     Html.Keyed.node "div" [ Html.Attributes.style "padding" "0px", widthCss, heightCss ] <|
         [ ( key
           , WebGL.toHtmlWith webGLOptions
-                [ Html.Attributes.width (round (toFloat widthInPixels * scalingFactor))
-                , Html.Attributes.height (round (toFloat heightInPixels * scalingFactor))
-                , widthCss
-                , heightCss
-                , Html.Attributes.style "display" "block"
-                , Html.Attributes.style "background-color" backgroundColorString
-                ]
-                webGLEntities
+                ([ Html.Attributes.width (round (toFloat widthInPixels * scalingFactor))
+                 , Html.Attributes.height (round (toFloat heightInPixels * scalingFactor))
+                 , widthCss
+                 , heightCss
+                 , Html.Attributes.style "display" "block"
+                 ]
+                    ++ (case toBackgroundColorString arguments.background of
+                            Just colorStr ->
+                                [ Html.Attributes.style "background-color" colorStr
+                                ]
+
+                            Nothing ->
+                                []
+                       )
+                )
+                (List.concat
+                    [ case arguments.background of
+                        BackgroundSkybox skybox ->
+                            [ Scene3d.Skybox.Protected.quad
+                                { camera = arguments.camera
+                                , aspectRatio = aspectRatio
+                                , skybox = skybox
+                                }
+                            ]
+
+                        _ ->
+                            []
+                    , webGLEntities
+                    ]
+                )
           )
         ]
 
