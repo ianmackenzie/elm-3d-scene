@@ -44,8 +44,28 @@ jobs:
           run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
           working-directory: ./testing
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: playwright-report-${{ matrix.project }}-${{ matrix.shardIndex }}
-          path: testing/playwright-report/
-          retention-days: 30
+          name: blob-report-${{ matrix.project }}-${{ matrix.shardIndex }}
+          path: testing/blob-report/
+          retention-days: 1
+  merge-reports:
+    # Merge reports after test, even if some shards have failed
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+      - run: npx playwright merge-reports --reporter html ./all-blob-reports
+      - uses: actions/upload-artifact@v4
+        with:
+          name: html-report--attempt-${{ github.run_attempt }}
+          path: playwright-report
+          retention-days: 14
