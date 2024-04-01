@@ -37,7 +37,7 @@ jobs:
       - run: npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
       - run: npx elm make TestApp.elm --output=TestApp.html
-      - uses: coactions/setup-xvfb@v1
+      - uses: coactions/setup-xvfb@6b00cf1889f4e1d5a48635647013c0508128ee1a # node20
         with:
           run: npx playwright test --project=${{ matrix.project }}
           working-directory: ./testing
