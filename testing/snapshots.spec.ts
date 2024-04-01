@@ -15,10 +15,7 @@ for (let i = 0; i < testCases.length; i++) {
   test(`Snapshot ${number}`, async ({ page }) => {
     await page.goto(`/TestApp.html?test_case=${number}`);
     await expect(page.getByTestId("scene")).toHaveScreenshot(
-      `${number}-${name}.png`,
-      {
-        timeout: 10 * 1000, // 10 seconds for a page
-      }
+      `${number}-${name}.png`
     );
   });
 }
