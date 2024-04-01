@@ -38,6 +38,7 @@
             pkgs.elmPackages.elm-format
             pkgs.elmPackages.elm-test
             pkgs.elmPackages.elm-json
+            pkgs.nodejs
           ];
           shellHook = ''
             rm -f elm-script

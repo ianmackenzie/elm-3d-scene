@@ -2352,7 +2352,7 @@ viewTestCase model testCase =
     case entity model testCase of
         Just validEntity ->
             Element.column [ Element.spacing 10 ]
-                [ Element.el [ Element.Events.onClick Next ] <|
+                [ Element.el [ Element.Events.onClick Next, Element.htmlAttribute (Html.Attributes.attribute "data-testid" "scene") ] <|
                     Element.html <|
                         Scene3d.custom
                             { lights = lights testCase

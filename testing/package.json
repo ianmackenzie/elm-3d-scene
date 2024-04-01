@@ -1,0 +1,19 @@
+{
+  "name": "playwright",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "precompile-elm-app": "elm make TestApp.elm --output=TestApp.html",
+    "test": "npx playwright test",
+    "update-snapshots": "npx playwright test --project=chromium --update-snapshots"
+  },
+  "keywords": [],
+  "author": "",
+  "devDependencies": {
+    "@playwright/test": "^1.42.1",
+    "@types/node": "^20.12.2",
+    "elm": "0.19.1-6",
+    "http-server": "^14.1.1"
+  }
+}
