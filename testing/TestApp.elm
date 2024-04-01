@@ -1288,17 +1288,9 @@ parseFaceVertex string =
 testCaseArray : List TestCase -> Array TestCase
 testCaseArray testCases =
     let
-        filteredTestCases =
-            testCases
-                |> List.filter
-                    (\testCase ->
-                        List.all (List.any ((==) True))
-                            []
-                    )
-
         ( firstGroup, secondGroup ) =
             List.partition (.antialiasing >> (==) Multisampling)
-                filteredTestCases
+                testCases
     in
     Array.fromList (firstGroup ++ secondGroup)
 

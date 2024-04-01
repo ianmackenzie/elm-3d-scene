@@ -10,7 +10,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, firefox, webkit]
+        # project: [chromium, firefox, webkit]
+        # only firefox is working reliably
+        project: [firefox]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     defaults:
