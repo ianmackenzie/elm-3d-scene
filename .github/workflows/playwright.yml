@@ -42,7 +42,7 @@ jobs:
           run: npx playwright test --project=${{ matrix.project }}
           working-directory: ./testing
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: playwright-report-${{ matrix.project }}
           path: testing/playwright-report/
