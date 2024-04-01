@@ -6,13 +6,15 @@ on:
     branches: [main]
 jobs:
   test:
-    name: "Playwright Tests - ${{ matrix.project }}"
+    name: "Playwright Tests - ${{ matrix.project }} (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})"
     strategy:
       fail-fast: false
       matrix:
         # project: [chromium, firefox, webkit]
         # only firefox is working reliably
         project: [firefox]
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     defaults:
@@ -39,11 +41,11 @@ jobs:
       - run: npx elm make TestApp.elm --output=TestApp.html
       - uses: coactions/setup-xvfb@6b00cf1889f4e1d5a48635647013c0508128ee1a # node20
         with:
-          run: npx playwright test --project=${{ matrix.project }}
+          run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
           working-directory: ./testing
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report-${{ matrix.project }}
+          name: playwright-report-${{ matrix.project }}-${{ matrix.shardIndex }}
           path: testing/playwright-report/
           retention-days: 30
