@@ -24,6 +24,8 @@ jobs:
             ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
       - uses: actions/checkout@v4
+        with:
+          lfs: "true"
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
