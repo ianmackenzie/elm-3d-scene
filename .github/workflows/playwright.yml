@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./playwright
+        working-directory: ./testing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,5 +24,5 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: playwright/playwright-report/
+          path: testing/playwright-report/
           retention-days: 30
