@@ -6,20 +6,34 @@ on:
     branches: [main]
 jobs:
   test:
+    name: "Playwright Tests - ${{ matrix.project }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./testing
     steps:
+      - uses: actions/cache@v2
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "18"
       - run: npm ci
       - run: npx playwright install --with-deps
-      - run: npm run precompile-elm-app
-      - run: npm test
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: npx playwright install-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+      - run: npx elm make TestApp.elm --output=TestApp.html
+      - run: npx playwright test --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -3,11 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "precompile-elm-app": "elm make TestApp.elm --output=TestApp.html",
-    "test": "npx playwright test",
-    "update-snapshots": "npx playwright test --project=chromium --update-snapshots"
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "devDependencies": {

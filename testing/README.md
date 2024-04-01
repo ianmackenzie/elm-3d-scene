@@ -1,11 +1,20 @@
 # Snapshot testing
 
 ```bash
-npm ci  # installs the dependencies
-npx playwright install --with-deps  # installs automated browsers
-npm run precompile-elm-app  # precompiles the test app to `TestApp.html`
-npm test  # runs the snapshot tests
-npm run update-snapshots  # updates snapshots with chromium
+# install the dependencies
+npm ci
+
+# install playwright browsers
+npx playwright install --with-deps
+
+# precompile the test app to `TestApp.html`
+npx elm make TestApp.elm --output=TestApp.html
+
+# run the snapshot tests
+npx playwright test
+
+# updates snapshots with chromium
+npx playwright test --project=chromium --update-snapshots
 ```
 
 - The tests are using [Playwright](https://playwright.dev)
