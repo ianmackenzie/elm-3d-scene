@@ -1450,7 +1450,7 @@ entity model testCase =
         Color ->
             let
                 material =
-                    Material.color (withTransparency Color.green)
+                    Material.color (withTransparency Color.blue)
             in
             case testCase.mesh of
                 Points ->
