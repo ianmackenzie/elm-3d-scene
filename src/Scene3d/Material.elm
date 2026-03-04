@@ -127,6 +127,16 @@ import WebGL.Texture
 {-| A `Material` controls the color, reflectivity etc. of a given object. It may
 be constant across the object or be textured.
 
+For (non-textured) materials based on a `Color` value, `elm-3d-scene` will attempt
+to respect any alpha (transparency) value of that color, by rendering any entity
+using that material in a special 'transparent objects' pass after all opaque objects
+have been rendered. This rendering pass will ensure that the foremost (closest to the
+camera) transparent surfaces will be rendered on top of everything else, so simple
+transparent objects (spheres, cubes etc.) should look OK. For more complex objects
+(where there may be several different transparent surfaces layered on top of each other),
+you may still notice some transparency-related rendering artifacts (incorrect layering,
+or even some overlaid surfaces not rendered at all).
+
 The `attributes` type parameter of a material is used to restrict what objects
 it can be used with. For example, `Material.matte` returns a value with an
 `attributes` type of `{ a | normals : () }`; you can read this as "this material
@@ -148,9 +158,6 @@ given color regardless of lights or scene exposure/white balance settings.
 Here's a rubber duck model with a constant blue color:
 
 ![Duckling with constant color](https://ianmackenzie.github.io/elm-3d-scene/images/1.0.0/constant-color.png)
-
-Note that transparency is not currently supported, so any alpha value in the
-given color will be ignored.
 
 -}
 color : Color -> Material coordinates attributes
