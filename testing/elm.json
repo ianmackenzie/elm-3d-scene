@@ -33,7 +33,8 @@
             "justinmimbs/time-extra": "1.1.1",
             "mdgriffith/elm-ui": "1.1.8",
             "myrho/elm-round": "1.0.5",
-            "rtfeldman/elm-css": "16.1.1"
+            "rtfeldman/elm-css": "16.1.1",
+            "w0rm/elm-physics": "6.0.1"
         },
         "indirect": {
             "elm/bytes": "1.0.8",

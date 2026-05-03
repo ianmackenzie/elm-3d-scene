@@ -1,9 +1,5 @@
 module DucklingGame exposing (main)
 
-{-| NOTE: not currently working until elm-physics and elm-obj-file
-have been updated to use elm-geometry 4.0
--}
-
 import Acceleration exposing (Acceleration)
 import Angle exposing (Angle)
 import Area
@@ -31,11 +27,9 @@ import Length exposing (Length, Meters)
 import LineSegment3d exposing (LineSegment3d)
 import Mass exposing (Mass)
 import Obj.Decode exposing (Decoder, ObjCoordinates)
-import Physics.Body exposing (Body)
-import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
+import Physics exposing (Body, BodyCoordinates, WorldCoordinates)
 import Physics.Material
 import Physics.Shape exposing (Shape)
-import Physics.World exposing (World)
 import Pixels exposing (Pixels)
 import Point2d exposing (Point2d)
 import Point3d exposing (Point3d)
@@ -79,7 +73,7 @@ type alias LoadingModel =
 type BodyId
     = DucklingId
     | BallId
-    | WallId
+    | WallsId
 
 
 type alias RunningModel =
@@ -89,7 +83,7 @@ type alias RunningModel =
     , ballColorTexture : Material.Texture Color
     , ballMetallicTexture : Material.Texture Float
     , ballRoughnessTexture : Material.Texture Float
-    , world : World BodyId
+    , world : List ( BodyId, Body )
     , screenDimensions : ( Quantity Int Pixels, Quantity Int Pixels )
     , pressedKeys : List Key
     , animationTime : Duration
@@ -212,68 +206,50 @@ handleResponse loadingModel =
                         Sphere3d.atPoint (Point3d.centimeters 0 -0.25 -6)
                             (Length.centimeters 4)
 
-                ducklingBehavior =
-                    Physics.Body.dynamic (Mass.grams 40)
-
                 ducklingMaterial =
-                    Physics.Material.custom
-                        { friction = 0.0005
+                    Physics.Material.dense
+                        { density = Density.kilogramsPerCubicMeter 72.6
+                        , friction = 0.0005
                         , bounciness = 0.75
                         }
 
-                ballBehavior =
-                    Physics.Body.dynamic (Mass.grams 10)
-
                 ballMaterial =
-                    Physics.Material.custom
-                        { friction = 0.05
+                    Physics.Material.dense
+                        { density = Density.kilogramsPerCubicMeter 11
+                        , friction = 0.05
                         , bounciness = 0.75
                         }
 
                 wallMaterial =
-                    Physics.Material.custom
+                    Physics.Material.surface
                         { friction = 0.0005
                         , bounciness = 0
                         }
 
                 ducklingBody =
-                    Physics.Body.compound
-                        [ ducklingShape
-                        , counterweight
+                    Physics.dynamic
+                        [ ( Physics.Shape.sum [ counterweight, ducklingShape ], ducklingMaterial )
                         ]
-                        DucklingId
-                        |> Physics.Body.withBehavior ducklingBehavior
-                        |> Physics.Body.withMaterial ducklingMaterial
-                        |> Physics.Body.withDamping
+                        |> Physics.damp
                             { linear = 0.99
                             , angular = 0.95
                             }
 
                 ballBody =
-                    Physics.Body.sphere (Sphere3d.atOrigin ballRadius) BallId
-                        |> Physics.Body.withBehavior ballBehavior
-                        |> Physics.Body.withMaterial ballMaterial
-                        |> Physics.Body.withDamping
+                    Physics.sphere (Sphere3d.atOrigin ballRadius) ballMaterial
+                        |> Physics.damp
                             { linear = 0.99
                             , angular = 0.8
                             }
-                        |> Physics.Body.translateBy (Vector3d.centimeters 15 -5 5)
+                        |> Physics.translateBy (Vector3d.centimeters 15 -5 5)
 
-                wallBody1 =
-                    Physics.Body.block wall1 WallId
-                        |> Physics.Body.withMaterial wallMaterial
+                wallsShape =
+                    [ wall1, wall2, wall3, wall4 ]
+                        |> List.map Physics.Shape.block
+                        |> Physics.Shape.sum
 
-                wallBody2 =
-                    Physics.Body.block wall2 WallId
-                        |> Physics.Body.withMaterial wallMaterial
-
-                wallBody3 =
-                    Physics.Body.block wall3 WallId
-                        |> Physics.Body.withMaterial wallMaterial
-
-                wallBody4 =
-                    Physics.Body.block wall4 WallId
-                        |> Physics.Body.withMaterial wallMaterial
+                wallsBody =
+                    Physics.static [ ( wallsShape, wallMaterial ) ]
 
                 texturedMesh =
                     Mesh.texturedFaces meshes.textured
@@ -282,14 +258,10 @@ handleResponse loadingModel =
                     Mesh.shadow texturedMesh
 
                 world =
-                    Physics.World.empty
-                        |> Physics.World.withGravity (Acceleration.gees 1) Direction3d.negativeZ
-                        |> Physics.World.add ducklingBody
-                        |> Physics.World.add ballBody
-                        |> Physics.World.add wallBody1
-                        |> Physics.World.add wallBody2
-                        |> Physics.World.add wallBody3
-                        |> Physics.World.add wallBody4
+                    [ ( DucklingId, ducklingBody )
+                    , ( BallId, ballBody )
+                    , ( WallsId, wallsBody )
+                    ]
 
                 boundingBox =
                     meshes.convex
@@ -354,24 +326,24 @@ updateLoading msg model =
             ( Failed "Error loading ball metallic texture", Cmd.none )
 
 
-simulate : Duration -> List Key -> Duration -> World BodyId -> World BodyId
-simulate duration pressedKeys animationTime world =
+simulate : Duration -> List Key -> Duration -> List ( BodyId, Body ) -> List ( BodyId, Body )
+simulate duration pressedKeys animationTime bodies =
     let
         controlDirection =
             Keyboard.Arrows.arrowsDirection pressedKeys
-    in
-    world
-        |> Physics.World.update
-            (\body ->
-                let
-                    bodyId =
-                        Physics.Body.data body
 
+        simConfig =
+            Physics.onEarth
+    in
+    bodies
+        |> List.map
+            (\( bodyId, body ) ->
+                let
                     bodyFrame =
-                        Physics.Body.frame body
+                        Physics.frame body
 
                     bodyOrigin =
-                        Frame3d.originPoint bodyFrame
+                        Physics.originPoint body
                 in
                 case bodyId of
                     DucklingId ->
@@ -450,10 +422,12 @@ simulate duration pressedKeys animationTime world =
                                 Direction3d.xyZ (Angle.degrees 0) (Angle.degrees 45)
                                     |> Direction3d.placeIn bodyFrame
                         in
-                        body
-                            |> Physics.Body.applyForce buoyancy Direction3d.z bodyOrigin
-                            |> Physics.Body.applyForce leftMagnitude thrustDirection leftPoint
-                            |> Physics.Body.applyForce rightMagnitude thrustDirection rightPoint
+                        ( bodyId
+                        , body
+                            |> Physics.applyForce (Vector3d.withLength buoyancy Direction3d.z) bodyOrigin
+                            |> Physics.applyForce (Vector3d.withLength leftMagnitude thrustDirection) leftPoint
+                            |> Physics.applyForce (Vector3d.withLength rightMagnitude thrustDirection) rightPoint
+                        )
 
                     BallId ->
                         let
@@ -461,7 +435,7 @@ simulate duration pressedKeys animationTime world =
                                 Point3d.zCoordinate bodyOrigin
                         in
                         if z0 |> Quantity.greaterThan ballRadius then
-                            body
+                            ( bodyId, body )
 
                         else
                             let
@@ -479,13 +453,16 @@ simulate duration pressedKeys animationTime world =
                                 buoyancy =
                                     displacedMass |> Quantity.times (Acceleration.gees 1)
                             in
-                            body
-                                |> Physics.Body.applyForce buoyancy Direction3d.z bodyOrigin
+                            ( bodyId
+                            , body
+                                |> Physics.applyForce (Vector3d.withLength buoyancy Direction3d.z) bodyOrigin
+                            )
 
-                    WallId ->
-                        body
+                    WallsId ->
+                        ( bodyId, body )
             )
-        |> Physics.World.simulate duration
+        |> Physics.simulate { simConfig | duration = duration }
+        |> Tuple.first
 
 
 updateRunning : RunningMsg -> RunningModel -> ( Model, Cmd Msg )
@@ -586,15 +563,11 @@ viewRunning model =
 
         physicsEntities =
             model.world
-                |> Physics.World.bodies
                 |> List.map
-                    (\body ->
+                    (\( bodyId, body ) ->
                         let
                             bodyFrame =
-                                Physics.Body.frame body
-
-                            bodyId =
-                                Physics.Body.data body
+                                Physics.frame body
 
                             ducklingMaterial =
                                 Material.texturedNonmetal
@@ -616,7 +589,7 @@ viewRunning model =
                                     model.shadowMesh
                                     |> Scene3d.placeIn bodyFrame
 
-                            WallId ->
+                            WallsId ->
                                 Scene3d.nothing
 
                             BallId ->
