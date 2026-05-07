@@ -31,7 +31,6 @@ import SketchPlane3d
 import Sphere3d
 import Task
 import Temperature
-import Viewpoint3d
 
 
 main : Program () Model Msg
@@ -42,7 +41,7 @@ main =
                 ( initialModel
                 , Task.perform
                     (\{ viewport } ->
-                        Resize ( Pixels.pixels (viewport.width - panelWidth), Pixels.pixels viewport.height )
+                        Resize ( Pixels.int (round (viewport.width - panelWidth)), Pixels.int (round viewport.height) )
                     )
                     Browser.Dom.getViewport
                 )
@@ -51,7 +50,7 @@ main =
             \_ ->
                 Browser.Events.onResize
                     (\width height ->
-                        Resize ( Pixels.pixels (toFloat width - panelWidth), Pixels.pixels (toFloat height) )
+                        Resize ( Pixels.int (width - round panelWidth), Pixels.int height )
                     )
         , view = view
         }
@@ -62,7 +61,7 @@ main =
 
 
 type alias Model =
-    { dimensions : ( Quantity Float Pixels, Quantity Float Pixels )
+    { dimensions : ( Quantity Int Pixels, Quantity Int Pixels )
 
     -- Camera:
     , distance : Length
@@ -93,7 +92,7 @@ type alias Model =
 
 
 type Msg
-    = Resize ( Quantity Float Pixels, Quantity Float Pixels )
+    = Resize ( Quantity Int Pixels, Quantity Int Pixels )
     | Zoom Float
     | MouseDown
     | MouseMove Float Float
@@ -236,7 +235,7 @@ type Material
 unlitScene : Model -> Html Msg
 unlitScene model =
     Scene3d.unlit
-        { dimensions = ( Pixels.pixels 360, Pixels.pixels 300 )
+        { dimensions = ( Pixels.int 360, Pixels.int 300 )
         , camera = camera model.distance model.azimuth model.elevation
         , clipDepth = Length.meters 0.1
         , background = Scene3d.transparentBackground
@@ -259,7 +258,7 @@ unlitScene model =
 sunnyScene : Model -> Html Msg
 sunnyScene model =
     Scene3d.sunny
-        { dimensions = ( Pixels.pixels 360, Pixels.pixels 300 )
+        { dimensions = ( Pixels.int 360, Pixels.int 300 )
         , camera = camera model.distance model.azimuth model.elevation
         , clipDepth = Length.meters 0.1
         , background = Scene3d.transparentBackground
@@ -285,7 +284,7 @@ sunnyScene model =
 cloudyScene : Model -> Html Msg
 cloudyScene model =
     Scene3d.cloudy
-        { dimensions = ( Pixels.pixels 360, Pixels.pixels 300 )
+        { dimensions = ( Pixels.int 360, Pixels.int 300 )
         , camera = camera model.distance model.azimuth model.elevation
         , clipDepth = Length.meters 0.1
         , background = Scene3d.transparentBackground
@@ -324,8 +323,8 @@ customScene model =
         , whiteBalance = Light.daylight
         , background =
             Scene3d.backgroundColor
-                (Color.fromHex model.backgroundColor
-                    |> Result.withDefault (Color.fromRGB ( 0, 0, 0 ))
+                (hexColor model.backgroundColor
+                    |> Result.withDefault (Color.rgb255 0 0 0)
                 )
         , entities =
             [ table |> Scene3d.placeIn Frame3d.atOrigin
@@ -354,9 +353,7 @@ view model =
                 :: Html.Attributes.style "top" "0"
                 :: events model.orbiting
             )
-            [ sunnyScene model
-            , cloudyScene model
-            , unlitScene model
+            [ customScene model
             ]
         ]
 
@@ -388,16 +385,14 @@ type SceneCoordinates
 
 camera : Length -> Angle -> Angle -> Camera3d Meters SceneCoordinates
 camera distance azimuth elevation =
-    Camera3d.perspective
-        { viewpoint =
-            Viewpoint3d.orbit
-                { focalPoint = Point3d.meters 0 0.1 0.71
-                , groundPlane = SketchPlane3d.xy
-                , azimuth = azimuth
-                , elevation = elevation
-                , distance = distance
-                }
-        , verticalFieldOfView = Angle.degrees 24
+    Camera3d.orbit
+        { focalPoint = Point3d.meters 0 0.1 0.71
+        , groundPlane = SketchPlane3d.xy
+        , azimuth = azimuth
+        , elevation = elevation
+        , distance = distance
+        , fov = Camera3d.angle (Angle.degrees 24)
+        , projection = Camera3d.Perspective
         }
 
 
@@ -892,12 +887,45 @@ type EntityCoordinates
     = EntityCoordinates
 
 
+hexColor : String -> Result String Color.Color
+hexColor str =
+    let
+        hexDigit c =
+            let
+                code =
+                    Char.toCode c
+            in
+            if '0' <= c && c <= '9' then
+                Just (code - Char.toCode '0')
+
+            else if 'A' <= c && c <= 'F' then
+                Just (code - Char.toCode 'A' + 10)
+
+            else
+                Nothing
+
+        hexPair a b =
+            Maybe.map2 (\x y -> x * 16 + y) (hexDigit a) (hexDigit b)
+    in
+    case String.toList (String.toUpper (String.dropLeft 1 str)) of
+        [ r1, r2, g1, g2, b1, b2 ] ->
+            case ( hexPair r1 r2, hexPair g1 g2, hexPair b1 b2 ) of
+                ( Just r, Just g, Just b ) ->
+                    Ok (Color.rgb255 r g b)
+
+                _ ->
+                    Err ("Invalid hex color: " ++ str)
+
+        _ ->
+            Err ("Invalid hex color: " ++ str)
+
+
 floor : Scene3d.Entity EntityCoordinates
 floor =
     Scene3d.quad
         --(Material.color (Color.fromRGB ( 50, 50, 50 )))
         (Material.nonmetal
-            { baseColor = Color.fromRGB ( 50, 50, 50 )
+            { baseColor = Color.rgb255 50 50 50
             , roughness = 0.9
             }
         )
@@ -945,7 +973,7 @@ table =
             (Scene3d.blockWithShadow
                 --(Material.color (Color.fromRGB ( 250, 180, 60 )))
                 (Material.nonmetal
-                    { baseColor = Color.fromRGB ( 250, 180, 60 )
+                    { baseColor = Color.rgb255 250 180 60
                     , roughness = 0.8
                     }
                 )
@@ -1003,7 +1031,7 @@ chair =
             (Scene3d.blockWithShadow
                 --(Material.color (Color.fromRGB ( 250, 180, 60 ) |> Color.blacken 25))
                 (Material.nonmetal
-                    { baseColor = Color.fromRGB ( 250, 180, 60 ) |> Color.blacken 25
+                    { baseColor = Color.rgb255 188 135 45
                     , roughness = 0.8
                     }
                 )
@@ -1015,8 +1043,8 @@ object : Object -> Scene3d.Entity SceneCoordinates
 object { kind, position, material, color, roughness } =
     let
         objectColor =
-            Color.fromHex color
-                |> Result.withDefault (Color.fromRGB ( 255, 255, 255 ))
+            hexColor color
+                |> Result.withDefault (Color.rgb255 255 255 255)
 
         objectMaterial =
             --Material.color objectColor
@@ -1081,12 +1109,12 @@ bulb light =
                                     (Luminance.nits light.intensity)
 
                              else
-                                Material.matte (Color.fromRGB ( 255, 255, 255 ))
+                                Material.matte (Color.rgb255 255 255 255)
                             )
                     , Cylinder3d.startingAt (Point3d.centimeters 0 0 2)
                         Direction3d.z
                         { radius = Length.millimeters 2, length = Length.meters 7 }
-                        |> Scene3d.cylinder (Material.matte (Color.fromRGB ( 255, 255, 255 )))
+                        |> Scene3d.cylinder (Material.matte (Color.rgb255 255 255 255))
                     ]
                     |> Scene3d.placeIn (Frame3d.atPoint position)
                 )

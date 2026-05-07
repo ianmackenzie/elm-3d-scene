@@ -1,9 +1,5 @@
 module BallsAndBlocks exposing (main)
 
-{-| NOTE: not currently working until elm-physics and elm-obj-file
-have been updated to use elm-geometry 4.0
--}
-
 import Acceleration
 import Angle
 import Array exposing (Array)
@@ -23,9 +19,9 @@ import Illuminance
 import Length exposing (Length, inMeters, meters)
 import Luminance
 import Mass
-import Physics.Body as Body exposing (Body)
-import Physics.Coordinates exposing (BodyCoordinates, WorldCoordinates)
-import Physics.World as World exposing (World)
+import Physics exposing (Body, BodyCoordinates, WorldCoordinates)
+import Physics.Material as PhysicsMaterial
+import Physics.Shape as PhysicsShape
 import Pixels exposing (pixels)
 import Point3d
 import Quantity
@@ -35,12 +31,12 @@ import Scene3d.Light as Light exposing (Light)
 import Scene3d.Material as Material
 import Sphere3d
 import Task
-import Viewpoint3d
+import Vector3d
 
 
 type alias Model =
-    { allFrames : List (World (Scene3d.Entity BodyCoordinates))
-    , remainingFrames : List (World (Scene3d.Entity BodyCoordinates))
+    { allFrames : List (List ( Scene3d.Entity BodyCoordinates, Body ))
+    , remainingFrames : List (List ( Scene3d.Entity BodyCoordinates, Body ))
     , screenWidth : Float
     , screenHeight : Float
     }
@@ -61,19 +57,28 @@ main =
         }
 
 
-simulate : Duration -> World (Scene3d.Entity BodyCoordinates) -> List (World (Scene3d.Entity BodyCoordinates))
+moonConfig : Physics.Config (Scene3d.Entity BodyCoordinates)
+moonConfig =
+    let
+        base =
+            Physics.onEarth
+    in
+    { base
+        | gravity = Vector3d.withLength (Acceleration.metersPerSecondSquared 1.62) Direction3d.negativeZ
+        , duration = Duration.seconds (1 / 60)
+    }
+
+
+simulate : Duration -> List ( Scene3d.Entity BodyCoordinates, Body ) -> List (List ( Scene3d.Entity BodyCoordinates, Body ))
 simulate remainingDuration currentWorld =
     if remainingDuration |> Quantity.lessThanOrEqualTo Quantity.zero then
         [ currentWorld ]
 
     else
         let
-            timestep =
-                Duration.seconds (1 / 60)
-
             futureWorlds =
-                simulate (remainingDuration |> Quantity.minus timestep)
-                    (World.simulate timestep currentWorld)
+                simulate (remainingDuration |> Quantity.minus moonConfig.duration)
+                    (Physics.simulate moonConfig currentWorld |> Tuple.first)
         in
         currentWorld :: futureWorlds
 
@@ -83,7 +88,7 @@ init _ =
     let
         frames =
             -- Generate 10 seconds of simulation ahead of time
-            simulate (Duration.seconds 10) initialWorld
+            simulate (Duration.seconds 10) (floor :: addBoxes [])
                 -- Just for fun, reverse the frames to watch the simulation
                 -- backwards =)
                 |> List.reverse
@@ -135,18 +140,16 @@ view { remainingFrames, screenWidth, screenHeight } =
         currentFrame :: rest ->
             let
                 camera =
-                    Camera3d.perspective
-                        { viewpoint =
-                            Viewpoint3d.lookAt
-                                { eyePoint = Point3d.meters 0 20 20
-                                , focalPoint = Point3d.meters 0 0 0
-                                , upDirection = Direction3d.positiveZ
-                                }
-                        , verticalFieldOfView = Angle.degrees 24
+                    Camera3d.lookAt
+                        { eyePoint = Point3d.meters 0 20 20
+                        , focalPoint = Point3d.meters 0 0 0
+                        , upDirection = Direction3d.positiveZ
+                        , fov = Camera3d.angle (Angle.degrees 24)
+                        , projection = Camera3d.Perspective
                         }
 
                 drawables =
-                    List.map getTransformedDrawable (World.bodies currentFrame)
+                    List.map getTransformedDrawable currentFrame
 
                 sunlight =
                     Light.directional (Light.castsShadows True)
@@ -168,7 +171,7 @@ view { remainingFrames, screenWidth, screenHeight } =
                 , Html.Attributes.style "top" "0"
                 ]
                 [ Scene3d.custom
-                    { dimensions = ( pixels screenWidth, pixels screenHeight )
+                    { dimensions = ( Pixels.int (round screenWidth), Pixels.int (round screenHeight) )
                     , antialiasing = Scene3d.multisampling
                     , camera = camera
                     , lights = Scene3d.twoLights sunlight daylight
@@ -180,18 +183,6 @@ view { remainingFrames, screenWidth, screenHeight } =
                     , entities = drawables
                     }
                 ]
-
-
-initialWorld : World (Scene3d.Entity BodyCoordinates)
-initialWorld =
-    let
-        moonGravity =
-            Acceleration.metersPerSecondSquared 1.62
-    in
-    World.empty
-        |> World.withGravity moonGravity Direction3d.negativeZ
-        |> World.add floor
-        |> addBoxes
 
 
 materials : Array (Material.Uniform coordinates)
@@ -238,7 +229,7 @@ randomOffsets index =
         |> Tuple.first
 
 
-addBoxes : World (Scene3d.Entity BodyCoordinates) -> World (Scene3d.Entity BodyCoordinates)
+addBoxes : List ( Scene3d.Entity BodyCoordinates, Body ) -> List ( Scene3d.Entity BodyCoordinates, Body )
 addBoxes world =
     let
         xySize =
@@ -261,16 +252,16 @@ addBoxes world =
             List.foldl
                 (\y world2 ->
                     List.foldl
-                        (\z ->
+                        (\z acc ->
                             let
                                 index =
-                                    round (z * xySize * xySize + y * xySize + x)
+                                    round (z * toFloat xySize * toFloat xySize + y * toFloat xySize + x)
 
                                 material =
                                     Array.get (index |> modBy (Array.length materials)) materials
                                         |> Maybe.withDefault Materials.aluminum
 
-                                body =
+                                ( entity, physBody ) =
                                     if (index |> modBy 3) == 0 then
                                         box material
 
@@ -280,14 +271,16 @@ addBoxes world =
                                 offsets =
                                     randomOffsets index
                             in
-                            body
-                                |> Body.moveTo
-                                    (Point3d.meters
-                                        ((x - (xySize - 1) / 2) * distance + offsets.x)
-                                        ((y - (xySize - 1) / 2) * distance + offsets.y)
-                                        ((z + (2 * zSize + 1) / 2) * distance + offsets.z)
-                                    )
-                                |> World.add
+                            ( entity
+                            , Physics.moveTo
+                                (Point3d.meters
+                                    ((x - (toFloat xySize - 1) / 2) * distance + offsets.x)
+                                    ((y - (toFloat xySize - 1) / 2) * distance + offsets.y)
+                                    ((z + (2 * toFloat zSize + 1) / 2) * distance + offsets.z)
+                                )
+                                physBody
+                            )
+                                :: acc
                         )
                         world2
                         zDimensions
@@ -304,20 +297,21 @@ floorRadius =
     Length.meters 30
 
 
-floor : Body (Scene3d.Entity BodyCoordinates)
+floor : ( Scene3d.Entity BodyCoordinates, Body )
 floor =
     let
         shape =
             Sphere3d.atOrigin floorRadius
     in
-    Scene3d.sphere (Material.uniform Materials.aluminum) shape
-        |> Body.sphere shape
-        |> Body.moveTo
+    ( Scene3d.sphere (Material.uniform Materials.aluminum) shape
+    , Physics.static [ ( PhysicsShape.sphere shape, PhysicsMaterial.steel ) ]
+        |> Physics.moveTo
             (Point3d.meters
                 0
                 0
                 -(Length.inMeters floorRadius)
             )
+    )
 
 
 boxSize : Length
@@ -325,16 +319,17 @@ boxSize =
     Length.meters 0.9
 
 
-box : Material.Uniform BodyCoordinates -> Body (Scene3d.Entity BodyCoordinates)
+box : Material.Uniform BodyCoordinates -> ( Scene3d.Entity BodyCoordinates, Body )
 box material =
     let
         shape =
             Block3d.centeredOn Frame3d.atOrigin
                 ( boxSize, boxSize, boxSize )
     in
-    Scene3d.blockWithShadow material shape
-        |> Body.block shape
-        |> Body.withBehavior (Body.dynamic (Mass.kilograms 5))
+    ( Scene3d.blockWithShadow material shape
+    , Physics.block shape PhysicsMaterial.wood
+        |> Physics.scaleMassTo (Mass.kilograms 5)
+    )
 
 
 sphereRadius : Length
@@ -342,17 +337,18 @@ sphereRadius =
     Length.meters 0.45
 
 
-sphere : Material.Textured BodyCoordinates -> Body (Scene3d.Entity BodyCoordinates)
+sphere : Material.Textured BodyCoordinates -> ( Scene3d.Entity BodyCoordinates, Body )
 sphere material =
     let
         shape =
             Sphere3d.atOrigin sphereRadius
     in
-    Scene3d.sphereWithShadow material shape
-        |> Body.sphere shape
-        |> Body.withBehavior (Body.dynamic (Mass.kilograms 2.5))
+    ( Scene3d.sphereWithShadow material shape
+    , Physics.sphere shape PhysicsMaterial.wood
+        |> Physics.scaleMassTo (Mass.kilograms 2.5)
+    )
 
 
-getTransformedDrawable : Body (Scene3d.Entity BodyCoordinates) -> Scene3d.Entity WorldCoordinates
-getTransformedDrawable body =
-    Scene3d.placeIn (Body.frame body) (Body.data body)
+getTransformedDrawable : ( Scene3d.Entity BodyCoordinates, Body ) -> Scene3d.Entity WorldCoordinates
+getTransformedDrawable ( entity, body ) =
+    Scene3d.placeIn (Physics.frame body) entity
