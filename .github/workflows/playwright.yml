@@ -1,0 +1,71 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    name: "${{ matrix.project }} (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        # project: [chromium, firefox, webkit]
+        # only firefox is working reliably
+        project: [firefox]
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./testing
+    steps:
+      - uses: actions/cache@v2
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright
+      - uses: actions/checkout@v4
+        with:
+          lfs: "true"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npx playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: npx playwright install-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+      - run: npx elm make TestApp.elm --output=TestApp.html
+      - uses: coactions/setup-xvfb@6b00cf1889f4e1d5a48635647013c0508128ee1a # node20
+        with:
+          run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+          working-directory: ./testing
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blob-report-${{ matrix.project }}-${{ matrix.shardIndex }}
+          path: testing/blob-report/
+          retention-days: 1
+  merge-reports:
+    # Merge reports after test, even if some shards have failed
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+      - run: npx playwright merge-reports --reporter html ./all-blob-reports
+      - uses: actions/upload-artifact@v4
+        with:
+          name: html-report--attempt-${{ github.run_attempt }}
+          path: playwright-report
+          retention-days: 14
